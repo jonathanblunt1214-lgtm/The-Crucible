@@ -9,6 +9,7 @@
     "audit:clutter": "node src/cli.js clutter",
     "audit:privacy": "node src/cli.js privacy",
     "audit:security": "node src/cli.js security",
+    "audit:collisions": "node src/cli.js collisions",
     "scrub:privacy": "node src/cli.js scrub",
     "run": "node src/cli.js run",
     "maintain": "node src/cli.js maintain"

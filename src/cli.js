@@ -5,8 +5,9 @@ const { auditClutter } = require('./clutter');
 const { runCrucible } = require('./runner');
 const { maintain } = require('./maintenance');
 const { auditPrivacy, scrubPrivacy } = require('./privacy');
-const { auditSecurity } = require('./security');
+const { auditSecurity, auditArtifactSecurity } = require('./security');
 const { runCommand } = require('./runner');
+const { auditCollisions } = require('./collisions');
 
 async function securityGate(root, config) {
   const result = auditSecurity(root, config);
@@ -14,6 +15,11 @@ async function securityGate(root, config) {
   if (result.findings.length) throw new Error(`Security Gate detected suspicious content:\n${result.findings.map((item) => `- ${item.type}: ${item.path}${item.line ? `:${item.line}` : ''}`).join('\n')}`);
   for (const command of config.security.dependencyAudit) await runCommand(root, command, config.workload.timeoutMinutes * 60_000);
   return result;
+}
+
+async function authenticityGate(root, config) {
+  for (const claim of config.authenticity.claims) await runCommand(root, claim, config.workload.timeoutMinutes * 60_000, ' [claim evidence]');
+  return { claims:config.authenticity.claims.length };
 }
 
 async function main() {
@@ -45,6 +51,15 @@ async function main() {
     const result = await securityGate(root, config);
     return console.log(result.skipped ? '[The Crucible] Security Gate is explicitly disabled.' : `[The Crucible] Security Gate passed across ${result.files} tracked files and ${config.security.dependencyAudit.length} dependency audit command(s).`);
   }
+  if (action === 'collisions') {
+    const result = await auditCollisions();
+    if (result.findings.length) throw new Error(`Overlapping open pull requests detected:\n${result.findings.map((item) => `- PR #${item.number} (${item.title}): ${item.paths.join(', ')}`).join('\n')}`);
+    return console.log(result.skipped ? '[The Crucible] Collision audit skipped outside a pull-request context.' : '[The Crucible] Collision audit passed with no overlapping open pull requests.');
+  }
+  if (action === 'authenticity') {
+    const result = await authenticityGate(root, config);
+    return console.log(`[The Crucible] Authenticity Gate passed ${result.claims} evidence-backed claim(s).`);
+  }
   if (action === 'maintain') {
     const result = maintain(root);
     return console.log(`[The Crucible] Git integrity and safe repacking passed at ${result.head}.\nBefore:\n${result.before}\nAfter:\n${result.after}`);
@@ -55,10 +70,13 @@ async function main() {
   const clutter = auditClutter(root, config);
   if (clutter.findings.length) throw new Error(`Clutter detected:\n${clutter.findings.map((item) => `- ${item.type}: ${item.path}`).join('\n')}`);
   await securityGate(root, config);
+  await authenticityGate(root, config);
   const result = await runCrucible(root, config);
+  const artifactSecurity = auditArtifactSecurity(root, config);
+  if (artifactSecurity.findings.length) throw new Error(`Generated artifact security scan failed:\n${artifactSecurity.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}`);
   console.log(`[The Crucible] PASS: ${config.project.name} completed ${result.workers * result.cycles * result.commands} verification command runs with ${result.artifacts} required artifact(s).`);
 }
 
 main().catch((error) => { console.error(`[The Crucible] FAIL: ${error.message}`); process.exitCode = 1; });
 
-module.exports = { securityGate };
+module.exports = { securityGate, authenticityGate };

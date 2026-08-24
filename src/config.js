@@ -39,22 +39,27 @@ function validateConfig(input) {
   const privacy = input.privacy;
   assert(isObject(privacy) && typeof privacy.githubIdentity === 'string', 'privacy.githubIdentity is required.');
   assert(/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(privacy.githubIdentity), 'privacy.githubIdentity must be a valid GitHub username.');
+  const privacyAllow = privacy.allow || [];
+  assert(Array.isArray(privacyAllow) && privacyAllow.length <= 100 && privacyAllow.every((item) => typeof item === 'string' && item), 'privacy.allow must contain at most 100 path patterns.');
   const workload = isObject(input.workload) ? input.workload : {};
   const security = isObject(input.security) ? input.security : {};
   const securityAllow = security.allow || [];
   const allowBinaries = security.allowBinaries || [];
   const dependencyAudit = security.dependencyAudit || [];
+  const authenticity = isObject(input.authenticity) ? input.authenticity : {};
+  const claims = authenticity.claims || [];
   assert(security.enabled === undefined || typeof security.enabled === 'boolean', 'security.enabled must be a boolean.');
   assert(Array.isArray(securityAllow) && securityAllow.length <= 100 && securityAllow.every((item) => typeof item === 'string' && item), 'security.allow must contain at most 100 path patterns.');
   assert(Array.isArray(allowBinaries) && allowBinaries.length <= 100 && allowBinaries.every((item) => typeof item === 'string' && item), 'security.allowBinaries must contain at most 100 path patterns.');
   assert(Array.isArray(dependencyAudit) && dependencyAudit.length <= 10, 'security.dependencyAudit must contain at most 10 commands.');
+  assert(Array.isArray(claims) && claims.length <= 30, 'authenticity.claims must contain at most 30 evidence commands.');
   return {
     schemaVersion:1,
     project:{ name:input.project.name.trim(), projectId:input.project.projectId || null },
     commands:{ prepare:prepare.map((item, index) => validateCommand(item, 'commands.prepare', index)), verify:verify.map((item, index) => validateCommand(item, 'commands.verify', index)) },
     artifacts,
-    clutter:{ allow, allowDuplicateContent:Boolean(clutter.allowDuplicateContent) },
-    privacy:{ githubIdentity:privacy.githubIdentity },
+    clutter:{ allow, allowDuplicateContent:Boolean(clutter.allowDuplicateContent), blockTrackedIgnored:Boolean(clutter.blockTrackedIgnored) },
+    privacy:{ githubIdentity:privacy.githubIdentity, scanContactInformation:Boolean(privacy.scanContactInformation), allow:privacyAllow },
     security:{
       enabled:security.enabled !== false,
       allow:securityAllow,
@@ -62,6 +67,7 @@ function validateConfig(input) {
       maxTextBytes:boundedInteger(security.maxTextBytes, 1_048_576, 1024, 5_242_880, 'security.maxTextBytes'),
       dependencyAudit:dependencyAudit.map((item, index) => validateCommand(item, 'security.dependencyAudit', index)),
     },
+    authenticity:{ claims:claims.map((item, index) => validateCommand(item, 'authenticity.claims', index)) },
     workload:{
       workers:boundedInteger(workload.workers, 4, 1, 8, 'workload.workers'),
       cycles:boundedInteger(workload.cycles, 2, 1, 20, 'workload.cycles'),

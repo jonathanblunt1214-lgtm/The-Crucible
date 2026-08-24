@@ -21,7 +21,7 @@ function auditClutter(root, config) {
     const hash = git(root, ['rev-parse', `:${file}`]);
     hashes.set(hash, [...(hashes.get(hash) || []), file]);
   }
-  for (const file of git(root, ['ls-files', '-ci', '--exclude-standard', '-z']).split('\0').filter(Boolean)) {
+  if (config.clutter.blockTrackedIgnored) for (const file of git(root, ['ls-files', '-ci', '--exclude-standard', '-z']).split('\0').filter(Boolean)) {
     if (!allow.some((rule) => rule.test(file))) findings.push({ type:'tracked file is ignored', path:file });
   }
   if (!config.clutter.allowDuplicateContent) for (const paths of hashes.values()) {

@@ -14,8 +14,28 @@ function fixture() {
 test('validates and supplies bounded workload defaults', () => {
   const config = validateConfig(fixture());
   assert.deepEqual(config.workload, { workers:4, cycles:2, timeoutMinutes:4 });
+  assert.equal(config.privacy.scanContactInformation, false);
+  assert.deepEqual(config.privacy.allow, []);
+  assert.equal(config.clutter.blockTrackedIgnored, false);
   assert.equal(config.commands.verify[0].run, 'node');
   assert.deepEqual(config.security, { enabled:true, allow:[], allowBinaries:[], maxTextBytes:1048576, dependencyAudit:[] });
+  assert.deepEqual(config.authenticity, { claims:[] });
+});
+
+test('requires shell-free evidence commands for declared claims', () => {
+  const value = fixture();
+  value.authenticity = { claims:[{ name:'Repository inventory is current', run:'npm', args:['run', 'inventory:verify'] }] };
+  assert.equal(validateConfig(value).authenticity.claims[0].name, 'Repository inventory is current');
+  value.authenticity.claims[0].run = '../fake-proof';
+  assert.throws(() => validateConfig(value), /executable name/);
+});
+
+test('validates narrow privacy path exemptions', () => {
+  const value = fixture();
+  value.privacy.allow = ['src/data/**'];
+  assert.deepEqual(validateConfig(value).privacy.allow, ['src/data/**']);
+  value.privacy.allow = [42];
+  assert.throws(() => validateConfig(value), /privacy.allow/);
 });
 
 test('validates bounded shell-free Security Gate configuration', () => {

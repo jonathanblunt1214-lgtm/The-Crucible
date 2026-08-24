@@ -17,7 +17,7 @@ function repository() {
   return root;
 }
 function config() {
-  return { project:{ name:'Fixture' }, commands:{ prepare:[], verify:[] }, artifacts:[], clutter:{ allow:[], allowDuplicateContent:false }, privacy:{ githubIdentity:'octocat' }, workload:{ workers:2, cycles:2, timeoutMinutes:1 } };
+  return { project:{ name:'Fixture' }, commands:{ prepare:[], verify:[] }, artifacts:[], clutter:{ allow:[], allowDuplicateContent:false, blockTrackedIgnored:true }, privacy:{ githubIdentity:'octocat', scanContactInformation:false }, workload:{ workers:2, cycles:2, timeoutMinutes:1 } };
 }
 
 test('clutter audit reports generated, empty, ignored, and duplicate tracked files', () => {
@@ -56,6 +56,13 @@ test('package-manager commands retain shell-free Windows compatibility', () => {
   assert.deepEqual(invocation.args, ['C:\\npm\\npm-cli.js', 'test']);
   assert.match(runner, /shell:false/);
   assert.doesNotMatch(runner, /shell:true/);
+});
+
+test('direct Windows CLI runs discover the bundled npm CLI without a shell', () => {
+  const runtime = { execPath:'C:\\node\\node.exe', existsSync:(candidate) => candidate === 'C:\\node\\node_modules\\npm\\bin\\npm-cli.js' };
+  const invocation = resolveSpawn({ run:'npm', args:['audit'] }, {}, 'win32', runtime);
+  assert.equal(invocation.executable, runtime.execPath);
+  assert.deepEqual(invocation.args, ['C:\\node\\node_modules\\npm\\bin\\npm-cli.js', 'audit']);
 });
 
 test('maintenance repacks without changing HEAD or the working tree', () => {

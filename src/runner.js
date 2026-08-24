@@ -2,9 +2,18 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 
-function resolveSpawn(command, environment = process.env, platform = process.platform) {
-  if (platform === 'win32' && command.run.toLowerCase() === 'npm' && environment.npm_execpath) {
-    return { executable:process.execPath, args:[environment.npm_execpath, ...command.args] };
+function resolveSpawn(command, environment = process.env, platform = process.platform, runtime = {}) {
+  const runtimeExecutable = runtime.execPath || process.execPath;
+  const exists = runtime.existsSync || fs.existsSync;
+  if (platform === 'win32' && command.run.toLowerCase() === 'npm') {
+    const candidates = [
+      environment.npm_execpath,
+      path.resolve(path.dirname(runtimeExecutable), 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+      path.resolve(path.dirname(runtimeExecutable), '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+      environment.APPDATA && path.resolve(environment.APPDATA, 'npm', 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+    ].filter(Boolean);
+    const npmCli = candidates.find((candidate) => candidate === environment.npm_execpath || exists(candidate));
+    if (npmCli) return { executable:runtimeExecutable, args:[npmCli, ...command.args] };
   }
   return { executable:command.run, args:command.args };
 }

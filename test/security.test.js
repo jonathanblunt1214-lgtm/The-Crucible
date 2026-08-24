@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
-const { findingsForText, executableMagic, auditSecurity } = require('../src/security');
+const { findingsForText, executableMagic, auditArtifactSecurity, auditSecurity } = require('../src/security');
 
 function git(root, args) { return execFileSync('git', args, { cwd:root, encoding:'utf8', windowsHide:true }).trim(); }
 function repository() {
@@ -31,6 +31,16 @@ test('detects high-confidence exploit, obfuscation, spyware, and secret indicato
   assert.equal(findingsForText('const encoded = Buffer.from(data).toString("base64");').length, 0);
 });
 
+test('does not execute or flag inert regular-expression rule definitions', () => {
+  const scannerRule = "{ pattern: /Login Data.{0,20}dpapi/i, message: 'credential detector' },";
+  assert.equal(findingsForText(scannerRule).length, 0);
+});
+
+test('detects client credential exposure and fabricated success', () => {
+  assert.match(findingsForText("localStorage.setItem('refresh_token', credential)")[0].type, /client-visible/);
+  assert.match(findingsForText('try { await provider() } catch (error) { return { success: true } }')[0].type, /fabricated/);
+});
+
 test('recognizes executable binary magic', () => {
   assert.equal(executableMagic(Buffer.from([0x7f, 0x45, 0x4c, 0x46])), 'ELF executable');
   assert.equal(executableMagic(Buffer.from('MZfixture')), 'Windows PE executable');
@@ -55,4 +65,12 @@ test('blocks suspicious binaries unless explicitly allowed', () => {
   git(root, ['add', 'tool.exe']);
   assert.equal(auditSecurity(root, config()).findings[0].type, 'Windows PE executable');
   assert.equal(auditSecurity(root, config({ allowBinaries:['tool.exe'] })).findings.length, 0);
+});
+
+test('scans generated text artifacts for credentials', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-artifact-'));
+  fs.mkdirSync(path.join(root, 'dist'));
+  fs.writeFileSync(path.join(root, 'dist', 'bundle.js'), `const key='${'AKIA'}${'A'.repeat(16)}'`);
+  const result = auditArtifactSecurity(root, { artifacts:['dist'], security:{ enabled:true, maxTextBytes:1_048_576 } });
+  assert.deepEqual(result.findings[0], { type:'AWS access key', path:'dist/bundle.js', line:1 });
 });
