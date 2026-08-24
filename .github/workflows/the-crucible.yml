@@ -61,6 +61,11 @@ jobs:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
           CRUCIBLE_CONFIG: ${{ inputs.config_path }}
         run: node .the-crucible-runtime/src/cli.js privacy
+      - name: Run Security Gate
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+          CRUCIBLE_CONFIG: ${{ inputs.config_path }}
+        run: node .the-crucible-runtime/src/cli.js security
       - name: Run verification and bounded workload
         if: inputs.run_workload
         env:

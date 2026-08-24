@@ -15,6 +15,20 @@ test('validates and supplies bounded workload defaults', () => {
   const config = validateConfig(fixture());
   assert.deepEqual(config.workload, { workers:4, cycles:2, timeoutMinutes:4 });
   assert.equal(config.commands.verify[0].run, 'node');
+  assert.deepEqual(config.security, { enabled:true, allow:[], allowBinaries:[], maxTextBytes:1048576, dependencyAudit:[] });
+});
+
+test('validates bounded shell-free Security Gate configuration', () => {
+  const value = fixture();
+  value.security = { allow:['fixtures/**'], allowBinaries:['vendor/tool.exe'], dependencyAudit:[{ name:'Audit', run:'npm', args:['audit'] }] };
+  const config = validateConfig(value);
+  assert.equal(config.security.dependencyAudit[0].run, 'npm');
+  const unsafe = fixture();
+  unsafe.security = { dependencyAudit:[{ name:'Unsafe', run:'../audit' }] };
+  assert.throws(() => validateConfig(unsafe), /executable name/);
+  const invalidToggle = fixture();
+  invalidToggle.security = { enabled:'no' };
+  assert.throws(() => validateConfig(invalidToggle), /must be a boolean/);
 });
 
 test('rejects shell-like executable paths and paths outside the repository', () => {

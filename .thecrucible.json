@@ -18,6 +18,11 @@
   "privacy": {
     "githubIdentity": "jonathanblunt1214-lgtm"
   },
+  "security": {
+    "allow": ["src/security.js", "test/security.test.js"],
+    "allowBinaries": [],
+    "dependencyAudit": []
+  },
   "workload": {
     "workers": 2,
     "cycles": 2,
