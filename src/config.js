@@ -46,10 +46,13 @@ function validateConfig(input) {
   const securityAllow = security.allow || [];
   const allowBinaries = security.allowBinaries || [];
   const dependencyAudit = security.dependencyAudit || [];
+  const authenticity = isObject(input.authenticity) ? input.authenticity : {};
+  const claims = authenticity.claims || [];
   assert(security.enabled === undefined || typeof security.enabled === 'boolean', 'security.enabled must be a boolean.');
   assert(Array.isArray(securityAllow) && securityAllow.length <= 100 && securityAllow.every((item) => typeof item === 'string' && item), 'security.allow must contain at most 100 path patterns.');
   assert(Array.isArray(allowBinaries) && allowBinaries.length <= 100 && allowBinaries.every((item) => typeof item === 'string' && item), 'security.allowBinaries must contain at most 100 path patterns.');
   assert(Array.isArray(dependencyAudit) && dependencyAudit.length <= 10, 'security.dependencyAudit must contain at most 10 commands.');
+  assert(Array.isArray(claims) && claims.length <= 30, 'authenticity.claims must contain at most 30 evidence commands.');
   return {
     schemaVersion:1,
     project:{ name:input.project.name.trim(), projectId:input.project.projectId || null },
@@ -64,6 +67,7 @@ function validateConfig(input) {
       maxTextBytes:boundedInteger(security.maxTextBytes, 1_048_576, 1024, 5_242_880, 'security.maxTextBytes'),
       dependencyAudit:dependencyAudit.map((item, index) => validateCommand(item, 'security.dependencyAudit', index)),
     },
+    authenticity:{ claims:claims.map((item, index) => validateCommand(item, 'authenticity.claims', index)) },
     workload:{
       workers:boundedInteger(workload.workers, 4, 1, 8, 'workload.workers'),
       cycles:boundedInteger(workload.cycles, 2, 1, 20, 'workload.cycles'),

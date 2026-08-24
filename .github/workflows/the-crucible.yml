@@ -67,6 +67,11 @@ jobs:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
           CRUCIBLE_CONFIG: ${{ inputs.config_path }}
         run: node .the-crucible-runtime/src/cli.js security
+      - name: Verify evidence-backed project claims
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+          CRUCIBLE_CONFIG: ${{ inputs.config_path }}
+        run: node .the-crucible-runtime/src/cli.js authenticity
       - name: Check for overlapping open pull requests
         if: github.event_name == 'pull_request'
         env:

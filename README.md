@@ -180,6 +180,10 @@ Optional path patterns excluded from the privacy audit and scrubber. This is int
 - `maxTextBytes`: Maximum bytes scanned per text file, from 1,024 through 5,242,880. Default: 1,048,576. Binary recognition is still performed before this limit is applied.
 - `dependencyAudit`: Up to ten optional vulnerability-audit commands. Each has `name`, `run`, `args`, and optional `cwd`, and runs directly without shell interpretation under the normal command timeout.
 
+### `authenticity.claims`
+
+Optional evidence commands for important project claims. Each claim has a human-readable `name` plus shell-free `run`, `args`, and optional `cwd` fields. The Authenticity Gate runs these checks before preparation and the heavy workload and fails when any declared evidence cannot be produced. This makes configured claims testable and prevents Crucible from treating an unsupported assertion as success; it cannot establish every possible real-world fact or guarantee that arbitrary prose is truthful.
+
 ### `workload`
 
 - `workers`: Concurrent workers, from 1 through 8. Default: 4.
