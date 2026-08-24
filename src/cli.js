@@ -8,6 +8,7 @@ const { auditPrivacy, scrubPrivacy } = require('./privacy');
 const { auditSecurity, auditArtifactSecurity } = require('./security');
 const { runCommand } = require('./runner');
 const { auditCollisions } = require('./collisions');
+const { auditCommit, fixCommit } = require('./commit');
 
 async function securityGate(root, config) {
   const result = auditSecurity(root, config);
@@ -22,11 +23,32 @@ async function authenticityGate(root, config) {
   return { claims:config.authenticity.claims.length };
 }
 
+function commitGate(root) {
+  const ref = process.env.CRUCIBLE_COMMIT_REF || '--cached';
+  const result = auditCommit(root, { ref });
+  if (result.findings.length) {
+    const details = result.findings.map((item) => `- ${item.type}: ${item.path}${item.line ? `:${item.line}` : ''}${item.detail ? ` (${item.detail})` : ''}`).join('\n');
+    const fixable = result.fixable.length ? '\nRun `npm run fix:commit`, review the working-tree changes, then stage them again.' : '';
+    throw new Error(`Commit Gate found ${result.findings.length} issue(s):\n${details}${fixable}`);
+  }
+  return result;
+}
+
 async function main() {
   const action = process.argv[2] || 'run';
   const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
   const config = loadConfig(root, process.env.CRUCIBLE_CONFIG || '.thecrucible.json');
   if (action === 'validate') return console.log(`[The Crucible] Valid configuration for ${config.project.name}.`);
+  if (action === 'commit') {
+    const result = commitGate(root);
+    return console.log(`[The Crucible] Commit Gate passed ${result.paths.length} changed path(s).`);
+  }
+  if (action === 'fix-commit') {
+    const ref = process.env.CRUCIBLE_COMMIT_REF || '--cached';
+    const result = fixCommit(root, { ref });
+    const review = result.review.length ? ` ${result.review.length} issue(s) still require human review.` : '';
+    return console.log(`[The Crucible] Commit fixer updated ${result.changed.length} working file(s). Review and stage the changes before rerunning the gate.${review}`);
+  }
   if (action === 'privacy') {
     const result = auditPrivacy(root, config);
     if (result.findings.length) {
@@ -65,6 +87,7 @@ async function main() {
     return console.log(`[The Crucible] Git integrity and safe repacking passed at ${result.head}.\nBefore:\n${result.before}\nAfter:\n${result.after}`);
   }
   if (action !== 'run') throw new Error(`Unknown action: ${action}`);
+  commitGate(root);
   const privacy = auditPrivacy(root, config);
   if (privacy.findings.length) throw new Error(`Personal identifiers detected:\n${privacy.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}`);
   const clutter = auditClutter(root, config);
@@ -79,4 +102,4 @@ async function main() {
 
 main().catch((error) => { console.error(`[The Crucible] FAIL: ${error.message}`); process.exitCode = 1; });
 
-module.exports = { securityGate, authenticityGate };
+module.exports = { securityGate, authenticityGate, commitGate };
