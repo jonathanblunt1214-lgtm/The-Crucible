@@ -53,8 +53,8 @@ function validateConfig(input) {
     project:{ name:input.project.name.trim(), projectId:input.project.projectId || null },
     commands:{ prepare:prepare.map((item, index) => validateCommand(item, 'commands.prepare', index)), verify:verify.map((item, index) => validateCommand(item, 'commands.verify', index)) },
     artifacts,
-    clutter:{ allow, allowDuplicateContent:Boolean(clutter.allowDuplicateContent) },
-    privacy:{ githubIdentity:privacy.githubIdentity },
+    clutter:{ allow, allowDuplicateContent:Boolean(clutter.allowDuplicateContent), blockTrackedIgnored:Boolean(clutter.blockTrackedIgnored) },
+    privacy:{ githubIdentity:privacy.githubIdentity, scanContactInformation:Boolean(privacy.scanContactInformation) },
     security:{
       enabled:security.enabled !== false,
       allow:securityAllow,

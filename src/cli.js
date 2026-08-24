@@ -5,8 +5,9 @@ const { auditClutter } = require('./clutter');
 const { runCrucible } = require('./runner');
 const { maintain } = require('./maintenance');
 const { auditPrivacy, scrubPrivacy } = require('./privacy');
-const { auditSecurity } = require('./security');
+const { auditSecurity, auditArtifactSecurity } = require('./security');
 const { runCommand } = require('./runner');
+const { auditCollisions } = require('./collisions');
 
 async function securityGate(root, config) {
   const result = auditSecurity(root, config);
@@ -45,6 +46,11 @@ async function main() {
     const result = await securityGate(root, config);
     return console.log(result.skipped ? '[The Crucible] Security Gate is explicitly disabled.' : `[The Crucible] Security Gate passed across ${result.files} tracked files and ${config.security.dependencyAudit.length} dependency audit command(s).`);
   }
+  if (action === 'collisions') {
+    const result = await auditCollisions();
+    if (result.findings.length) throw new Error(`Overlapping open pull requests detected:\n${result.findings.map((item) => `- PR #${item.number} (${item.title}): ${item.paths.join(', ')}`).join('\n')}`);
+    return console.log(result.skipped ? '[The Crucible] Collision audit skipped outside a pull-request context.' : '[The Crucible] Collision audit passed with no overlapping open pull requests.');
+  }
   if (action === 'maintain') {
     const result = maintain(root);
     return console.log(`[The Crucible] Git integrity and safe repacking passed at ${result.head}.\nBefore:\n${result.before}\nAfter:\n${result.after}`);
@@ -56,6 +62,8 @@ async function main() {
   if (clutter.findings.length) throw new Error(`Clutter detected:\n${clutter.findings.map((item) => `- ${item.type}: ${item.path}`).join('\n')}`);
   await securityGate(root, config);
   const result = await runCrucible(root, config);
+  const artifactSecurity = auditArtifactSecurity(root, config);
+  if (artifactSecurity.findings.length) throw new Error(`Generated artifact security scan failed:\n${artifactSecurity.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}`);
   console.log(`[The Crucible] PASS: ${config.project.name} completed ${result.workers * result.cycles * result.commands} verification command runs with ${result.artifacts} required artifact(s).`);
 }
 

@@ -14,6 +14,8 @@ function fixture() {
 test('validates and supplies bounded workload defaults', () => {
   const config = validateConfig(fixture());
   assert.deepEqual(config.workload, { workers:4, cycles:2, timeoutMinutes:4 });
+  assert.equal(config.privacy.scanContactInformation, false);
+  assert.equal(config.clutter.blockTrackedIgnored, false);
   assert.equal(config.commands.verify[0].run, 'node');
   assert.deepEqual(config.security, { enabled:true, allow:[], allowBinaries:[], maxTextBytes:1048576, dependencyAudit:[] });
 });

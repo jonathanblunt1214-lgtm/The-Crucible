@@ -6,7 +6,7 @@ The Crucible is a repository-independent GitHub Actions quality gate. A project 
 
 ### On every push and pull request
 
-The caller workflow checks out the project commit that triggered the run, checks out an exact pinned commit of this repository into `.the-crucible-runtime`, and runs with `contents: read` permission.
+The caller workflow checks out the project commit that triggered the run, checks out an exact pinned commit of this repository into `.the-crucible-runtime`, and runs with read-only contents and pull-request permissions.
 
 The engine then:
 
@@ -15,14 +15,16 @@ The engine then:
 3. Audits every Git-tracked project file for clutter.
 4. Audits staged tracked text for personal identifiers, credentials, and private keys.
 5. Runs the Security Gate against the staged Git snapshot before any project preparation or heavy workload begins.
-6. Runs each configured `security.dependencyAudit` command directly, without a shell.
-7. Runs each `commands.prepare` entry once, in order.
-8. Starts the configured number of workers concurrently.
-9. Each worker runs every `commands.verify` entry, in order, for the configured number of cycles.
-10. Terminates a command when it exceeds `workload.timeoutMinutes`.
-11. Fails if a command cannot start or exits with a nonzero status.
-12. Confirms every configured artifact exists after the workload.
-13. Reports one passing or failing check named **The Crucible**.
+6. On pull requests, reports files that overlap another open pull request before workload execution.
+7. Runs each configured `security.dependencyAudit` command directly, without a shell.
+8. Runs each `commands.prepare` entry once, in order.
+9. Starts the configured number of workers concurrently.
+10. Each worker runs every `commands.verify` entry, in order, for the configured number of cycles.
+11. Terminates a command when it exceeds `workload.timeoutMinutes`.
+12. Fails if a command cannot start or exits with a nonzero status.
+13. Confirms every configured artifact exists after the workload.
+14. Scans configured generated text artifacts for credential exposure.
+15. Reports one passing or failing check named **The Crucible**.
 
 Commands are launched directly with an executable and argument array. They are not concatenated into a shell command. This prevents configuration values from being interpreted as shell operators. Each configured working directory must remain inside the project repository.
 
@@ -70,6 +72,12 @@ The built-in scan fails on high-confidence indicators of:
 `security.allow` exempts intentional text fixtures from pattern scanning. `security.allowBinaries` exempts intentional executable artifacts from binary blocking. Both are path-pattern allowlists and should be as narrow as possible. Neither grants execution permission, and neither changes the repository.
 
 This is a defense-in-depth gate, not an antivirus or sandbox. Static patterns and dependency advisories cannot detect every exploit, malicious program, spyware technique, supply-chain compromise, or future zero-day. Passing means none of the configured known indicators or dependency audit failures were found; it is not a guarantee that code is safe.
+
+After the workload, The Crucible scans configured text artifacts for recognized credentials and client-visible secret exposure before reporting success. This catches secrets introduced by generation or bundling even when they were not present in the staged source snapshot.
+
+### Collision protection
+
+For pull-request runs, the reusable workflow uses read-only pull-request access to compare the current PR's changed files with every other open PR. Any overlap fails before the heavy workload and reports only PR numbers, titles, and paths. Outside a GitHub pull-request context the collision audit skips safely. It never closes, modifies, approves, or merges a pull request.
 
 ### Weekly
 
@@ -148,9 +156,17 @@ Optional path patterns for intentionally tracked files that would otherwise be r
 
 Defaults to `false`. Set it to `true` only when identical tracked files are an intentional project requirement.
 
+### `clutter.blockTrackedIgnored`
+
+Defaults to `false` for cross-project compatibility. Enable it when a project treats any file that is both tracked and ignored as a blocking repository error.
+
 ### `privacy.githubIdentity`
 
 Required GitHub username that may remain as the project's sole explicitly allowed public personal identity. Its corresponding GitHub noreply email is also allowed so private email addresses never need to appear in commits.
+
+### `privacy.scanContactInformation`
+
+Defaults to `false` because email addresses and phone numbers are often legitimate application data, operational identities, or documentation. Enable it for repositories whose policy forbids all contact information. High-confidence credentials, private keys, and personal machine paths remain blocked regardless. Public package-maintainer emails in recognized dependency lockfiles are not treated as personal identifiers.
 
 ### `security`
 

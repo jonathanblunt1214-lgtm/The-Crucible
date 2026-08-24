@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
-const { findingsForText, isAllowedEmail, scrubText, auditPrivacy, scrubPrivacy } = require('../src/privacy');
+const { findingsForText, isAllowedEmail, isDependencyLockfile, scrubText, auditPrivacy, scrubPrivacy } = require('../src/privacy');
 
 function git(root, args) { return execFileSync('git', args, { cwd:root, encoding:'utf8', windowsHide:true }).trim(); }
 function repository() {
@@ -14,13 +14,27 @@ function repository() {
   git(root, ['config', 'user.email', 'crucible@example.test']);
   return root;
 }
-const config = { privacy:{ githubIdentity:'jonathanblunt1214-lgtm' } };
+const config = { privacy:{ githubIdentity:'jonathanblunt1214-lgtm', scanContactInformation:true } };
 
 test('only the configured GitHub noreply identity and technical examples are allowed', () => {
   assert.equal(isAllowedEmail('41898282+jonathanblunt1214-lgtm@users.noreply.github.com', config.privacy.githubIdentity), true);
   assert.equal(isAllowedEmail('git@github.com', config.privacy.githubIdentity), true);
   assert.equal(isAllowedEmail('person@example.test', config.privacy.githubIdentity), true);
+  assert.equal(isAllowedEmail('maintainer@packages.invalid', config.privacy.githubIdentity), true);
   assert.equal(isAllowedEmail('private' + '@personal-domain.invalid', config.privacy.githubIdentity), false);
+});
+
+test('inert private-key detector expressions are not treated as embedded keys', () => {
+  assert.equal(findingsForText("const detector = /-----BEGIN PRIVATE KEY-----/;", config.privacy.githubIdentity).length, 0);
+});
+
+test('dependency lockfiles may retain public package metadata emails', () => {
+  assert.equal(isDependencyLockfile('package-lock.json'), true);
+  assert.equal(isDependencyLockfile('src/profile.json'), false);
+  const root = repository();
+  fs.writeFileSync(path.join(root, 'package-lock.json'), JSON.stringify({ support:'maintainer@packages.invalid' }));
+  git(root, ['add', 'package-lock.json']);
+  assert.equal(auditPrivacy(root, config).findings.length, 0);
 });
 
 test('scrubber removes recognized identifiers while preserving the GitHub identity', () => {
@@ -52,7 +66,7 @@ test('audit checks the staged version and scrub leaves reviewable working change
 test('normal privacy command automatically scrubs but keeps unsafe staged content blocked', () => {
   const root = repository();
   const privateEmail = ['private', 'personal-domain.invalid'].join('@');
-  fs.writeFileSync(path.join(root, '.thecrucible.json'), JSON.stringify({ schemaVersion:1, project:{ name:'Fixture' }, commands:{ verify:[{ name:'Test', run:'node', args:['--test'] }] }, privacy:{ githubIdentity:'jonathanblunt1214-lgtm' } }));
+  fs.writeFileSync(path.join(root, '.thecrucible.json'), JSON.stringify({ schemaVersion:1, project:{ name:'Fixture' }, commands:{ verify:[{ name:'Test', run:'node', args:['--test'] }] }, privacy:{ githubIdentity:'jonathanblunt1214-lgtm', scanContactInformation:true } }));
   fs.writeFileSync(path.join(root, 'profile.txt'), `${privateEmail}\n`);
   git(root, ['add', '.thecrucible.json', 'profile.txt']);
   const cli = path.join(__dirname, '..', 'src', 'cli.js');

@@ -1,3 +1,5 @@
+const fs = require('node:fs');
+const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 
 const TEXT_RULES = [
@@ -11,7 +13,13 @@ const TEXT_RULES = [
   ['Slack credential', /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/],
   ['npm credential', /\bnpm_[A-Za-z0-9]{30,}\b/],
   ['Stripe live secret', /\bsk_live_[A-Za-z0-9]{16,}\b/],
+  ['client-visible credential storage', /(?:localStorage|sessionStorage)\s*\.\s*setItem\s*\(\s*['"][^'"]*(?:access[_-]?token|refresh[_-]?token|provider[_-]?credential|private[_-]?key|client[_-]?secret)[^'"]*['"]/i],
+  ['client-visible secret environment variable', /\b(?:VITE|NEXT_PUBLIC|REACT_APP)_[A-Z0-9_]*(?:SECRET|PRIVATE_KEY|REFRESH_TOKEN|ACCESS_TOKEN)\b/],
+  ['service-account private key material', /["']private_key["']\s*:\s*["']-----BEGIN PRIVATE KEY-----/i],
+  ['fabricated integration success', /catch\s*(?:\([^)]*\))?\s*\{[^}]{0,300}(?:return\s+\{[^}]{0,120}(?:success|ok)\s*:\s*true|status\s*\(\s*2\d\d\s*\))/i],
 ];
+
+const ARTIFACT_RULE_TYPES = new Set(['AWS access key', 'Slack credential', 'npm credential', 'Stripe live secret', 'client-visible credential storage', 'client-visible secret environment variable', 'service-account private key material']);
 
 const SUSPICIOUS_BINARY_EXTENSION = /\.(?:exe|dll|scr|com|msi|msp|cpl|sys|dylib|so(?:\.\d+)*|node|class|jar|wasm)$/i;
 
@@ -38,15 +46,51 @@ function executableMagic(buffer) {
   return null;
 }
 
-function findingsForText(value) {
+function findingsForText(value, allowedTypes = null) {
   const content = String(value);
   const findings = [];
   for (const [type, rule] of TEXT_RULES) {
+    if (allowedTypes && !allowedTypes.has(type)) continue;
     rule.lastIndex = 0;
     const match = rule.exec(content);
-    if (match) findings.push({ type, line:content.slice(0, match.index).split(/\r?\n/).length });
+    if (match) {
+      const line = content.slice(0, match.index).split(/\r?\n/).length;
+      const sourceLine = content.split(/\r?\n/)[line - 1] || '';
+      if (/\bpattern\s*:\s*\/.+\/[dgimsuvy]*\s*[,}]/.test(sourceLine)) continue;
+      findings.push({ type, line });
+    }
   }
   return findings;
+}
+
+function artifactFiles(root, artifacts) {
+  const files = [];
+  const repository = path.resolve(root);
+  function visit(target) {
+    const resolved = path.resolve(target);
+    if (resolved !== repository && !resolved.startsWith(`${repository}${path.sep}`)) throw new Error('Artifact path escapes the repository.');
+    if (!fs.existsSync(resolved)) return;
+    const stat = fs.statSync(resolved);
+    if (stat.isDirectory()) for (const entry of fs.readdirSync(resolved)) visit(path.join(resolved, entry));
+    else if (stat.isFile()) files.push(resolved);
+  }
+  for (const artifact of artifacts) visit(path.resolve(root, artifact));
+  return files;
+}
+
+function auditArtifactSecurity(root, config) {
+  if (!config.security.enabled) return { files:0, findings:[], skipped:true };
+  const findings = [];
+  const files = artifactFiles(root, config.artifacts);
+  for (const target of files) {
+    const stat = fs.statSync(target);
+    if (stat.size > config.security.maxTextBytes) continue;
+    const buffer = fs.readFileSync(target);
+    if (buffer.includes(0)) continue;
+    const relative = path.relative(root, target).replace(/\\/g, '/');
+    for (const finding of findingsForText(buffer.toString('utf8'), ARTIFACT_RULE_TYPES)) findings.push({ path:relative, ...finding });
+  }
+  return { files:files.length, findings, skipped:false };
 }
 
 function auditSecurity(root, config) {
@@ -70,4 +114,4 @@ function auditSecurity(root, config) {
   return { files:files.length, findings, skipped:false };
 }
 
-module.exports = { TEXT_RULES, SUSPICIOUS_BINARY_EXTENSION, executableMagic, findingsForText, auditSecurity, glob };
+module.exports = { TEXT_RULES, SUSPICIOUS_BINARY_EXTENSION, executableMagic, findingsForText, artifactFiles, auditArtifactSecurity, auditSecurity, glob };

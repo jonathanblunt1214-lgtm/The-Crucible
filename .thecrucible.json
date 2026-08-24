@@ -13,10 +13,12 @@
   "artifacts": ["package.json"],
   "clutter": {
     "allow": [],
-    "allowDuplicateContent": false
+    "allowDuplicateContent": false,
+    "blockTrackedIgnored": true
   },
   "privacy": {
-    "githubIdentity": "jonathanblunt1214-lgtm"
+    "githubIdentity": "jonathanblunt1214-lgtm",
+    "scanContactInformation": true
   },
   "security": {
     "allow": ["src/security.js", "test/security.test.js"],

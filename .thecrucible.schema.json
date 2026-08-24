@@ -35,7 +35,8 @@
       "additionalProperties": false,
       "properties": {
         "allow": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1, "maxLength": 240 } },
-        "allowDuplicateContent": { "type": "boolean" }
+        "allowDuplicateContent": { "type": "boolean" },
+        "blockTrackedIgnored": { "type": "boolean" }
       }
     },
     "privacy": {
@@ -43,7 +44,8 @@
       "additionalProperties": false,
       "required": ["githubIdentity"],
       "properties": {
-        "githubIdentity": { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$" }
+        "githubIdentity": { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$" },
+        "scanContactInformation": { "type": "boolean" }
       }
     },
     "security": {

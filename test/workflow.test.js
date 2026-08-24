@@ -9,10 +9,12 @@ test('reusable workflow is read-only and uses the exact caller-supplied core ref
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'the-crucible.yml'), 'utf8');
   assert.match(workflow, /workflow_call:/);
   assert.match(workflow, /permissions:\s*\n\s*contents: read/);
+  assert.match(workflow, /pull-requests: read/);
   assert.match(workflow, /ref: \$\{\{ inputs\.core_ref \}\}/);
   assert.match(workflow, /persist-credentials: false/);
   assert.doesNotMatch(workflow, /contents: write|git push/);
   assert.match(workflow, /Run Security Gate[\s\S]*cli\.js security[\s\S]*Run verification and bounded workload/);
+  assert.match(workflow, /overlapping open pull requests[\s\S]*cli\.js collisions/);
 });
 
 test('caller template schedules daily clutter and weekly maintenance', () => {
