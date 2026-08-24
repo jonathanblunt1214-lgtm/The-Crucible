@@ -28,6 +28,7 @@ function validateExceptions(entries, label) {
       assert(entry.owner === undefined || typeof entry.owner === 'string', `${label} exception.owner must be a string.`);
       assert(entry.expires === undefined || /^\d{4}-\d{2}-\d{2}$/.test(entry.expires), `${label} exception.expires must be YYYY-MM-DD.`);
       assert(entry.sha256 === undefined || /^[a-f0-9]{64}$/i.test(entry.sha256), `${label} exception.sha256 must be a SHA-256 digest.`);
+      assert(entry.rules === undefined || (Array.isArray(entry.rules) && entry.rules.every((item) => typeof item === 'string' && item)), `${label} exception.rules must contain finding names.`);
     }
   }
   return entries;

@@ -153,6 +153,7 @@
               "owner": { "type": "string", "minLength": 1, "maxLength": 100 },
               "expires": { "type": "string", "pattern": "^\\d{4}-\\d{2}-\\d{2}$" },
               "sha256": { "type": "string", "pattern": "^[A-Fa-f0-9]{64}$" }
+              ,"rules": { "type": "array", "maxItems": 30, "items": { "type": "string", "minLength": 1, "maxLength": 100 } }
             }
           }
         ]

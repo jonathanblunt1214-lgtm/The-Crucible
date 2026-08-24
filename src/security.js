@@ -96,12 +96,11 @@ function auditArtifactSecurity(root, config) {
 
 function auditSecurity(root, config, snapshot = null) {
   if (!config.security.enabled) return { files:0, findings:[], skipped:true };
-  const allow = config.security.allow.map((entry) => glob(typeof entry === 'string' ? entry : entry.path));
+  const allow = config.security.allow.map((entry) => ({ entry, rule:glob(typeof entry === 'string' ? entry : entry.path) }));
   const allowedBinaries = config.security.allowBinaries.map((entry) => glob(typeof entry === 'string' ? entry : entry.path));
   const findings = [];
   const files = snapshot?.files || trackedFiles(root);
   for (const file of files) {
-    if (allow.some((rule) => rule.test(file))) continue;
     let buffer;
     try { buffer = snapshot?.entries.get(file)?.buffer || gitBuffer(root, `:${file}`); } catch { continue; }
     const magic = executableMagic(buffer);
@@ -110,8 +109,9 @@ function auditSecurity(root, config, snapshot = null) {
       continue;
     }
     if (buffer.length > config.security.maxTextBytes || buffer.includes(0)) continue;
-    for (const finding of findingsForText(buffer.toString('utf8'))) findings.push({ path:file, ...finding });
-    for (const finding of languageFindings(buffer.toString('utf8'), file)) findings.push({ path:file, ...finding });
+    const permitted = (type) => allow.some(({ entry, rule }) => rule.test(file) && (typeof entry === 'string' || !entry.rules?.length || entry.rules.includes(type)));
+    for (const finding of findingsForText(buffer.toString('utf8'))) if (!permitted(finding.type)) findings.push({ path:file, ...finding });
+    for (const finding of languageFindings(buffer.toString('utf8'), file)) if (!permitted(finding.type)) findings.push({ path:file, ...finding });
   }
   return { files:files.length, findings, skipped:false };
 }
