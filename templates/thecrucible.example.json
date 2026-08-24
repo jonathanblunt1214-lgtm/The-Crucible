@@ -32,6 +32,8 @@
   "workload": {
     "workers": 4,
     "cycles": 2,
-    "timeoutMinutes": 4
+    "timeoutMinutes": 4,
+    "maxOutputBytes": 1048576,
+    "execution": { "network": "allow" }
   }
 }

@@ -8,17 +8,17 @@ function glob(pattern) {
   return new RegExp(`^${escaped}$`, 'i');
 }
 
-function auditClutter(root, config) {
-  const files = git(root, ['ls-files', '-z']).split('\0').filter(Boolean);
-  const allow = config.clutter.allow.map(glob);
+function auditClutter(root, config, snapshot = null) {
+  const files = snapshot?.files || git(root, ['ls-files', '-z']).split('\0').filter(Boolean);
+  const allow = config.clutter.allow.map((entry) => glob(typeof entry === 'string' ? entry : entry.path));
   const findings = [];
   const hashes = new Map();
   for (const file of files) {
     if (allow.some((rule) => rule.test(file))) continue;
-    const size = Number(git(root, ['cat-file', '-s', `:${file}`]));
+    const size = snapshot?.entries.get(file)?.size ?? Number(git(root, ['cat-file', '-s', `:${file}`]));
     if (size === 0) findings.push({ type:'empty tracked file', path:file });
     if (CLUTTER.test(file)) findings.push({ type:'generated or temporary path', path:file });
-    const hash = git(root, ['rev-parse', `:${file}`]);
+    const hash = snapshot?.entries.get(file)?.sha256 || git(root, ['rev-parse', `:${file}`]);
     hashes.set(hash, [...(hashes.get(hash) || []), file]);
   }
   if (config.clutter.blockTrackedIgnored) for (const file of git(root, ['ls-files', '-ci', '--exclude-standard', '-z']).split('\0').filter(Boolean)) {

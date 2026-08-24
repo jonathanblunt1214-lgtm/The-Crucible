@@ -10,6 +10,9 @@
     "audit:privacy": "node src/cli.js privacy",
     "audit:security": "node src/cli.js security",
     "audit:collisions": "node src/cli.js collisions",
+    "audit:governance": "node src/cli.js governance",
+    "audit:authenticity": "node src/cli.js authenticity",
+    "audit:reproducibility": "node src/cli.js reproducibility",
     "scrub:privacy": "node src/cli.js scrub",
     "run": "node src/cli.js run",
     "maintain": "node src/cli.js maintain"
