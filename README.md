@@ -222,6 +222,14 @@ The Crucible does not silently delete clutter, automatically fix application cod
 
 ## Local use
 
+### Saved reports
+
+Every reusable-workflow run saves a project-specific JSON report as a downloadable GitHub Actions artifact named `the-crucible-report-<run>-<attempt>`. It records the project, repository, commit, workflow run, timestamps, and the pass or fail status of each Crucible action that started. Reports are retained for 90 days by default.
+
+Artifact storage uses GitHub's workflow-artifact service. It does not require `contents: write`, does not change the project checkout, and cannot commit or push repository files. If a failure occurs before the Crucible engine can start, the workflow warns that no report was produced rather than inventing a result.
+
+For a local run, set `CRUCIBLE_REPORT_PATH` to an explicit destination before invoking the CLI. If it is not set, Crucible does not create a report file. Report error summaries are bounded and redact common credential forms. Each failed action also includes a gate-specific suggested fix. Suggestions are diagnostic starting points, not fabricated success results or guarantees that the first correction will resolve every cause.
+
 Run these commands from this repository while pointing `CRUCIBLE_PROJECT_ROOT` at the project being checked:
 
 ```powershell

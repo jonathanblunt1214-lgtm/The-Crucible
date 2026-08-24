@@ -13,6 +13,11 @@ const { stagedSnapshot } = require('./snapshot');
 const { auditExceptions } = require('./exceptions');
 const { auditDependencyPolicy } = require('./dependencies');
 const { verifyReproducibility } = require('./reproducibility');
+const { writeReport } = require('./report');
+
+const action = process.argv[2] || 'run';
+const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
+let activeConfig = null;
 
 async function securityGate(root, config, snapshot = null) {
   const result = auditSecurity(root, config, snapshot);
@@ -38,9 +43,9 @@ function governanceGate(root, config, suppliedSnapshot = null) {
 }
 
 async function main() {
-  const action = process.argv[2] || 'run';
-  const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
+  if (action === 'report-init') return console.log('[The Crucible] Report initialized.');
   const config = loadConfig(root, process.env.CRUCIBLE_CONFIG || '.thecrucible.json');
+  activeConfig = config;
   if (action === 'validate') return console.log(`[The Crucible] Valid configuration for ${config.project.name}.`);
   if (action === 'governance') { const result = governanceGate(root, config); return console.log(`[The Crucible] Configuration governance passed ${result.exceptions} exception(s).`); }
   if (action === 'reproducibility') { const result = await verifyReproducibility(root, config); return console.log(result.skipped ? '[The Crucible] Reproducibility Gate is not enabled.' : `[The Crucible] Reproducibility Gate passed ${result.artifacts} artifact(s).`); }
@@ -97,6 +102,13 @@ async function main() {
   console.log(`[The Crucible] PASS: ${config.project.name} completed ${result.workers * result.cycles * result.commands} verification command runs with ${result.artifacts} required artifact(s).`);
 }
 
-main().catch((error) => { console.error(`[The Crucible] FAIL: ${error.message}`); process.exitCode = 1; });
+main()
+  .then(() => writeReport({ root, config:activeConfig, action, status:'passed' }))
+  .catch((error) => {
+    try { writeReport({ root, config:activeConfig, action, status:'failed', error }); }
+    catch (reportError) { console.error(`[The Crucible] Report could not be saved: ${reportError.message}`); }
+    console.error(`[The Crucible] FAIL: ${error.message}`);
+    process.exitCode = 1;
+  });
 
 module.exports = { securityGate, authenticityGate };

@@ -13,6 +13,8 @@ test('reusable workflow is read-only and uses the exact caller-supplied core ref
   assert.match(workflow, /ref: \$\{\{ inputs\.core_ref \}\}/);
   assert.match(workflow, /persist-credentials: false/);
   assert.doesNotMatch(workflow, /contents: write|git push/);
+  assert.match(workflow, /CRUCIBLE_REPORT_PATH: \$\{\{ runner\.temp \}\}\/the-crucible-report\.json/);
+  assert.match(workflow, /if: always\(\)[\s\S]*actions\/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02/);
   assert.match(workflow, /Run Security Gate[\s\S]*cli\.js security[\s\S]*Run verification and bounded workload/);
   assert.match(workflow, /overlapping open pull requests[\s\S]*cli\.js collisions/);
 });
