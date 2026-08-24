@@ -25,9 +25,7 @@ function changedPaths(root, ref = '--cached') {
 
 function readCandidate(root, relative, ref = '--cached') {
   if (ref !== '--cached') return git(root, ['show', `${ref}:${relative}`]);
-  const absolute = path.resolve(root, relative);
-  if (!absolute.startsWith(`${path.resolve(root)}${path.sep}`)) throw new Error(`Path escapes repository: ${relative}`);
-  return fs.existsSync(absolute) ? fs.readFileSync(absolute, 'utf8') : '';
+  return git(root, ['show', `:${relative}`]);
 }
 
 function inspectText(relative, content) {
@@ -75,6 +73,7 @@ function fixCommit(root, options = {}) {
   for (const relative of new Set(audit.fixable.map((item) => item.path))) {
     if (relative === 'COMMIT_MESSAGE') continue;
     const absolute = path.resolve(root, relative);
+    if (!absolute.startsWith(`${path.resolve(root)}${path.sep}`)) throw new Error(`Path escapes repository: ${relative}`);
     if (!fs.existsSync(absolute) || !isTextPath(relative)) continue;
     const before = fs.readFileSync(absolute, 'utf8');
     const after = normalizeText(before);
