@@ -32,4 +32,5 @@ jobs:
       - run: npm run audit:clutter
       - run: npm run audit:privacy
       - run: npm run audit:security
+      - run: npm run precheck
       - run: npm run run

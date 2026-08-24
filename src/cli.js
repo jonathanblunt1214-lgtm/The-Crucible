@@ -9,6 +9,17 @@ const { auditSecurity, auditArtifactSecurity } = require('./security');
 const { runCommand } = require('./runner');
 const { auditCollisions } = require('./collisions');
 const { auditCommit, fixCommit } = require('./commit');
+const { formatReport, publishReport, runPrecheck } = require('./precheck');
+
+async function precheckGate(root, config) {
+  const ref = process.env.CRUCIBLE_COMMIT_REF || process.env.GITHUB_SHA || '--cached';
+  const result = await runPrecheck(root, config, { ref });
+  const report = formatReport(result);
+  console.log(report);
+  publishReport(report);
+  if (result.findings.length) throw new Error('Pre-check requires the actions listed in the report.');
+  return result;
+}
 
 async function securityGate(root, config) {
   const result = auditSecurity(root, config);
@@ -42,6 +53,10 @@ async function main() {
   if (action === 'commit') {
     const result = commitGate(root);
     return console.log(`[The Crucible] Commit Gate passed ${result.paths.length} changed path(s).`);
+  }
+  if (action === 'precheck') {
+    await precheckGate(root, config);
+    return;
   }
   if (action === 'fix-commit') {
     const ref = process.env.CRUCIBLE_COMMIT_REF || '--cached';
@@ -87,7 +102,7 @@ async function main() {
     return console.log(`[The Crucible] Git integrity and safe repacking passed at ${result.head}.\nBefore:\n${result.before}\nAfter:\n${result.after}`);
   }
   if (action !== 'run') throw new Error(`Unknown action: ${action}`);
-  commitGate(root);
+  await precheckGate(root, config);
   const privacy = auditPrivacy(root, config);
   if (privacy.findings.length) throw new Error(`Personal identifiers detected:\n${privacy.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}`);
   const clutter = auditClutter(root, config);
@@ -102,4 +117,4 @@ async function main() {
 
 main().catch((error) => { console.error(`[The Crucible] FAIL: ${error.message}`); process.exitCode = 1; });
 
-module.exports = { securityGate, authenticityGate, commitGate };
+module.exports = { securityGate, authenticityGate, commitGate, precheckGate };

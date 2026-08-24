@@ -85,4 +85,4 @@ function fixCommit(root, options = {}) {
   return { ...audit, changed };
 }
 
-module.exports = { auditCommit, changedPaths, fixCommit, inspectText, normalizeText };
+module.exports = { auditCommit, changedPaths, fixCommit, inspectText, normalizeText, readCandidate };

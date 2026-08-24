@@ -16,6 +16,13 @@ The engine then:
 4. Audits staged tracked text for personal identifiers, credentials, and private keys.
 5. Runs the Security Gate against the staged Git snapshot before any project preparation or heavy workload begins.
 6. On pull requests, reports files that overlap another open pull request before workload execution.
+7. Pre-checks the exact staged snapshot locally (or commit SHA in CI), then parses changed JSON/JavaScript and runs only configured checks whose path patterns match changed files.
+
+## Language-aware pre-check report
+
+`npm run precheck` combines the Commit Gate with changed-file code checks. Built-in parsing reads the staged or committed snapshot, not an unrelated working copy. Projects can add `codeCheck.commands` with `include` path patterns; `{files}` in an argument expands to only the matching changed paths. Commands without `{files}` run once when a matching file changes, which is useful for an affected package's test suite.
+
+Every required action in this report uses exactly one class: `safe auto-fix`, `test failure`, `security concern`, or `human code review required`. In GitHub Actions, the same report is appended to the run's latest job summary through `GITHUB_STEP_SUMMARY`, alongside the existing checks. Safe auto-fixes keep the existing review-and-restage flow through `npm run fix:commit`; the pre-check never silently rewrites application code. Parser failures and checks without a deterministic repair require human review. Configure test, security, and review commands with the corresponding `failureAction` value.
 7. Runs each configured `security.dependencyAudit` command directly, without a shell.
 8. Runs each `commands.prepare` entry once, in order.
 9. Starts the configured number of workers concurrently.

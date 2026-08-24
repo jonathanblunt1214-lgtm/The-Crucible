@@ -25,6 +25,17 @@
     "allowBinaries": [],
     "dependencyAudit": []
   },
+  "codeCheck": {
+    "commands": [
+      {
+        "name": "Affected Node tests",
+        "run": "npm",
+        "args": ["test"],
+        "include": ["src/**", "test/**", "package.json", ".thecrucible.json", ".thecrucible.schema.json"],
+        "failureAction": "test failure"
+      }
+    ]
+  },
   "workload": {
     "workers": 2,
     "cycles": 2,

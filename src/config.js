@@ -48,11 +48,20 @@ function validateConfig(input) {
   const dependencyAudit = security.dependencyAudit || [];
   const authenticity = isObject(input.authenticity) ? input.authenticity : {};
   const claims = authenticity.claims || [];
+  const codeCheck = isObject(input.codeCheck) ? input.codeCheck : {};
+  const codeCommands = codeCheck.commands || [];
   assert(security.enabled === undefined || typeof security.enabled === 'boolean', 'security.enabled must be a boolean.');
   assert(Array.isArray(securityAllow) && securityAllow.length <= 100 && securityAllow.every((item) => typeof item === 'string' && item), 'security.allow must contain at most 100 path patterns.');
   assert(Array.isArray(allowBinaries) && allowBinaries.length <= 100 && allowBinaries.every((item) => typeof item === 'string' && item), 'security.allowBinaries must contain at most 100 path patterns.');
   assert(Array.isArray(dependencyAudit) && dependencyAudit.length <= 10, 'security.dependencyAudit must contain at most 10 commands.');
   assert(Array.isArray(claims) && claims.length <= 30, 'authenticity.claims must contain at most 30 evidence commands.');
+  assert(Array.isArray(codeCommands) && codeCommands.length <= 30, 'codeCheck.commands must contain at most 30 commands.');
+  const validatedCodeCommands = codeCommands.map((item, index) => {
+    const command = validateCommand(item, 'codeCheck.commands', index);
+    assert(Array.isArray(item.include) && item.include.length && item.include.every((pattern) => typeof pattern === 'string' && pattern), `codeCheck.commands[${index}].include must contain path patterns.`);
+    assert(['test failure', 'security concern', 'human code review required'].includes(item.failureAction), `codeCheck.commands[${index}].failureAction must be an allowed action class.`);
+    return { ...command, include:item.include, failureAction:item.failureAction };
+  });
   return {
     schemaVersion:1,
     project:{ name:input.project.name.trim(), projectId:input.project.projectId || null },
@@ -68,6 +77,7 @@ function validateConfig(input) {
       dependencyAudit:dependencyAudit.map((item, index) => validateCommand(item, 'security.dependencyAudit', index)),
     },
     authenticity:{ claims:claims.map((item, index) => validateCommand(item, 'authenticity.claims', index)) },
+    codeCheck:{ commands:validatedCodeCommands },
     workload:{
       workers:boundedInteger(workload.workers, 4, 1, 8, 'workload.workers'),
       cycles:boundedInteger(workload.cycles, 2, 1, 20, 'workload.cycles'),
