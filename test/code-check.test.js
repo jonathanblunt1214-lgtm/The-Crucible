@@ -16,15 +16,17 @@ test('language-aware parser checks changed JSON and JavaScript without executing
   assert.equal(parseCandidate('README.md', 'not code'), null);
   assert.ok(parseCandidate('bad.json', '{'));
   assert.equal(parseCandidate('bad.json', '{').action, 'human code review required');
+  assert.equal(parseCandidate('bad.json', '{').errorCode, 'CRUCIBLE_PARSE_JSON_SYNTAX');
 });
 
 test('pre-check is appended to the latest GitHub report with its action labels', () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-report-'));
   const target = path.join(directory, 'summary.md');
-  assert.equal(publishReport('[The Crucible] Pre-check report\n- [safe auto-fix] Commit Gate: a.js', { GITHUB_STEP_SUMMARY:target }), true);
+  assert.equal(publishReport('[The Crucible] Pre-check report\n- [safe auto-fix] CRUCIBLE_COMMIT_TRAILING_WHITESPACE: Commit Gate: a.js', { GITHUB_STEP_SUMMARY:target }), true);
   const report = fs.readFileSync(target, 'utf8');
   assert.match(report, /The Crucible latest report/);
   assert.match(report, /\[safe auto-fix\]/);
+  assert.match(report, /CRUCIBLE_COMMIT_TRAILING_WHITESPACE/);
 });
 
 test('configured checks select only matching changed files and expand file arguments', () => {
@@ -35,7 +37,8 @@ test('configured checks select only matching changed files and expand file argum
 
 test('commit findings use the requested action classes in the unified report', () => {
   assert.equal(classifyCommit({ type:'trailing-whitespace', fixable:true }).action, 'safe auto-fix');
+  assert.equal(classifyCommit({ type:'trailing-whitespace', fixable:true }).errorCode, 'CRUCIBLE_COMMIT_TRAILING_WHITESPACE');
   assert.equal(classifyCommit({ type:'merge-conflict-marker', fixable:false }).action, 'security concern');
-  const report = formatReport({ paths:['a.js'], findings:[{ action:'test failure', check:'Affected tests', paths:['a.js'] }] });
-  assert.match(report, /\[test failure\] Affected tests: a\.js/);
+  const report = formatReport({ paths:['a.js'], findings:[{ action:'test failure', errorCode:'CRUCIBLE_TEST_FAILURE_EXIT_1', check:'Affected tests', paths:['a.js'] }] });
+  assert.match(report, /\[test failure\] CRUCIBLE_TEST_FAILURE_EXIT_1: Affected tests: a\.js/);
 });

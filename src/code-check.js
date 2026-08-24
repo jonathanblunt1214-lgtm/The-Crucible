@@ -30,6 +30,7 @@ function parseCandidate(relative, content) {
     return {
       action:'human code review required',
       check:'parser',
+      errorCode:`CRUCIBLE_PARSE_${extension === '.json' ? 'JSON' : 'JAVASCRIPT'}_SYNTAX`,
       path:relative,
       detail:error.message.split(/\r?\n/)[0],
     };
@@ -54,12 +55,12 @@ function runCheckCommand(root, command, files, timeoutMs) {
     child.stdout.on('data', (chunk) => { output += chunk; process.stdout.write(chunk); });
     child.stderr.on('data', (chunk) => { output += chunk; process.stderr.write(chunk); });
     const finish = (result) => resolve(result);
-    const timer = setTimeout(() => { child.kill(); finish({ ok:false, detail:`exceeded the configured timeout` }); }, timeoutMs);
-    child.on('error', (error) => { clearTimeout(timer); finish({ ok:false, detail:`could not start: ${error.message}` }); });
+    const timer = setTimeout(() => { child.kill(); finish({ ok:false, reason:'timeout', detail:'exceeded the configured timeout' }); }, timeoutMs);
+    child.on('error', (error) => { clearTimeout(timer); finish({ ok:false, reason:'start error', detail:`could not start: ${error.message}` }); });
     child.on('close', (code) => {
       clearTimeout(timer);
       if (code === 0) finish({ ok:true });
-      else finish({ ok:false, detail:`exit ${code}: ${output.trim().split(/\r?\n/).slice(-1)[0] || 'no output'}` });
+      else finish({ ok:false, reason:`exit ${code}`, exitCode:code, detail:`exit ${code}: ${output.trim().split(/\r?\n/).slice(-1)[0] || 'no output'}` });
     });
   });
 }
@@ -78,7 +79,13 @@ async function auditCode(root, config, options = {}) {
     const files = selectChanged(paths, command.include);
     if (!files.length) continue;
     const result = await runCheckCommand(root, command, files, config.workload.timeoutMinutes * 60_000);
-    if (!result.ok) findings.push({ action:command.failureAction, check:command.name, paths:files, detail:result.detail });
+    if (!result.ok) {
+      const actionCode = command.failureAction.replace(/[^A-Za-z0-9]+/g, '_').toUpperCase();
+      const reasonCode = result.exitCode === null || result.exitCode === undefined
+        ? result.reason.replace(/[^A-Za-z0-9]+/g, '_').toUpperCase()
+        : `EXIT_${result.exitCode}`;
+      findings.push({ action:command.failureAction, errorCode:`CRUCIBLE_${actionCode}_${reasonCode}`, check:command.name, paths:files, detail:result.detail });
+    }
   }
   return { ref, paths, findings, commands:commands.length };
 }
