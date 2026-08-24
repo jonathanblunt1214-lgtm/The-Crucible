@@ -14,13 +14,15 @@ The engine then:
 2. Rejects malformed configuration, unsupported schema versions, absolute paths, parent-directory traversal, unbounded workload values, and executable paths embedded in configuration.
 3. Audits every Git-tracked project file for clutter.
 4. Audits staged tracked text for personal identifiers, credentials, and private keys.
-5. Runs each `commands.prepare` entry once, in order.
-6. Starts the configured number of workers concurrently.
-7. Each worker runs every `commands.verify` entry, in order, for the configured number of cycles.
-8. Terminates a command when it exceeds `workload.timeoutMinutes`.
-9. Fails if a command cannot start or exits with a nonzero status.
-10. Confirms every configured artifact exists after the workload.
-11. Reports one passing or failing check named **The Crucible**.
+5. Runs the Security Gate against the staged Git snapshot before any project preparation or heavy workload begins.
+6. Runs each configured `security.dependencyAudit` command directly, without a shell.
+7. Runs each `commands.prepare` entry once, in order.
+8. Starts the configured number of workers concurrently.
+9. Each worker runs every `commands.verify` entry, in order, for the configured number of cycles.
+10. Terminates a command when it exceeds `workload.timeoutMinutes`.
+11. Fails if a command cannot start or exits with a nonzero status.
+12. Confirms every configured artifact exists after the workload.
+13. Reports one passing or failing check named **The Crucible**.
 
 Commands are launched directly with an executable and argument array. They are not concatenated into a shell command. This prevents configuration values from being interpreted as shell operators. Each configured working directory must remain inside the project repository.
 
@@ -51,9 +53,27 @@ Running `node src/cli.js privacy` performs this automatically when necessary. `n
 
 No pattern-based tool can reliably recognize every human name, street address, biographical fact, or identifier in arbitrary prose. The scrubber guarantees detection for the categories listed above; sensitive prose still requires human review. It never searches other repositories, account data, browser data, or commit history.
 
+### Security Gate
+
+The Security Gate runs before preparation commands and the concurrent verification workload. Like the privacy gate, it reads the staged Git snapshot so changing only the unstaged working copy cannot conceal introduced content. It reports only the category, file, and line where applicable; it never prints a detected secret or payload.
+
+The built-in scan fails on high-confidence indicators of:
+
+- Encoded PowerShell execution and download-and-execute command chains.
+- Common reverse-shell payloads and dynamic execution of base64 or URI-decoded code.
+- Credential-store theft combinations, keylogging combined with transmission, and covert screenshot or clipboard exfiltration behavior.
+- Recognized AWS, Slack, npm, and Stripe live credentials. GitHub credentials and private keys remain covered by the privacy gate.
+- Tracked Windows PE, ELF, and Mach-O executables, plus suspicious executable/library extensions, unless the exact intentional paths are allowlisted.
+
+`security.dependencyAudit` adds ecosystem-specific vulnerability checks. Each entry uses the same bounded, shell-free command model as other Crucible commands and runs before preparation. For example, a Node project with a lockfile can configure `npm audit --audit-level=high --omit=dev`. A nonzero audit result blocks the workload. The engine does not silently install a scanner, send source code to a service, or assume one package manager for every repository.
+
+`security.allow` exempts intentional text fixtures from pattern scanning. `security.allowBinaries` exempts intentional executable artifacts from binary blocking. Both are path-pattern allowlists and should be as narrow as possible. Neither grants execution permission, and neither changes the repository.
+
+This is a defense-in-depth gate, not an antivirus or sandbox. Static patterns and dependency advisories cannot detect every exploit, malicious program, spyware technique, supply-chain compromise, or future zero-day. Passing means none of the configured known indicators or dependency audit failures were found; it is not a guarantee that code is safe.
+
 ### Weekly
 
-At 04:47 UTC every Sunday, the caller runs the clutter audit, the full configured workload, artifact verification, and safe Git maintenance.
+At 04:47 UTC every Sunday, the caller runs the clutter, privacy, and Security Gates, the full configured workload, artifact verification, and safe Git maintenance.
 
 Git maintenance performs:
 
@@ -132,6 +152,14 @@ Defaults to `false`. Set it to `true` only when identical tracked files are an i
 
 Required GitHub username that may remain as the project's sole explicitly allowed public personal identity. Its corresponding GitHub noreply email is also allowed so private email addresses never need to appear in commits.
 
+### `security`
+
+- `enabled`: Defaults to `true`. Setting it to `false` is an explicit project-level opt-out of both static scanning and dependency audit commands.
+- `allow`: Optional path patterns excluded from text scanning. Intended for narrow security-test fixtures that deliberately contain recognizable payload examples.
+- `allowBinaries`: Optional path patterns for reviewed executable or library files that must be tracked intentionally.
+- `maxTextBytes`: Maximum bytes scanned per text file, from 1,024 through 5,242,880. Default: 1,048,576. Binary recognition is still performed before this limit is applied.
+- `dependencyAudit`: Up to ten optional vulnerability-audit commands. Each has `name`, `run`, `args`, and optional `cwd`, and runs directly without shell interpretation under the normal command timeout.
+
 ### `workload`
 
 - `workers`: Concurrent workers, from 1 through 8. Default: 4.
@@ -157,9 +185,10 @@ $env:CRUCIBLE_PROJECT_ROOT = 'C:\path\to\project'
 node src/cli.js validate
 node src/cli.js clutter
 node src/cli.js privacy
+node src/cli.js security
 node src/cli.js scrub
 node src/cli.js run
 node src/cli.js maintain
 ```
 
-`maintain` changes only the local clone's internal `.git` object packing. All other commands are read-only except for the project commands explicitly listed in its own `.thecrucible.json`.
+`maintain` changes only the local clone's internal `.git` object packing. The built-in Security Gate is read-only. All other changes can come only from the privacy scrubber or project commands explicitly listed in the project's own `.thecrucible.json`; The Crucible never stages, commits, pushes, or automatically deletes files.

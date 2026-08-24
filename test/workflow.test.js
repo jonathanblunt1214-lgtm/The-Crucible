@@ -12,6 +12,7 @@ test('reusable workflow is read-only and uses the exact caller-supplied core ref
   assert.match(workflow, /ref: \$\{\{ inputs\.core_ref \}\}/);
   assert.match(workflow, /persist-credentials: false/);
   assert.doesNotMatch(workflow, /contents: write|git push/);
+  assert.match(workflow, /Run Security Gate[\s\S]*cli\.js security[\s\S]*Run verification and bounded workload/);
 });
 
 test('caller template schedules daily clutter and weekly maintenance', () => {
@@ -31,5 +32,5 @@ test('engine changes test across supported operating systems before adoption', (
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'self-test.yml'), 'utf8');
   assert.match(workflow, /os: \[ubuntu-latest, windows-latest, macos-latest\]/);
   assert.match(workflow, /node: \[20, 22, 24\]/);
-  assert.match(workflow, /npm test[\s\S]*npm run validate[\s\S]*npm run audit:clutter[\s\S]*npm run run/);
+  assert.match(workflow, /npm test[\s\S]*npm run validate[\s\S]*npm run audit:clutter[\s\S]*npm run audit:security[\s\S]*npm run run/);
 });

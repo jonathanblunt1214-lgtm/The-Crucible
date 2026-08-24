@@ -40,6 +40,14 @@ function validateConfig(input) {
   assert(isObject(privacy) && typeof privacy.githubIdentity === 'string', 'privacy.githubIdentity is required.');
   assert(/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(privacy.githubIdentity), 'privacy.githubIdentity must be a valid GitHub username.');
   const workload = isObject(input.workload) ? input.workload : {};
+  const security = isObject(input.security) ? input.security : {};
+  const securityAllow = security.allow || [];
+  const allowBinaries = security.allowBinaries || [];
+  const dependencyAudit = security.dependencyAudit || [];
+  assert(security.enabled === undefined || typeof security.enabled === 'boolean', 'security.enabled must be a boolean.');
+  assert(Array.isArray(securityAllow) && securityAllow.length <= 100 && securityAllow.every((item) => typeof item === 'string' && item), 'security.allow must contain at most 100 path patterns.');
+  assert(Array.isArray(allowBinaries) && allowBinaries.length <= 100 && allowBinaries.every((item) => typeof item === 'string' && item), 'security.allowBinaries must contain at most 100 path patterns.');
+  assert(Array.isArray(dependencyAudit) && dependencyAudit.length <= 10, 'security.dependencyAudit must contain at most 10 commands.');
   return {
     schemaVersion:1,
     project:{ name:input.project.name.trim(), projectId:input.project.projectId || null },
@@ -47,6 +55,13 @@ function validateConfig(input) {
     artifacts,
     clutter:{ allow, allowDuplicateContent:Boolean(clutter.allowDuplicateContent) },
     privacy:{ githubIdentity:privacy.githubIdentity },
+    security:{
+      enabled:security.enabled !== false,
+      allow:securityAllow,
+      allowBinaries,
+      maxTextBytes:boundedInteger(security.maxTextBytes, 1_048_576, 1024, 5_242_880, 'security.maxTextBytes'),
+      dependencyAudit:dependencyAudit.map((item, index) => validateCommand(item, 'security.dependencyAudit', index)),
+    },
     workload:{
       workers:boundedInteger(workload.workers, 4, 1, 8, 'workload.workers'),
       cycles:boundedInteger(workload.cycles, 2, 1, 20, 'workload.cycles'),
