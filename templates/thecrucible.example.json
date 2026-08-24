@@ -19,6 +19,9 @@
     "allow": [],
     "allowDuplicateContent": false
   },
+  "privacy": {
+    "githubIdentity": "octocat"
+  },
   "workload": {
     "workers": 4,
     "cycles": 2,

@@ -38,6 +38,14 @@
         "allowDuplicateContent": { "type": "boolean" }
       }
     },
+    "privacy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["githubIdentity"],
+      "properties": {
+        "githubIdentity": { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$" }
+      }
+    },
     "workload": {
       "type": "object",
       "additionalProperties": false,

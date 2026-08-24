@@ -17,7 +17,7 @@ function repository() {
   return root;
 }
 function config() {
-  return { project:{ name:'Fixture' }, commands:{ prepare:[], verify:[] }, artifacts:[], clutter:{ allow:[], allowDuplicateContent:false }, workload:{ workers:2, cycles:2, timeoutMinutes:1 } };
+  return { project:{ name:'Fixture' }, commands:{ prepare:[], verify:[] }, artifacts:[], clutter:{ allow:[], allowDuplicateContent:false }, privacy:{ githubIdentity:'octocat' }, workload:{ workers:2, cycles:2, timeoutMinutes:1 } };
 }
 
 test('clutter audit reports generated, empty, ignored, and duplicate tracked files', () => {

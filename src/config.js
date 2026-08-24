@@ -36,6 +36,9 @@ function validateConfig(input) {
   const clutter = isObject(input.clutter) ? input.clutter : {};
   const allow = clutter.allow || [];
   assert(Array.isArray(allow) && allow.every((item) => typeof item === 'string' && item), 'clutter.allow must contain path patterns.');
+  const privacy = input.privacy;
+  assert(isObject(privacy) && typeof privacy.githubIdentity === 'string', 'privacy.githubIdentity is required.');
+  assert(/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(privacy.githubIdentity), 'privacy.githubIdentity must be a valid GitHub username.');
   const workload = isObject(input.workload) ? input.workload : {};
   return {
     schemaVersion:1,
@@ -43,6 +46,7 @@ function validateConfig(input) {
     commands:{ prepare:prepare.map((item, index) => validateCommand(item, 'commands.prepare', index)), verify:verify.map((item, index) => validateCommand(item, 'commands.verify', index)) },
     artifacts,
     clutter:{ allow, allowDuplicateContent:Boolean(clutter.allowDuplicateContent) },
+    privacy:{ githubIdentity:privacy.githubIdentity },
     workload:{
       workers:boundedInteger(workload.workers, 4, 1, 8, 'workload.workers'),
       cycles:boundedInteger(workload.cycles, 2, 1, 20, 'workload.cycles'),

@@ -30,4 +30,5 @@ jobs:
       - run: npm test
       - run: npm run validate
       - run: npm run audit:clutter
+      - run: npm run audit:privacy
       - run: npm run run

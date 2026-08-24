@@ -15,6 +15,9 @@
     "allow": [],
     "allowDuplicateContent": false
   },
+  "privacy": {
+    "githubIdentity": "jonathanblunt1214-lgtm"
+  },
   "workload": {
     "workers": 2,
     "cycles": 2,

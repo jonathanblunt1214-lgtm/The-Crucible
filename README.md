@@ -13,13 +13,14 @@ The engine then:
 1. Loads `.thecrucible.json` from the project.
 2. Rejects malformed configuration, unsupported schema versions, absolute paths, parent-directory traversal, unbounded workload values, and executable paths embedded in configuration.
 3. Audits every Git-tracked project file for clutter.
-4. Runs each `commands.prepare` entry once, in order.
-5. Starts the configured number of workers concurrently.
-6. Each worker runs every `commands.verify` entry, in order, for the configured number of cycles.
-7. Terminates a command when it exceeds `workload.timeoutMinutes`.
-8. Fails if a command cannot start or exits with a nonzero status.
-9. Confirms every configured artifact exists after the workload.
-10. Reports one passing or failing check named **The Crucible**.
+4. Audits staged tracked text for personal identifiers, credentials, and private keys.
+5. Runs each `commands.prepare` entry once, in order.
+6. Starts the configured number of workers concurrently.
+7. Each worker runs every `commands.verify` entry, in order, for the configured number of cycles.
+8. Terminates a command when it exceeds `workload.timeoutMinutes`.
+9. Fails if a command cannot start or exits with a nonzero status.
+10. Confirms every configured artifact exists after the workload.
+11. Reports one passing or failing check named **The Crucible**.
 
 Commands are launched directly with an executable and argument array. They are not concatenated into a shell command. This prevents configuration values from being interpreted as shell operators. Each configured working directory must remain inside the project repository.
 
@@ -37,6 +38,16 @@ The clutter audit examines tracked files only and reports:
 - Byte-for-byte duplicate tracked content, unless `allowDuplicateContent` is enabled.
 
 The audit never deletes or rewrites a project file. A project can exempt an intentional path with `clutter.allow`. Exemptions affect clutter reporting only; they do not grant execution permission or weaken GitHub permissions.
+
+### Personal-identifier protection
+
+Every project declares one public identity in `privacy.githubIdentity`. For these repositories that value is `jonathanblunt1214-lgtm`. The privacy gate permits that GitHub username and its matching `users.noreply.github.com` commit email. It also permits non-personal technical examples such as `git@github.com` and addresses on reserved `example` domains.
+
+The privacy gate blocks recognized GitHub access tokens, private-key blocks, personal Windows user-profile paths, personal Google Drive paths, phone numbers, and all other ordinary email addresses. It reads the Git index rather than only the working copy, so a secret already staged for commit cannot be hidden by changing the unstaged file afterward. It reports the file, line, and category but never prints the detected secret value.
+
+Running `node src/cli.js scrub` locally replaces recognized values with neutral markers such as `REDACTED_EMAIL`, `USER_HOME`, `DRIVE_HOME`, `REDACTED_PHONE`, `REDACTED_GITHUB_TOKEN`, and `REDACTED_PRIVATE_KEY`. The scrubber changes working files but deliberately does not stage, commit, push, or delete them. The user must review the changes, stage them, and rerun `node src/cli.js privacy`; this prevents the original staged identifier from remaining in Git history.
+
+No pattern-based tool can reliably recognize every human name, street address, biographical fact, or identifier in arbitrary prose. The scrubber guarantees detection for the categories listed above; sensitive prose still requires human review. It never searches other repositories, account data, browser data, or commit history.
 
 ### Weekly
 
@@ -115,6 +126,10 @@ Optional path patterns for intentionally tracked files that would otherwise be r
 
 Defaults to `false`. Set it to `true` only when identical tracked files are an intentional project requirement.
 
+### `privacy.githubIdentity`
+
+Required GitHub username that may remain as the project's sole explicitly allowed public personal identity. Its corresponding GitHub noreply email is also allowed so private email addresses never need to appear in commits.
+
 ### `workload`
 
 - `workers`: Concurrent workers, from 1 through 8. Default: 4.
@@ -139,6 +154,8 @@ Run these commands from this repository while pointing `CRUCIBLE_PROJECT_ROOT` a
 $env:CRUCIBLE_PROJECT_ROOT = 'C:\path\to\project'
 node src/cli.js validate
 node src/cli.js clutter
+node src/cli.js privacy
+node src/cli.js scrub
 node src/cli.js run
 node src/cli.js maintain
 ```

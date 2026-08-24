@@ -6,6 +6,7 @@ function fixture() {
   return {
     schemaVersion:1,
     project:{ name:'Fixture' },
+    privacy:{ githubIdentity:'octocat' },
     commands:{ verify:[{ name:'Test', run:'node', args:['--test'] }] },
   };
 }
