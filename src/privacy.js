@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
+const { glob } = require('./clutter');
 
 const RULES = [
   ['GitHub credential', /gh[pousr]_[A-Za-z0-9_]{20,}/g],
@@ -60,7 +61,9 @@ function trackedFiles(root) {
 function auditPrivacy(root, config) {
   const findings = [];
   const files = trackedFiles(root);
+  const allow = (config.privacy.allow || []).map(glob);
   for (const file of files) {
+    if (allow.some((rule) => rule.test(file))) continue;
     let content;
     try { content = execFileSync('git', ['show', `:${file}`], { cwd:root, encoding:'utf8', windowsHide:true, maxBuffer:20 * 1024 * 1024 }); }
     catch { continue; }
@@ -76,7 +79,9 @@ function auditPrivacy(root, config) {
 
 function scrubPrivacy(root, config) {
   const changed = [];
+  const allow = (config.privacy.allow || []).map(glob);
   for (const file of trackedFiles(root)) {
+    if (allow.some((rule) => rule.test(file))) continue;
     const target = path.resolve(root, file);
     if (!target.startsWith(`${path.resolve(root)}${path.sep}`) || !fs.existsSync(target)) continue;
     const stat = fs.statSync(target);

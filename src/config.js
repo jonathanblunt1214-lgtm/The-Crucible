@@ -39,6 +39,8 @@ function validateConfig(input) {
   const privacy = input.privacy;
   assert(isObject(privacy) && typeof privacy.githubIdentity === 'string', 'privacy.githubIdentity is required.');
   assert(/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/.test(privacy.githubIdentity), 'privacy.githubIdentity must be a valid GitHub username.');
+  const privacyAllow = privacy.allow || [];
+  assert(Array.isArray(privacyAllow) && privacyAllow.length <= 100 && privacyAllow.every((item) => typeof item === 'string' && item), 'privacy.allow must contain at most 100 path patterns.');
   const workload = isObject(input.workload) ? input.workload : {};
   const security = isObject(input.security) ? input.security : {};
   const securityAllow = security.allow || [];
@@ -54,7 +56,7 @@ function validateConfig(input) {
     commands:{ prepare:prepare.map((item, index) => validateCommand(item, 'commands.prepare', index)), verify:verify.map((item, index) => validateCommand(item, 'commands.verify', index)) },
     artifacts,
     clutter:{ allow, allowDuplicateContent:Boolean(clutter.allowDuplicateContent), blockTrackedIgnored:Boolean(clutter.blockTrackedIgnored) },
-    privacy:{ githubIdentity:privacy.githubIdentity, scanContactInformation:Boolean(privacy.scanContactInformation) },
+    privacy:{ githubIdentity:privacy.githubIdentity, scanContactInformation:Boolean(privacy.scanContactInformation), allow:privacyAllow },
     security:{
       enabled:security.enabled !== false,
       allow:securityAllow,

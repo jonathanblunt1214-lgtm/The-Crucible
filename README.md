@@ -168,6 +168,10 @@ Required GitHub username that may remain as the project's sole explicitly allowe
 
 Defaults to `false` because email addresses and phone numbers are often legitimate application data, operational identities, or documentation. Enable it for repositories whose policy forbids all contact information. High-confidence credentials, private keys, and personal machine paths remain blocked regardless. Public package-maintainer emails in recognized dependency lockfiles are not treated as personal identifiers.
 
+### `privacy.allow`
+
+Optional path patterns excluded from the privacy audit and scrubber. This is intended for narrowly identified project data that must never be rewritten automatically. It does not exempt those paths from the separate Security Gate.
+
 ### `security`
 
 - `enabled`: Defaults to `true`. Setting it to `false` is an explicit project-level opt-out of both static scanning and dependency audit commands.

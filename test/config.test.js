@@ -15,9 +15,18 @@ test('validates and supplies bounded workload defaults', () => {
   const config = validateConfig(fixture());
   assert.deepEqual(config.workload, { workers:4, cycles:2, timeoutMinutes:4 });
   assert.equal(config.privacy.scanContactInformation, false);
+  assert.deepEqual(config.privacy.allow, []);
   assert.equal(config.clutter.blockTrackedIgnored, false);
   assert.equal(config.commands.verify[0].run, 'node');
   assert.deepEqual(config.security, { enabled:true, allow:[], allowBinaries:[], maxTextBytes:1048576, dependencyAudit:[] });
+});
+
+test('validates narrow privacy path exemptions', () => {
+  const value = fixture();
+  value.privacy.allow = ['src/data/**'];
+  assert.deepEqual(validateConfig(value).privacy.allow, ['src/data/**']);
+  value.privacy.allow = [42];
+  assert.throws(() => validateConfig(value), /privacy.allow/);
 });
 
 test('validates bounded shell-free Security Gate configuration', () => {

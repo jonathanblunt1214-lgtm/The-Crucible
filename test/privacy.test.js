@@ -14,7 +14,7 @@ function repository() {
   git(root, ['config', 'user.email', 'crucible@example.test']);
   return root;
 }
-const config = { privacy:{ githubIdentity:'jonathanblunt1214-lgtm', scanContactInformation:true } };
+const config = { privacy:{ githubIdentity:'jonathanblunt1214-lgtm', scanContactInformation:true, allow:[] } };
 
 test('only the configured GitHub noreply identity and technical examples are allowed', () => {
   assert.equal(isAllowedEmail('41898282+jonathanblunt1214-lgtm@users.noreply.github.com', config.privacy.githubIdentity), true);
@@ -61,6 +61,19 @@ test('audit checks the staged version and scrub leaves reviewable working change
   assert.equal(auditPrivacy(root, config).findings.length, 1);
   git(root, ['add', 'profile.txt']);
   assert.equal(auditPrivacy(root, config).findings.length, 0);
+});
+
+test('privacy path exemptions are excluded from both auditing and scrubbing', () => {
+  const root = repository();
+  const privateEmail = ['private', 'personal-domain.invalid'].join('@');
+  fs.mkdirSync(path.join(root, 'src', 'data'), { recursive:true });
+  const target = path.join(root, 'src', 'data', 'records.ts');
+  fs.writeFileSync(target, `${privateEmail}\n`);
+  git(root, ['add', 'src/data/records.ts']);
+  const exemptConfig = { privacy:{ ...config.privacy, allow:['src/data/**'] } };
+  assert.equal(auditPrivacy(root, exemptConfig).findings.length, 0);
+  assert.deepEqual(scrubPrivacy(root, exemptConfig).changed, []);
+  assert.match(fs.readFileSync(target, 'utf8'), /personal-domain/);
 });
 
 test('normal privacy command automatically scrubs but keeps unsafe staged content blocked', () => {
