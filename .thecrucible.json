@@ -1,0 +1,23 @@
+{
+  "$schema": "./.thecrucible.schema.json",
+  "schemaVersion": 1,
+  "project": {
+    "name": "The Crucible",
+    "projectId": "the-crucible"
+  },
+  "commands": {
+    "verify": [
+      { "name": "Engine tests", "run": "npm", "args": ["test"] }
+    ]
+  },
+  "artifacts": ["package.json"],
+  "clutter": {
+    "allow": [],
+    "allowDuplicateContent": false
+  },
+  "workload": {
+    "workers": 2,
+    "cycles": 2,
+    "timeoutMinutes": 4
+  }
+}

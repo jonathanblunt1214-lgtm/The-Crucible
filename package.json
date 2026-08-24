@@ -1,0 +1,17 @@
+{
+  "name": "the-crucible",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Repository-independent verification, stress, clutter, and Git maintenance gates.",
+  "scripts": {
+    "test": "node --test",
+    "validate": "node src/cli.js validate",
+    "audit:clutter": "node src/cli.js clutter",
+    "run": "node src/cli.js run",
+    "maintain": "node src/cli.js maintain"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}

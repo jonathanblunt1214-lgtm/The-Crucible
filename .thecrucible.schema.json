@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/jonathanblunt1214-lgtm/The-Crucible/blob/main/.thecrucible.schema.json",
+  "title": "The Crucible project configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "project", "commands"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name"],
+      "properties": {
+        "name": { "type": "string", "minLength": 1, "maxLength": 100 },
+        "projectId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$" }
+      }
+    },
+    "commands": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verify"],
+      "properties": {
+        "prepare": { "$ref": "#/$defs/commands" },
+        "verify": { "$ref": "#/$defs/commands" }
+      }
+    },
+    "artifacts": {
+      "type": "array",
+      "maxItems": 50,
+      "items": { "type": "string", "minLength": 1, "maxLength": 240 }
+    },
+    "clutter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "allow": { "type": "array", "maxItems": 100, "items": { "type": "string", "minLength": 1, "maxLength": 240 } },
+        "allowDuplicateContent": { "type": "boolean" }
+      }
+    },
+    "workload": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "workers": { "type": "integer", "minimum": 1, "maximum": 8 },
+        "cycles": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "timeoutMinutes": { "type": "integer", "minimum": 1, "maximum": 30 }
+      }
+    }
+  },
+  "$defs": {
+    "commands": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 30,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "run"],
+        "properties": {
+          "name": { "type": "string", "minLength": 1, "maxLength": 80 },
+          "run": { "type": "string", "minLength": 1, "maxLength": 200 },
+          "args": { "type": "array", "maxItems": 50, "items": { "type": "string", "maxLength": 500 } },
+          "cwd": { "type": "string", "minLength": 1, "maxLength": 240 }
+        }
+      }
+    }
+  }
+}

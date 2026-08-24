@@ -1,0 +1,27 @@
+{
+  "$schema": "https://raw.githubusercontent.com/jonathanblunt1214-lgtm/The-Crucible/main/.thecrucible.schema.json",
+  "schemaVersion": 1,
+  "project": {
+    "name": "Example project",
+    "projectId": "example-project"
+  },
+  "commands": {
+    "prepare": [
+      { "name": "Install locked dependencies", "run": "npm", "args": ["ci"] }
+    ],
+    "verify": [
+      { "name": "Tests", "run": "npm", "args": ["test"] },
+      { "name": "Build", "run": "npm", "args": ["run", "build"] }
+    ]
+  },
+  "artifacts": ["dist"],
+  "clutter": {
+    "allow": [],
+    "allowDuplicateContent": false
+  },
+  "workload": {
+    "workers": 4,
+    "cycles": 2,
+    "timeoutMinutes": 4
+  }
+}

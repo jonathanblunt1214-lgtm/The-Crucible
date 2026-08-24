@@ -1,0 +1,22 @@
+name: The Crucible
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+  schedule:
+    - cron: '17 3 * * *'
+    - cron: '47 4 * * 0'
+
+permissions:
+  contents: read
+
+jobs:
+  crucible:
+    name: The Crucible
+    uses: jonathanblunt1214-lgtm/The-Crucible/.github/workflows/the-crucible.yml@REPLACE_WITH_EXACT_COMMIT_SHA
+    with:
+      core_ref: REPLACE_WITH_EXACT_COMMIT_SHA
+      config_path: .thecrucible.json
+      run_workload: ${{ github.event_name != 'schedule' || github.event.schedule == '47 4 * * 0' }}
+      weekly_maintenance: ${{ github.event.schedule == '47 4 * * 0' }}
