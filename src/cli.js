@@ -24,11 +24,11 @@ async function authenticityGate(root, config) {
 }
 
 function commitGate(root) {
-  const ref = process.env.CRUCIBLE_COMMIT_REF || '--cached';
+  const ref = process.env.CRUCIBLE_COMMIT_REF || process.env.GITHUB_SHA || '--cached';
   const result = auditCommit(root, { ref });
   if (result.findings.length) {
     const details = result.findings.map((item) => `- ${item.type}: ${item.path}${item.line ? `:${item.line}` : ''}${item.detail ? ` (${item.detail})` : ''}`).join('\n');
-    const fixable = result.fixable.length ? '\nRun `npm run fix:commit`, review the working-tree changes, then stage them again.' : '';
+    const fixable = result.fixable.length && ref === '--cached' ? '\nRun `npm run fix:commit`, review the working-tree changes, then stage them again.' : '';
     throw new Error(`Commit Gate found ${result.findings.length} issue(s):\n${details}${fixable}`);
   }
   return result;
