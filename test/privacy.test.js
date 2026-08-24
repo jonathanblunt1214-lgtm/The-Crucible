@@ -48,3 +48,20 @@ test('audit checks the staged version and scrub leaves reviewable working change
   git(root, ['add', 'profile.txt']);
   assert.equal(auditPrivacy(root, config).findings.length, 0);
 });
+
+test('normal privacy command automatically scrubs but keeps unsafe staged content blocked', () => {
+  const root = repository();
+  const privateEmail = ['private', 'personal-domain.invalid'].join('@');
+  fs.writeFileSync(path.join(root, '.thecrucible.json'), JSON.stringify({ schemaVersion:1, project:{ name:'Fixture' }, commands:{ verify:[{ name:'Test', run:'node', args:['--test'] }] }, privacy:{ githubIdentity:'jonathanblunt1214-lgtm' } }));
+  fs.writeFileSync(path.join(root, 'profile.txt'), `${privateEmail}\n`);
+  git(root, ['add', '.thecrucible.json', 'profile.txt']);
+  const cli = path.join(__dirname, '..', 'src', 'cli.js');
+  let output = '';
+  try { execFileSync(process.execPath, [cli, 'privacy'], { cwd:root, encoding:'utf8', windowsHide:true, stdio:['ignore', 'pipe', 'pipe'] }); }
+  catch (error) { output = `${error.stdout || ''}${error.stderr || ''}`; }
+  assert.match(output, /automatically sanitized/);
+  assert.match(output, /Review the cleaned files, stage them, and commit again/);
+  assert.doesNotMatch(output, /private@|personal-domain/);
+  assert.match(fs.readFileSync(path.join(root, 'profile.txt'), 'utf8'), /REDACTED_EMAIL/);
+  assert.equal(auditPrivacy(root, config).findings.length, 1);
+});

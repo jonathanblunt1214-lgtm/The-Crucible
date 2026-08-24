@@ -13,7 +13,12 @@ async function main() {
   if (action === 'validate') return console.log(`[The Crucible] Valid configuration for ${config.project.name}.`);
   if (action === 'privacy') {
     const result = auditPrivacy(root, config);
-    if (result.findings.length) throw new Error(`Personal identifiers detected:\n${result.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}`);
+    if (result.findings.length) {
+      const scrubbed = scrubPrivacy(root, config);
+      const locations = result.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n');
+      const files = scrubbed.changed.length ? scrubbed.changed.map((file) => `- ${file}`).join('\n') : '- no writable text file could be sanitized';
+      throw new Error(`Personal identifiers detected and the working copies were automatically sanitized.\n${locations}\nCleaned working files:\n${files}\nReview the cleaned files, stage them, and commit again. The original staged content remains blocked until you replace it.`);
+    }
     return console.log(`[The Crucible] Privacy audit passed across ${result.files} tracked files. Allowed public identity: ${config.privacy.githubIdentity}.`);
   }
   if (action === 'scrub') {
