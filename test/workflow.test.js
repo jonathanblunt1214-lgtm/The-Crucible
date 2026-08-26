@@ -31,6 +31,17 @@ test('documentation explicitly covers behavior, limits, and non-goals', () => {
   for (const statement of ['Exactly what it does', 'Every 24 hours', 'Weekly', 'does not rebase', 'does not silently delete clutter', 'What it deliberately does not do']) assert.match(readme, new RegExp(statement, 'i'));
 });
 
+test('agent boundaries document forbids touching the Crucible link and self-repair', () => {
+  const boundaries = fs.readFileSync(path.join(root, 'templates', 'agent-boundaries.md'), 'utf8');
+  assert.match(boundaries, /never modify the link/i);
+  assert.match(boundaries, /core_ref/);
+  assert.match(boundaries, /never self-repair/i);
+  assert.match(boundaries, /human-reviewed pull request/i);
+  assert.match(boundaries, /not this repository's bug/i);
+  assert.match(boundaries, /untrusted input/i);
+  assert.match(fs.readFileSync(path.join(root, 'README.md'), 'utf8'), /agent-boundaries\.md/);
+});
+
 test('engine changes test across supported operating systems before adoption', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'self-test.yml'), 'utf8');
   assert.match(workflow, /os: \[ubuntu-latest, windows-latest, macos-latest\]/);

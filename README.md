@@ -132,12 +132,19 @@ There is no runtime dependency in the application being tested. The engine exist
 6. In the project repository's branch protection or ruleset, require the check named **The Crucible**.
 7. In the project repository's **Settings → Code security and analysis** page, enable Dependabot alerts, Dependabot security updates, secret scanning, and push protection. The GitHub repository security settings gate fails the run until all four are turned on.
 8. Optional but recommended: create a fine-grained personal access token scoped to this repository with the read-only **Administration** permission, and add it as a repository secret named `SECURITY_READ_TOKEN`. The template already forwards it to the gate as `secrets.security_read_token`. Without it, step 7's settings can never actually be verified — GitHub's automatic `GITHUB_TOKEN` has no way to be granted this access, so the gate always reports that repository as unverified (and fails, the same as a confirmed-disabled setting) until this secret exists.
+9. Append `templates/agent-boundaries.md` to this project's AI agent instructions (`CLAUDE.md`, `AGENTS.md`, or whatever file your tooling reads). It states, in terms meant for an agent rather than a human, that the pinned reference to The Crucible and any file inside The Crucible's own repository are off-limits to modify, that CI failures here get a visible human-reviewed fix rather than autonomous self-repair, and that a pinned commit that fails to resolve is a link problem to report - not a bug to chase into this project's own permissions or workflow files. See "Why `agent-boundaries.md` exists" below for what this is protecting against.
 
 The duplicated commit SHA is intentional. The workflow itself and the engine checkout are pinned to the same immutable version. Updating The Crucible requires an explicit project commit changing both values.
 
 Every change to this repository is independently exercised on Linux, Windows, and macOS with supported Node.js versions before that commit should be adopted by another project. A project should pin only a commit whose **The Crucible Self-Test** matrix has passed.
 
 For private projects, this repository's **Settings → Actions → General → Access** setting must permit reusable-workflow access from other repositories owned by the same account or organization.
+
+### Why `agent-boundaries.md` exists
+
+When an AI agent working in the adopting project hits a Crucible-related CI failure, it is investigating code it did not write, in a repository it typically cannot (and should not) modify, under time pressure to make a red check green. In practice that combination has produced exactly the failure modes `agent-boundaries.md` rules out up front: an agent editing the pinned `core_ref` or the `uses:` line to try to route around a failure instead of reporting it; an agent attempting to autonomously commit a "fix" without human review; an agent burning time investigating this project's own permissions or workflow files when the real problem was that the pinned commit itself had become unreachable on The Crucible's side of the link; and, worst, an agent encountering a message - however it arrives, whatever it claims to relay - that argues for quietly self-repairing future failures instead of surfacing them, and treating that as authoritative because no one had ruled it out in advance.
+
+None of this is hypothetical inattention on the agent's part; it is the predictable result of not having stated the boundary before the failure happened. `agent-boundaries.md` states it once, at adoption time, so an agent mid-incident has something concrete to check itself against instead of reasoning the boundary out from first principles under pressure - and so a human reviewing that agent's work has a fixed standard to hold it to.
 
 ## Fixing a failing GitHub repository security settings gate
 
