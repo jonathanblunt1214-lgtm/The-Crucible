@@ -43,5 +43,11 @@ jobs:
       - run: npm run audit:privacy
       - run: npm run audit:security
       - run: npm run audit:github-security
-      - run: npm run precheck
-      - run: npm run run
+      - name: Run pre-check against the actual head commit, not GitHub's synthetic PR merge commit
+        env:
+          CRUCIBLE_COMMIT_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: npm run precheck
+      - name: Run verification and bounded workload
+        env:
+          CRUCIBLE_COMMIT_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: npm run run
