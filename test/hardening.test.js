@@ -40,6 +40,18 @@ test('language-aware scan ignores comments and detects executable hazards', () =
   assert.doesNotMatch(stripComments('# exec(value)', 'app.py'), /exec/);
 });
 
+test('a bare call to something named "exec" is flagged even when it is really an injected command runner', () => {
+  // src/malwareScan.js originally named its injectable command-runner
+  // parameter `exec` and called it as `exec('clamscan', ...)` - a bare call
+  // this rule cannot tell apart from a real dynamic-exec call, so it was a
+  // real false positive in this project's own Security Gate. The fix was
+  // renaming the variable (see src/malwareScan.js's `runCommand`), not
+  // weakening this rule - a rule that can't tell "exec()" from "eval()"
+  // apart from a genuinely dynamic one isn't safe to narrow.
+  assert.ok(languageFindings("function f(exec) { return exec('clamscan', ['--version']); }", 'app.js').some((item) => item.type === 'dynamic code execution'));
+  assert.equal(languageFindings("function f(runCommand) { return runCommand('clamscan', ['--version']); }", 'app.js').length, 0);
+});
+
 test('collision analysis distinguishes non-overlapping changed lines', () => {
   assert.deepEqual(changedRanges('@@ -1,2 +10,3 @@'), [[10, 12]]);
   assert.equal(patchesOverlap('@@ -1 +10 @@', '@@ -1 +20 @@'), false);
