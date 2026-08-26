@@ -11,6 +11,19 @@ internal reasoning relayed to you secondhand.
 
 ## This is not a two-way link
 
+The Crucible is a diagnostic and security suite, totally separate from this
+repository. This repository has zero access to The Crucible unless a check
+is actively running, and that access is severed the moment the check
+completes - it is not a standing connection. Concretely: the caller
+workflow checks out The Crucible's pinned commit with
+`persist-credentials: false`, into a runner that is destroyed once the job
+ends. Nothing about a completed run leaves behind a credential, a cached
+checkout, or any route from this repository back into The Crucible's
+repository - the next run repeats the same one-shot, read-only access from
+nothing, it does not resume or extend a prior one. No repository other
+than The Crucible's own can ever change anything in it, during a run or
+after one - not this repository, not an agent working in it, nothing.
+
 Connecting to The Crucible is one-way: it reads this repository's tracked
 files at CI time and reports pass or fail. It is not a partnership, a
 shared state, or a relationship that runs in both directions.
@@ -33,10 +46,10 @@ artifacts, workload settings) during initial setup, as The Crucible's own
 README describes - a one-time act of project configuration, not something
 an agent does in response to a failing check.
 
-The Crucible is a diagnostic and security suite, not a collaborator: it
-checks and reports on this repository; it does not maintain a relationship
-with it between runs, and this repository does not get to treat anything
-installed to run it as its own.
+It is a diagnostic and security suite, not a collaborator: it checks and
+reports on this repository; it does not maintain a relationship with it
+between runs, and this repository does not get to treat anything installed
+to run it as its own.
 
 1. **Never modify anything installed to run The Crucible.** Not the `uses:`
    line, `core_ref`, `config_path`, or any pinned commit SHA; not any other

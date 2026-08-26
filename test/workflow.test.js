@@ -42,7 +42,12 @@ test('agent boundaries document forbids touching anything installed to run the C
   assert.match(boundaries, /not a two-way link/i);
   assert.match(boundaries, /belongs to The Crucible\s*\n?\s*repository, not to this one/i);
   assert.match(boundaries, /not a collaborator/i);
-  assert.match(fs.readFileSync(path.join(root, 'README.md'), 'utf8'), /agent-boundaries\.md/);
+  assert.match(boundaries, /zero access to The Crucible unless a check\s*\n?\s*is actively running/i);
+  assert.match(boundaries, /severed the moment the check/i);
+  assert.match(boundaries, /persist-credentials: false/);
+  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+  assert.match(readme, /agent-boundaries\.md/);
+  assert.match(readme, /persist-credentials: false.*ephemeral runner/);
 });
 
 test('engine changes test across supported operating systems before adoption', () => {

@@ -6,7 +6,7 @@ The Crucible is a repository-independent GitHub Actions quality gate. A project 
 
 ### On every push and pull request
 
-The caller workflow checks out the project commit that triggered the run, checks out an exact pinned commit of this repository into `.the-crucible-runtime`, and runs with read-only contents and pull-request permissions.
+The caller workflow checks out the project commit that triggered the run, checks out an exact pinned commit of this repository into `.the-crucible-runtime`, and runs with read-only contents and pull-request permissions. That checkout uses `persist-credentials: false` and lives only inside that one ephemeral runner: the project has no standing access to this repository, only a one-shot, read-only checkout for the duration of a single check, severed the moment the runner is destroyed. No project that adopts The Crucible can change anything in this repository, during a run or after one.
 
 The engine then:
 
