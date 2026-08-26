@@ -5,16 +5,19 @@ const { fixWorkflowPermissions } = require('./workflowLint');
 
 // This module exists only to keep The Crucible's own repository green. It
 // must never be reachable for a project that adopts The Crucible: the guard
-// below checks two independent, unrelated config fields so a coincidental
-// projectId match alone can never satisfy it.
+// below checks two independent, unrelated config fields and, in GitHub
+// Actions, the actual repository identity supplied by the runner.
 const ENGINE_PROJECT_ID = 'the-crucible';
 const ENGINE_GITHUB_IDENTITY = 'jonathanblunt1214-lgtm';
+const ENGINE_REPOSITORY = `${ENGINE_GITHUB_IDENTITY}/The-Crucible`;
 
-function assertInternalProject(config) {
+function assertInternalProject(config, environment = process.env) {
   const matchesProject = config.project.projectId === ENGINE_PROJECT_ID;
   const matchesIdentity = config.privacy.githubIdentity === ENGINE_GITHUB_IDENTITY;
-  if (!matchesProject || !matchesIdentity) {
-    throw new Error(`The internal repair system only runs against The Crucible engine's own repository (project.projectId "${ENGINE_PROJECT_ID}" and privacy.githubIdentity "${ENGINE_GITHUB_IDENTITY}"). It never modifies a project that adopts The Crucible, even when this code is run locally against another checkout.`);
+  const matchesRepository = environment.GITHUB_ACTIONS !== 'true'
+    || (environment.GITHUB_REPOSITORY || '').toLowerCase() === ENGINE_REPOSITORY.toLowerCase();
+  if (!matchesProject || !matchesIdentity || !matchesRepository) {
+    throw new Error(`The internal repair system only runs against The Crucible engine's own repository (project.projectId "${ENGINE_PROJECT_ID}", privacy.githubIdentity "${ENGINE_GITHUB_IDENTITY}", and in GitHub Actions GITHUB_REPOSITORY "${ENGINE_REPOSITORY}"). It never modifies a project that adopts The Crucible, even when this code is run locally against another checkout.`);
   }
 }
 
@@ -25,7 +28,7 @@ function assertInternalProject(config) {
 // it never stages, commits, or pushes, and it cannot repair logic bugs,
 // failing tests, or anything requiring human judgment.
 function repairInternalChecks(root, config, options = {}) {
-  assertInternalProject(config);
+  assertInternalProject(config, options.environment || process.env);
   const ref = options.ref || '--cached';
   const privacy = scrubPrivacy(root, config);
   const workflows = fixWorkflowPermissions(root, ['templates']);
@@ -56,4 +59,4 @@ function publishReport(report, environment = process.env) {
   return true;
 }
 
-module.exports = { ENGINE_PROJECT_ID, ENGINE_GITHUB_IDENTITY, assertInternalProject, repairInternalChecks, formatReport, publishReport };
+module.exports = { ENGINE_PROJECT_ID, ENGINE_GITHUB_IDENTITY, ENGINE_REPOSITORY, assertInternalProject, repairInternalChecks, formatReport, publishReport };

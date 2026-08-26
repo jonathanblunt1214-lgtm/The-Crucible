@@ -278,7 +278,7 @@ workers × cycles × number of verify commands
 
 ## What it deliberately does not do
 
-The Crucible does not silently delete clutter, automatically fix application code, upload project source elsewhere, collect telemetry, read unrelated repositories, expose repository secrets, modify branch protection, approve pull requests, publish releases, or push commits. It reports failures and leaves changes under the repository owner's control. The GitHub repository security settings gate only reads `security_and_analysis` and vulnerability-alert status through the GitHub API; it never enables, disables, or otherwise changes those settings itself.
+The Crucible does not silently delete clutter, automatically fix application code, upload project source elsewhere, collect telemetry, read unrelated repositories, expose repository secrets, modify branch protection, approve pull requests, or publish releases. Adopting-project findings are report-only unless a separate external-repair feature is explicitly enabled. Internal recovery is different: it can commit and promote a verified restoration only inside The Crucible's own repository.
 
 ## Local use
 
@@ -297,16 +297,18 @@ node src/cli.js maintain
 
 `maintain` changes only the local clone's internal `.git` object packing. The built-in Security Gate is read-only. All other changes can come only from the privacy scrubber or project commands explicitly listed in the project's own `.thecrucible.json`; The Crucible never stages, commits, pushes, or automatically deletes files.
 
-## Internal repair (this engine's own repository only)
+## Autonomous internal recovery (this engine's own repository only)
 
-**This section describes tooling for maintaining The Crucible's own repository. It is not part of the gate any adopting project runs, and it refuses to run anywhere else.** A security gate that a fixable, mechanical problem can leave permanently red is not doing its job, so `npm run repair` bundles the existing safe fixers — the privacy scrubber and the Commit Gate's whitespace/newline fixer — behind one command for this repository's own maintainers:
+**This system is not part of the gate an adopting project runs and it never repairs application code.** Every 15 minutes, `canonical-snapshot.yml` checks out `main`, runs the full deterministic verification set, and updates `crucible-canonical` only when those checks pass. A failing candidate therefore cannot replace the last verified snapshot.
+
+When The Crucible's own Self-Test fails on `main`, `internal-recovery.yml` restores the complete tracked tree from `crucible-canonical`, creates a recovery commit and an auditable `crucible-recovery-<run-id>` branch, verifies the restored tree again, and promotes that commit to `main` with an exact force-with-lease check. The lease prevents recovery from overwriting any newer concurrent work. The promoted commit triggers Self-Test again automatically.
+
+The local deterministic fixer remains available for maintainers:
 
 ```
 node src/cli.js repair
 ```
 
-It applies no fix that isn't already available individually through `npm run scrub:privacy` / `npm run fix:commit`. Like both of those, it only ever writes to the working copy: it never stages, commits, or pushes, so you still review the diff and commit it yourself. It cannot fix a failing test, a logic bug, or anything that needs judgment — those stay "human code review required" by design, same as everywhere else in The Crucible.
+`npm run repair` itself applies only the existing privacy, commit-hygiene, and workflow-permission fixers to a local working copy. Autonomous recovery does not depend on guessing how to repair arbitrary logic: it restores the last complete tree that passed verification.
 
-Two independent safeguards keep this from ever touching a project that adopts The Crucible, even if this code were copied elsewhere: it refuses to run unless `.thecrucible.json` has both `project.projectId` set to `the-crucible` *and* `privacy.githubIdentity` set to this repository's own maintainer identity. Neither value is something an adopting project would plausibly have, and it takes both, not either, to pass.
-
-The Crucible Self-Test workflow also runs `npm run repair` as a diagnostic step whenever an earlier check fails. It cannot commit or push from GitHub Actions (the same limitation the privacy scrubber has in CI), so it exists only to tell you, from the job summary, whether the failure was one `npm run repair` would have caught locally before you push a real fix.
+Three safeguards keep local repair from touching an adopting project: `.thecrucible.json` must identify the engine project and maintainer, and GitHub Actions must report the actual repository as `jonathanblunt1214-lgtm/The-Crucible`. Autonomous recovery has stricter workflow-level gates: it accepts only a failed Self-Test from this repository's `main`, reads only the fixed canonical branch, and contains no issue, dispatch, or adopting-repository trigger.

@@ -1,0 +1,43 @@
+name: Refresh Crucible canonical snapshot
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/15 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crucible-canonical-snapshot
+  cancel-in-progress: false
+
+jobs:
+  snapshot:
+    if: github.repository == 'jonathanblunt1214-lgtm/The-Crucible'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Verify candidate before preserving it
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CRUCIBLE_SECURITY_READ_TOKEN: ${{ secrets.SECURITY_READ_TOKEN }}
+          CRUCIBLE_WORKFLOW_LINT_DIRS: templates
+        run: |
+          npm test
+          npm run validate
+          npm run lint:workflows
+          npm run audit:clutter
+          npm run audit:privacy
+          npm run audit:security
+      - name: Store the verified main commit as the canonical snapshot
+        shell: bash
+        run: git push --force origin HEAD:refs/heads/crucible-canonical

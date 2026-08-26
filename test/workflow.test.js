@@ -94,3 +94,24 @@ test('engine changes test across supported operating systems before adoption', (
   assert.match(workflow, /node: \[20, 22, 24\]/);
   assert.match(workflow, /npm test[\s\S]*npm run validate[\s\S]*npm run audit:clutter[\s\S]*npm run audit:security[\s\S]*npm run precheck[\s\S]*npm run run/);
 });
+
+test('canonical source is refreshed every 15 minutes only after verification', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'canonical-snapshot.yml'), 'utf8');
+  assert.match(workflow, /cron: '\*\/15 \* \* \* \*'/);
+  assert.match(workflow, /npm test[\s\S]*npm run validate[\s\S]*npm run audit:security/);
+  assert.match(workflow, /HEAD:refs\/heads\/crucible-canonical/);
+});
+
+test('only a failed internal main Self-Test triggers autonomous canonical recovery', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'internal-recovery.yml'), 'utf8');
+  assert.match(workflow, /workflows: \['The Crucible Self-Test'\]/);
+  assert.match(workflow, /workflow_run\.conclusion == 'failure'/);
+  assert.match(workflow, /workflow_run\.head_branch == 'main'/);
+  assert.match(workflow, /head_repository\.full_name == github\.repository/);
+  assert.match(workflow, /git read-tree --reset -u origin\/crucible-canonical/);
+  assert.match(workflow, /git commit -m "Auto-recover Crucible/);
+  assert.match(workflow, /RECOVERY_BRANCH: crucible-recovery-/);
+  assert.match(workflow, /refs\/heads\/\$RECOVERY_BRANCH/);
+  assert.match(workflow, /--force-with-lease=refs\/heads\/main/);
+  assert.doesNotMatch(workflow, /repository_dispatch|issues:|pull_request_target/);
+});

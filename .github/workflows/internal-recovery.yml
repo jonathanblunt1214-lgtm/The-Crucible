@@ -1,0 +1,67 @@
+name: Recover Crucible from canonical snapshot
+
+on:
+  workflow_run:
+    workflows: ['The Crucible Self-Test']
+    types: [completed]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: crucible-internal-recovery
+  cancel-in-progress: false
+
+jobs:
+  recover:
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository &&
+      github.repository == 'jonathanblunt1214-lgtm/The-Crucible'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+          persist-credentials: true
+      - name: Restore the complete tracked tree from the canonical snapshot
+        shell: bash
+        env:
+          FAILED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          git fetch origin main crucible-canonical
+          test "$(git rev-parse HEAD)" = "$FAILED_SHA"
+          git read-tree --reset -u origin/crucible-canonical
+          if git diff --cached --quiet; then
+            echo 'The failed tree already matches the canonical snapshot; refusing an empty recovery loop.'
+            exit 1
+          fi
+          git config user.name 'The Crucible Recovery'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m "Auto-recover Crucible from verified canonical snapshot"
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Verify the restored tree before promotion
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CRUCIBLE_SECURITY_READ_TOKEN: ${{ secrets.SECURITY_READ_TOKEN }}
+          CRUCIBLE_WORKFLOW_LINT_DIRS: templates
+        run: |
+          npm test
+          npm run validate
+          npm run lint:workflows
+          npm run audit:clutter
+          npm run audit:privacy
+          npm run audit:security
+      - name: Preserve the recovery branch and promote it atomically
+        shell: bash
+        env:
+          FAILED_SHA: ${{ github.event.workflow_run.head_sha }}
+          RECOVERY_BRANCH: crucible-recovery-${{ github.event.workflow_run.id }}
+        run: |
+          git push origin HEAD:"refs/heads/$RECOVERY_BRANCH"
+          git push origin HEAD:refs/heads/main --force-with-lease=refs/heads/main:"$FAILED_SHA"

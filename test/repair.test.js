@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
-const { ENGINE_PROJECT_ID, ENGINE_GITHUB_IDENTITY, repairInternalChecks } = require('../src/repair');
+const { ENGINE_PROJECT_ID, ENGINE_GITHUB_IDENTITY, ENGINE_REPOSITORY, repairInternalChecks } = require('../src/repair');
 
 function git(root, args) { return execFileSync('git', args, { cwd:root, encoding:'utf8', windowsHide:true }); }
 function repository() {
@@ -30,6 +30,28 @@ test('refuses to run against a project that is not this engine repository', () =
 test('refuses to run even if only the GitHub identity fails to match', () => {
   const root = repository();
   assert.throws(() => repairInternalChecks(root, config({ privacy: { githubIdentity: 'someone-else', scanContactInformation: true, allow: [] } })), /only runs against The Crucible engine's own repository/);
+});
+
+test('runs in CI when the actual repository identity is The Crucible', () => {
+  const root = repository();
+  const result = repairInternalChecks(root, config(), {
+    environment: { GITHUB_ACTIONS: 'true', GITHUB_REPOSITORY: ENGINE_REPOSITORY },
+  });
+  assert.deepEqual(result.changed, []);
+});
+
+test('refuses copied internal config in CI when the actual repository identity is different', () => {
+  const root = repository();
+  assert.throws(() => repairInternalChecks(root, config(), {
+    environment: { GITHUB_ACTIONS: 'true', GITHUB_REPOSITORY: 'someone-else/copied-crucible' },
+  }), /GITHUB_REPOSITORY "jonathanblunt1214-lgtm\/The-Crucible"/);
+});
+
+test('refuses to run in CI when the actual repository identity is unavailable', () => {
+  const root = repository();
+  assert.throws(() => repairInternalChecks(root, config(), {
+    environment: { GITHUB_ACTIONS: 'true' },
+  }), /GITHUB_REPOSITORY "jonathanblunt1214-lgtm\/The-Crucible"/);
 });
 
 test('fixes trailing whitespace and personal identifiers in the working copy without staging or committing', () => {
