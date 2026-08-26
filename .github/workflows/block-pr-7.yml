@@ -1,0 +1,31 @@
+name: Block PR #7
+
+# PR #7 (development -> main) is a permanent draft that exists solely as a
+# live CI-monitoring event hook - see AGENTS.md's branch policy. It must
+# never be merged, by any agent or by accident. This check reports failure
+# only for PR #7 specifically and succeeds instantly for every other pull
+# request, so it can be added as a required status check on `main` without
+# adding friction to any real, legitimate merge.
+#
+# Adding it as required is a one-time manual step in this repository's own
+# Settings -> Branches -> Branch protection rules (no API this project's
+# agents have access to can do it remotely): require this check, "block",
+# to pass before merging into `main`. Until that step is done, this
+# workflow reports the failure but does not yet block the merge button.
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  block:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fail only for PR #7, the permanent CI-monitoring hook
+        run: |
+          if [ "${{ github.event.pull_request.number }}" = "7" ]; then
+            echo "PR #7 is a permanent CI-monitoring event hook and must never be merged. See AGENTS.md's branch policy." >&2
+            exit 1
+          fi
+          echo "Not PR #7 - nothing to block."
