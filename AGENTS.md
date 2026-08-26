@@ -47,6 +47,29 @@ visible commit on `development` you can point to, nothing is hidden, and
 requires the owner's own explicit instruction, same as always. It is
 ordinary CI hygiene applied automatically instead of waited-for.
 
+## Automatic CI monitoring
+
+The owner should not have to notice a failure, paste a screenshot, or ask
+"what's going on" for ordinary CI hygiene to happen. A standing scheduled
+check-in runs against `development`'s latest commit and:
+
+- If Self-Test and CodeQL are both green, it does nothing and stays silent.
+  A quiet check is not worth a message.
+- If something is red, it first confirms the failing run is actually for
+  the *current* HEAD commit, not a stale run for a commit that's since been
+  superseded - GitHub's UI and pasted check lists don't distinguish these,
+  and treating an old failure as current wastes everyone's time.
+- If the failure is real and current, it follows the loop above: diagnose,
+  fix, push, verify green again, and only then report a one-line summary of
+  what broke and what fixed it.
+- If it's ambiguous, infrastructure noise (stuck queue, `startup_failure`),
+  or needs a judgment call outside ordinary hygiene, it says so plainly
+  instead of guessing silently.
+
+This still never touches `main` or `Archive` on its own, and every fix is
+still a normal, visible, inspectable commit - the automation is about not
+waiting to be asked, not about hiding anything.
+
 ## Self-repair
 
 This repository never self-repairs invisibly. A CI failure gets a visible,
