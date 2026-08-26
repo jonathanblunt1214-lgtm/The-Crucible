@@ -39,6 +39,15 @@ repository owner, not as an exception.
   recreate it as a way around this. If it ever needs to not exist, that is
   the owner's explicit call to make, not something inferred from its
   mergeable state going green.
+  - This is backed by a real, GitHub-enforced check, not just this
+    document: `.github/workflows/block-pr-7.yml` fails specifically and
+    only for PR #7, succeeding instantly for every other pull request.
+    Once the repository owner adds it as a required status check on
+    `main` (Settings -> Branches -> Branch protection rules - no tool
+    available to any agent here can do this remotely), the merge button
+    on PR #7 itself becomes GitHub-disabled, without adding any friction
+    to a real, legitimate PR into `main`. Never remove, rename, or weaken
+    this workflow's PR-#7 check to work around the lock.
 
 ## CI on `development`
 

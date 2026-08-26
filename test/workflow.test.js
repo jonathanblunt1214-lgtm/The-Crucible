@@ -125,3 +125,16 @@ test('recovery from the canonical snapshot requires a human to manually dispatch
   assert.match(workflow, /--force-with-lease=refs\/heads\/main/);
   assert.doesNotMatch(workflow, /repository_dispatch|issues:|pull_request_target/);
 });
+
+test('a dedicated check blocks only PR #7, the permanent do-not-merge CI-monitoring hook', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'block-pr-7.yml'), 'utf8');
+  assert.match(workflow, /^on:\s*\n\s*pull_request:\s*$/m);
+  assert.match(workflow, /permissions:\s*\n\s*contents: read/);
+  assert.match(workflow, /github\.event\.pull_request\.number.*=.*"7"/);
+  assert.match(workflow, /must never be merged/i);
+  assert.match(workflow, /Not PR #7 - nothing to block/);
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /never merged, under any circumstances/i);
+  assert.match(agents, /block-pr-7\.yml/);
+  assert.match(agents, /required status check on\s*\n\s*`main`/);
+});
