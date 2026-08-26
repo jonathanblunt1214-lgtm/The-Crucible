@@ -274,3 +274,17 @@ node src/cli.js maintain
 ```
 
 `maintain` changes only the local clone's internal `.git` object packing. The built-in Security Gate is read-only. All other changes can come only from the privacy scrubber or project commands explicitly listed in the project's own `.thecrucible.json`; The Crucible never stages, commits, pushes, or automatically deletes files.
+
+## Internal repair (this engine's own repository only)
+
+**This section describes tooling for maintaining The Crucible's own repository. It is not part of the gate any adopting project runs, and it refuses to run anywhere else.** A security gate that a fixable, mechanical problem can leave permanently red is not doing its job, so `npm run repair` bundles the existing safe fixers — the privacy scrubber and the Commit Gate's whitespace/newline fixer — behind one command for this repository's own maintainers:
+
+```
+node src/cli.js repair
+```
+
+It applies no fix that isn't already available individually through `npm run scrub:privacy` / `npm run fix:commit`. Like both of those, it only ever writes to the working copy: it never stages, commits, or pushes, so you still review the diff and commit it yourself. It cannot fix a failing test, a logic bug, or anything that needs judgment — those stay "human code review required" by design, same as everywhere else in The Crucible.
+
+Two independent safeguards keep this from ever touching a project that adopts The Crucible, even if this code were copied elsewhere: it refuses to run unless `.thecrucible.json` has both `project.projectId` set to `the-crucible` *and* `privacy.githubIdentity` set to this repository's own maintainer identity. Neither value is something an adopting project would plausibly have, and it takes both, not either, to pass.
+
+The Crucible Self-Test workflow also runs `npm run repair` as a diagnostic step whenever an earlier check fails. It cannot commit or push from GitHub Actions (the same limitation the privacy scrubber has in CI), so it exists only to tell you, from the job summary, whether the failure was one `npm run repair` would have caught locally before you push a real fix.

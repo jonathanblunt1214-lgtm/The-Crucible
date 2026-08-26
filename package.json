@@ -15,6 +15,7 @@
     "precheck": "node src/cli.js precheck",
     "fix:commit": "node src/cli.js fix-commit",
     "scrub:privacy": "node src/cli.js scrub",
+    "repair": "node src/cli.js repair",
     "run": "node src/cli.js run",
     "maintain": "node src/cli.js maintain"
   },

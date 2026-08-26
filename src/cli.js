@@ -10,6 +10,7 @@ const { auditGithubRepositorySecurity, formatReport: formatGithubSecurityReport,
 const { runCommand } = require('./runner');
 const { auditCollisions } = require('./collisions');
 const { auditCommit, fixCommit } = require('./commit');
+const { repairInternalChecks, formatReport: formatRepairReport, publishReport: publishRepairReport } = require('./repair');
 const { formatReport, publishReport, runPrecheck } = require('./precheck');
 
 async function precheckGate(root, config) {
@@ -74,6 +75,14 @@ async function main() {
     const result = fixCommit(root, { ref });
     const review = result.review.length ? ` ${result.review.length} issue(s) still require human review.` : '';
     return console.log(`[The Crucible] Commit fixer updated ${result.changed.length} working file(s). Review and stage the changes before rerunning the gate.${review}`);
+  }
+  if (action === 'repair') {
+    const ref = process.env.CRUCIBLE_COMMIT_REF || process.env.GITHUB_SHA || '--cached';
+    const result = repairInternalChecks(root, config, { ref });
+    const report = formatRepairReport(result);
+    console.log(report);
+    publishRepairReport(report);
+    return;
   }
   if (action === 'privacy') {
     const result = auditPrivacy(root, config);

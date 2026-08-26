@@ -38,3 +38,6 @@ jobs:
       - run: npm run audit:github-security
       - run: npm run precheck
       - run: npm run run
+      - name: Diagnose whether a failure is auto-fixable (does not persist)
+        if: failure()
+        run: npm run repair
