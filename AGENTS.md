@@ -31,6 +31,22 @@ repository owner, not as an exception.
 - **Never rename files, branches, or repositories** unless the owner
   explicitly asks for it.
 
+## CI on `development`
+
+After every push you make to `development`, check the resulting CI (Self-Test
+and CodeQL) without being asked, and if anything fails, diagnose the real
+cause, fix it, push the fix, and check again - looping until it's actually
+green, not just until one attempt looks plausible. Since `development` has no
+permanently-open pull request, a push here does not always auto-trigger
+Self-Test; dispatch it manually (`workflow_dispatch`) when that's the case,
+rather than assuming a lack of a run means nothing to check.
+
+This is not the self-repair this file forbids below: every fix is a real,
+visible commit on `development` you can point to, nothing is hidden, and
+`main` is never touched by this loop - promoting anything to `main` still
+requires the owner's own explicit instruction, same as always. It is
+ordinary CI hygiene applied automatically instead of waited-for.
+
 ## Self-repair
 
 This repository never self-repairs invisibly. A CI failure gets a visible,
