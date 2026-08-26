@@ -73,7 +73,7 @@ The built-in scan fails on high-confidence indicators of:
 
 - Encoded PowerShell execution and download-and-execute command chains.
 - Common reverse-shell payloads and dynamic execution of base64 or URI-decoded code.
-- Credential-store theft combinations, keylogging combined with transmission, and covert screenshot or clipboard exfiltration behavior.
+- Credential-store theft combinations, and spyware-shaped behavior: keylogging APIs (including raw-input and low-level event-tap capture), screenshot capture, clipboard reads, and unauthorized microphone/camera access, each combined with a network transmission call.
 - Recognized AWS, Slack, npm, and Stripe live credentials. GitHub credentials and private keys remain covered by the privacy gate.
 - Tracked Windows PE, ELF, and Mach-O executables, plus suspicious executable/library extensions, unless the exact intentional paths are allowlisted.
 

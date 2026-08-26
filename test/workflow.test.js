@@ -20,7 +20,8 @@ test('reusable workflow is read-only and uses the exact caller-supplied core ref
   assert.match(workflow, /Run Security Gate[\s\S]*cli\.js security[\s\S]*Run verification and bounded workload/);
   assert.match(workflow, /overlapping open pull requests[\s\S]*cli\.js collisions/);
   assert.match(workflow, /Pre-check changed commit and code[\s\S]*cli\.js precheck/);
-  assert.match(workflow, /cli\.js design-brief[\s\S]*cli\.js validate/);
+  assert.match(workflow, /cli\.js design-brief[\s\S]*cli\.js core-ref[\s\S]*cli\.js validate/);
+  assert.match(workflow, /Scan the checked-out Crucible engine code for malicious patterns[\s\S]*CRUCIBLE_PROJECT_ROOT: \$\{\{ github\.workspace \}\}\/\.the-crucible-runtime[\s\S]*cli\.js security/);
   assert.match(workflow, /Create or update the Crucible failure issue[\s\S]*if: failure\(\)[\s\S]*cli\.js failure-issue/);
 });
 
