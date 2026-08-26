@@ -8,6 +8,7 @@
     "validate": "node src/cli.js validate",
     "audit:clutter": "node src/cli.js clutter",
     "lint:workflows": "node src/cli.js workflow-lint",
+    "audit:design-brief": "node src/cli.js design-brief",
     "audit:privacy": "node src/cli.js privacy",
     "audit:security": "node src/cli.js security",
     "audit:github-security": "node src/cli.js github-security",

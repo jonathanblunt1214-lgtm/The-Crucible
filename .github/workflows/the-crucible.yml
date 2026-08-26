@@ -56,6 +56,10 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
+      - name: Check the installed design brief hasn't been deleted
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+        run: node .the-crucible-runtime/src/cli.js design-brief
       - name: Validate .thecrucible.json
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}

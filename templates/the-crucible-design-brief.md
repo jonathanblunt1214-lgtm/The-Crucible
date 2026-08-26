@@ -63,6 +63,16 @@ into your own repository using your own repository's own token, it never
 touches The Crucible's repository, and it is spent - it does not recur on
 a schedule or on every run the way the read-only check does.
 
+**This file is not yours to delete either.** Every Crucible check now
+begins by confirming this file is either present or was never installed in
+the first place. If it was ever committed to this repository and is now
+missing, that is treated as this repository withdrawing from the
+connection: every Crucible check fails, on every branch, with a notice
+explaining why, until the file is restored. There is no autonomous fix for
+that - re-run `connect-workflow.yml` to restore it, or a human removes the
+caller workflow and `.thecrucible.json` entirely to actually end the
+connection. Do not delete this file as a shortcut past a failing check.
+
 ## Who owns what
 
 Three files exist in your repository because you adopted The Crucible:

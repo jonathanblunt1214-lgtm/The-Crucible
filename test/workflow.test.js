@@ -16,6 +16,17 @@ test('reusable workflow is read-only and uses the exact caller-supplied core ref
   assert.match(workflow, /Run Security Gate[\s\S]*cli\.js security[\s\S]*Run verification and bounded workload/);
   assert.match(workflow, /overlapping open pull requests[\s\S]*cli\.js collisions/);
   assert.match(workflow, /Pre-check changed commit and code[\s\S]*cli\.js precheck/);
+  assert.match(workflow, /cli\.js design-brief[\s\S]*cli\.js validate/);
+});
+
+test('a severed design-brief link fails every check, unconditionally, before anything else', () => {
+  const brief = fs.readFileSync(path.join(root, 'templates', 'the-crucible-design-brief.md'), 'utf8');
+  const boundaries = fs.readFileSync(path.join(root, 'templates', 'agent-boundaries.md'), 'utf8');
+  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+  for (const doc of [brief, boundaries]) assert.match(doc, /not yours to delete/i);
+  assert.match(readme, /Severing: what happens if the installed design brief is deleted/);
+  assert.match(readme, /never installed in this repository's history at all/);
+  assert.match(readme, /removing the caller workflow and `\.thecrucible\.json` entirely/);
 });
 
 test('caller template schedules daily clutter and weekly maintenance', () => {

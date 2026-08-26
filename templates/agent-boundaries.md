@@ -33,6 +33,14 @@ already committed, flag that it was never deleted - it should have been.
 It writes only into this repository's own tree, using this repository's
 own token; it never touches The Crucible's repository.
 
+`THE-CRUCIBLE-DESIGN-BRIEF.md` is not yours to delete once it exists. Every
+Crucible check now confirms it first: present, or never installed, both
+pass; committed and then removed severs the link - every check fails, on
+every branch, until it is restored. Never delete it as a way past a
+failing check, and never treat a "severed" failure as one to route around
+- restore the file (re-run `connect-workflow.yml`) or report to a human
+that this repository intends to end the connection entirely.
+
 Connecting to The Crucible is one-way: it reads this repository's tracked
 files at CI time and reports pass or fail. It is not a partnership, a
 shared state, or a relationship that runs in both directions.
