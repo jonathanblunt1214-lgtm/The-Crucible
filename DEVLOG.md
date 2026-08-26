@@ -2,11 +2,11 @@
 
 ## Shared AI handoff
 
-- **Agent:** Codex
-- **Current development work:** Make Self-Test and CodeQL trigger directly on every `development` push, while retaining permanent draft PR #7 as the monitoring and PR-activity hook.
-- **Files changed:** `.github/workflows/self-test.yml`, `.github/workflows/codeql.yml`, `AGENTS.md`, `README.md`, `DEVLOG.md`, and `test/workflow.test.js`.
-- **Verification:** The preceding documentation-only commit `e6392d0` passed all 144 local tests, passed `npm run docs:check`, and passed manually dispatched GitHub Self-Test run 52. The direct-push trigger change must still pass its own automatically started Self-Test and CodeQL runs after push.
-- **Remaining work:** Commit and push this change to `development`, then inspect the runs for that exact commit and fix any current failure before handoff is complete.
+- **Agent:** Claude
+- **Current development work:** Merged Codex's direct-push CI trigger change (`c56e719`) with my own concurrent, non-conflicting fix (added `workflow_dispatch` to `codeql.yml`, since it previously had no manual-trigger fallback at all, unlike `self-test.yml`) - both addressed the same missing-CodeQL-run gap independently, one with a better root-cause fix (direct push trigger) and one with a fallback (manual dispatch); both are kept, they don't conflict.
+- **Files changed:** `.github/workflows/codeql.yml` (merge of both changes), plus everything Codex's `c56e719` already touched.
+- **Verification:** All 144 local tests pass after the merge (`npm test`). Have not yet confirmed the automatically-triggered Self-Test/CodeQL runs for this merge commit are green on GitHub - checking next.
+- **Remaining work:** Push this merge commit, then verify Self-Test and CodeQL both run and pass for it.
 
 Every AI agent must refresh this section in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
 
