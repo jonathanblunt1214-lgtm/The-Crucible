@@ -138,6 +138,40 @@ Every change to this repository is independently exercised on Linux, Windows, an
 
 For private projects, this repository's **Settings → Actions → General → Access** setting must permit reusable-workflow access from other repositories owned by the same account or organization.
 
+## Fixing a failing GitHub repository security settings gate
+
+When this gate fails, the CI log and the run's job summary already contain a `## The Crucible GitHub repository security settings` report listing exactly which repository has a problem and a `Fix:` line telling you what to do about it — you should not need this guide to read that output, only to act on it. Every finding is one of two kinds:
+
+### "required GitHub security settings disabled: ..."
+
+The gate could read the repository's settings and confirmed one or more of the four required protections is off. Fix it directly in the browser:
+
+1. Open `https://github.com/<owner>/<repo>/settings/security_analysis` for the repository named in the finding (the report's `Fix:` line already contains the exact link).
+2. Under **Dependabot**, enable **Dependabot alerts** and **Dependabot security updates**.
+3. Under **Code security**, enable **Secret scanning** and, once that is on, **Push protection**. Push protection cannot be turned on until secret scanning is already enabled.
+4. Re-run the failed workflow (or push a new commit). No code change is required — this is a repository setting, not a file in the repository.
+
+### "unable to verify required GitHub security settings"
+
+The gate could not tell whether the settings are on or off, and fails closed rather than guessing. The `detail` in the finding says why:
+
+- **`the workflow is missing the required "administration: read" permission`** — this is the common case for a newly adopted project. GitHub does not return an error for a missing permission here; it silently leaves `security_and_analysis` out of an otherwise-successful response, so the gate cannot distinguish "off" from "not allowed to check" and has to fail either way. Fix it by adding the permission to the failing repository's own workflow:
+
+  ```yaml
+  permissions:
+    contents: read
+    pull-requests: read
+    administration: read
+  ```
+
+  `templates/caller-workflow.yml` already includes this block — if your workflow file still fails on this, check that you copied the template's `permissions:` section rather than writing your own, and that nothing later in the file narrows it back down.
+- **`HTTP 404` / a repository-not-found style detail** — the repository name The Crucible tried to check does not exist or is misspelled. For the calling project this should not happen (it comes from `GITHUB_REPOSITORY`, set automatically by GitHub Actions); for the linked engine repository, confirm the pinned commit SHA in your caller workflow still points at `jonathanblunt1214-lgtm/The-Crucible`.
+- **Any other `HTTP` status** — a transient GitHub API problem or an outage. Re-running the workflow is usually sufficient; if it persists, check [githubstatus.com](https://www.githubstatus.com/) before assuming it is a Crucible bug.
+
+### If you disagree with the requirement itself
+
+Set `githubSecurity.enabled` to `false` in `.thecrucible.json` to opt the project out entirely (see the [configuration reference](#githubsecurity) below). Prefer fixing the underlying settings first — this is a repository-level opt-out, not a way to silence one specific finding.
+
 ## Configuration reference
 
 ### `schemaVersion`

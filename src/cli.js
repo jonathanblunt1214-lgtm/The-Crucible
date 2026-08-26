@@ -6,7 +6,7 @@ const { runCrucible } = require('./runner');
 const { maintain } = require('./maintenance');
 const { auditPrivacy, scrubPrivacy } = require('./privacy');
 const { auditSecurity, auditArtifactSecurity } = require('./security');
-const { auditGithubRepositorySecurity } = require('./githubRepoSecurity');
+const { auditGithubRepositorySecurity, formatReport: formatGithubSecurityReport, publishReport: publishGithubSecurityReport } = require('./githubRepoSecurity');
 const { runCommand } = require('./runner');
 const { auditCollisions } = require('./collisions');
 const { auditCommit, fixCommit } = require('./commit');
@@ -32,7 +32,11 @@ async function securityGate(root, config) {
 
 async function githubSecurityGate(config) {
   const result = await auditGithubRepositorySecurity(config);
-  if (result.findings.length) throw new Error(`Required GitHub repository security settings are not satisfied:\n${result.findings.map((item) => `- ${item.repository}: ${item.type}${item.detail ? ` (${item.detail})` : ''}`).join('\n')}\nEnable Dependabot alerts, Dependabot security updates, secret scanning, and push protection for each listed repository's Settings -> Code security and analysis page. The calling workflow must also grant the "administration: read" permission (see templates/caller-workflow.yml) so this gate can read those settings.`);
+  if (result.skipped) return result;
+  const report = formatGithubSecurityReport(result);
+  console.log(report);
+  publishGithubSecurityReport(report);
+  if (result.findings.length) throw new Error('GitHub repository security settings gate requires the fixes listed in the report above. See "GitHub repository security settings gate" in README.md for the full walkthrough.');
   return result;
 }
 
@@ -97,8 +101,8 @@ async function main() {
   }
   if (action === 'github-security') {
     const result = await githubSecurityGate(config);
-    if (result.skipped) return console.log(result.disabled ? '[The Crucible] GitHub repository security settings gate is explicitly disabled.' : '[The Crucible] GitHub repository security settings gate skipped outside a GitHub Actions context.');
-    return console.log(`[The Crucible] GitHub repository security settings gate passed for: ${result.results.map((item) => item.repository).join(', ')}.`);
+    if (result.skipped) console.log(result.disabled ? '[The Crucible] GitHub repository security settings gate is explicitly disabled.' : '[The Crucible] GitHub repository security settings gate skipped outside a GitHub Actions context.');
+    return;
   }
   if (action === 'collisions') {
     const result = await auditCollisions();

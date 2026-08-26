@@ -1,6 +1,9 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { ENGINE_REPOSITORY, MISSING_PERMISSION_HINT, auditGithubRepositorySecurity } = require('../src/githubRepoSecurity');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
+const { ENGINE_REPOSITORY, MISSING_PERMISSION_HINT, PERMISSION_REMEDIATION, settingsUrl, auditGithubRepositorySecurity, formatReport, publishReport } = require('../src/githubRepoSecurity');
 
 function config(overrides = {}) {
   return { githubSecurity: { enabled: true, ...overrides } };
@@ -73,8 +76,12 @@ test('fails when a required setting is confirmed disabled on either repository',
   });
   const result = await auditGithubRepositorySecurity(config(), { GITHUB_TOKEN: 'token', GITHUB_REPOSITORY: 'octocat/example' }, fetchImpl);
   assert.equal(result.findings.length, 2);
-  assert.match(result.findings.find((item) => item.repository === 'octocat/example').type, /secret scanning/);
-  assert.match(result.findings.find((item) => item.repository === ENGINE_REPOSITORY).type, /Dependabot alerts/);
+  const example = result.findings.find((item) => item.repository === 'octocat/example');
+  const engine = result.findings.find((item) => item.repository === ENGINE_REPOSITORY);
+  assert.match(example.type, /secret scanning/);
+  assert.equal(example.remediation, `Open ${settingsUrl('octocat/example')} and enable: secret scanning.`);
+  assert.match(engine.type, /Dependabot alerts/);
+  assert.match(engine.remediation, /settings\/security_analysis/);
 });
 
 test('reports an unreachable repository instead of throwing', async () => {
@@ -86,6 +93,7 @@ test('reports an unreachable repository instead of throwing', async () => {
   const finding = result.findings.find((item) => item.repository === ENGINE_REPOSITORY);
   assert.match(finding.type, /unable to verify/);
   assert.match(finding.detail, /HTTP 403/);
+  assert.match(finding.remediation, /Confirm .* exists/);
 });
 
 test('reports missing administration:read instead of falsely claiming settings are disabled', async () => {
@@ -97,6 +105,7 @@ test('reports missing administration:read instead of falsely claiming settings a
   const finding = result.findings.find((item) => item.repository === 'octocat/example');
   assert.match(finding.type, /unable to verify/);
   assert.equal(finding.detail, MISSING_PERMISSION_HINT);
+  assert.equal(finding.remediation, PERMISSION_REMEDIATION);
 });
 
 test('reports missing administration:read when the vulnerability-alerts endpoint is forbidden', async () => {
@@ -107,4 +116,32 @@ test('reports missing administration:read when the vulnerability-alerts endpoint
   const result = await auditGithubRepositorySecurity(config(), { GITHUB_TOKEN: 'token', GITHUB_REPOSITORY: 'octocat/example' }, fetchImpl);
   const finding = result.findings.find((item) => item.repository === 'octocat/example');
   assert.equal(finding.detail, MISSING_PERMISSION_HINT);
+});
+
+test('formatReport prints an actionable fix line under every finding', () => {
+  const report = formatReport({
+    results: [{ repository: 'octocat/example' }],
+    findings: [{ repository: 'octocat/example', type: 'required GitHub security settings disabled: secret scanning', remediation: `Open ${settingsUrl('octocat/example')} and enable: secret scanning.` }],
+  });
+  assert.match(report, /1 repository checked, 1 issue\(s\)/);
+  assert.match(report, /- octocat\/example: required GitHub security settings disabled: secret scanning/);
+  assert.match(report, /\n {2}Fix: Open https:\/\/github\.com\/octocat\/example\/settings\/security_analysis and enable: secret scanning\./);
+});
+
+test('formatReport reports a clean pass with no findings', () => {
+  const report = formatReport({ results: [{ repository: 'octocat/example' }, { repository: ENGINE_REPOSITORY }], findings: [] });
+  assert.match(report, /2 repositories checked, 0 issue\(s\)/);
+  assert.match(report, /No action required/);
+});
+
+test('publishReport appends to the GitHub Actions job summary when present', () => {
+  const summaryPath = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-summary-')), 'summary.md');
+  fs.writeFileSync(summaryPath, '');
+  const published = publishReport('report body', { GITHUB_STEP_SUMMARY: summaryPath });
+  assert.equal(published, true);
+  assert.match(fs.readFileSync(summaryPath, 'utf8'), /## The Crucible GitHub repository security settings[\s\S]*report body/);
+});
+
+test('publishReport is a no-op outside GitHub Actions', () => {
+  assert.equal(publishReport('report body', {}), false);
 });

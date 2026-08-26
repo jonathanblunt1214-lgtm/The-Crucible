@@ -1,5 +1,12 @@
+const fs = require('node:fs');
+
 const ENGINE_REPOSITORY = 'jonathanblunt1214-lgtm/The-Crucible';
 const MISSING_PERMISSION_HINT = 'the workflow is missing the required "administration: read" permission';
+const PERMISSION_REMEDIATION = 'Add "administration: read" to the workflow\'s permissions block (see templates/caller-workflow.yml for the exact shape), commit, and re-run. Without it GitHub returns a normal response with the security settings silently left out, so this gate cannot tell "disabled" apart from "not permitted to check" and fails either way.';
+
+function settingsUrl(repository) {
+  return `https://github.com/${repository}/settings/security_analysis`;
+}
 
 async function githubRequest(apiBase, path, token, fetchImpl) {
   return fetchImpl(`${apiBase}${path}`, {
@@ -58,13 +65,41 @@ async function auditGithubRepositorySecurity(config, environment = process.env, 
     const status = await fetchRepositorySecurity(apiBase, target, token, fetchImpl);
     results.push(status);
     if (!status.reachable) {
-      findings.push({ repository: target, type: 'unable to verify required GitHub security settings', detail: status.reason });
+      const isPermissionIssue = status.reason === MISSING_PERMISSION_HINT;
+      findings.push({
+        repository: target,
+        type: 'unable to verify required GitHub security settings',
+        detail: status.reason,
+        remediation: isPermissionIssue ? PERMISSION_REMEDIATION : `Confirm ${target} exists and that the workflow's token can reach the GitHub API, then re-run.`,
+      });
       continue;
     }
     const missing = missingRequirements(status);
-    if (missing.length) findings.push({ repository: target, type: `required GitHub security settings disabled: ${missing.join(', ')}` });
+    if (missing.length) {
+      findings.push({
+        repository: target,
+        type: `required GitHub security settings disabled: ${missing.join(', ')}`,
+        remediation: `Open ${settingsUrl(target)} and enable: ${missing.join(', ')}.`,
+      });
+    }
   }
   return { skipped: false, disabled: false, findings, results };
 }
 
-module.exports = { ENGINE_REPOSITORY, MISSING_PERMISSION_HINT, fetchRepositorySecurity, missingRequirements, auditGithubRepositorySecurity };
+function formatReport(result) {
+  const lines = [`[The Crucible] GitHub repository security settings report: ${result.results.length} repositor${result.results.length === 1 ? 'y' : 'ies'} checked, ${result.findings.length} issue(s).`];
+  for (const finding of result.findings) {
+    lines.push(`- ${finding.repository}: ${finding.type}${finding.detail ? ` (${finding.detail})` : ''}`);
+    lines.push(`  Fix: ${finding.remediation}`);
+  }
+  if (!result.findings.length) lines.push('- No action required.');
+  return lines.join('\n');
+}
+
+function publishReport(report, environment = process.env) {
+  if (!environment.GITHUB_STEP_SUMMARY) return false;
+  fs.appendFileSync(environment.GITHUB_STEP_SUMMARY, `## The Crucible GitHub repository security settings\n\n\`\`\`text\n${report}\n\`\`\`\n\n`, 'utf8');
+  return true;
+}
+
+module.exports = { ENGINE_REPOSITORY, MISSING_PERMISSION_HINT, PERMISSION_REMEDIATION, settingsUrl, fetchRepositorySecurity, missingRequirements, auditGithubRepositorySecurity, formatReport, publishReport };
