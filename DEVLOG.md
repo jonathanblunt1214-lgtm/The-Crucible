@@ -2,12 +2,12 @@
 
 ## Shared AI handoff
 
-- **Agent:** Codex, continuing the shared Codex/Claude work.
-- **Current plan:** Make `DEVLOG.md` the mandatory, automatically maintained two-way coordination channel whenever the owner directs Claude and Codex to work together or continue one another's work.
-- **Current development work:** Preserve the combined direct-push CI triggers and manual workflow fallbacks from `c9ac7b5`, then add the explicit two-way, always-current handoff rule to the repository instructions and README.
-- **Files changed:** `AGENTS.md`, `DEVLOG.md`, and `README.md` for this rule; the preceding combined work changed the Self-Test and CodeQL triggers.
-- **Verification:** Combined head `c9ac7b5` passed GitHub Self-Test run 52 and CodeQL run 55 after both were dispatched for that exact head. Local documentation and tests will be rerun before this rule is pushed.
-- **Remaining work:** Validate, push to `development`, and verify Self-Test and CodeQL for the resulting exact commit. Update this handoff automatically if that status or plan changes.
+- **Agent:** Claude, continuing the shared Codex/Claude work.
+- **Current plan:** Owner made DEVLOG-first reading unconditional (not just "before editing"); merged that with Codex's two-way handoff-trigger-phrase rule. No further planned work right now - handoff mechanism itself is the current deliverable.
+- **Current development work:** Added a top-level "Read DEVLOG.md first, always" section to AGENTS.md (applies before any action, not just edits), then merged Codex's `5d23d43` (two-way "work with Claude/Codex" trigger phrases, mandatory always-current plan field). Both kept, no conflict.
+- **Files changed:** `AGENTS.md` (merge of both changes), `DEVLOG.md` (this entry).
+- **Verification:** All 144 local tests pass after the merge (`npm test`). GitHub Self-Test/CodeQL for this exact merge commit not yet checked - doing that next.
+- **Remaining work:** Push this merge commit, then verify Self-Test and CodeQL both run and pass for it.
 
 Every AI agent must keep the current plan and status in this section accurate automatically and refresh it in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
 
