@@ -191,6 +191,26 @@ Optional path patterns excluded from the privacy audit and scrubber. This is int
 
 Optional evidence commands for important project claims. Each claim has a human-readable `name` plus shell-free `run`, `args`, and optional `cwd` fields. The Authenticity Gate runs these checks before preparation and the heavy workload and fails when any declared evidence cannot be produced. This makes configured claims testable and prevents Crucible from treating an unsupported assertion as success; it cannot establish every possible real-world fact or guarantee that arbitrary prose is truthful.
 
+Each claim can declare `evidence` files. Crucible reports the command digest, commit SHA, UTC verification time, and SHA-256 digest of every evidence file in the check output. `authenticity.requireArtifacts` makes evidence files mandatory.
+
+### Advanced read-only hardening
+
+- `governance.requireExceptionMetadata` requires each exception to carry `path`, `reason`, `owner`, and `expires`. Exceptions fail when expired, unused, overly broad, or when an optional `sha256` no longer matches.
+- `governance.failOnDisabledSecurity` prevents configuration from silently disabling the Security Gate.
+- `integrity.digest` optionally pins the effective configuration as `sha256:<digest>`; Crucible fails if reviewed settings change without updating the digest.
+- `security.dependencyPolicy` rejects configured Git, URL, local, unapproved-registry, and prohibited-license dependencies.
+- `security.provenanceAudit` runs shell-free, read-only signature or provenance verification commands such as `npm audit signatures`. Crucible verifies attestations; it does not publish them.
+- Pull-request callers can enable the pinned GitHub dependency-review action with `dependency_review: true`.
+- Language-aware scanning removes language comments before checking JavaScript, TypeScript, Python, PowerShell, shell, and other common source files for dynamic execution, shell-enabled child processes, and unsafe deserialization. Projects can add full AST analyzers as ordinary verification commands.
+- `reproducibility` builds configured artifacts twice from independent staged-source copies and compares SHA-256 digests. Temporary copies are removed after the comparison; tracked project files are not rewritten.
+- `workload.maxOutputBytes` bounds retained command output while leaving live logs visible.
+- `workload.execution` can apply Linux `prlimit` memory, process, and file-size limits and `unshare` network denial. Enabling strict isolation on an unsupported platform fails closed.
+- Timeouts terminate the complete process tree rather than only the immediate child.
+- Collision protection compares changed line ranges, labels code versus documentation overlap, and ignores recognized stacked-PR relationships.
+- Privacy, clutter, and security gates share one immutable staged snapshot during the combined run, avoiding repeated blob reads and guaranteeing that every gate evaluates the same content.
+
+The normal and reusable workflows remain repository read-only. They never generate or publish release attestations, SBOMs, commits, tags, or releases. A project may verify an existing SBOM or attestation through `security.provenanceAudit`; publication belongs in an owner-approved release workflow with separate permissions.
+
 ### `workload`
 
 - `workers`: Concurrent workers, from 1 through 8. Default: 4.
@@ -208,6 +228,14 @@ workers × cycles × number of verify commands
 The Crucible does not silently delete clutter, automatically fix application code, upload project source elsewhere, collect telemetry, read unrelated repositories, expose repository secrets, modify branch protection, approve pull requests, publish releases, or push commits. It reports failures and leaves changes under the repository owner's control.
 
 ## Local use
+
+### Saved reports
+
+Every reusable-workflow run saves a project-specific JSON report as a downloadable GitHub Actions artifact named `the-crucible-report-<run>-<attempt>`. It records the project, repository, commit, workflow run, timestamps, and the pass or fail status of each Crucible action that started. Reports are retained for 90 days by default.
+
+Artifact storage uses GitHub's workflow-artifact service. It does not require `contents: write`, does not change the project checkout, and cannot commit or push repository files. If a failure occurs before the Crucible engine can start, the workflow warns that no report was produced rather than inventing a result.
+
+For a local run, set `CRUCIBLE_REPORT_PATH` to an explicit destination before invoking the CLI. If it is not set, Crucible does not create a report file. Report error summaries are bounded and redact common credential forms. Each failed action also includes a gate-specific suggested fix. Suggestions are diagnostic starting points, not fabricated success results or guarantees that the first correction will resolve every cause.
 
 Run these commands from this repository while pointing `CRUCIBLE_PROJECT_ROOT` at the project being checked:
 

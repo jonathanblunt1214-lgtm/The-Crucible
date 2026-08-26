@@ -10,6 +10,16 @@ const { runCommand } = require('./runner');
 const { auditCollisions } = require('./collisions');
 const { auditCommit, fixCommit } = require('./commit');
 const { formatReport, publishReport, runPrecheck } = require('./precheck');
+const { verifyClaims } = require('./authenticity');
+const { stagedSnapshot } = require('./snapshot');
+const { auditExceptions } = require('./exceptions');
+const { auditDependencyPolicy } = require('./dependencies');
+const { verifyReproducibility } = require('./reproducibility');
+const { writeReport } = require('./report');
+
+const action = process.argv[2] || 'run';
+const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
+let activeConfig = null;
 
 async function precheckGate(root, config) {
   const ref = process.env.CRUCIBLE_COMMIT_REF || process.env.GITHUB_SHA || '--cached';
@@ -21,49 +31,46 @@ async function precheckGate(root, config) {
   return result;
 }
 
-async function securityGate(root, config) {
-  const result = auditSecurity(root, config);
+function commitGate(root) {
+  const ref = process.env.CRUCIBLE_COMMIT_REF || process.env.GITHUB_SHA || '--cached';
+  const result = auditCommit(root, { ref });
+  if (result.findings.length) throw new Error(`Commit Gate found ${result.findings.length} issue(s).`);
+  return result;
+}
+
+async function securityGate(root, config, snapshot = null) {
+  const result = auditSecurity(root, config, snapshot);
   if (result.skipped) return result;
   if (result.findings.length) throw new Error(`Security Gate detected suspicious content:\n${result.findings.map((item) => `- ${item.type}: ${item.path}${item.line ? `:${item.line}` : ''}`).join('\n')}`);
+  const dependencies = auditDependencyPolicy(root, config);
+  if (dependencies.findings.length) throw new Error(`Dependency policy failed:\n${dependencies.findings.map((item) => `- ${item.type}: ${item.path}`).join('\n')}`);
   for (const command of config.security.dependencyAudit) await runCommand(root, command, config.workload.timeoutMinutes * 60_000);
+  for (const command of config.security.provenanceAudit) await runCommand(root, command, config.workload.timeoutMinutes * 60_000, ' [provenance]');
   return result;
 }
 
 async function authenticityGate(root, config) {
-  for (const claim of config.authenticity.claims) await runCommand(root, claim, config.workload.timeoutMinutes * 60_000, ' [claim evidence]');
-  return { claims:config.authenticity.claims.length };
+  return verifyClaims(root, config);
 }
 
-function commitGate(root) {
-  const ref = process.env.CRUCIBLE_COMMIT_REF || process.env.GITHUB_SHA || '--cached';
-  const result = auditCommit(root, { ref });
-  if (result.findings.length) {
-    const details = result.findings.map((item) => `- ${item.type}: ${item.path}${item.line ? `:${item.line}` : ''}${item.detail ? ` (${item.detail})` : ''}`).join('\n');
-    const fixable = result.fixable.length && ref === '--cached' ? '\nRun `npm run fix:commit`, review the working-tree changes, then stage them again.' : '';
-    throw new Error(`Commit Gate found ${result.findings.length} issue(s):\n${details}${fixable}`);
-  }
-  return result;
+function governanceGate(root, config, suppliedSnapshot = null) {
+  if (config.governance.failOnDisabledSecurity && !config.security.enabled) throw new Error('Configuration governance forbids disabling the Security Gate.');
+  const snapshot = suppliedSnapshot || stagedSnapshot(root);
+  const findings = auditExceptions(snapshot, { 'clutter.allow':config.clutter.allow, 'privacy.allow':config.privacy.allow, 'security.allow':config.security.allow, 'security.allowBinaries':config.security.allowBinaries }, config.governance.requireExceptionMetadata);
+  if (findings.length) throw new Error(`Exception governance failed:\n${findings.map((item) => `- ${item.type}: ${item.group} ${item.path}`).join('\n')}`);
+  return { exceptions:Object.values({ a:config.clutter.allow, b:config.privacy.allow, c:config.security.allow, d:config.security.allowBinaries }).flat().length };
 }
 
 async function main() {
-  const action = process.argv[2] || 'run';
-  const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
+  if (action === 'report-init') return console.log('[The Crucible] Report initialized.');
   const config = loadConfig(root, process.env.CRUCIBLE_CONFIG || '.thecrucible.json');
+  activeConfig = config;
   if (action === 'validate') return console.log(`[The Crucible] Valid configuration for ${config.project.name}.`);
-  if (action === 'commit') {
-    const result = commitGate(root);
-    return console.log(`[The Crucible] Commit Gate passed ${result.paths.length} changed path(s).`);
-  }
-  if (action === 'precheck') {
-    await precheckGate(root, config);
-    return;
-  }
-  if (action === 'fix-commit') {
-    const ref = process.env.CRUCIBLE_COMMIT_REF || '--cached';
-    const result = fixCommit(root, { ref });
-    const review = result.review.length ? ` ${result.review.length} issue(s) still require human review.` : '';
-    return console.log(`[The Crucible] Commit fixer updated ${result.changed.length} working file(s). Review and stage the changes before rerunning the gate.${review}`);
-  }
+  if (action === 'commit') { const result = commitGate(root); return console.log(`[The Crucible] Commit Gate passed ${result.paths.length} changed path(s).`); }
+  if (action === 'precheck') { await precheckGate(root, config); return; }
+  if (action === 'fix-commit') { const result = fixCommit(root, { ref:process.env.CRUCIBLE_COMMIT_REF || '--cached' }); return console.log(`[The Crucible] Commit fixer updated ${result.changed.length} working file(s).`); }
+  if (action === 'governance') { const result = governanceGate(root, config); return console.log(`[The Crucible] Configuration governance passed ${result.exceptions} exception(s).`); }
+  if (action === 'reproducibility') { const result = await verifyReproducibility(root, config); return console.log(result.skipped ? '[The Crucible] Reproducibility Gate is not enabled.' : `[The Crucible] Reproducibility Gate passed ${result.artifacts} artifact(s).`); }
   if (action === 'privacy') {
     const result = auditPrivacy(root, config);
     if (result.findings.length) {
@@ -102,19 +109,29 @@ async function main() {
     return console.log(`[The Crucible] Git integrity and safe repacking passed at ${result.head}.\nBefore:\n${result.before}\nAfter:\n${result.after}`);
   }
   if (action !== 'run') throw new Error(`Unknown action: ${action}`);
+  const snapshot = stagedSnapshot(root);
   await precheckGate(root, config);
-  const privacy = auditPrivacy(root, config);
+  const privacy = auditPrivacy(root, config, snapshot);
   if (privacy.findings.length) throw new Error(`Personal identifiers detected:\n${privacy.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}`);
-  const clutter = auditClutter(root, config);
+  const clutter = auditClutter(root, config, snapshot);
   if (clutter.findings.length) throw new Error(`Clutter detected:\n${clutter.findings.map((item) => `- ${item.type}: ${item.path}`).join('\n')}`);
-  await securityGate(root, config);
+  governanceGate(root, config, snapshot);
+  await securityGate(root, config, snapshot);
   await authenticityGate(root, config);
   const result = await runCrucible(root, config);
   const artifactSecurity = auditArtifactSecurity(root, config);
   if (artifactSecurity.findings.length) throw new Error(`Generated artifact security scan failed:\n${artifactSecurity.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}`);
+  await verifyReproducibility(root, config);
   console.log(`[The Crucible] PASS: ${config.project.name} completed ${result.workers * result.cycles * result.commands} verification command runs with ${result.artifacts} required artifact(s).`);
 }
 
-main().catch((error) => { console.error(`[The Crucible] FAIL: ${error.message}`); process.exitCode = 1; });
+main()
+  .then(() => writeReport({ root, config:activeConfig, action, status:'passed' }))
+  .catch((error) => {
+    try { writeReport({ root, config:activeConfig, action, status:'failed', error }); }
+    catch (reportError) { console.error(`[The Crucible] Report could not be saved: ${reportError.message}`); }
+    console.error(`[The Crucible] FAIL: ${error.message}`);
+    process.exitCode = 1;
+  });
 
 module.exports = { securityGate, authenticityGate, commitGate, precheckGate };

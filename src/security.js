@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
+const { languageFindings } = require('./syntax');
 
 const TEXT_RULES = [
   ['encoded PowerShell execution', /powershell(?:\.exe)?[^\r\n]{0,160}(?:-[Ee](?:ncodedCommand)?\s+|frombase64string\s*\()/i],
@@ -93,23 +94,24 @@ function auditArtifactSecurity(root, config) {
   return { files:files.length, findings, skipped:false };
 }
 
-function auditSecurity(root, config) {
+function auditSecurity(root, config, snapshot = null) {
   if (!config.security.enabled) return { files:0, findings:[], skipped:true };
-  const allow = config.security.allow.map(glob);
-  const allowedBinaries = config.security.allowBinaries.map(glob);
+  const allow = config.security.allow.map((entry) => ({ entry, rule:glob(typeof entry === 'string' ? entry : entry.path) }));
+  const allowedBinaries = config.security.allowBinaries.map((entry) => glob(typeof entry === 'string' ? entry : entry.path));
   const findings = [];
-  const files = trackedFiles(root);
+  const files = snapshot?.files || trackedFiles(root);
   for (const file of files) {
-    if (allow.some((rule) => rule.test(file))) continue;
     let buffer;
-    try { buffer = gitBuffer(root, `:${file}`); } catch { continue; }
+    try { buffer = snapshot?.entries.get(file)?.buffer || gitBuffer(root, `:${file}`); } catch { continue; }
     const magic = executableMagic(buffer);
     if ((magic || SUSPICIOUS_BINARY_EXTENSION.test(file)) && !allowedBinaries.some((rule) => rule.test(file))) {
       findings.push({ type:magic || 'suspicious executable binary extension', path:file });
       continue;
     }
     if (buffer.length > config.security.maxTextBytes || buffer.includes(0)) continue;
-    for (const finding of findingsForText(buffer.toString('utf8'))) findings.push({ path:file, ...finding });
+    const permitted = (type) => allow.some(({ entry, rule }) => rule.test(file) && (typeof entry === 'string' || !entry.rules?.length || entry.rules.includes(type)));
+    for (const finding of findingsForText(buffer.toString('utf8'))) if (!permitted(finding.type)) findings.push({ path:file, ...finding });
+    for (const finding of languageFindings(buffer.toString('utf8'), file)) if (!permitted(finding.type)) findings.push({ path:file, ...finding });
   }
   return { files:files.length, findings, skipped:false };
 }
