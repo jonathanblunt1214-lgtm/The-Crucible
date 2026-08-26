@@ -9,6 +9,7 @@
     "audit:clutter": "node src/cli.js clutter",
     "audit:privacy": "node src/cli.js privacy",
     "audit:security": "node src/cli.js security",
+    "audit:github-security": "node src/cli.js github-security",
     "audit:collisions": "node src/cli.js collisions",
     "audit:commit": "node src/cli.js commit",
     "precheck": "node src/cli.js precheck",

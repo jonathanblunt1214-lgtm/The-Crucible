@@ -26,6 +26,7 @@ on:
 permissions:
   contents: read
   pull-requests: read
+  administration: read
 
 jobs:
   verify:
@@ -73,6 +74,12 @@ jobs:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
           CRUCIBLE_CONFIG: ${{ inputs.config_path }}
         run: node .the-crucible-runtime/src/cli.js security
+      - name: Check required GitHub repository security settings
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+          CRUCIBLE_CONFIG: ${{ inputs.config_path }}
+        run: node .the-crucible-runtime/src/cli.js github-security
       - name: Verify evidence-backed project claims
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}

@@ -15,8 +15,9 @@ The engine then:
 3. Audits every Git-tracked project file for clutter.
 4. Audits staged tracked text for personal identifiers, credentials, and private keys.
 5. Runs the Security Gate against the staged Git snapshot before any project preparation or heavy workload begins.
-6. On pull requests, reports files that overlap another open pull request before workload execution.
-7. Pre-checks the exact staged snapshot locally (or commit SHA in CI), then parses changed JSON/JavaScript and runs only configured checks whose path patterns match changed files.
+6. Checks that Dependabot alerts, Dependabot security updates, secret scanning, and secret scanning push protection are enabled on both the calling project's repository and the linked Crucible engine repository.
+7. On pull requests, reports files that overlap another open pull request before workload execution.
+8. Pre-checks the exact staged snapshot locally (or commit SHA in CI), then parses changed JSON/JavaScript and runs only configured checks whose path patterns match changed files.
 
 ## Language-aware pre-check report
 
@@ -82,13 +83,24 @@ This is a defense-in-depth gate, not an antivirus or sandbox. Static patterns an
 
 After the workload, The Crucible scans configured text artifacts for recognized credentials and client-visible secret exposure before reporting success. This catches secrets introduced by generation or bundling even when they were not present in the staged source snapshot.
 
+### GitHub repository security settings gate
+
+Passing static and dependency scanning is not enough if GitHub's own repository-level protections are turned off. Alongside the Security Gate, The Crucible checks the live GitHub repository settings for **Dependabot alerts**, **Dependabot security updates**, **secret scanning**, and **secret scanning push protection**, and fails the run if any of them is disabled.
+
+This requirement applies to two repositories on every run:
+
+- The calling project's own repository (`GITHUB_REPOSITORY`).
+- The linked Crucible engine repository, `jonathanblunt1214-lgtm/The-Crucible`, that every caller pins and checks out into `.the-crucible-runtime`. A project that trusts this engine to gate its code should also be able to trust that this engine's own repository keeps the same protections turned on.
+
+The gate reads settings through the GitHub REST API using the workflow's own token; it never modifies them. It requires the `administration: read` permission, which the reusable workflow and the caller template both request. Outside a GitHub Actions context (no `GITHUB_TOKEN`/`GITHUB_REPOSITORY`, for example running `node src/cli.js` locally) it skips safely rather than blocking local development. A repository whose settings cannot be read (for example, insufficient permissions) is reported as unverified rather than assumed safe, and blocks the run the same as a confirmed-disabled setting. Set `githubSecurity.enabled` to `false` to explicitly opt a project out.
+
 ### Collision protection
 
 For pull-request runs, the reusable workflow uses read-only pull-request access to compare the current PR's changed files with every other open PR. Any overlap fails before the heavy workload and reports only PR numbers, titles, and paths. Outside a GitHub pull-request context the collision audit skips safely. It never closes, modifies, approves, or merges a pull request.
 
 ### Weekly
 
-At 04:47 UTC every Sunday, the caller runs the clutter, privacy, and Security Gates, the full configured workload, artifact verification, and safe Git maintenance.
+At 04:47 UTC every Sunday, the caller runs the clutter, privacy, and Security Gates, the GitHub repository security settings gate, the full configured workload, artifact verification, and safe Git maintenance.
 
 Git maintenance performs:
 
@@ -118,6 +130,7 @@ There is no runtime dependency in the application being tested. The engine exist
 4. Replace both `REPLACE_WITH_EXACT_COMMIT_SHA` values with the same tested commit SHA from this repository.
 5. Commit and push both files.
 6. In the project repository's branch protection or ruleset, require the check named **The Crucible**.
+7. In the project repository's **Settings → Code security and analysis** page, enable Dependabot alerts, Dependabot security updates, secret scanning, and push protection. The GitHub repository security settings gate fails the run until all four are turned on.
 
 The duplicated commit SHA is intentional. The workflow itself and the engine checkout are pinned to the same immutable version. Updating The Crucible requires an explicit project commit changing both values.
 
@@ -191,6 +204,10 @@ Optional path patterns excluded from the privacy audit and scrubber. This is int
 
 Optional evidence commands for important project claims. Each claim has a human-readable `name` plus shell-free `run`, `args`, and optional `cwd` fields. The Authenticity Gate runs these checks before preparation and the heavy workload and fails when any declared evidence cannot be produced. This makes configured claims testable and prevents Crucible from treating an unsupported assertion as success; it cannot establish every possible real-world fact or guarantee that arbitrary prose is truthful.
 
+### `githubSecurity`
+
+- `enabled`: Defaults to `true`. Setting it to `false` is an explicit project-level opt-out of the entire GitHub repository security settings gate described above, including the linked Crucible engine repository check.
+
 ### `workload`
 
 - `workers`: Concurrent workers, from 1 through 8. Default: 4.
@@ -205,7 +222,7 @@ workers × cycles × number of verify commands
 
 ## What it deliberately does not do
 
-The Crucible does not silently delete clutter, automatically fix application code, upload project source elsewhere, collect telemetry, read unrelated repositories, expose repository secrets, modify branch protection, approve pull requests, publish releases, or push commits. It reports failures and leaves changes under the repository owner's control.
+The Crucible does not silently delete clutter, automatically fix application code, upload project source elsewhere, collect telemetry, read unrelated repositories, expose repository secrets, modify branch protection, approve pull requests, publish releases, or push commits. It reports failures and leaves changes under the repository owner's control. The GitHub repository security settings gate only reads `security_and_analysis` and vulnerability-alert status through the GitHub API; it never enables, disables, or otherwise changes those settings itself.
 
 ## Local use
 

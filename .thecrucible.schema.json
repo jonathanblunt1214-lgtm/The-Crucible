@@ -67,6 +67,13 @@
         "claims": { "type": "array", "maxItems": 30, "items": { "$ref": "#/$defs/command" } }
       }
     },
+    "githubSecurity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" }
+      }
+    },
     "codeCheck": {
       "type": "object",
       "additionalProperties": false,

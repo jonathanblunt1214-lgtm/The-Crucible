@@ -6,6 +6,7 @@ const { runCrucible } = require('./runner');
 const { maintain } = require('./maintenance');
 const { auditPrivacy, scrubPrivacy } = require('./privacy');
 const { auditSecurity, auditArtifactSecurity } = require('./security');
+const { auditGithubRepositorySecurity } = require('./githubRepoSecurity');
 const { runCommand } = require('./runner');
 const { auditCollisions } = require('./collisions');
 const { auditCommit, fixCommit } = require('./commit');
@@ -26,6 +27,12 @@ async function securityGate(root, config) {
   if (result.skipped) return result;
   if (result.findings.length) throw new Error(`Security Gate detected suspicious content:\n${result.findings.map((item) => `- ${item.type}: ${item.path}${item.line ? `:${item.line}` : ''}`).join('\n')}`);
   for (const command of config.security.dependencyAudit) await runCommand(root, command, config.workload.timeoutMinutes * 60_000);
+  return result;
+}
+
+async function githubSecurityGate(config) {
+  const result = await auditGithubRepositorySecurity(config);
+  if (result.findings.length) throw new Error(`Required GitHub repository security settings are not satisfied:\n${result.findings.map((item) => `- ${item.repository}: ${item.type}${item.detail ? ` (${item.detail})` : ''}`).join('\n')}\nEnable Dependabot alerts, Dependabot security updates, secret scanning, and push protection for each listed repository's Settings -> Code security and analysis page.`);
   return result;
 }
 
@@ -88,6 +95,11 @@ async function main() {
     const result = await securityGate(root, config);
     return console.log(result.skipped ? '[The Crucible] Security Gate is explicitly disabled.' : `[The Crucible] Security Gate passed across ${result.files} tracked files and ${config.security.dependencyAudit.length} dependency audit command(s).`);
   }
+  if (action === 'github-security') {
+    const result = await githubSecurityGate(config);
+    if (result.skipped) return console.log(result.disabled ? '[The Crucible] GitHub repository security settings gate is explicitly disabled.' : '[The Crucible] GitHub repository security settings gate skipped outside a GitHub Actions context.');
+    return console.log(`[The Crucible] GitHub repository security settings gate passed for: ${result.results.map((item) => item.repository).join(', ')}.`);
+  }
   if (action === 'collisions') {
     const result = await auditCollisions();
     if (result.findings.length) throw new Error(`Overlapping open pull requests detected:\n${result.findings.map((item) => `- PR #${item.number} (${item.title}): ${item.paths.join(', ')}`).join('\n')}`);
@@ -108,6 +120,7 @@ async function main() {
   const clutter = auditClutter(root, config);
   if (clutter.findings.length) throw new Error(`Clutter detected:\n${clutter.findings.map((item) => `- ${item.type}: ${item.path}`).join('\n')}`);
   await securityGate(root, config);
+  await githubSecurityGate(config);
   await authenticityGate(root, config);
   const result = await runCrucible(root, config);
   const artifactSecurity = auditArtifactSecurity(root, config);
@@ -117,4 +130,4 @@ async function main() {
 
 main().catch((error) => { console.error(`[The Crucible] FAIL: ${error.message}`); process.exitCode = 1; });
 
-module.exports = { securityGate, authenticityGate, commitGate, precheckGate };
+module.exports = { securityGate, githubSecurityGate, authenticityGate, commitGate, precheckGate };

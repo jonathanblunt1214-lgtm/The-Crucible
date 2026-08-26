@@ -48,6 +48,8 @@ function validateConfig(input) {
   const dependencyAudit = security.dependencyAudit || [];
   const authenticity = isObject(input.authenticity) ? input.authenticity : {};
   const claims = authenticity.claims || [];
+  const githubSecurity = isObject(input.githubSecurity) ? input.githubSecurity : {};
+  assert(githubSecurity.enabled === undefined || typeof githubSecurity.enabled === 'boolean', 'githubSecurity.enabled must be a boolean.');
   const codeCheck = isObject(input.codeCheck) ? input.codeCheck : {};
   const codeCommands = codeCheck.commands || [];
   assert(security.enabled === undefined || typeof security.enabled === 'boolean', 'security.enabled must be a boolean.');
@@ -77,6 +79,7 @@ function validateConfig(input) {
       dependencyAudit:dependencyAudit.map((item, index) => validateCommand(item, 'security.dependencyAudit', index)),
     },
     authenticity:{ claims:claims.map((item, index) => validateCommand(item, 'authenticity.claims', index)) },
+    githubSecurity:{ enabled:githubSecurity.enabled !== false },
     codeCheck:{ commands:validatedCodeCommands },
     workload:{
       workers:boundedInteger(workload.workers, 4, 1, 8, 'workload.workers'),
