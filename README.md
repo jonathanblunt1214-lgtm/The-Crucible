@@ -198,6 +198,8 @@ Development work is performed on `development`. Self-Test and CodeQL trigger dir
 
 Multiple AI agents coordinate through the Shared AI handoff at the top of `DEVLOG.md`. When the owner says to work with, coordinate with, or continue work done with Codex, Claude, Perplexity, Gemini, or any later agent, the named agent must synchronize `development` and read that handoff before acting. Every agent must preserve concurrent work and automatically keep the handoff's current plan, changes, verification, status, and remaining work accurate in the same commit it pushes. Every conflict must be preserved and brought to the repository owner; no agent may silently choose, overwrite, delete, or revert one side. This makes the handoff visible to every agent and human maintainer without depending on access to another agent's chat or requiring the owner to request an update.
 
+GitHub checks this policy through `.github/workflows/handoff-policy.yml`. A `development` commit or pull request into `main` fails the **AI handoff policy** check when project files change without a `DEVLOG.md` update. After this workflow is explicitly promoted to `main`, that check is added to the `main` ruleset as required; it is not activated prematurely because GitHub cannot run a pull-request workflow from the base branch until the workflow exists there.
+
 For private projects, this repository's **Settings → Actions → General → Access** setting must permit reusable-workflow access from other repositories owned by the same account or organization.
 
 ### Why `agent-boundaries.md` exists

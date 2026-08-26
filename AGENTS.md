@@ -105,6 +105,14 @@ as unrelated changes.
   choosing, overwriting, deleting, or reverting one side.
 - `DEVLOG.md` is the repository-visible communication channel. Chat sessions
   are not assumed to be shared between agents.
+- GitHub enforces the observable part of this rule through
+  `.github/workflows/handoff-policy.yml`: every `development` change and every
+  pull request into `main` must include `DEVLOG.md`. Never remove, bypass,
+  rename, or weaken the `AI handoff policy` check. Once this workflow is
+  explicitly promoted to `main`, its check must be added to the `main` ruleset
+  as a required status check; do not add that requirement before promotion,
+  because GitHub cannot run a base-branch PR workflow that does not yet exist
+  on `main`.
 
 This is not the self-repair this file forbids below: every fix is a real,
 visible commit on `development` you can point to, nothing is hidden, and

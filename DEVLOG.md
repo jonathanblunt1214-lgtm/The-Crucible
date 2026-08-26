@@ -3,11 +3,11 @@
 ## Shared AI handoff
 
 - **Agent:** Codex, continuing the shared multi-agent work after Claude's `2b7b9c9`.
-- **Current plan:** Extend the mandatory, always-current DEVLOG coordination and owner-conflict-escalation rules to Perplexity, Gemini, and every later AI agent, in every direction.
-- **Current development work:** Preserved Claude's unconditional DEVLOG-first rule and expanded the handoff protocol so all named or future agents must use it and every conflict must be brought to the repository owner.
-- **Files changed:** `AGENTS.md`, `DEVLOG.md`, and `README.md`.
-- **Verification:** Claude reported all 144 local tests passing for `2b7b9c9`. This extension will rerun documentation checks and all tests before push, followed by Self-Test and CodeQL for the resulting exact commit.
-- **Remaining work:** Validate, push to `development`, and verify GitHub CI. Update this handoff automatically if the plan or status changes.
+- **Current plan:** Enforce the always-current DEVLOG handoff as a GitHub project check without weakening the rule that `main` is changed only by explicit owner promotion.
+- **Current development work:** Added the `AI handoff policy` workflow and a shell-free range checker. Every `development` commit and future PR into `main` must include `DEVLOG.md`; the check is designed to become required on `main` after the workflow itself is explicitly promoted there.
+- **Files changed:** `.github/workflows/handoff-policy.yml`, `src/handoffPolicy.js`, `test/handoffPolicy.test.js`, `test/workflow.test.js`, `package.json`, `AGENTS.md`, `DEVLOG.md`, and `README.md`.
+- **Verification:** The preceding all-agent rule commit `d466f7e` passed all 144 local tests, documentation validation, GitHub Self-Test, and CodeQL. The new enforcement code and full suite will be tested before push.
+- **Remaining work:** Validate, push to `development`, verify the new GitHub check plus Self-Test and CodeQL, and add `AI handoff policy` to the active `main` ruleset only after an explicit promotion places this workflow on `main`.
 
 Every AI agent must keep the current plan and status in this section accurate automatically and refresh it in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
 

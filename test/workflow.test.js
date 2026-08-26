@@ -142,3 +142,14 @@ test('a dedicated check blocks only PR #7, the permanent do-not-merge CI-monitor
   assert.match(agents, /block-pr-7\.yml/);
   assert.match(agents, /required status check on\s*\n\s*`main`/);
 });
+
+test('GitHub checks every development change and main PR for a current DEVLOG handoff', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'handoff-policy.yml'), 'utf8');
+  assert.match(workflow, /name: AI handoff policy/);
+  assert.match(workflow, /push:\s*\n\s*branches: \[development\]/);
+  assert.match(workflow, /pull_request:\s*\n\s*branches: \[main\]/);
+  assert.match(workflow, /fetch-depth: 0/);
+  assert.match(workflow, /HANDOFF_BASE_SHA:/);
+  assert.match(workflow, /HANDOFF_HEAD_SHA:/);
+  assert.match(workflow, /npm run audit:handoff/);
+});
