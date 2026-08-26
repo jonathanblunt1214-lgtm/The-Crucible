@@ -306,7 +306,7 @@ The Crucible does not silently delete clutter, automatically fix application cod
 
 Every reusable-workflow run saves a project-specific JSON report as a downloadable GitHub Actions artifact named `the-crucible-report-<run>-<attempt>`. It records the project, repository, commit, workflow run, timestamps, and the pass or fail status of each Crucible action that started. Reports are retained for 90 days by default.
 
-When the gate fails, the final reporting step uses the caller's narrowly scoped `issues: write` permission to create an open issue titled `[The Crucible] Gate failure` in the scanned repository. The issue contains the run link, commit, artifact name, bounded error summary, and suggested next step. If that issue is already open, later failures add a comment instead of creating duplicates. The workflow never closes the issue automatically and never writes repository contents.
+When the gate fails, the final reporting step uses the caller's narrowly scoped `issues: write` permission to create an open issue titled `[The Crucible] Gate failure` in the scanned repository. The issue contains the run link, commit, artifact name, bounded error summary, and an explicitly labeled **Suggested repair** for every reported failure. If that issue is already open, later failures add a comment instead of creating duplicates. The workflow never closes the issue automatically and never writes repository contents.
 
 Artifact storage uses GitHub's workflow-artifact service. It does not require `contents: write`, does not change the project checkout, and cannot commit or push repository files. If a failure occurs before the Crucible engine can start, the workflow warns that no report was produced rather than inventing a result.
 

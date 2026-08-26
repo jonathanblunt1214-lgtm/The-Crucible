@@ -21,7 +21,7 @@ function failureSummary(report) {
     const action = String(result.action || 'unknown').replace(/[^A-Za-z0-9._-]/g, '').slice(0, 80) || 'unknown';
     const error = String(result.error || 'No bounded error summary was recorded.').replace(/[\r\n]+/g, ' ').slice(0, 500);
     const fix = String(result.suggestedFix || 'Review the failed action and rerun Crucible.').replace(/[\r\n]+/g, ' ').slice(0, 700);
-    return `- **${action}**: ${error}\n  - Suggested next step: ${fix}`;
+    return `- **${action}**: ${error}\n  - **Suggested repair:** ${fix}`;
   }).join('\n');
 }
 

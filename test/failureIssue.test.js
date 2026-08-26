@@ -18,6 +18,7 @@ test('builds a bounded failure notice with the run and redacted report summary',
   assert.match(notice, /actions\/runs\/123/);
   assert.match(notice, /the-crucible-report-123-2/);
   assert.match(notice, /\*\*security\*\*: unsafe content/);
+  assert.match(notice, /\*\*Suggested repair:\*\* remove it/);
 });
 
 test('creates one issue when no open Crucible failure issue exists', async () => {
