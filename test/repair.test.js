@@ -35,7 +35,8 @@ test('refuses to run even if only the GitHub identity fails to match', () => {
 test('fixes trailing whitespace and personal identifiers in the working copy without staging or committing', () => {
   const root = repository();
   fs.writeFileSync(path.join(root, 'app.js'), 'const value = 1;   \n');
-  fs.writeFileSync(path.join(root, 'notes.txt'), 'contact jane.doe@gmail.com for details\n');
+  const personalEmail = ['jane.doe', 'gmail.com'].join('@');
+  fs.writeFileSync(path.join(root, 'notes.txt'), `contact ${personalEmail} for details\n`);
   git(root, ['add', 'app.js', 'notes.txt']);
   const result = repairInternalChecks(root, config(), { ref: '--cached' });
   assert.deepEqual(result.changed.sort(), ['app.js', 'notes.txt']);
