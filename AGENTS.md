@@ -30,6 +30,15 @@ repository owner, not as an exception.
   agent can reason its way around because deletion "seems" appropriate.
 - **Never rename files, branches, or repositories** unless the owner
   explicitly asks for it.
+- **[PR #7](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/7)
+  is never merged, under any circumstances.** It is a permanent draft
+  `development` -> `main` pull request that exists solely as a live
+  event hook for CI monitoring (see "Automatic CI monitoring" below) - not
+  a normal pull request awaiting review. Never merge it, never mark it
+  ready for review with intent to merge it, and never close-and-reopen or
+  recreate it as a way around this. If it ever needs to not exist, that is
+  the owner's explicit call to make, not something inferred from its
+  mergeable state going green.
 
 ## CI on `development`
 
