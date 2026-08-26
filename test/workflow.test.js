@@ -112,14 +112,14 @@ test('canonical source is refreshed every 15 minutes only after verification', (
   assert.match(workflow, /HEAD:refs\/heads\/crucible-canonical/);
 });
 
-test('only a failed internal main Self-Test triggers autonomous canonical recovery', () => {
+test('recovery from the canonical snapshot requires a human to manually dispatch it with the exact failing SHA', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'internal-recovery.yml'), 'utf8');
-  assert.match(workflow, /workflows: \['The Crucible Self-Test'\]/);
-  assert.match(workflow, /workflow_run\.conclusion == 'failure'/);
-  assert.match(workflow, /workflow_run\.head_branch == 'main'/);
-  assert.match(workflow, /head_repository\.full_name == github\.repository/);
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.doesNotMatch(workflow, /\n\s*workflow_run:|\n\s*schedule:|\n\s*push:/);
+  assert.match(workflow, /failed_sha:[\s\S]*required: true/);
+  assert.match(workflow, /invisible self-repair/i);
   assert.match(workflow, /git read-tree --reset -u origin\/crucible-canonical/);
-  assert.match(workflow, /git commit -m "Auto-recover Crucible/);
+  assert.match(workflow, /git commit -m "Recover Crucible/);
   assert.match(workflow, /RECOVERY_BRANCH: crucible-recovery-/);
   assert.match(workflow, /refs\/heads\/\$RECOVERY_BRANCH/);
   assert.match(workflow, /--force-with-lease=refs\/heads\/main/);
