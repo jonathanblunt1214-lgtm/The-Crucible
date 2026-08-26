@@ -58,11 +58,31 @@ repository owner, not as an exception.
 After every push you make to `development`, check the resulting CI (Self-Test
 and CodeQL) without being asked, and if anything fails, diagnose the real
 cause, fix it, push the fix, and check again - looping until it's actually
-green, not just until one attempt looks plausible. PR #7 is the permanent
-draft `development` -> `main` event hook that should trigger Self-Test for
-these pushes. If that run is missing, dispatch Self-Test manually
+green, not just until one attempt looks plausible. Self-Test and CodeQL both
+trigger directly on pushes to `development`; PR #7 remains the permanent draft
+`development` -> `main` event hook for near-live monitoring and PR activity.
+If a direct-push Self-Test run is missing, dispatch Self-Test manually
 (`workflow_dispatch`) rather than assuming a lack of a run means nothing to
 check.
+
+## AI-to-AI handoff protocol
+
+Codex, Claude, and any later agent working here share `development`; they must
+treat one another's work as active project state, not as unrelated changes.
+
+- Before editing, fetch `origin/development`, fast-forward only, and read this
+  file plus the **Shared AI handoff** section at the top of `DEVLOG.md`.
+- Before pushing, fetch again. If `origin/development` moved, integrate and
+  verify the other agent's work without force-pushing or discarding it.
+- Every pushed change must update the Shared AI handoff in the same commit with
+  the agent name, what changed, verification performed, and any remaining
+  failure or unfinished work. Do not leave another agent to reconstruct state
+  from chat history.
+- Never overwrite, revert, delete, or rename another agent's work merely because
+  it was not created in the current session. If two changes conflict in intent,
+  preserve both and ask the owner before choosing one.
+- `DEVLOG.md` is the repository-visible communication channel. Chat sessions
+  are not assumed to be shared between agents.
 
 This is not the self-repair this file forbids below: every fix is a real,
 visible commit on `development` you can point to, nothing is hidden, and
@@ -76,10 +96,11 @@ The owner should not have to notice a failure, paste a screenshot, or ask
 "what's going on" for ordinary CI hygiene to happen. Two mechanisms cover
 this, since the platform's scheduler cannot poll more often than hourly:
 
-- **Primary, near-live:** [PR #7](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/7),
-  a permanently-draft, never-merged `development` -> `main` pull request
-  that exists only so GitHub pushes CI and comment events the moment they
-  happen, instead of waiting for a poll. It is explicitly marked
+- **Primary, near-live:** direct `development` push triggers run Self-Test and
+  CodeQL immediately. [PR #7](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/7)
+  is a permanently-draft, never-merged `development` -> `main` pull request
+  that keeps PR activity and comment events live instead of waiting for a
+  poll. It is explicitly marked
   do-not-merge and does not change the `main` branch policy above - opening
   and keeping it open was itself an explicit, one-time owner decision, not
   something assumed going forward.

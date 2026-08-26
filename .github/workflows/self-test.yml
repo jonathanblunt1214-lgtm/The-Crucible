@@ -3,7 +3,7 @@ name: The Crucible Self-Test
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, development]
   pull_request:
     branches: [main]
 
