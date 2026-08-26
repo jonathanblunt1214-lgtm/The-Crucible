@@ -200,6 +200,10 @@ Multiple AI agents coordinate through the Shared AI handoff at the top of `DEVLO
 
 GitHub checks this policy through `.github/workflows/handoff-policy.yml`. A `development` commit or pull request into `main` fails the **AI handoff policy** check when project files change without a `DEVLOG.md` update. A manual-dispatch fallback accepts the exact base SHA so AI-authenticated pushes whose events GitHub suppresses can still verify the same commit range. After this workflow is explicitly promoted to `main`, the check is added to the `main` ruleset as required; it is not activated prematurely because GitHub cannot run a pull-request workflow from the base branch until the workflow exists there.
 
+The general rule is repository-independent AI conflict resolution. [`templates/ai-conflict-resolution.md`](templates/ai-conflict-resolution.md) requires every AI to freeze a contested mutation, preserve both sides, update the shared handoff, and obtain an explicit owner decision instead of silently choosing or broadening its authority. `npm run audit:ai-conflict` provides a structured stop/go check: unresolved conflicts can be reported, but contested mutations fail.
+
+Required workflow checks are one concrete application. Start with [`templates/required-check-rollout.md`](templates/required-check-rollout.md): development checks may report immediately, but required-check activation is a separate, explicitly authorized phase. `npm run audit:required-check` refuses activation unless promotion is confirmed and the workflow file is verifiably present on `origin/<default-branch>`. Passing the preflight does not modify branch protection; it only establishes that a separately authorized human or tool can safely do so without creating an impossible required check.
+
 For private projects, this repository's **Settings → Actions → General → Access** setting must permit reusable-workflow access from other repositories owned by the same account or organization.
 
 ### Why `agent-boundaries.md` exists

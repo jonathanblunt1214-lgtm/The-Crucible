@@ -2,12 +2,12 @@
 
 ## Shared AI handoff
 
-- **Agent:** Codex, continuing the shared multi-agent work after Claude's `2b7b9c9`.
-- **Current plan:** Enforce the always-current DEVLOG handoff as a GitHub project check without weakening the rule that `main` is changed only by explicit owner promotion.
-- **Current development work:** Added the `AI handoff policy` workflow and a shell-free range checker. Every `development` commit and future PR into `main` must include `DEVLOG.md`; the check is designed to become required on `main` after the workflow itself is explicitly promoted there. Added a manual-dispatch fallback with a required exact base SHA because GitHub suppresses workflow events from some AI-authenticated pushes.
-- **Files changed:** `.github/workflows/handoff-policy.yml`, `src/handoffPolicy.js`, `test/handoffPolicy.test.js`, `test/workflow.test.js`, `package.json`, `AGENTS.md`, `DEVLOG.md`, and `README.md`.
-- **Verification:** The preceding all-agent rule commit `d466f7e` passed all 144 local tests, documentation validation, GitHub Self-Test, and CodeQL. The new enforcement code and full suite will be tested before push.
-- **Remaining work:** Validate and push the manual fallback, verify the new GitHub check plus Self-Test and CodeQL, and add `AI handoff policy` to the active `main` ruleset only after an explicit promotion places this workflow on `main`.
+- **Agent:** Codex, continuing the safe-enforcement-boundary work.
+- **Current plan:** Add repository-independent AI conflict resolution, with the report-first, promote-explicitly, enforce-last sequence as one concrete application.
+- **Current development work:** Added a general AI conflict stop/go check and reusable policy: freeze contested mutations, preserve both sides in the shared handoff, and require explicit owner resolution. Added a shell-free required-check preflight and rollout template. Report mode is allowed on development; activation fails unless explicit promotion is recorded and the workflow exists on the remote-tracking default branch. No protected/default branch or repository setting is modified.
+- **Files changed:** `src/aiConflictResolution.js`, `src/requiredCheckBoundary.js`, `test/aiConflictResolution.test.js`, `test/requiredCheckBoundary.test.js`, `templates/ai-conflict-resolution.md`, `templates/required-check-rollout.md`, `templates/agent-boundaries.md`, `package.json`, `AGENTS.md`, `DEVLOG.md`, and `README.md`.
+- **Verification:** All 159 local tests pass, including 10 new conflict-resolution and required-check-boundary tests. `npm run docs:check` passes, and the focused policy/workflow suite passes 26/26.
+- **Remaining work:** Commit and push only to `development`; verify the AI handoff policy, Self-Test, and CodeQL for that exact commit. Default-branch promotion and any required-check activation remain separate owner decisions.
 
 Every AI agent must keep the current plan and status in this section accurate automatically and refresh it in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
 
