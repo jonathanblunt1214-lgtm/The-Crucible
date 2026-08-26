@@ -79,7 +79,9 @@ test('connect workflow is a one-time, human-triggered, bounded governance-file w
   assert.match(workflow, /persist-credentials: false/);
   assert.match(workflow, /THE-CRUCIBLE-DESIGN-BRIEF\.md/);
   assert.match(workflow, /AI-CONFLICTS\.json/);
+  assert.match(workflow, /AI-HANDOFF\.json/);
   assert.match(workflow, /ai-conflict-governance\.yml/);
+  assert.match(workflow, /ai-handoff-policy\.yml/);
   assert.match(workflow, /templates\/the-crucible-design-brief\.md/);
   assert.match(workflow, /git status --porcelain/);
   assert.match(workflow, /Refusing to commit/);
@@ -155,6 +157,7 @@ test('GitHub checks every development change and main PR for a current DEVLOG ha
   assert.match(workflow, /HANDOFF_BASE_SHA:/);
   assert.match(workflow, /HANDOFF_HEAD_SHA:/);
   assert.match(workflow, /npm run audit:handoff/);
+  assert.match(workflow, /takeover-ready AI development plan/);
 });
 
 test('AI conflict governance is unavoidable in the reusable workflow and monitored near real time', () => {

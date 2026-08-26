@@ -43,7 +43,7 @@
   },
   "codeCheck": {
     "commands": [
-      { "name": "Affected Node tests", "run": "npm", "args": ["test"], "include": ["src/**", "test/**", "package.json", ".thecrucible.json", ".thecrucible.schema.json", "AI-CONFLICTS.json"], "failureAction": "test failure" }
+      { "name": "Affected Node tests", "run": "npm", "args": ["test"], "include": ["src/**", "test/**", "package.json", ".thecrucible.json", ".thecrucible.schema.json", "AI-CONFLICTS.json", "AI-HANDOFF.json"], "failureAction": "test failure" }
     ]
   },
   "governance": { "requireExceptionMetadata": true, "failOnDisabledSecurity": true },

@@ -23,6 +23,7 @@ session.
 
 - Resolve every conflict between agents, instructions, plans, concurrent work, or claimed authority with `templates/ai-conflict-resolution.md`. Freeze the contested mutation, preserve both sides in the Shared AI handoff, and obtain an explicit owner decision; never silently pick a side.
 - Record every detected conflict immediately in `AI-CONFLICTS.json`. Never delete, bypass, disable, or exclude the ledger, its governance audit, or `.github/workflows/ai-conflict-governance.yml`.
+- Before implementation, the starting AI must publish its takeover-ready development plan in `AI-HANDOFF.json`. Every project commit must update both that structured plan and `DEVLOG.md`; never bypass or weaken the **AI handoff policy** check.
 - For every new required workflow check, follow `templates/required-check-rollout.md`. Reporting on `development` is allowed, but never activate the check in branch protection or a ruleset until the workflow has been explicitly promoted to the default branch and `npm run audit:required-check` passes. Do not treat a report-mode pass as promotion or authorization.
 
 - **`development` is the only branch you develop on or push to**, unless the

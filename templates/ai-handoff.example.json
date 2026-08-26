@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "activePlan": {
+    "agent": "unassigned",
+    "objective": "Adopt The Crucible and publish the first repository development plan.",
+    "steps": [
+      "Assign the starting AI agent.",
+      "Replace this plan before making project changes."
+    ],
+    "status": "handoff-ready",
+    "startedAt": "1970-01-01T00:00:00Z",
+    "lastUpdatedAt": "1970-01-01T00:00:00Z"
+  },
+  "handoffNotes": {
+    "completed": [],
+    "verification": [],
+    "remaining": [
+      "Starting AI must replace this placeholder with its real plan."
+    ]
+  }
+}

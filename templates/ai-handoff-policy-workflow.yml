@@ -8,9 +8,7 @@ on:
         required: true
         type: string
   push:
-    branches: [development]
   pull_request:
-    branches: [main]
 
 permissions:
   contents: read
@@ -19,12 +17,21 @@ jobs:
   handoff:
     name: AI handoff policy
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Check out this repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
           fetch-depth: 0
+      - name: Check out the pinned Crucible engine
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: jonathanblunt1214-lgtm/The-Crucible
+          ref: REPLACE_WITH_EXACT_COMMIT_SHA
+          path: .the-crucible-runtime
+          persist-credentials: false
       - name: Require a current takeover-ready AI development plan
         env:
           HANDOFF_BASE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.base_sha || github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           HANDOFF_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
-        run: npm run audit:handoff
+        run: node .the-crucible-runtime/src/handoffPolicy.js

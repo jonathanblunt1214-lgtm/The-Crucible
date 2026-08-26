@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "activePlan": {
+    "agent": "Codex",
+    "objective": "Require every starting AI to publish a takeover-ready development plan through the AI handoff policy.",
+    "steps": [
+      "Define and validate a structured AI development plan.",
+      "Require both DEVLOG.md and AI-HANDOFF.json on every project change.",
+      "Install the plan template in adopting repositories.",
+      "Verify locally and through GitHub status checks on development."
+    ],
+    "status": "handoff-ready",
+    "startedAt": "2026-08-26T15:30:00-04:00",
+    "lastUpdatedAt": "2026-08-26T15:42:00-04:00"
+  },
+  "handoffNotes": {
+    "completed": [
+      "Defined and validated the structured development plan schema.",
+      "Required both handoff surfaces on every project change.",
+      "Added adopter plan and workflow installation templates."
+    ],
+    "verification": [
+      "Full local suite passes 167/167.",
+      "Documentation, workflow lint, clutter, governance, and Security Gate pass.",
+      "The exact staged snapshot passes pre-check across 14 changed paths and Security Gate across 87 tracked files."
+    ],
+    "remaining": [
+      "Commit, push, and verify the implementation on development.",
+      "Do not promote or require the check on the default branch without separate owner authorization."
+    ]
+  }
+}

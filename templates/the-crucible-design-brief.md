@@ -2,6 +2,8 @@
 
 `AI-CONFLICTS.json` is a permanent governance input installed alongside this brief. Never delete, bypass, or exclude it from The Crucible. Record every detected AI conflict there immediately; unresolved conflicts intentionally fail governance and the dedicated **AI conflict governance** GitHub status check.
 
+`AI-HANDOFF.json` is the permanent takeover-ready development plan. The starting AI replaces its placeholder before implementation and updates it with the human-readable development log on every project commit. Missing or incomplete plans intentionally fail the **AI handoff policy** status check.
+
 This file was installed once, by a one-time, self-revoking workflow, as
 part of connecting this repository to The Crucible
 (`jonathanblunt1214-lgtm/The-Crucible`). It is a brief for any AI agent (or
