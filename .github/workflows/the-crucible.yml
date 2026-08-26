@@ -27,6 +27,15 @@ on:
         required: false
         default: false
         type: boolean
+    secrets:
+      security_read_token:
+        description: >-
+          Optional fine-grained PAT with read-only "Administration" repository
+          permission, used only to check Dependabot/secret-scanning settings.
+          GITHUB_TOKEN cannot be granted this access (there is no such
+          `permissions:` key), so without this secret the check reports
+          "unable to verify" rather than a false pass or a workflow error.
+        required: false
 
 permissions:
   contents: read
@@ -51,7 +60,7 @@ jobs:
           ref: ${{ inputs.core_ref }}
           path: .the-crucible-runtime
           persist-credentials: false
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
       - name: Initialize project report
@@ -63,6 +72,15 @@ jobs:
         uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5
         with:
           fail-on-severity: moderate
+      - name: Check the installed design brief hasn't been deleted
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+        run: node .the-crucible-runtime/src/cli.js design-brief
+      - name: Verify the pinned Crucible commit is reachable and passed its own Self-Test
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CRUCIBLE_CORE_REF: ${{ inputs.core_ref }}
+        run: node .the-crucible-runtime/src/cli.js core-ref
       - name: Validate .thecrucible.json
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
@@ -73,6 +91,11 @@ jobs:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
           CRUCIBLE_CONFIG: ${{ inputs.config_path }}
         run: node .the-crucible-runtime/src/cli.js governance
+      - name: Lint GitHub Actions workflow permissions
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+          CRUCIBLE_CONFIG: ${{ inputs.config_path }}
+        run: node .the-crucible-runtime/src/cli.js workflow-lint
       - name: Pre-check changed commit and code
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
@@ -94,6 +117,13 @@ jobs:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
           CRUCIBLE_CONFIG: ${{ inputs.config_path }}
         run: node .the-crucible-runtime/src/cli.js security
+      - name: Check required GitHub repository security settings
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CRUCIBLE_SECURITY_READ_TOKEN: ${{ secrets.security_read_token }}
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+          CRUCIBLE_CONFIG: ${{ inputs.config_path }}
+        run: node .the-crucible-runtime/src/cli.js github-security
       - name: Verify evidence-backed project claims
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}

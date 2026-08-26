@@ -26,7 +26,8 @@ test('writes and appends a project-specific report only when requested', () => {
 });
 
 test('redacts common credentials from report errors', () => {
-  assert.equal(safeMessage(new Error('token ghp_abcdefghijklmnopqrstuvwxyz123456')), 'token [REDACTED]');
+  const token = ['ghp', 'abcdefghijklmnopqrstuvwxyz123456'].join('_');
+  assert.equal(safeMessage(new Error(`token ${token}`)), 'token [REDACTED]');
 });
 
 test('provides bounded action-specific remediation without claiming a guaranteed fix', () => {

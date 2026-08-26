@@ -72,6 +72,8 @@ function validateConfig(input) {
   const dependencyPolicy = isObject(security.dependencyPolicy) ? security.dependencyPolicy : {};
   const authenticity = isObject(input.authenticity) ? input.authenticity : {};
   const claims = authenticity.claims || [];
+  const githubSecurity = isObject(input.githubSecurity) ? input.githubSecurity : {};
+  assert(githubSecurity.enabled === undefined || typeof githubSecurity.enabled === 'boolean', 'githubSecurity.enabled must be a boolean.');
   const codeCheck = isObject(input.codeCheck) ? input.codeCheck : {};
   const codeCommands = codeCheck.commands || [];
   const reproducibility = isObject(input.reproducibility) ? input.reproducibility : {};
@@ -111,6 +113,7 @@ function validateConfig(input) {
       dependencyPolicy:{ enabled:Boolean(dependencyPolicy.enabled), denyGit:dependencyPolicy.denyGit !== false, denyHttp:dependencyPolicy.denyHttp !== false, denyLocal:Boolean(dependencyPolicy.denyLocal), allowedRegistryHosts:dependencyPolicy.allowedRegistryHosts || [], denyLicenses:dependencyPolicy.denyLicenses || [] },
     },
     authenticity:{ claims:claims.map((item, index) => validateCommand(item, 'authenticity.claims', index)), requireArtifacts:Boolean(authenticity.requireArtifacts) },
+    githubSecurity:{ enabled:githubSecurity.enabled !== false },
     codeCheck:{ commands:validatedCodeCommands },
     governance:{ requireExceptionMetadata:Boolean(input.governance?.requireExceptionMetadata), failOnDisabledSecurity:input.governance?.failOnDisabledSecurity !== false },
     reproducibility:{ enabled:Boolean(reproducibility.enabled), commands:reproductionCommands.map((item, index) => validateCommand(item, 'reproducibility.commands', index)), artifacts:reproductionArtifacts },

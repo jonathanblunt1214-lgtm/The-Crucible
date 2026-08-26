@@ -1,6 +1,8 @@
 const fs = require('node:fs');
+const { assertWellFormedApiUrl, assertSafeRepository } = require('./apiGuard');
 
 async function githubJson(url, token, fetchImpl) {
+  assertWellFormedApiUrl(url);
   const response = await fetchImpl(url, { headers:{ Accept:'application/vnd.github+json', Authorization:`Bearer ${token}`, 'X-GitHub-Api-Version':'2022-11-28' } });
   if (!response.ok) throw new Error(`GitHub collision query failed with HTTP ${response.status}.`);
   return response.json();
@@ -32,6 +34,7 @@ async function auditCollisions(environment = process.env, fetchImpl = globalThis
   const token = environment.GITHUB_TOKEN;
   const eventPath = environment.GITHUB_EVENT_PATH;
   if (!repository || !token || !eventPath || !fs.existsSync(eventPath)) return { skipped:true, findings:[] };
+  assertSafeRepository(repository);
   const event = JSON.parse(fs.readFileSync(eventPath, 'utf8'));
   const current = event.pull_request?.number;
   if (!current) return { skipped:true, findings:[] };

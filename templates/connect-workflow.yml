@@ -1,0 +1,57 @@
+# Run this workflow exactly once, by hand, right after you adopt The
+# Crucible - then delete THIS WORKFLOW FILE from your repository
+# immediately afterward. It is the only place `contents: write` appears
+# anywhere in The Crucible's design, and it is scoped to a single, narrow
+# purpose: writing `THE-CRUCIBLE-DESIGN-BRIEF.md` into this repository,
+# once. It never touches The Crucible's own repository (that checkout
+# stays read-only, exactly like the caller workflow's), and it never
+# writes anything else.
+#
+# Severing means deleting THIS FILE ONLY. Do not delete or revert the
+# THE-CRUCIBLE-DESIGN-BRIEF.md commit it produced - that file is meant to
+# stay in this repository permanently. Once this workflow file is gone,
+# the write capability it granted is gone with it; nothing about the file
+# it already wrote is undone.
+name: Connect The Crucible (run once, then delete this file)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install-design-brief:
+    name: Install THE-CRUCIBLE-DESIGN-BRIEF.md
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Check out the pinned Crucible engine (read-only)
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: jonathanblunt1214-lgtm/The-Crucible
+          ref: REPLACE_WITH_EXACT_COMMIT_SHA
+          path: .the-crucible-runtime
+          persist-credentials: false
+      - name: Write only THE-CRUCIBLE-DESIGN-BRIEF.md, refuse to commit anything else
+        run: |
+          set -euo pipefail
+          cp .the-crucible-runtime/templates/the-crucible-design-brief.md THE-CRUCIBLE-DESIGN-BRIEF.md
+          rm -rf .the-crucible-runtime
+          changed="$(git status --porcelain)"
+          count="$(printf '%s\n' "$changed" | grep -c . || true)"
+          path="$(printf '%s\n' "$changed" | head -n1 | cut -c4-)"
+          if [ "$count" -ne 1 ] || [ "$path" != "THE-CRUCIBLE-DESIGN-BRIEF.md" ]; then
+            echo "Refusing to commit: expected exactly one changed file, THE-CRUCIBLE-DESIGN-BRIEF.md. Found:" >&2
+            printf '%s\n' "$changed" >&2
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add THE-CRUCIBLE-DESIGN-BRIEF.md
+          git commit -m "Install THE-CRUCIBLE-DESIGN-BRIEF.md from The Crucible"
+          git push
+      - name: Reminder
+        run: echo "THE-CRUCIBLE-DESIGN-BRIEF.md is committed and stays. Now delete .github/workflows/connect-the-crucible.yml (this workflow file only) to remove the write capability it granted."

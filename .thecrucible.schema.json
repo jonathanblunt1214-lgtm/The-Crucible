@@ -97,6 +97,13 @@
         "artifacts": { "type": "array", "maxItems": 50, "items": { "type": "string", "minLength": 1, "maxLength": 240 } }
       }
     },
+    "githubSecurity": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "enabled": { "type": "boolean" }
+      }
+    },
     "codeCheck": {
       "type": "object",
       "additionalProperties": false,
