@@ -92,7 +92,7 @@ This requirement applies to two repositories on every run:
 - The calling project's own repository (`GITHUB_REPOSITORY`).
 - The linked Crucible engine repository, `jonathanblunt1214-lgtm/The-Crucible`, that every caller pins and checks out into `.the-crucible-runtime`. A project that trusts this engine to gate its code should also be able to trust that this engine's own repository keeps the same protections turned on.
 
-The gate reads settings through the GitHub REST API using the workflow's own token; it never modifies them. It requires the `administration: read` permission, which the reusable workflow and the caller template both request. Outside a GitHub Actions context (no `GITHUB_TOKEN`/`GITHUB_REPOSITORY`, for example running `node src/cli.js` locally) it skips safely rather than blocking local development. A repository whose settings cannot be read (for example, insufficient permissions) is reported as unverified rather than assumed safe, and blocks the run the same as a confirmed-disabled setting. Set `githubSecurity.enabled` to `false` to explicitly opt a project out.
+The gate reads settings through the GitHub REST API using the workflow's own token; it never modifies them. **The calling (linking) repository's workflow must grant the `administration: read` permission** for its own repository to be checked — `templates/caller-workflow.yml` already requests it, so a project that copies the template unmodified satisfies this automatically. Without it, GitHub silently omits the security settings from its API response (it does not return an error), so The Crucible reports that repository as unverified rather than guessing or assuming it is safe, and blocks the run exactly as it would for a confirmed-disabled setting. The same applies to the linked engine repository check: it succeeds here because this engine repository is checking itself, but a caller cannot use its own token to read admin settings on an unrelated third-party repository, so that side of the check depends on the engine repository keeping its own protections on and being self-verified in its own CI. Outside a GitHub Actions context (no `GITHUB_TOKEN`/`GITHUB_REPOSITORY`, for example running `node src/cli.js` locally) the gate skips safely rather than blocking local development. Set `githubSecurity.enabled` to `false` to explicitly opt a project out.
 
 ### Collision protection
 
@@ -126,7 +126,7 @@ There is no runtime dependency in the application being tested. The engine exist
 
 1. Copy `templates/thecrucible.example.json` to the project root as `.thecrucible.json`.
 2. Replace its example commands and artifact paths with real project values.
-3. Copy `templates/caller-workflow.yml` to `.github/workflows/the-crucible.yml`.
+3. Copy `templates/caller-workflow.yml` to `.github/workflows/the-crucible.yml`. Keep its `permissions:` block intact, including `administration: read` — the GitHub repository security settings gate requires it to read your repository's settings, and without it the gate cannot tell the difference between "disabled" and "not permitted to check", so it fails either way.
 4. Replace both `REPLACE_WITH_EXACT_COMMIT_SHA` values with the same tested commit SHA from this repository.
 5. Commit and push both files.
 6. In the project repository's branch protection or ruleset, require the check named **The Crucible**.

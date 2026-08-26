@@ -32,7 +32,7 @@ async function securityGate(root, config) {
 
 async function githubSecurityGate(config) {
   const result = await auditGithubRepositorySecurity(config);
-  if (result.findings.length) throw new Error(`Required GitHub repository security settings are not satisfied:\n${result.findings.map((item) => `- ${item.repository}: ${item.type}${item.detail ? ` (${item.detail})` : ''}`).join('\n')}\nEnable Dependabot alerts, Dependabot security updates, secret scanning, and push protection for each listed repository's Settings -> Code security and analysis page.`);
+  if (result.findings.length) throw new Error(`Required GitHub repository security settings are not satisfied:\n${result.findings.map((item) => `- ${item.repository}: ${item.type}${item.detail ? ` (${item.detail})` : ''}`).join('\n')}\nEnable Dependabot alerts, Dependabot security updates, secret scanning, and push protection for each listed repository's Settings -> Code security and analysis page. The calling workflow must also grant the "administration: read" permission (see templates/caller-workflow.yml) so this gate can read those settings.`);
   return result;
 }
 
