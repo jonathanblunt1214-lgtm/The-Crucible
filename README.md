@@ -8,33 +8,47 @@ The Crucible is a repository-independent GitHub Actions quality gate. A project 
 
 The caller workflow checks out the project commit that triggered the run, checks out an exact pinned commit of this repository into `.the-crucible-runtime`, and runs with read-only contents, read-only pull-request access, and issue-write permission limited to surfacing a failed run. That checkout uses `persist-credentials: false` and lives only inside that one ephemeral runner: the project has no standing access to this repository, only a one-shot, read-only checkout for the duration of a single check, severed the moment the runner is destroyed. No project that adopts The Crucible can change anything in this repository, during a run or after one.
 
-The engine then:
+The reusable workflow runs the following named steps, in this exact order:
 
-1. Confirms `THE-CRUCIBLE-DESIGN-BRIEF.md`, if it was ever installed via `connect-workflow.yml`, has not since been deleted - fails immediately, before anything else, if it has (see "Severing: what happens if the installed design brief is deleted" below).
-2. Confirms the pinned `core_ref` commit exists, is reachable from The Crucible's `main` branch, and has a passing Self-Test recorded for it - see "Pinned commit integrity" below.
-3. Loads `.thecrucible.json` from the project.
-4. Rejects malformed configuration, unsupported schema versions, absolute paths, parent-directory traversal, unbounded workload values, and executable paths embedded in configuration.
-5. Audits every Git-tracked project file for clutter.
-6. Audits staged tracked text for personal identifiers, credentials, and private keys.
-7. Runs the Security Gate against the staged Git snapshot before any project preparation or heavy workload begins.
-8. Checks that Dependabot alerts, Dependabot security updates, secret scanning, and secret scanning push protection are enabled on both the calling project's repository and the linked Crucible engine repository.
-9. On pull requests, reports files that overlap another open pull request before workload execution.
-10. Pre-checks the exact staged snapshot locally (or commit SHA in CI), then parses changed JSON/JavaScript and runs only configured checks whose path patterns match changed files.
+1. Initializes the run's JSON report (`report-init`; see "Saved reports" below).
+2. On a pull request, if the caller sets `dependency_review: true`, runs GitHub's pinned dependency-review action against the PR's dependency changes.
+3. Confirms `THE-CRUCIBLE-DESIGN-BRIEF.md`, if it was ever installed via `connect-workflow.yml`, has not since been deleted - fails immediately, before anything else, if it has (see "Severing: what happens if the installed design brief is deleted" below).
+4. Confirms the pinned `core_ref` commit exists, is reachable from The Crucible's `main` branch, and has a passing Self-Test recorded for it - see "Pinned commit integrity" below.
+5. Re-scans the checked-out Crucible engine code itself (`.the-crucible-runtime`) with the Security Gate, so every run gets a fresh, independent scan of the exact engine bytes it is about to execute, not just a historical Self-Test check-run status.
+6. Loads `.thecrucible.json` from the project and rejects malformed configuration, unsupported schema versions, absolute paths, parent-directory traversal, unbounded workload values, and executable paths embedded in configuration.
+7. Enforces configuration and exception governance - see `governance.requireExceptionMetadata` and `governance.failOnDisabledSecurity` under "Advanced read-only hardening" below.
+8. Lints every GitHub Actions workflow file's `permissions:` block for a key that isn't a real `GITHUB_TOKEN` permission (see "Fixing a failing GitHub repository security settings gate" for why an invalid key is worse than a missing one).
+9. Pre-checks the exact staged snapshot locally (or commit SHA in CI), then parses changed JSON/JavaScript and runs only configured checks whose path patterns match changed files - see "Language-aware pre-check report" below.
+10. Audits every Git-tracked project file for clutter.
+11. Audits staged tracked text for personal identifiers, credentials, and private keys.
+12. Runs the Security Gate against the project's own staged Git snapshot.
+13. Checks that Dependabot alerts, Dependabot security updates, secret scanning, and secret scanning push protection are enabled on both the calling project's repository and the linked Crucible engine repository.
+14. Runs the Authenticity Gate's configured evidence commands.
+15. On pull requests, reports files that overlap another open pull request.
+16. Runs the configured prepare/verify workload - see "Workload execution" below. This step re-runs steps 3, 4, and 6-14 a second time internally before starting the workload; every one of those gates is read-only and idempotent, so this repeats work without changing the result.
+17. Only when the caller sets `weekly_maintenance: true` (the weekly schedule), performs Git integrity verification and safe repacking.
+18. If any earlier step failed, creates or updates a single tracking issue in the scanned repository (see "Saved reports" below); regardless of outcome, saves the JSON report as a downloadable workflow artifact.
 
 ## Language-aware pre-check report
 
 `npm run precheck` combines the Commit Gate with changed-file code checks. Built-in parsing reads the staged or committed snapshot, not an unrelated working copy. Projects can add `codeCheck.commands` with `include` path patterns; `{files}` in an argument expands to only the matching changed paths. Commands without `{files}` run once when a matching file changes, which is useful for an affected package's test suite.
 
 Every required action in this report uses exactly one class: `safe auto-fix`, `test failure`, `security concern`, or `human code review required`. Those are headings, followed by an exact machine-readable error code such as `CRUCIBLE_COMMIT_TRAILING_WHITESPACE`, `CRUCIBLE_PARSE_JSON_SYNTAX`, or `CRUCIBLE_TEST_FAILURE_EXIT_1`. Command failures preserve the real process exit code. In GitHub Actions, the same report is appended to the run's latest job summary through `GITHUB_STEP_SUMMARY`, alongside the existing checks. Safe auto-fixes keep the existing review-and-restage flow through `npm run fix:commit`; the pre-check never silently rewrites application code. Parser failures and checks without a deterministic repair require human review. Configure test, security, and review commands with the corresponding `failureAction` value.
-7. Runs each configured `security.dependencyAudit` command directly, without a shell.
-8. Runs each `commands.prepare` entry once, in order.
-9. Starts the configured number of workers concurrently.
-10. Each worker runs every `commands.verify` entry, in order, for the configured number of cycles.
-11. Terminates a command when it exceeds `workload.timeoutMinutes`.
-12. Fails if a command cannot start or exits with a nonzero status.
-13. Confirms every configured artifact exists after the workload.
-14. Scans configured generated text artifacts for credential exposure.
-15. Reports one passing or failing check named **The Crucible**.
+
+### Workload execution
+
+Once every gate above has passed, `runCrucible` executes the project's configured workload:
+
+1. Runs each configured `security.dependencyAudit` command directly, without a shell.
+2. Runs each configured `security.provenanceAudit` command directly, without a shell (see "Advanced read-only hardening" below).
+3. Runs each `commands.prepare` entry once, in order.
+4. Starts the configured number of workers concurrently.
+5. Each worker runs every `commands.verify` entry, in order, for the configured number of cycles.
+6. Terminates a command when it exceeds `workload.timeoutMinutes`.
+7. Fails if a command cannot start or exits with a nonzero status.
+8. Confirms every configured artifact exists after the workload.
+9. Scans configured generated text artifacts for credential exposure.
+10. Reports one passing or failing check named **The Crucible**.
 
 Commands are launched directly with an executable and argument array. They are not concatenated into a shell command. This prevents configuration values from being interpreted as shell operators. Each configured working directory must remain inside the project repository.
 
