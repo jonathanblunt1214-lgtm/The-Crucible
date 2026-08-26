@@ -5,6 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { ENGINE_PROJECT_ID, ENGINE_GITHUB_IDENTITY, repairInternalChecks } = require('../src/repair');
+const { ENGINE_REPOSITORY } = require('../src/githubRepoSecurity');
 
 function git(root, args) { return execFileSync('git', args, { cwd:root, encoding:'utf8', windowsHide:true }); }
 function repository() {
@@ -30,6 +31,27 @@ test('refuses to run against a project that is not this engine repository', () =
 test('refuses to run even if only the GitHub identity fails to match', () => {
   const root = repository();
   assert.throws(() => repairInternalChecks(root, config({ privacy: { githubIdentity: 'someone-else', scanContactInformation: true, allow: [] } })), /only runs against The Crucible engine's own repository/);
+});
+
+test('refuses to run when GITHUB_REPOSITORY names a different repository, even with a matching config file', () => {
+  const root = repository();
+  assert.throws(
+    () => repairInternalChecks(root, config(), { ref: '--cached', environment: { GITHUB_REPOSITORY: 'someone-else/a-fork-with-a-copied-config' } }),
+    /only runs against The Crucible engine's own repository/,
+  );
+});
+
+test('runs when GITHUB_REPOSITORY matches the engine repository or is unset (local development)', () => {
+  const root = repository();
+  fs.writeFileSync(path.join(root, 'app.js'), 'const value = 1;   \n');
+  git(root, ['add', 'app.js']);
+  const inCi = repairInternalChecks(root, config(), { ref: '--cached', environment: { GITHUB_REPOSITORY: ENGINE_REPOSITORY } });
+  assert.deepEqual(inCi.changed, ['app.js']);
+  const root2 = repository();
+  fs.writeFileSync(path.join(root2, 'app2.js'), 'const value = 1;   \n');
+  git(root2, ['add', 'app2.js']);
+  const local = repairInternalChecks(root2, config(), { ref: '--cached', environment: {} });
+  assert.deepEqual(local.changed, ['app2.js']);
 });
 
 test('fixes trailing whitespace and personal identifiers in the working copy without staging or committing', () => {

@@ -2,19 +2,28 @@ const fs = require('node:fs');
 const { fixCommit } = require('./commit');
 const { scrubPrivacy } = require('./privacy');
 const { fixWorkflowPermissions } = require('./workflowLint');
+const { ENGINE_REPOSITORY } = require('./githubRepoSecurity');
 
 // This module exists only to keep The Crucible's own repository green. It
-// must never be reachable for a project that adopts The Crucible: the guard
-// below checks two independent, unrelated config fields so a coincidental
-// projectId match alone can never satisfy it.
+// must never be reachable for a project that adopts The Crucible. The first
+// two checks below rely on .thecrucible.json content alone, which someone
+// could in principle copy into a different repository - so a third,
+// independent check against the actual repository identity (GITHUB_REPOSITORY,
+// set automatically by GitHub Actions, not read from any file this module
+// controls) closes that gap. All three must agree; a coincidental match on
+// any one or two of them alone can never satisfy this guard.
 const ENGINE_PROJECT_ID = 'the-crucible';
 const ENGINE_GITHUB_IDENTITY = 'jonathanblunt1214-lgtm';
 
-function assertInternalProject(config) {
+function assertInternalProject(config, environment = process.env) {
   const matchesProject = config.project.projectId === ENGINE_PROJECT_ID;
   const matchesIdentity = config.privacy.githubIdentity === ENGINE_GITHUB_IDENTITY;
-  if (!matchesProject || !matchesIdentity) {
-    throw new Error(`The internal repair system only runs against The Crucible engine's own repository (project.projectId "${ENGINE_PROJECT_ID}" and privacy.githubIdentity "${ENGINE_GITHUB_IDENTITY}"). It never modifies a project that adopts The Crucible, even when this code is run locally against another checkout.`);
+  // GITHUB_REPOSITORY is unset for local development (npm run repair on a
+  // maintainer's own machine), which this guard must keep allowing - it is
+  // only enforced when running in a context (CI) where it is actually set.
+  const matchesRepository = !environment.GITHUB_REPOSITORY || environment.GITHUB_REPOSITORY === ENGINE_REPOSITORY;
+  if (!matchesProject || !matchesIdentity || !matchesRepository) {
+    throw new Error(`The internal repair system only runs against The Crucible engine's own repository (project.projectId "${ENGINE_PROJECT_ID}", privacy.githubIdentity "${ENGINE_GITHUB_IDENTITY}", and, when running in CI, GITHUB_REPOSITORY "${ENGINE_REPOSITORY}"). It never modifies a project that adopts The Crucible, even when this code is run locally against another checkout or a copied .thecrucible.json.`);
   }
 }
 
@@ -25,7 +34,7 @@ function assertInternalProject(config) {
 // it never stages, commits, or pushes, and it cannot repair logic bugs,
 // failing tests, or anything requiring human judgment.
 function repairInternalChecks(root, config, options = {}) {
-  assertInternalProject(config);
+  assertInternalProject(config, options.environment || process.env);
   const ref = options.ref || '--cached';
   const privacy = scrubPrivacy(root, config);
   const workflows = fixWorkflowPermissions(root, ['templates']);

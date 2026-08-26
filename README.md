@@ -73,7 +73,7 @@ The built-in scan fails on high-confidence indicators of:
 
 - Encoded PowerShell execution and download-and-execute command chains.
 - Common reverse-shell payloads and dynamic execution of base64 or URI-decoded code.
-- Credential-store theft combinations, keylogging combined with transmission, and covert screenshot or clipboard exfiltration behavior.
+- Credential-store theft combinations, and spyware-shaped behavior: keylogging APIs (including raw-input and low-level event-tap capture), screenshot capture, clipboard reads, and unauthorized microphone/camera access, each combined with a network transmission call.
 - Recognized AWS, Slack, npm, and Stripe live credentials. GitHub credentials and private keys remain covered by the privacy gate.
 - Tracked Windows PE, ELF, and Mach-O executables, plus suspicious executable/library extensions, unless the exact intentional paths are allowlisted.
 
@@ -307,6 +307,6 @@ node src/cli.js repair
 
 It applies no fix that isn't already available individually through `npm run scrub:privacy` / `npm run fix:commit`. Like both of those, it only ever writes to the working copy: it never stages, commits, or pushes, so you still review the diff and commit it yourself. It cannot fix a failing test, a logic bug, or anything that needs judgment — those stay "human code review required" by design, same as everywhere else in The Crucible.
 
-Two independent safeguards keep this from ever touching a project that adopts The Crucible, even if this code were copied elsewhere: it refuses to run unless `.thecrucible.json` has both `project.projectId` set to `the-crucible` *and* `privacy.githubIdentity` set to this repository's own maintainer identity. Neither value is something an adopting project would plausibly have, and it takes both, not either, to pass.
+Three independent safeguards keep this from ever touching a project that adopts The Crucible, even if this code were copied elsewhere: it refuses to run unless `.thecrucible.json` has both `project.projectId` set to `the-crucible` *and* `privacy.githubIdentity` set to this repository's own maintainer identity, *and* — when running in CI, where it is set automatically and can't be edited via any file this module reads — `GITHUB_REPOSITORY` names this exact repository. The first two rely on `.thecrucible.json` content alone, which someone could in principle copy into a different repository; the third closes that gap, since it comes from the actual repository identity, not a file. It takes all three, not any one or two, to pass.
 
 The Crucible Self-Test workflow also runs `npm run repair` as a diagnostic step whenever an earlier check fails. It cannot commit or push from GitHub Actions (the same limitation the privacy scrubber has in CI), so it exists only to tell you, from the job summary, whether the failure was one `npm run repair` would have caught locally before you push a real fix.

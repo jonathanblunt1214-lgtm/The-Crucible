@@ -65,6 +65,10 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           CRUCIBLE_CORE_REF: ${{ inputs.core_ref }}
         run: node .the-crucible-runtime/src/cli.js core-ref
+      - name: Scan the checked-out Crucible engine code for malicious patterns
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}/.the-crucible-runtime
+        run: node .the-crucible-runtime/src/cli.js security
       - name: Validate .thecrucible.json
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
