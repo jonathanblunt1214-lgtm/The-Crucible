@@ -134,7 +134,8 @@ test('a dedicated check blocks only PR #7, the permanent do-not-merge CI-monitor
   assert.match(workflow, /must never be merged/i);
   assert.match(workflow, /Not PR #7 - nothing to block/);
   const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
-  assert.match(agents, /never merged, under any circumstances/i);
+  assert.match(agents, /never merged or closed, under any circumstances/i);
+  assert.match(agents, /no technical backstop/i);
   assert.match(agents, /block-pr-7\.yml/);
   assert.match(agents, /required status check on\s*\n\s*`main`/);
 });

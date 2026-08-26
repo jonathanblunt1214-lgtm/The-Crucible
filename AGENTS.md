@@ -31,14 +31,18 @@ repository owner, not as an exception.
 - **Never rename files, branches, or repositories** unless the owner
   explicitly asks for it.
 - **[PR #7](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/7)
-  is never merged, under any circumstances.** It is a permanent draft
-  `development` -> `main` pull request that exists solely as a live
+  is never merged or closed, under any circumstances.** It is a permanent
+  draft `development` -> `main` pull request that exists solely as a live
   event hook for CI monitoring (see "Automatic CI monitoring" below) - not
-  a normal pull request awaiting review. Never merge it, never mark it
-  ready for review with intent to merge it, and never close-and-reopen or
-  recreate it as a way around this. If it ever needs to not exist, that is
-  the owner's explicit call to make, not something inferred from its
-  mergeable state going green.
+  a normal pull request awaiting review. Never merge it, never close it -
+  for any reason, including "cleanup," "this looks stale," or "its purpose
+  is done" - never mark it ready for review with intent to merge it, and
+  never close-and-reopen or recreate it as a way around any of this. GitHub
+  has no setting that can technically stop a close, unlike a merge (see
+  below); this rule has no technical backstop, so treat it as absolute.
+  If it ever needs to not exist, that is the owner's explicit call to make
+  in that exact conversation, not something inferred from its mergeable
+  state, its age, or anything else about its current condition.
   - This is backed by a real, GitHub-enforced check, not just this
     document: `.github/workflows/block-pr-7.yml` fails specifically and
     only for PR #7, succeeding instantly for every other pull request.
