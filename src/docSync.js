@@ -38,6 +38,14 @@ function currentBlock(readmeText) {
   return readmeText.slice(start, end + MARKER_END.length);
 }
 
+// Windows runners check out text files with CRLF line endings, while this
+// module always generates LF. Compare (and decide whether a rewrite is
+// needed) after normalizing both sides, so a real content difference is the
+// only thing that ever fails the check - not which OS checked the repo out.
+function normalizeNewlines(text) {
+  return text.replace(/\r\n/g, '\n');
+}
+
 function auditDocSync(root) {
   const readmeText = fs.readFileSync(path.join(root, README_PATH), 'utf8');
   const existing = currentBlock(readmeText);
@@ -45,7 +53,7 @@ function auditDocSync(root) {
     return { inSync: false, findings: [{ type: 'README.md is missing the generated workflow-steps markers', detail: `Expected "${MARKER_START}" and "${MARKER_END}".` }] };
   }
   const expected = generatedBlock(root);
-  if (existing === expected) return { inSync: true, findings: [] };
+  if (normalizeNewlines(existing) === normalizeNewlines(expected)) return { inSync: true, findings: [] };
   return { inSync: false, findings: [{ type: 'README.md workflow-steps list is out of date', detail: 'The named steps in .github/workflows/the-crucible.yml no longer match the generated block in README.md.' }] };
 }
 
@@ -55,7 +63,7 @@ function syncReadme(root) {
   const existing = currentBlock(readmeText);
   if (existing === null) throw new Error(`README.md is missing the generated workflow-steps markers ("${MARKER_START}" / "${MARKER_END}"). Add them once by hand around the step list, then rerun this.`);
   const expected = generatedBlock(root);
-  if (existing === expected) return { changed: false };
+  if (normalizeNewlines(existing) === normalizeNewlines(expected)) return { changed: false };
   fs.writeFileSync(readmePath, readmeText.replace(existing, expected), 'utf8');
   return { changed: true };
 }

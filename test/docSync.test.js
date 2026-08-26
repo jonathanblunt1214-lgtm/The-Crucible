@@ -56,6 +56,26 @@ test('reports out of sync when the marker block is stale, and syncReadme fixes i
   assert.equal(generatedBlock(root), [MARKER_START, '1. One.', '2. Two.', MARKER_END].join('\n'));
 });
 
+test('CRLF line endings (as Windows checkouts produce) are not treated as drift', () => {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-docsync-'));
+  fs.mkdirSync(path.join(root, '.github', 'workflows'), { recursive: true });
+  fs.writeFileSync(path.join(root, '.github', 'workflows', 'the-crucible.yml'), [
+    'jobs:',
+    '  verify:',
+    '    steps:',
+    '      - name: One',
+    '      - name: Two',
+    '',
+  ].join('\r\n'));
+  const crlfBlock = [MARKER_START, '1. One.', '2. Two.', MARKER_END].join('\r\n');
+  fs.writeFileSync(path.join(root, 'README.md'), ['# Project', '', crlfBlock, ''].join('\r\n'));
+  assert.deepEqual(auditDocSync(root), { inSync: true, findings: [] });
+  assert.deepEqual(syncReadme(root), { changed: false });
+});
+
 test('syncReadme refuses to guess where the list belongs when markers are missing', () => {
   const fs = require('node:fs');
   const os = require('node:os');
