@@ -47,7 +47,12 @@ function writeReport({ root, config, action, status, error = null }) {
     startedAt:new Date().toISOString(),
     results:[],
   };
-  report.results.push({ action, status, timestamp:new Date().toISOString(), ...(error ? { error:safeMessage(error), suggestedFix:suggestedFix(action) } : {}) });
+  report.results.push({
+    action, status, timestamp:new Date().toISOString(),
+    ...(error ? { error:safeMessage(error), suggestedFix:suggestedFix(action) } : {}),
+    ...(error?.findings?.length ? { findings:error.findings.map((item) => ({ type:item.type, path:item.path || null, line:item.line || null })) } : {}),
+    ...(error?.quarantined?.length ? { quarantined:error.quarantined } : {}),
+  });
   report.completedAt = new Date().toISOString();
   const temporary = `${reportFile}.${process.pid}.tmp`;
   fs.writeFileSync(temporary, `${JSON.stringify(report, null, 2)}\n`, { encoding:'utf8', mode:0o600 });

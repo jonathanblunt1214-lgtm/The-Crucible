@@ -24,6 +24,7 @@ const { writeReport } = require('./report');
 const { publishFailureIssue } = require('./failureIssue');
 const { auditDocSync, syncReadme } = require('./docSync');
 const { auditMalware } = require('./malwareScan');
+const { quarantineFindings, quarantineNote } = require('./quarantine');
 
 const action = process.argv[2] || 'run';
 const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
@@ -69,13 +70,25 @@ function commitGate(root) {
 async function securityGate(root, config, snapshot = null) {
   const result = auditSecurity(root, config, snapshot);
   if (result.skipped) return result;
-  if (result.findings.length) throw new Error(`Security Gate detected suspicious content:\n${result.findings.map((item) => `- ${item.type}: ${item.path}${item.line ? `:${item.line}` : ''}`).join('\n')}`);
+  if (result.findings.length) {
+    const quarantine = quarantineFindings(root, result.findings, { snapshot });
+    const error = new Error(`Security Gate detected suspicious content:\n${result.findings.map((item) => `- ${item.type}: ${item.path}${item.line ? `:${item.line}` : ''}`).join('\n')}${quarantineNote(quarantine)}`);
+    error.findings = result.findings;
+    error.quarantined = quarantine.quarantined;
+    throw error;
+  }
   const dependencies = auditDependencyPolicy(root, config);
   if (dependencies.findings.length) throw new Error(`Dependency policy failed:\n${dependencies.findings.map((item) => `- ${item.type}: ${item.path}`).join('\n')}`);
   for (const command of config.security.dependencyAudit) await runCommand(root, command, config.workload.timeoutMinutes * 60_000);
   for (const command of config.security.provenanceAudit) await runCommand(root, command, config.workload.timeoutMinutes * 60_000, ' [provenance]');
   const malware = auditMalware(root, config, { snapshot });
-  if (malware.findings.length) throw new Error(`Malware scan detected issues:\n${malware.findings.map((item) => `- ${item.type}${item.path ? `: ${item.path}` : ''}${item.detail ? ` (${item.detail})` : ''}`).join('\n')}`);
+  if (malware.findings.length) {
+    const quarantine = quarantineFindings(root, malware.findings, { snapshot });
+    const error = new Error(`Malware scan detected issues:\n${malware.findings.map((item) => `- ${item.type}${item.path ? `: ${item.path}` : ''}${item.detail ? ` (${item.detail})` : ''}`).join('\n')}${quarantineNote(quarantine)}`);
+    error.findings = malware.findings;
+    error.quarantined = quarantine.quarantined;
+    throw error;
+  }
   return result;
 }
 
@@ -213,7 +226,13 @@ async function main() {
   await authenticityGate(root, config);
   const result = await runCrucible(root, config);
   const artifactSecurity = auditArtifactSecurity(root, config);
-  if (artifactSecurity.findings.length) throw new Error(`Generated artifact security scan failed:\n${artifactSecurity.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}`);
+  if (artifactSecurity.findings.length) {
+    const quarantine = quarantineFindings(root, artifactSecurity.findings);
+    const error = new Error(`Generated artifact security scan failed:\n${artifactSecurity.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}${quarantineNote(quarantine)}`);
+    error.findings = artifactSecurity.findings;
+    error.quarantined = quarantine.quarantined;
+    throw error;
+  }
   await verifyReproducibility(root, config);
   console.log(`[The Crucible] PASS: ${config.project.name} completed ${result.workers * result.cycles * result.commands} verification command runs with ${result.artifacts} required artifact(s).`);
 }

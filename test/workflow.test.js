@@ -25,6 +25,7 @@ test('reusable workflow is read-only and uses the exact caller-supplied core ref
   assert.match(workflow, /Create or update the Crucible failure issue[\s\S]*if: failure\(\)[\s\S]*cli\.js failure-issue/);
   assert.match(workflow, /malware_scan:[\s\S]*type: boolean/);
   assert.match(workflow, /Install ClamAV for the malware scan[\s\S]*if: inputs\.malware_scan[\s\S]*apt-get install -y clamav[\s\S]*Run Security Gate/);
+  assert.match(workflow, /Save quarantined flagged files[\s\S]*if: failure\(\)[\s\S]*the-crucible-quarantine-\$\{\{ github\.run_id \}\}-\$\{\{ github\.run_attempt \}\}[\s\S]*if-no-files-found: ignore/);
 });
 
 test('a severed design-brief link fails every check, unconditionally, before anything else', () => {

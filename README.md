@@ -30,10 +30,11 @@ The reusable workflow runs the following named steps, in this exact order. This 
 17. Run verification and bounded workload.
 18. Perform weekly Git integrity and safe repacking.
 19. Create or update the Crucible failure issue.
-20. Save Crucible report with this workflow run.
+20. Save quarantined flagged files.
+21. Save Crucible report with this workflow run.
 <!-- CRUCIBLE_WORKFLOW_STEPS:END -->
 
-A few of these only run conditionally: step 2 only on a pull request with `dependency_review: true` set; step 12 only when the caller sets `malware_scan: true` (see "Malware scanning" below); step 16 only on pull requests; step 18 only when the caller sets `weekly_maintenance: true` (the weekly schedule); step 19 only if an earlier step failed. See "Severing" below for step 3, "Pinned commit integrity" for step 4, "Advanced read-only hardening" for step 7, "Language-aware pre-check report" for step 9, and "Saved reports" for steps 1 and 19-20. Step 17 (`cli.js run`) re-runs steps 3, 4, and 6-15 a second time internally before starting the configured workload - every one of those gates is read-only and idempotent, so this repeats work without changing the result.
+A few of these only run conditionally: step 2 only on a pull request with `dependency_review: true` set; step 12 only when the caller sets `malware_scan: true` (see "Malware scanning" below); step 16 only on pull requests; step 18 only when the caller sets `weekly_maintenance: true` (the weekly schedule); steps 19 and 20 only if an earlier step failed. See "Severing" below for step 3, "Pinned commit integrity" for step 4, "Advanced read-only hardening" for step 7, "Language-aware pre-check report" for step 9, "Malware scanning" for step 12's quarantine behavior, and "Saved reports" for steps 1, 19, 20, and 21. Step 17 (`cli.js run`) re-runs steps 3, 4, and 6-15 a second time internally before starting the configured workload - every one of those gates is read-only and idempotent, so this repeats work without changing the result.
 
 ## Language-aware pre-check report
 
@@ -87,7 +88,7 @@ No pattern-based tool can reliably recognize every human name, street address, b
 
 ### Security Gate
 
-The Security Gate runs before preparation commands and the concurrent verification workload. Like the privacy gate, it reads the staged Git snapshot so changing only the unstaged working copy cannot conceal introduced content. It reports only the category, file, and line where applicable; it never prints a detected secret or payload.
+The Security Gate runs before preparation commands and the concurrent verification workload. Like the privacy gate, it reads the staged Git snapshot so changing only the unstaged working copy cannot conceal introduced content. It reports only the category, file, and line where applicable; it never prints a detected secret or payload. A flagged file is also quarantined - see "Quarantine" below - before the run fails.
 
 The built-in scan fails on high-confidence indicators of:
 
@@ -110,6 +111,12 @@ After the workload, The Crucible scans configured text artifacts for recognized 
 The pattern rules above catch the *shape* of malicious behavior - a keylogging API paired with a network call, an obfuscated `eval`, a reverse-shell payload - in source text. They cannot catch a known virus or trojan that doesn't match any of those shapes. `security.malwareScan.enabled` adds a second, independent layer for that: a real ClamAV virus-signature scan of the same staged snapshot the rest of the Security Gate already reads.
 
 This is opt-in and costs real runner time, so two things have to both be true for it to run in CI: `security.malwareScan.enabled: true` in `.thecrucible.json`, and `malware_scan: true` passed to the reusable workflow (which installs ClamAV and updates its virus database before the Security Gate step runs). Setting only the config flag without the workflow input - or running in any environment where the `clamscan` executable isn't installed - fails closed with an explicit "malware scanner unavailable" finding rather than silently skipping the check a project asked for. Findings report the file path and the matched signature name; they never print file contents.
+
+### Quarantine
+
+There is no persistent, air-gapped environment this engine can build inside GitHub Actions - each run is a fresh, disposable runner destroyed the moment the job ends, and a flagged file is scanned from the staged Git snapshot before any command runs, so it was never executed in the first place. What quarantine actually does: the moment the Security Gate, malware scan, or the post-workload artifact scan reports a finding, the exact flagged bytes (unmodified) are copied into a `.the-crucible-quarantine/` directory before the run fails, and the reusable workflow uploads that directory as its own separate `the-crucible-quarantine-<run>` artifact - distinct from the project checkout and from the normal report artifact. It is never unpacked back into the checkout and never runs again. `.the-crucible-quarantine/` is git-ignored, so it is never committed.
+
+The flagged file path, type, and (for text findings) line number are also recorded in the JSON report's `findings` field for that failed action, alongside a `quarantined` list of the exact paths copied - not just a truncated first line of the error message. See "Saved reports" below for the full report format. As with every other finding in this gate, quarantine records paths and metadata only; it never prints the flagged content itself into a log or report.
 
 ### GitHub repository security settings gate
 
@@ -338,6 +345,8 @@ When the gate fails, the final reporting step uses the caller's narrowly scoped 
 Artifact storage uses GitHub's workflow-artifact service. It does not require `contents: write`, does not change the project checkout, and cannot commit or push repository files. If a failure occurs before the Crucible engine can start, the workflow warns that no report was produced rather than inventing a result.
 
 For a local run, set `CRUCIBLE_REPORT_PATH` to an explicit destination before invoking the CLI. If it is not set, Crucible does not create a report file. Report error summaries are bounded and redact common credential forms. Each failed action also includes a gate-specific suggested fix. Suggestions are diagnostic starting points, not fabricated success results or guarantees that the first correction will resolve every cause.
+
+When a failure came from the Security Gate, malware scan, or artifact scan, that action's report entry also includes a structured `findings` array (`type`, `path`, `line` - the same fields shown in the log, never the matched content) and a `quarantined` array naming exactly which paths were copied to `.the-crucible-quarantine/` and uploaded as the separate quarantine artifact described in "Quarantine" above. Other failed actions (a failing test, a misconfigured claim) have no `findings`/`quarantined` fields - those only appear for gates that flag specific files.
 
 Run these commands from this repository while pointing `CRUCIBLE_PROJECT_ROOT` at the project being checked:
 
