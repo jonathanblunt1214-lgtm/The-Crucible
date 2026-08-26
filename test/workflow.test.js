@@ -100,6 +100,9 @@ test('installed design brief matches the agent-boundaries rules and explains the
 
 test('engine changes test across supported operating systems before adoption', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'self-test.yml'), 'utf8');
+  const codeql = fs.readFileSync(path.join(root, '.github', 'workflows', 'codeql.yml'), 'utf8');
+  assert.match(workflow, /push:\s*\n\s*branches: \[main, development\]/);
+  assert.match(codeql, /push:\s*\n\s*branches: \[main, development\]/);
   assert.match(workflow, /os: \[ubuntu-latest, windows-latest, macos-latest\]/);
   assert.match(workflow, /node: \[20, 22, 24\]/);
   assert.match(workflow, /npm test[\s\S]*npm run validate[\s\S]*npm run audit:clutter[\s\S]*npm run audit:security[\s\S]*npm run precheck[\s\S]*npm run run/);

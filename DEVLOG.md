@@ -1,5 +1,15 @@
 # Development log
 
+## Shared AI handoff
+
+- **Agent:** Codex
+- **Current development work:** Make Self-Test and CodeQL trigger directly on every `development` push, while retaining permanent draft PR #7 as the monitoring and PR-activity hook.
+- **Files changed:** `.github/workflows/self-test.yml`, `.github/workflows/codeql.yml`, `AGENTS.md`, `README.md`, `DEVLOG.md`, and `test/workflow.test.js`.
+- **Verification:** The preceding documentation-only commit `e6392d0` passed all 144 local tests, passed `npm run docs:check`, and passed manually dispatched GitHub Self-Test run 52. The direct-push trigger change must still pass its own automatically started Self-Test and CodeQL runs after push.
+- **Remaining work:** Commit and push this change to `development`, then inspect the runs for that exact commit and fix any current failure before handoff is complete.
+
+Every AI agent must refresh this section in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
+
 **Note (main):** this file was written on `development` and landed on `main` via the merge of PR #6 (`c574c64`, "Merge pull request #6 from jonathanblunt1214-lgtm/development"). The "not merged" line at the bottom is now stale for that reason - it has been merged. `main` and `development` share this exact history as of that merge; anything committed to either branch after that point is not reflected here until this file is updated again.
 
 This log reflects exactly what has happened on **this branch** (`development`), commit by commit, oldest first within each day. It is generated from real git history, not a narrative summary — every entry below is a real commit that exists on this branch right now. Each branch in this repository keeps its own log describing its own actual state; this one is not copied onto `main` or `Archive`, and theirs are not copied onto this one.
