@@ -2,8 +2,9 @@
 # Crucible - then delete THIS WORKFLOW FILE from your repository
 # immediately afterward. It is the only place `contents: write` appears
 # anywhere in The Crucible's design, and it is scoped to a single, narrow
-# purpose: writing `THE-CRUCIBLE-DESIGN-BRIEF.md` into this repository,
-# once. It never touches The Crucible's own repository (that checkout
+# purpose: writing `THE-CRUCIBLE-DESIGN-BRIEF.md` and the mandatory
+# `AI-CONFLICTS.json` ledger and `.github/workflows/ai-conflict-governance.yml`
+# monitor into this repository once. It never touches The Crucible's own repository (that checkout
 # stays read-only, exactly like the caller workflow's), and it never
 # writes anything else.
 #
@@ -22,7 +23,7 @@ permissions:
 
 jobs:
   install-design-brief:
-    name: Install THE-CRUCIBLE-DESIGN-BRIEF.md
+    name: Install Crucible governance files
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -35,23 +36,25 @@ jobs:
           ref: REPLACE_WITH_EXACT_COMMIT_SHA
           path: .the-crucible-runtime
           persist-credentials: false
-      - name: Write only THE-CRUCIBLE-DESIGN-BRIEF.md, refuse to commit anything else
+      - name: Write only the design brief, AI conflict ledger, and monitor; refuse anything else
         run: |
           set -euo pipefail
           cp .the-crucible-runtime/templates/the-crucible-design-brief.md THE-CRUCIBLE-DESIGN-BRIEF.md
+          cp .the-crucible-runtime/templates/ai-conflicts.example.json AI-CONFLICTS.json
+          cp .the-crucible-runtime/templates/ai-conflict-monitor-workflow.yml .github/workflows/ai-conflict-governance.yml
           rm -rf .the-crucible-runtime
           changed="$(git status --porcelain)"
           count="$(printf '%s\n' "$changed" | grep -c . || true)"
           path="$(printf '%s\n' "$changed" | head -n1 | cut -c4-)"
-          if [ "$count" -ne 1 ] || [ "$path" != "THE-CRUCIBLE-DESIGN-BRIEF.md" ]; then
-            echo "Refusing to commit: expected exactly one changed file, THE-CRUCIBLE-DESIGN-BRIEF.md. Found:" >&2
+          if [ "$count" -ne 3 ] || ! printf '%s\n' "$changed" | grep -q 'AI-CONFLICTS.json' || ! printf '%s\n' "$changed" | grep -q 'THE-CRUCIBLE-DESIGN-BRIEF.md' || ! printf '%s\n' "$changed" | grep -q '.github/workflows/ai-conflict-governance.yml'; then
+            echo "Refusing to commit: expected exactly AI-CONFLICTS.json, THE-CRUCIBLE-DESIGN-BRIEF.md, and .github/workflows/ai-conflict-governance.yml. Found:" >&2
             printf '%s\n' "$changed" >&2
             exit 1
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add THE-CRUCIBLE-DESIGN-BRIEF.md
-          git commit -m "Install THE-CRUCIBLE-DESIGN-BRIEF.md from The Crucible"
+          git add AI-CONFLICTS.json THE-CRUCIBLE-DESIGN-BRIEF.md .github/workflows/ai-conflict-governance.yml
+          git commit -m "Install Crucible governance files"
           git push
       - name: Reminder
         run: echo "THE-CRUCIBLE-DESIGN-BRIEF.md is committed and stays. Now delete .github/workflows/connect-the-crucible.yml (this workflow file only) to remove the write capability it granted."

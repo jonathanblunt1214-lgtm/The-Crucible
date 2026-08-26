@@ -53,6 +53,29 @@ permissions:
   pull-requests: read
 
 jobs:
+  ai-conflict-governance:
+    name: AI conflict governance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out the caller repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Check out the pinned Crucible engine
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: jonathanblunt1214-lgtm/The-Crucible
+          ref: ${{ inputs.core_ref }}
+          path: .the-crucible-runtime
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Enforce the repository AI conflict ledger
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+          CRUCIBLE_CONFIG: ${{ inputs.config_path }}
+        run: node .the-crucible-runtime/src/cli.js ai-conflicts
+
   verify:
     name: The Crucible
     runs-on: ubuntu-latest

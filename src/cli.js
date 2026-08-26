@@ -25,6 +25,7 @@ const { publishFailureIssue } = require('./failureIssue');
 const { auditDocSync, syncReadme } = require('./docSync');
 const { auditMalware } = require('./malwareScan');
 const { quarantineFindings, quarantineNote } = require('./quarantine');
+const { auditAIConflictLedger } = require('./aiConflictLedger');
 
 const action = process.argv[2] || 'run';
 const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
@@ -118,10 +119,12 @@ async function authenticityGate(root, config) {
 
 function governanceGate(root, config, suppliedSnapshot = null) {
   if (config.governance.failOnDisabledSecurity && !config.security.enabled) throw new Error('Configuration governance forbids disabling the Security Gate.');
+  const conflicts = auditAIConflictLedger(root);
+  if (conflicts.findings.length) throw new Error(`AI conflict governance failed:\n${conflicts.findings.map((item) => `- ${item.type}: ${item.path} (${item.detail})`).join('\n')}`);
   const snapshot = suppliedSnapshot || stagedSnapshot(root);
   const findings = auditExceptions(snapshot, { 'clutter.allow':config.clutter.allow, 'privacy.allow':config.privacy.allow, 'security.allow':config.security.allow, 'security.allowBinaries':config.security.allowBinaries }, config.governance.requireExceptionMetadata);
   if (findings.length) throw new Error(`Exception governance failed:\n${findings.map((item) => `- ${item.type}: ${item.group} ${item.path}`).join('\n')}`);
-  return { exceptions:Object.values({ a:config.clutter.allow, b:config.privacy.allow, c:config.security.allow, d:config.security.allowBinaries }).flat().length };
+  return { exceptions:Object.values({ a:config.clutter.allow, b:config.privacy.allow, c:config.security.allow, d:config.security.allowBinaries }).flat().length, conflicts:conflicts.conflicts };
 }
 
 async function main() {
@@ -145,7 +148,12 @@ async function main() {
   if (action === 'commit') { const result = commitGate(root); return console.log(`[The Crucible] Commit Gate passed ${result.paths.length} changed path(s).`); }
   if (action === 'precheck') { await precheckGate(root, config); return; }
   if (action === 'fix-commit') { const result = fixCommit(root, { ref:process.env.CRUCIBLE_COMMIT_REF || '--cached' }); return console.log(`[The Crucible] Commit fixer updated ${result.changed.length} working file(s).`); }
-  if (action === 'governance') { const result = governanceGate(root, config); return console.log(`[The Crucible] Configuration governance passed ${result.exceptions} exception(s).`); }
+  if (action === 'governance') { const result = governanceGate(root, config); return console.log(`[The Crucible] Configuration and AI conflict governance passed ${result.exceptions} exception(s) and ${result.conflicts} recorded conflict(s).`); }
+  if (action === 'ai-conflicts') {
+    const result = auditAIConflictLedger(root);
+    if (result.findings.length) throw new Error(`AI conflict governance failed:\n${result.findings.map((item) => `- ${item.type}: ${item.path} (${item.detail})`).join('\n')}`);
+    return console.log(`[The Crucible] AI conflict governance passed ${result.conflicts} recorded conflict(s).`);
+  }
   if (action === 'reproducibility') { const result = await verifyReproducibility(root, config); return console.log(result.skipped ? '[The Crucible] Reproducibility Gate is not enabled.' : `[The Crucible] Reproducibility Gate passed ${result.artifacts} artifact(s).`); }
   if (action === 'design-brief') {
     designBriefGate(root);
@@ -246,4 +254,4 @@ main()
     process.exitCode = 1;
   });
 
-module.exports = { securityGate, githubSecurityGate, authenticityGate, commitGate, precheckGate, designBriefGate, coreRefGate };
+module.exports = { securityGate, githubSecurityGate, authenticityGate, commitGate, precheckGate, designBriefGate, coreRefGate, governanceGate };

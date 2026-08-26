@@ -3,11 +3,11 @@
 ## Shared AI handoff
 
 - **Agent:** Codex, continuing the safe-enforcement-boundary work.
-- **Current plan:** Add repository-independent AI conflict resolution, with the report-first, promote-explicitly, enforce-last sequence as one concrete application.
-- **Current development work:** Added a general AI conflict stop/go check and reusable policy: freeze contested mutations, preserve both sides in the shared handoff, and require explicit owner resolution. Added a shell-free required-check preflight and rollout template. Report mode is allowed on development; activation fails unless explicit promotion is recorded and the workflow exists on the remote-tracking default branch. No protected/default branch or repository setting is modified.
-- **Files changed:** `src/aiConflictResolution.js`, `src/requiredCheckBoundary.js`, `test/aiConflictResolution.test.js`, `test/requiredCheckBoundary.test.js`, `templates/ai-conflict-resolution.md`, `templates/required-check-rollout.md`, `templates/agent-boundaries.md`, `package.json`, `AGENTS.md`, `DEVLOG.md`, and `README.md`.
-- **Verification:** All 159 local tests pass, including 10 new conflict-resolution and required-check-boundary tests. `npm run docs:check` passes, and the focused policy/workflow suite passes 26/26.
-- **Remaining work:** Commit and push only to `development`; verify the AI handoff policy, Self-Test, and CodeQL for that exact commit. Default-branch promotion and any required-check activation remain separate owner decisions.
+- **Current plan:** Make repository-independent AI conflict resolution mandatory in governance and monitor it as close to real time as GitHub permits.
+- **Current development work:** Added a mandatory tracked `AI-CONFLICTS.json` ledger; general governance and a dedicated status-check command fail closed when it is missing, malformed, invalidly resolved, or contains open conflicts. Integrated a distinct **AI conflict governance** job into the reusable workflow and added engine/adopter monitors for push, pull-request, review, and comment events with a five-minute fallback. No protected/default branch or repository setting is modified.
+- **Files changed:** `AI-CONFLICTS.json`, `src/aiConflictLedger.js`, `src/cli.js`, `.github/workflows/ai-conflict-governance.yml`, `.github/workflows/the-crucible.yml`, adopter templates, tests, documentation, configuration, `AGENTS.md`, and `DEVLOG.md`.
+- **Verification:** Focused policy/workflow tests pass 29/29 and the full suite passes 166/166. The exact staged snapshot passes configuration validation, Security Gate across 84 files, pre-check across 18 changed paths, general governance, dedicated AI conflict governance, workflow lint, documentation sync/check, and diff checks.
+- **Remaining work:** Commit and push only to `development`, then confirm **AI conflict governance**, AI handoff policy, Self-Test, and CodeQL for the exact commit. Default-branch promotion and required-check activation remain separate owner decisions.
 
 Every AI agent must keep the current plan and status in this section accurate automatically and refresh it in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
 

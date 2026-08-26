@@ -1,0 +1,47 @@
+name: AI conflict governance
+
+on:
+  workflow_dispatch:
+  push:
+  pull_request:
+    types: [opened, synchronize, reopened, edited, ready_for_review]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  pull_request_review_comment:
+    types: [created, edited]
+  issue_comment:
+    types: [created, edited]
+  schedule:
+    - cron: '*/5 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ai-conflict-governance-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  governance:
+    name: AI conflict governance
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check out this repository
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: ${{ github.event.pull_request.head.sha || (github.event.issue.pull_request && format('refs/pull/{0}/head', github.event.issue.number)) || github.sha }}
+      - name: Check out the pinned Crucible engine
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: jonathanblunt1214-lgtm/The-Crucible
+          ref: REPLACE_WITH_EXACT_COMMIT_SHA
+          path: .the-crucible-runtime
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: '24'
+      - name: Enforce the repository AI conflict ledger
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+        run: node .the-crucible-runtime/src/cli.js ai-conflicts

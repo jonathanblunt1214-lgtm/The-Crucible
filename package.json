@@ -16,6 +16,7 @@
     "audit:collisions": "node src/cli.js collisions",
     "audit:handoff": "node src/handoffPolicy.js",
     "audit:ai-conflict": "node src/aiConflictResolution.js",
+    "audit:ai-conflict-governance": "node src/cli.js ai-conflicts",
     "audit:required-check": "node src/requiredCheckBoundary.js",
     "audit:commit": "node src/cli.js commit",
     "precheck": "node src/cli.js precheck",

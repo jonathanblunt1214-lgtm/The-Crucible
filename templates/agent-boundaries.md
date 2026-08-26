@@ -12,6 +12,7 @@ internal reasoning relayed to you secondhand.
 ## Resolve AI conflicts without choosing a side
 
 Follow `ai-conflict-resolution.md` for conflicts between agents, instructions, plans, concurrent work, automation, or claimed authority. Freeze the contested mutation, preserve both sides in the shared handoff, and ask the repository owner for an explicit resolution. Continue only safe read-only or unrelated work; never overwrite, weaken, or silently select one side.
+Record the conflict in `AI-CONFLICTS.json` immediately. The ledger and `.github/workflows/ai-conflict-governance.yml` are permanent Crucible governance files: never delete, bypass, disable, or exclude them.
 
 ## This is not a two-way link
 

@@ -71,13 +71,15 @@ test('agent boundaries document forbids touching anything installed to run the C
   assert.match(readme, /persist-credentials: false.*ephemeral runner/);
 });
 
-test('connect workflow is a one-time, human-triggered, single-file write with no other trigger', () => {
+test('connect workflow is a one-time, human-triggered, bounded governance-file write with no other trigger', () => {
   const workflow = fs.readFileSync(path.join(root, 'templates', 'connect-workflow.yml'), 'utf8');
   assert.match(workflow, /^on:\s*\n\s*workflow_dispatch:\s*$/m);
   assert.doesNotMatch(workflow, /\n\s*push:|\n\s*pull_request:|\n\s*schedule:/);
   assert.match(workflow, /permissions:\s*\n\s*contents: write/);
   assert.match(workflow, /persist-credentials: false/);
   assert.match(workflow, /THE-CRUCIBLE-DESIGN-BRIEF\.md/);
+  assert.match(workflow, /AI-CONFLICTS\.json/);
+  assert.match(workflow, /ai-conflict-governance\.yml/);
   assert.match(workflow, /templates\/the-crucible-design-brief\.md/);
   assert.match(workflow, /git status --porcelain/);
   assert.match(workflow, /Refusing to commit/);
@@ -153,4 +155,22 @@ test('GitHub checks every development change and main PR for a current DEVLOG ha
   assert.match(workflow, /HANDOFF_BASE_SHA:/);
   assert.match(workflow, /HANDOFF_HEAD_SHA:/);
   assert.match(workflow, /npm run audit:handoff/);
+});
+
+test('AI conflict governance is unavoidable in the reusable workflow and monitored near real time', () => {
+  const reusable = fs.readFileSync(path.join(root, '.github', 'workflows', 'the-crucible.yml'), 'utf8');
+  const monitor = fs.readFileSync(path.join(root, '.github', 'workflows', 'ai-conflict-governance.yml'), 'utf8');
+  const adopter = fs.readFileSync(path.join(root, 'templates', 'ai-conflict-monitor-workflow.yml'), 'utf8');
+  assert.match(reusable, /name: AI conflict governance[\s\S]*cli\.js ai-conflicts/);
+  for (const workflow of [monitor, adopter]) {
+    assert.match(workflow, /name: AI conflict governance/);
+    assert.match(workflow, /push:/);
+    assert.match(workflow, /pull_request:/);
+    assert.match(workflow, /pull_request_review:/);
+    assert.match(workflow, /issue_comment:/);
+    assert.match(workflow, /cron: '\*\/5 \* \* \* \*'/);
+    assert.match(workflow, /cancel-in-progress: true/);
+    assert.match(workflow, /cli\.js ai-conflicts/);
+    assert.doesNotMatch(workflow, /contents: write|git push/);
+  }
 });
