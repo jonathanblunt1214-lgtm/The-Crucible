@@ -23,6 +23,7 @@
   "security": {
     "allow": [
       { "path": "src/security.js", "reason": "The scanner defines the signatures it detects.", "owner": "jonathanblunt1214-lgtm", "expires": "2027-08-24" },
+      { "path": "src/code-check.js", "reason": "The language-aware parser uses Node's compile-only API to validate changed JavaScript without executing it.", "owner": "jonathanblunt1214-lgtm", "expires": "2027-08-24" },
       { "path": "test/security.test.js", "reason": "Adversarial fixtures intentionally contain recognizable payloads.", "owner": "jonathanblunt1214-lgtm", "expires": "2027-08-24" },
       { "path": "test/hardening.test.js", "reason": "Hardening tests exercise dynamic-execution and dependency-policy fixtures.", "owner": "jonathanblunt1214-lgtm", "expires": "2027-08-24" }
     ],
