@@ -24,6 +24,15 @@ nothing, it does not resume or extend a prior one. No repository other
 than The Crucible's own can ever change anything in it, during a run or
 after one - not this repository, not an agent working in it, nothing.
 
+The one write in this entire design is `templates/connect-workflow.yml`, a
+`workflow_dispatch`-only workflow a human runs exactly once to commit
+`THE-CRUCIBLE-DESIGN-BRIEF.md` into this repository, then deletes. If you
+see it, do not re-run it, do not use it as precedent for any other write,
+and if it is still present long after `THE-CRUCIBLE-DESIGN-BRIEF.md` was
+already committed, flag that it was never deleted - it should have been.
+It writes only into this repository's own tree, using this repository's
+own token; it never touches The Crucible's repository.
+
 Connecting to The Crucible is one-way: it reads this repository's tracked
 files at CI time and reports pass or fail. It is not a partnership, a
 shared state, or a relationship that runs in both directions.

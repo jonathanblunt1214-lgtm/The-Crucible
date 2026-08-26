@@ -50,6 +50,33 @@ test('agent boundaries document forbids touching anything installed to run the C
   assert.match(readme, /persist-credentials: false.*ephemeral runner/);
 });
 
+test('connect workflow is a one-time, human-triggered, single-file write with no other trigger', () => {
+  const workflow = fs.readFileSync(path.join(root, 'templates', 'connect-workflow.yml'), 'utf8');
+  assert.match(workflow, /^on:\s*\n\s*workflow_dispatch:\s*$/m);
+  assert.doesNotMatch(workflow, /\n\s*push:|\n\s*pull_request:|\n\s*schedule:/);
+  assert.match(workflow, /permissions:\s*\n\s*contents: write/);
+  assert.match(workflow, /persist-credentials: false/);
+  assert.match(workflow, /THE-CRUCIBLE-DESIGN-BRIEF\.md/);
+  assert.match(workflow, /templates\/the-crucible-design-brief\.md/);
+  assert.match(workflow, /git status --porcelain/);
+  assert.match(workflow, /Refusing to commit/);
+  assert.match(workflow, /delete THIS WORKFLOW FILE/);
+  assert.match(workflow, /Do not delete or revert the\s*\n#\s*THE-CRUCIBLE-DESIGN-BRIEF\.md commit/);
+  assert.equal((workflow.match(/REPLACE_WITH_EXACT_COMMIT_SHA/g) || []).length, 1);
+});
+
+test('installed design brief matches the agent-boundaries rules and explains the one-time write', () => {
+  const brief = fs.readFileSync(path.join(root, 'templates', 'the-crucible-design-brief.md'), 'utf8');
+  assert.match(brief, /never modify anything installed to run The Crucible/i);
+  assert.match(brief, /never self-repair/i);
+  assert.match(brief, /not your bug/i);
+  assert.match(brief, /connect-workflow\.yml/);
+  assert.match(brief, /it is spent/i);
+  const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
+  assert.match(readme, /connect-workflow\.yml/);
+  assert.match(readme, /delete `\.github\/workflows\/connect-the-crucible\.yml`/);
+});
+
 test('engine changes test across supported operating systems before adoption', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'self-test.yml'), 'utf8');
   assert.match(workflow, /os: \[ubuntu-latest, windows-latest, macos-latest\]/);
