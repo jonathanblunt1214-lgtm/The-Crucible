@@ -1,4 +1,4 @@
-name: Block PR #7
+name: "Block PR #7"
 
 # PR #7 (development -> main) is a permanent draft that exists solely as a
 # live CI-monitoring event hook - see AGENTS.md's branch policy. It must
