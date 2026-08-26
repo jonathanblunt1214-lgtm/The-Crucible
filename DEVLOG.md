@@ -2,12 +2,12 @@
 
 ## Shared AI handoff
 
-- **Agent:** Claude, continuing the shared Codex/Claude work.
-- **Current plan:** Owner made DEVLOG-first reading unconditional (not just "before editing"); merged that with Codex's two-way handoff-trigger-phrase rule. No further planned work right now - handoff mechanism itself is the current deliverable.
-- **Current development work:** Added a top-level "Read DEVLOG.md first, always" section to AGENTS.md (applies before any action, not just edits), then merged Codex's `5d23d43` (two-way "work with Claude/Codex" trigger phrases, mandatory always-current plan field). Both kept, no conflict.
-- **Files changed:** `AGENTS.md` (merge of both changes), `DEVLOG.md` (this entry).
-- **Verification:** All 144 local tests pass after the merge (`npm test`). GitHub Self-Test/CodeQL for this exact merge commit not yet checked - doing that next.
-- **Remaining work:** Push this merge commit, then verify Self-Test and CodeQL both run and pass for it.
+- **Agent:** Codex, continuing the shared multi-agent work after Claude's `2b7b9c9`.
+- **Current plan:** Extend the mandatory, always-current DEVLOG coordination and owner-conflict-escalation rules to Perplexity, Gemini, and every later AI agent, in every direction.
+- **Current development work:** Preserved Claude's unconditional DEVLOG-first rule and expanded the handoff protocol so all named or future agents must use it and every conflict must be brought to the repository owner.
+- **Files changed:** `AGENTS.md`, `DEVLOG.md`, and `README.md`.
+- **Verification:** Claude reported all 144 local tests passing for `2b7b9c9`. This extension will rerun documentation checks and all tests before push, followed by Self-Test and CodeQL for the resulting exact commit.
+- **Remaining work:** Validate, push to `development`, and verify GitHub CI. Update this handoff automatically if the plan or status changes.
 
 Every AI agent must keep the current plan and status in this section accurate automatically and refresh it in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
 

@@ -78,17 +78,17 @@ check.
 
 ## AI-to-AI handoff protocol
 
-Codex, Claude, and any later agent working here share `development`; they must
-treat one another's work as active project state, not as unrelated changes.
+Codex, Claude, Perplexity, Gemini, and any later AI agent working here share
+`development`; they must treat one another's work as active project state, not
+as unrelated changes.
 
 - Before editing, fetch `origin/development`, fast-forward only, and read this
   file plus the **Shared AI handoff** section at the top of `DEVLOG.md`.
-- The phrases "work with Claude," "coordinate with Claude," or "finish what
-  Claude and I did" mean: synchronize `development` and read `DEVLOG.md` before
-  acting. The same rule applies in the opposite direction whenever the owner
-  tells Claude to work with Codex, coordinate with Codex, or finish work done
-  with Codex. Agent names are a direction to use the shared handoff, not an
-  invitation to rely on private chat history.
+- Any instruction to work with, coordinate with, or continue work done with
+  Codex, Claude, Perplexity, Gemini, or another AI agent means: synchronize
+  `development` and read `DEVLOG.md` before acting. The rule works in every
+  direction between every agent. Agent names are a direction to use the shared
+  handoff, not an invitation to rely on private chat history.
 - Before pushing, fetch again. If `origin/development` moved, integrate and
   verify the other agent's work without force-pushing or discarding it.
 - Every pushed change must update the Shared AI handoff in the same commit with
@@ -99,8 +99,10 @@ treat one another's work as active project state, not as unrelated changes.
   refresh, and do not leave another agent to reconstruct state from chat
   history.
 - Never overwrite, revert, delete, or rename another agent's work merely because
-  it was not created in the current session. If two changes conflict in intent,
-  preserve both and ask the owner before choosing one.
+  it was not created in the current session. Every conflict between agents,
+  project rules, plans, or competing implementations must be preserved and
+  brought to the repository owner. No agent may resolve a conflict by silently
+  choosing, overwriting, deleting, or reverting one side.
 - `DEVLOG.md` is the repository-visible communication channel. Chat sessions
   are not assumed to be shared between agents.
 
