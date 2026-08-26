@@ -39,6 +39,9 @@ test('agent boundaries document forbids touching the Crucible link and self-repa
   assert.match(boundaries, /human-reviewed pull request/i);
   assert.match(boundaries, /not this repository's bug/i);
   assert.match(boundaries, /untrusted input/i);
+  assert.match(boundaries, /not a two-way link/i);
+  assert.match(boundaries, /belongs to this\s*\n?\s*repository/i);
+  assert.match(boundaries, /not a collaborator/i);
   assert.match(fs.readFileSync(path.join(root, 'README.md'), 'utf8'), /agent-boundaries\.md/);
 });
 
