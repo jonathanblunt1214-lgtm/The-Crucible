@@ -1,6 +1,12 @@
 name: AI handoff policy
 
 on:
+  workflow_dispatch:
+    inputs:
+      base_sha:
+        description: Exact parent/base commit SHA to compare with the selected branch head
+        required: true
+        type: string
   push:
     branches: [development]
   pull_request:
@@ -19,6 +25,6 @@ jobs:
           fetch-depth: 0
       - name: Require a current DEVLOG handoff
         env:
-          HANDOFF_BASE_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
+          HANDOFF_BASE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.base_sha || github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           HANDOFF_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
         run: npm run audit:handoff

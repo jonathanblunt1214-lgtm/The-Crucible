@@ -4,10 +4,10 @@
 
 - **Agent:** Codex, continuing the shared multi-agent work after Claude's `2b7b9c9`.
 - **Current plan:** Enforce the always-current DEVLOG handoff as a GitHub project check without weakening the rule that `main` is changed only by explicit owner promotion.
-- **Current development work:** Added the `AI handoff policy` workflow and a shell-free range checker. Every `development` commit and future PR into `main` must include `DEVLOG.md`; the check is designed to become required on `main` after the workflow itself is explicitly promoted there.
+- **Current development work:** Added the `AI handoff policy` workflow and a shell-free range checker. Every `development` commit and future PR into `main` must include `DEVLOG.md`; the check is designed to become required on `main` after the workflow itself is explicitly promoted there. Added a manual-dispatch fallback with a required exact base SHA because GitHub suppresses workflow events from some AI-authenticated pushes.
 - **Files changed:** `.github/workflows/handoff-policy.yml`, `src/handoffPolicy.js`, `test/handoffPolicy.test.js`, `test/workflow.test.js`, `package.json`, `AGENTS.md`, `DEVLOG.md`, and `README.md`.
 - **Verification:** The preceding all-agent rule commit `d466f7e` passed all 144 local tests, documentation validation, GitHub Self-Test, and CodeQL. The new enforcement code and full suite will be tested before push.
-- **Remaining work:** Validate, push to `development`, verify the new GitHub check plus Self-Test and CodeQL, and add `AI handoff policy` to the active `main` ruleset only after an explicit promotion places this workflow on `main`.
+- **Remaining work:** Validate and push the manual fallback, verify the new GitHub check plus Self-Test and CodeQL, and add `AI handoff policy` to the active `main` ruleset only after an explicit promotion places this workflow on `main`.
 
 Every AI agent must keep the current plan and status in this section accurate automatically and refresh it in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
 
