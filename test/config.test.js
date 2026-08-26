@@ -18,7 +18,7 @@ test('validates and supplies bounded workload defaults', () => {
   assert.deepEqual(config.privacy.allow, []);
   assert.equal(config.clutter.blockTrackedIgnored, false);
   assert.equal(config.commands.verify[0].run, 'node');
-  assert.deepEqual(config.security, { enabled:true, allow:[], allowBinaries:[], maxTextBytes:1048576, dependencyAudit:[], provenanceAudit:[], dependencyPolicy:{ enabled:false, denyGit:true, denyHttp:true, denyLocal:false, allowedRegistryHosts:[], denyLicenses:[] } });
+  assert.deepEqual(config.security, { enabled:true, allow:[], allowBinaries:[], maxTextBytes:1048576, dependencyAudit:[], provenanceAudit:[], dependencyPolicy:{ enabled:false, denyGit:true, denyHttp:true, denyLocal:false, allowedRegistryHosts:[], denyLicenses:[] }, malwareScan:{ enabled:false } });
   assert.deepEqual(config.authenticity, { claims:[], requireArtifacts:false });
   assert.deepEqual(config.reproducibility, { enabled:false, commands:[], artifacts:[] });
 });

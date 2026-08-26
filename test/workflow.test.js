@@ -23,6 +23,8 @@ test('reusable workflow is read-only and uses the exact caller-supplied core ref
   assert.match(workflow, /cli\.js design-brief[\s\S]*cli\.js core-ref[\s\S]*cli\.js validate/);
   assert.match(workflow, /Scan the checked-out Crucible engine code for malicious patterns[\s\S]*CRUCIBLE_PROJECT_ROOT: \$\{\{ github\.workspace \}\}\/\.the-crucible-runtime[\s\S]*cli\.js security/);
   assert.match(workflow, /Create or update the Crucible failure issue[\s\S]*if: failure\(\)[\s\S]*cli\.js failure-issue/);
+  assert.match(workflow, /malware_scan:[\s\S]*type: boolean/);
+  assert.match(workflow, /Install ClamAV for the malware scan[\s\S]*if: inputs\.malware_scan[\s\S]*apt-get install -y clamav[\s\S]*Run Security Gate/);
 });
 
 test('a severed design-brief link fails every check, unconditionally, before anything else', () => {

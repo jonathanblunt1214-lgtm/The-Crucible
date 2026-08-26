@@ -66,6 +66,10 @@
             "allowedRegistryHosts": { "type": "array", "maxItems": 20, "items": { "type": "string", "minLength": 1 } },
             "denyLicenses": { "type": "array", "maxItems": 50, "items": { "type": "string", "minLength": 1 } }
           }
+        },
+        "malwareScan": {
+          "type": "object", "additionalProperties": false,
+          "properties": { "enabled": { "type": "boolean" } }
         }
       }
     },

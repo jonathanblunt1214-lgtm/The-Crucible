@@ -23,6 +23,13 @@ jobs:
       run_workload: ${{ github.event_name != 'schedule' || github.event.schedule == '47 4 * * 0' }}
       weekly_maintenance: ${{ github.event.schedule == '47 4 * * 0' }}
       dependency_review: true
+      # Optional: installs ClamAV so the Security Gate can run a real
+      # virus-signature scan, not just pattern-based detection. Costs extra
+      # runner time (installing ClamAV and updating its virus database).
+      # Also requires security.malwareScan.enabled: true in .thecrucible.json -
+      # set only one of the two and the check fails closed rather than
+      # silently skipping.
+      malware_scan: false
     # Optional: a fine-grained PAT scoped to THIS repository with the
     # read-only "Administration" permission, stored as a repository secret.
     # GITHUB_TOKEN can never be granted this access on its own (there is no

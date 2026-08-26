@@ -27,6 +27,16 @@ on:
         required: false
         default: false
         type: boolean
+      malware_scan:
+        description: >-
+          Install ClamAV on the runner so the Security Gate's malware scan
+          can run. Also requires security.malwareScan.enabled: true in
+          .thecrucible.json - that flag alone, without this input, fails
+          closed rather than silently skipping, since clamscan would not
+          be present.
+        required: false
+        default: false
+        type: boolean
     secrets:
       security_read_token:
         description: >-
@@ -117,6 +127,12 @@ jobs:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
           CRUCIBLE_CONFIG: ${{ inputs.config_path }}
         run: node .the-crucible-runtime/src/cli.js privacy
+      - name: Install ClamAV for the malware scan
+        if: inputs.malware_scan
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clamav
+          sudo freshclam --quiet || echo 'freshclam failed to update virus definitions; clamscan will use whatever database apt installed.'
       - name: Run Security Gate
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}

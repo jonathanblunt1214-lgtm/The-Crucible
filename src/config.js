@@ -70,6 +70,7 @@ function validateConfig(input) {
   const dependencyAudit = security.dependencyAudit || [];
   const provenanceAudit = security.provenanceAudit || [];
   const dependencyPolicy = isObject(security.dependencyPolicy) ? security.dependencyPolicy : {};
+  const malwareScan = isObject(security.malwareScan) ? security.malwareScan : {};
   const authenticity = isObject(input.authenticity) ? input.authenticity : {};
   const claims = authenticity.claims || [];
   const githubSecurity = isObject(input.githubSecurity) ? input.githubSecurity : {};
@@ -86,6 +87,7 @@ function validateConfig(input) {
   assert(Array.isArray(provenanceAudit) && provenanceAudit.length <= 10, 'security.provenanceAudit must contain at most 10 commands.');
   assert(Array.isArray(dependencyPolicy.allowedRegistryHosts || []) && (dependencyPolicy.allowedRegistryHosts || []).every((item) => typeof item === 'string' && item), 'security.dependencyPolicy.allowedRegistryHosts must contain host names.');
   assert(Array.isArray(dependencyPolicy.denyLicenses || []) && (dependencyPolicy.denyLicenses || []).every((item) => typeof item === 'string' && item), 'security.dependencyPolicy.denyLicenses must contain license identifiers.');
+  assert(malwareScan.enabled === undefined || typeof malwareScan.enabled === 'boolean', 'security.malwareScan.enabled must be a boolean.');
   assert(Array.isArray(claims) && claims.length <= 30, 'authenticity.claims must contain at most 30 evidence commands.');
   assert(Array.isArray(codeCommands) && codeCommands.length <= 30, 'codeCheck.commands must contain at most 30 commands.');
   const validatedCodeCommands = codeCommands.map((item, index) => {
@@ -111,6 +113,7 @@ function validateConfig(input) {
       dependencyAudit:dependencyAudit.map((item, index) => validateCommand(item, 'security.dependencyAudit', index)),
       provenanceAudit:provenanceAudit.map((item, index) => validateCommand(item, 'security.provenanceAudit', index)),
       dependencyPolicy:{ enabled:Boolean(dependencyPolicy.enabled), denyGit:dependencyPolicy.denyGit !== false, denyHttp:dependencyPolicy.denyHttp !== false, denyLocal:Boolean(dependencyPolicy.denyLocal), allowedRegistryHosts:dependencyPolicy.allowedRegistryHosts || [], denyLicenses:dependencyPolicy.denyLicenses || [] },
+      malwareScan:{ enabled:Boolean(malwareScan.enabled) },
     },
     authenticity:{ claims:claims.map((item, index) => validateCommand(item, 'authenticity.claims', index)), requireArtifacts:Boolean(authenticity.requireArtifacts) },
     githubSecurity:{ enabled:githubSecurity.enabled !== false },

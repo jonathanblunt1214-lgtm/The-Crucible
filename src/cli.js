@@ -23,6 +23,7 @@ const { verifyReproducibility } = require('./reproducibility');
 const { writeReport } = require('./report');
 const { publishFailureIssue } = require('./failureIssue');
 const { auditDocSync, syncReadme } = require('./docSync');
+const { auditMalware } = require('./malwareScan');
 
 const action = process.argv[2] || 'run';
 const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
@@ -73,6 +74,8 @@ async function securityGate(root, config, snapshot = null) {
   if (dependencies.findings.length) throw new Error(`Dependency policy failed:\n${dependencies.findings.map((item) => `- ${item.type}: ${item.path}`).join('\n')}`);
   for (const command of config.security.dependencyAudit) await runCommand(root, command, config.workload.timeoutMinutes * 60_000);
   for (const command of config.security.provenanceAudit) await runCommand(root, command, config.workload.timeoutMinutes * 60_000, ' [provenance]');
+  const malware = auditMalware(root, config, { snapshot });
+  if (malware.findings.length) throw new Error(`Malware scan detected issues:\n${malware.findings.map((item) => `- ${item.type}${item.path ? `: ${item.path}` : ''}${item.detail ? ` (${item.detail})` : ''}`).join('\n')}`);
   return result;
 }
 

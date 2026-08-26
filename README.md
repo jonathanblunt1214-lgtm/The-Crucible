@@ -22,17 +22,18 @@ The reusable workflow runs the following named steps, in this exact order. This 
 9. Pre-check changed commit and code.
 10. Check tracked repository clutter.
 11. Block personal identifiers and credentials.
-12. Run Security Gate.
-13. Check required GitHub repository security settings.
-14. Verify evidence-backed project claims.
-15. Check for overlapping open pull requests.
-16. Run verification and bounded workload.
-17. Perform weekly Git integrity and safe repacking.
-18. Create or update the Crucible failure issue.
-19. Save Crucible report with this workflow run.
+12. Install ClamAV for the malware scan.
+13. Run Security Gate.
+14. Check required GitHub repository security settings.
+15. Verify evidence-backed project claims.
+16. Check for overlapping open pull requests.
+17. Run verification and bounded workload.
+18. Perform weekly Git integrity and safe repacking.
+19. Create or update the Crucible failure issue.
+20. Save Crucible report with this workflow run.
 <!-- CRUCIBLE_WORKFLOW_STEPS:END -->
 
-A few of these only run conditionally: step 2 only on a pull request with `dependency_review: true` set; step 15 only on pull requests; step 17 only when the caller sets `weekly_maintenance: true` (the weekly schedule); step 18 only if an earlier step failed. See "Severing" below for step 3, "Pinned commit integrity" for step 4, "Advanced read-only hardening" for step 7, "Language-aware pre-check report" for step 9, and "Saved reports" for steps 1 and 18-19. Step 16 (`cli.js run`) re-runs steps 3, 4, and 6-14 a second time internally before starting the configured workload - every one of those gates is read-only and idempotent, so this repeats work without changing the result.
+A few of these only run conditionally: step 2 only on a pull request with `dependency_review: true` set; step 12 only when the caller sets `malware_scan: true` (see "Malware scanning" below); step 16 only on pull requests; step 18 only when the caller sets `weekly_maintenance: true` (the weekly schedule); step 19 only if an earlier step failed. See "Severing" below for step 3, "Pinned commit integrity" for step 4, "Advanced read-only hardening" for step 7, "Language-aware pre-check report" for step 9, and "Saved reports" for steps 1 and 19-20. Step 17 (`cli.js run`) re-runs steps 3, 4, and 6-15 a second time internally before starting the configured workload - every one of those gates is read-only and idempotent, so this repeats work without changing the result.
 
 ## Language-aware pre-check report
 
@@ -100,9 +101,15 @@ The built-in scan fails on high-confidence indicators of:
 
 `security.allow` exempts intentional text fixtures from pattern scanning. `security.allowBinaries` exempts intentional executable artifacts from binary blocking. Both are path-pattern allowlists and should be as narrow as possible. Neither grants execution permission, and neither changes the repository.
 
-This is a defense-in-depth gate, not an antivirus or sandbox. Static patterns and dependency advisories cannot detect every exploit, malicious program, spyware technique, supply-chain compromise, or future zero-day. Passing means none of the configured known indicators or dependency audit failures were found; it is not a guarantee that code is safe.
+This is a defense-in-depth gate, not a sandbox. Static patterns, dependency advisories, and virus signatures cannot detect every exploit, malicious program, spyware technique, supply-chain compromise, or future zero-day. Passing means none of the configured known indicators, dependency audit failures, or (if enabled) malware signatures were found; it is not a guarantee that code is safe.
 
 After the workload, The Crucible scans configured text artifacts for recognized credentials and client-visible secret exposure before reporting success. This catches secrets introduced by generation or bundling even when they were not present in the staged source snapshot.
+
+### Malware scanning
+
+The pattern rules above catch the *shape* of malicious behavior - a keylogging API paired with a network call, an obfuscated `eval`, a reverse-shell payload - in source text. They cannot catch a known virus or trojan that doesn't match any of those shapes. `security.malwareScan.enabled` adds a second, independent layer for that: a real ClamAV virus-signature scan of the same staged snapshot the rest of the Security Gate already reads.
+
+This is opt-in and costs real runner time, so two things have to both be true for it to run in CI: `security.malwareScan.enabled: true` in `.thecrucible.json`, and `malware_scan: true` passed to the reusable workflow (which installs ClamAV and updates its virus database before the Security Gate step runs). Setting only the config flag without the workflow input - or running in any environment where the `clamscan` executable isn't installed - fails closed with an explicit "malware scanner unavailable" finding rather than silently skipping the check a project asked for. Findings report the file path and the matched signature name; they never print file contents.
 
 ### GitHub repository security settings gate
 
@@ -274,6 +281,7 @@ Optional path patterns excluded from the privacy audit and scrubber. This is int
 - `allowBinaries`: Optional path patterns for reviewed executable or library files that must be tracked intentionally.
 - `maxTextBytes`: Maximum bytes scanned per text file, from 1,024 through 5,242,880. Default: 1,048,576. Binary recognition is still performed before this limit is applied.
 - `dependencyAudit`: Up to ten optional vulnerability-audit commands. Each has `name`, `run`, `args`, and optional `cwd`, and runs directly without shell interpretation under the normal command timeout.
+- `malwareScan.enabled`: Defaults to `false`. See "Malware scanning" above - also requires `malware_scan: true` on the caller workflow to actually install ClamAV in CI.
 
 ### `authenticity.claims`
 
