@@ -34,6 +34,7 @@ jobs:
         env:
           CRUCIBLE_WORKFLOW_LINT_DIRS: templates
         run: npm run lint:workflows
+      - run: npm run docs:check
       - run: npm run audit:design-brief
       - run: npm run audit:core-ref
       - run: npm test
