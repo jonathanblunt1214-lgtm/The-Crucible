@@ -83,12 +83,21 @@ treat one another's work as active project state, not as unrelated changes.
 
 - Before editing, fetch `origin/development`, fast-forward only, and read this
   file plus the **Shared AI handoff** section at the top of `DEVLOG.md`.
+- The phrases "work with Claude," "coordinate with Claude," or "finish what
+  Claude and I did" mean: synchronize `development` and read `DEVLOG.md` before
+  acting. The same rule applies in the opposite direction whenever the owner
+  tells Claude to work with Codex, coordinate with Codex, or finish work done
+  with Codex. Agent names are a direction to use the shared handoff, not an
+  invitation to rely on private chat history.
 - Before pushing, fetch again. If `origin/development` moved, integrate and
   verify the other agent's work without force-pushing or discarding it.
 - Every pushed change must update the Shared AI handoff in the same commit with
-  the agent name, what changed, verification performed, and any remaining
-  failure or unfinished work. Do not leave another agent to reconstruct state
-  from chat history.
+  the agent name, the current plan, what changed, verification performed, and
+  any remaining failure or unfinished work. The current plan must never be
+  omitted or knowingly left stale: update it automatically whenever the plan,
+  status, or next step changes. Do not wait for the owner to request a handoff
+  refresh, and do not leave another agent to reconstruct state from chat
+  history.
 - Never overwrite, revert, delete, or rename another agent's work merely because
   it was not created in the current session. If two changes conflict in intent,
   preserve both and ask the owner before choosing one.

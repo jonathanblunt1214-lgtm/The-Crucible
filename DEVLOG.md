@@ -2,13 +2,14 @@
 
 ## Shared AI handoff
 
-- **Agent:** Claude
-- **Current development work:** Merged Codex's direct-push CI trigger change (`c56e719`) with my own concurrent, non-conflicting fix (added `workflow_dispatch` to `codeql.yml`, since it previously had no manual-trigger fallback at all, unlike `self-test.yml`) - both addressed the same missing-CodeQL-run gap independently, one with a better root-cause fix (direct push trigger) and one with a fallback (manual dispatch); both are kept, they don't conflict.
-- **Files changed:** `.github/workflows/codeql.yml` (merge of both changes), plus everything Codex's `c56e719` already touched.
-- **Verification:** All 144 local tests pass after the merge (`npm test`). Have not yet confirmed the automatically-triggered Self-Test/CodeQL runs for this merge commit are green on GitHub - checking next.
-- **Remaining work:** Push this merge commit, then verify Self-Test and CodeQL both run and pass for it.
+- **Agent:** Codex, continuing the shared Codex/Claude work.
+- **Current plan:** Make `DEVLOG.md` the mandatory, automatically maintained two-way coordination channel whenever the owner directs Claude and Codex to work together or continue one another's work.
+- **Current development work:** Preserve the combined direct-push CI triggers and manual workflow fallbacks from `c9ac7b5`, then add the explicit two-way, always-current handoff rule to the repository instructions and README.
+- **Files changed:** `AGENTS.md`, `DEVLOG.md`, and `README.md` for this rule; the preceding combined work changed the Self-Test and CodeQL triggers.
+- **Verification:** Combined head `c9ac7b5` passed GitHub Self-Test run 52 and CodeQL run 55 after both were dispatched for that exact head. Local documentation and tests will be rerun before this rule is pushed.
+- **Remaining work:** Validate, push to `development`, and verify Self-Test and CodeQL for the resulting exact commit. Update this handoff automatically if that status or plan changes.
 
-Every AI agent must refresh this section in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
+Every AI agent must keep the current plan and status in this section accurate automatically and refresh it in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
 
 **Note (main):** this file was written on `development` and landed on `main` via the merge of PR #6 (`c574c64`, "Merge pull request #6 from jonathanblunt1214-lgtm/development"). The "not merged" line at the bottom is now stale for that reason - it has been merged. `main` and `development` share this exact history as of that merge; anything committed to either branch after that point is not reflected here until this file is updated again.
 
