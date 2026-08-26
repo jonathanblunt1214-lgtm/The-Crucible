@@ -194,6 +194,8 @@ The duplicated commit SHA is intentional. The workflow itself and the engine che
 
 Every change to this repository is independently exercised on Linux, Windows, and macOS with supported Node.js versions before that commit should be adopted by another project. A project should pin only a commit whose **The Crucible Self-Test** matrix has passed.
 
+Development work is performed on `development`. Permanent draft PR #7 (`development` -> `main`) is a CI event hook, not a release request: it must remain open, must never be merged, and must never be marked ready for review with the intent to merge. Each push to `development` is followed by Self-Test and CodeQL verification; if the PR event does not produce a Self-Test run, maintainers dispatch Self-Test manually. Promotion to `main` happens only when the repository owner explicitly requests it.
+
 For private projects, this repository's **Settings → Actions → General → Access** setting must permit reusable-workflow access from other repositories owned by the same account or organization.
 
 ### Why `agent-boundaries.md` exists
