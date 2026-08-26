@@ -48,7 +48,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 35
     env:
-      CRUCIBLE_REPORT_PATH: ${{ runner.temp }}/the-crucible-report.json
+      CRUCIBLE_REPORT_PATH: ${{ github.workspace }}/.the-crucible-report.json
     steps:
       - name: Check out the caller repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -161,6 +161,6 @@ jobs:
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: the-crucible-report-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/the-crucible-report.json
+          path: ${{ github.workspace }}/.the-crucible-report.json
           if-no-files-found: warn
           retention-days: 90
