@@ -6,11 +6,12 @@ function resolveSpawn(command, environment = process.env, platform = process.pla
   const runtimeExecutable = runtime.execPath || process.execPath;
   const exists = runtime.existsSync || fs.existsSync;
   if (platform === 'win32' && command.run.toLowerCase() === 'npm') {
+    const pathImpl = path.win32;
     const candidates = [
       environment.npm_execpath,
-      path.resolve(path.dirname(runtimeExecutable), 'node_modules', 'npm', 'bin', 'npm-cli.js'),
-      path.resolve(path.dirname(runtimeExecutable), '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js'),
-      environment.APPDATA && path.resolve(environment.APPDATA, 'npm', 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+      pathImpl.resolve(pathImpl.dirname(runtimeExecutable), 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+      pathImpl.resolve(pathImpl.dirname(runtimeExecutable), '..', 'lib', 'node_modules', 'npm', 'bin', 'npm-cli.js'),
+      environment.APPDATA && pathImpl.resolve(environment.APPDATA, 'npm', 'node_modules', 'npm', 'bin', 'npm-cli.js'),
     ].filter(Boolean);
     const npmCli = candidates.find((candidate) => candidate === environment.npm_execpath || exists(candidate));
     if (npmCli) return { executable:runtimeExecutable, args:[npmCli, ...command.args] };
