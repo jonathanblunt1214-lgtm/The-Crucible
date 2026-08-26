@@ -12,7 +12,9 @@
   },
   "artifacts": ["package.json"],
   "clutter": {
-    "allow": [],
+    "allow": [
+      { "path": "templates/ai-conflicts.example.json", "reason": "The adopter template intentionally begins byte-for-byte identical to this repository's empty mandatory AI conflict ledger.", "owner": "jonathanblunt1214-lgtm", "expires": "2027-08-26" }
+    ],
     "allowDuplicateContent": false,
     "blockTrackedIgnored": true
   },
