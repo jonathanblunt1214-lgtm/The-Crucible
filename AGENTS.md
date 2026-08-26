@@ -50,8 +50,20 @@ ordinary CI hygiene applied automatically instead of waited-for.
 ## Automatic CI monitoring
 
 The owner should not have to notice a failure, paste a screenshot, or ask
-"what's going on" for ordinary CI hygiene to happen. A standing scheduled
-check-in runs against `development`'s latest commit and:
+"what's going on" for ordinary CI hygiene to happen. Two mechanisms cover
+this, since the platform's scheduler cannot poll more often than hourly:
+
+- **Primary, near-live:** [PR #7](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/7),
+  a permanently-draft, never-merged `development` -> `main` pull request
+  that exists only so GitHub pushes CI and comment events the moment they
+  happen, instead of waiting for a poll. It is explicitly marked
+  do-not-merge and does not change the `main` branch policy above - opening
+  and keeping it open was itself an explicit, one-time owner decision, not
+  something assumed going forward.
+- **Fallback, hourly:** a scheduled check-in, for anything the event stream
+  misses or arrives out of order.
+
+Either way, on a wake or a check-in against `development`'s latest commit:
 
 - If Self-Test and CodeQL are both green, it does nothing and stays silent.
   A quiet check is not worth a message.
