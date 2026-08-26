@@ -42,7 +42,10 @@ failing check, and never treat a "severed" failure as one to route around
 that this repository intends to end the connection entirely.
 
 Connecting to The Crucible is one-way: it reads this repository's tracked
-files at CI time and reports pass or fail. It is not a partnership, a
+files at CI time and reports pass or fail. A failed run also creates or
+updates one visible `[The Crucible] Gate failure` issue in this repository;
+that narrow issue write cannot modify source, branches, pull requests, or
+The Crucible itself. It is not a partnership, a
 shared state, or a relationship that runs in both directions.
 
 If it is installed here to run The Crucible, it belongs to The Crucible

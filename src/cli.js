@@ -21,6 +21,7 @@ const { auditExceptions } = require('./exceptions');
 const { auditDependencyPolicy } = require('./dependencies');
 const { verifyReproducibility } = require('./reproducibility');
 const { writeReport } = require('./report');
+const { publishFailureIssue } = require('./failureIssue');
 
 const action = process.argv[2] || 'run';
 const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
@@ -108,6 +109,10 @@ function governanceGate(root, config, suppliedSnapshot = null) {
 
 async function main() {
   if (action === 'report-init') return console.log('[The Crucible] Report initialized.');
+  if (action === 'failure-issue') {
+    const result = await publishFailureIssue();
+    return console.log(`[The Crucible] Failure issue #${result.number} ${result.action}.`);
+  }
   const config = loadConfig(root, process.env.CRUCIBLE_CONFIG || '.thecrucible.json');
   activeConfig = config;
   if (action === 'validate') return console.log(`[The Crucible] Valid configuration for ${config.project.name}.`);

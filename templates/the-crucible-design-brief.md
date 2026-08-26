@@ -30,12 +30,18 @@ copied from The Crucible's `templates/caller-workflow.yml`) declares a
 3. Runs The Crucible's CLI against your checked-out code from inside that
    ephemeral runner.
 4. Reports one check named **The Crucible**.
+5. If the check fails, creates or updates one visible
+   `[The Crucible] Gate failure` issue in your repository with the run link,
+   bounded error summary, and report artifact name.
 
 That's the whole mechanism. Two things follow directly from it:
 
 - **Access is one-shot and read-only.** `persist-credentials: false` means
   no token or credential capable of writing to The Crucible is ever stored
-  anywhere in your runner. The checkout is read-only from the start.
+  anywhere in your runner. Both source checkouts are read-only from the
+  start. The caller token has only one recurring write capability:
+  `issues: write`, used to surface a failed run in your own repository. It
+  cannot write source, branches, pull requests, or The Crucible.
 - **Access is severed the instant the run ends.** The runner is destroyed
   when the job completes. Nothing persists - no cached checkout, no
   lingering credential, no route from your repository back into The
@@ -58,10 +64,11 @@ this one file out of it into your repository, verified via `git status`
 that nothing else had changed, committed only this file, and pushed. The
 workflow file that granted that write capability is meant to be deleted
 immediately afterward - once it's gone, the capability is gone with it.
-That is the only write of any kind anywhere in this design, it writes only
-into your own repository using your own repository's own token, it never
-touches The Crucible's repository, and it is spent - it does not recur on
-a schedule or on every run the way the read-only check does.
+That is the only source-tree write anywhere in this design. The recurring
+gate can write only failure issue metadata in your repository. Neither write
+ever touches The Crucible's repository. The source-tree capability is narrow,
+one-time, and it is spent:
+it does not recur on a schedule or on every run the way the check does.
 
 **This file is not yours to delete either.** Every Crucible check now
 begins by confirming this file is either present or was never installed in

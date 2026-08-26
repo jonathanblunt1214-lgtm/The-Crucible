@@ -10,6 +10,7 @@ test('reusable workflow is read-only and uses the exact caller-supplied core ref
   assert.match(workflow, /workflow_call:/);
   assert.match(workflow, /permissions:\s*\n\s*contents: read/);
   assert.match(workflow, /pull-requests: read/);
+  assert.match(workflow, /issues: write/);
   assert.match(workflow, /ref: \$\{\{ inputs\.core_ref \}\}/);
   assert.match(workflow, /persist-credentials: false/);
   assert.doesNotMatch(workflow, /contents: write|git push/);
@@ -19,6 +20,7 @@ test('reusable workflow is read-only and uses the exact caller-supplied core ref
   assert.match(workflow, /overlapping open pull requests[\s\S]*cli\.js collisions/);
   assert.match(workflow, /Pre-check changed commit and code[\s\S]*cli\.js precheck/);
   assert.match(workflow, /cli\.js design-brief[\s\S]*cli\.js validate/);
+  assert.match(workflow, /Create or update the Crucible failure issue[\s\S]*if: failure\(\)[\s\S]*cli\.js failure-issue/);
 });
 
 test('a severed design-brief link fails every check, unconditionally, before anything else', () => {
@@ -37,6 +39,7 @@ test('caller template schedules daily clutter and weekly maintenance', () => {
   assert.match(workflow, /cron: '47 4 \* \* 0'/);
   assert.match(workflow, /weekly_maintenance:.*47 4 \* \* 0/);
   assert.equal((workflow.match(/REPLACE_WITH_EXACT_COMMIT_SHA/g) || []).length, 2);
+  assert.match(workflow, /issues: write/);
 });
 
 test('documentation explicitly covers behavior, limits, and non-goals', () => {

@@ -23,7 +23,10 @@ function parseCandidate(relative, content) {
   const extension = path.extname(relative).toLowerCase();
   try {
     if (extension === '.json') JSON.parse(content);
-    else if (['.js', '.cjs', '.mjs'].includes(extension)) new Function(content); // Syntax only; never executed.
+    else if (['.js', '.cjs', '.mjs'].includes(extension)) {
+      const syntaxContent = content.replace(/^#![^\r\n]*(?:\r?\n|$)/, '');
+      new Function(syntaxContent); // Syntax only; never executed. Node accepts a leading CLI shebang.
+    }
     else return null;
     return null;
   } catch (error) {

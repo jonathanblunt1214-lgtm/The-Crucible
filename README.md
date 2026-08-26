@@ -1,12 +1,12 @@
 # The Crucible
 
-The Crucible is a repository-independent GitHub Actions quality gate. A project opts in by adding `.thecrucible.json` and a small caller workflow. The project remains independent: The Crucible does not copy application code between repositories, does not require another application, and does not receive write access to the project.
+The Crucible is a repository-independent GitHub Actions quality gate. A project opts in by adding `.thecrucible.json` and a small caller workflow. The project remains independent: The Crucible does not copy application code between repositories, does not require another application, and receives no project-content write access. Its only recurring write permission is `issues: write`, used after a failed gate to create or update the visible failure issue in the scanned repository.
 
 ## Exactly what it does
 
 ### On every push and pull request
 
-The caller workflow checks out the project commit that triggered the run, checks out an exact pinned commit of this repository into `.the-crucible-runtime`, and runs with read-only contents and pull-request permissions. That checkout uses `persist-credentials: false` and lives only inside that one ephemeral runner: the project has no standing access to this repository, only a one-shot, read-only checkout for the duration of a single check, severed the moment the runner is destroyed. No project that adopts The Crucible can change anything in this repository, during a run or after one.
+The caller workflow checks out the project commit that triggered the run, checks out an exact pinned commit of this repository into `.the-crucible-runtime`, and runs with read-only contents, read-only pull-request access, and issue-write permission limited to surfacing a failed run. That checkout uses `persist-credentials: false` and lives only inside that one ephemeral runner: the project has no standing access to this repository, only a one-shot, read-only checkout for the duration of a single check, severed the moment the runner is destroyed. No project that adopts The Crucible can change anything in this repository, during a run or after one.
 
 The engine then:
 
@@ -298,13 +298,15 @@ workers × cycles × number of verify commands
 
 ## What it deliberately does not do
 
-The Crucible does not silently delete clutter, automatically fix application code, upload project source elsewhere, collect telemetry, read unrelated repositories, expose repository secrets, modify branch protection, approve pull requests, or publish releases. Adopting-project findings are report-only unless a separate external-repair feature is explicitly enabled. Internal recovery is different: it can commit and promote a verified restoration only inside The Crucible's own repository.
+The Crucible does not silently delete clutter, automatically fix application code, upload project source elsewhere, collect telemetry, read unrelated repositories, expose repository secrets, modify branch protection, approve pull requests, or publish releases. An adopting-project failure is reported in the run and automatically surfaced as an issue; it does not stage, commit, push, or repair adopting-project files. Internal recovery is different: it can commit and promote a verified restoration only inside The Crucible's own repository.
 
 ## Local use
 
 ### Saved reports
 
 Every reusable-workflow run saves a project-specific JSON report as a downloadable GitHub Actions artifact named `the-crucible-report-<run>-<attempt>`. It records the project, repository, commit, workflow run, timestamps, and the pass or fail status of each Crucible action that started. Reports are retained for 90 days by default.
+
+When the gate fails, the final reporting step uses the caller's narrowly scoped `issues: write` permission to create an open issue titled `[The Crucible] Gate failure` in the scanned repository. The issue contains the run link, commit, artifact name, bounded error summary, and suggested next step. If that issue is already open, later failures add a comment instead of creating duplicates. The workflow never closes the issue automatically and never writes repository contents.
 
 Artifact storage uses GitHub's workflow-artifact service. It does not require `contents: write`, does not change the project checkout, and cannot commit or push repository files. If a failure occurs before the Crucible engine can start, the workflow warns that no report was produced rather than inventing a result.
 
