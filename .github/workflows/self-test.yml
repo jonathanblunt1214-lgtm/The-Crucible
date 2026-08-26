@@ -20,6 +20,9 @@ jobs:
         node: [20, 22, 24]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      CRUCIBLE_SECURITY_READ_TOKEN: ${{ secrets.SECURITY_READ_TOKEN }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -27,10 +30,24 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: ${{ matrix.node }}
+      - name: Lint GitHub Actions workflow permissions
+        env:
+          CRUCIBLE_WORKFLOW_LINT_DIRS: templates
+        run: npm run lint:workflows
+      - run: npm run docs:check
+      - run: npm run audit:design-brief
+      - run: npm run audit:core-ref
       - run: npm test
       - run: npm run validate
       - run: npm run audit:clutter
       - run: npm run audit:privacy
       - run: npm run audit:security
-      - run: npm run precheck
-      - run: npm run run
+      - run: npm run audit:github-security
+      - name: Run pre-check against the actual head commit, not GitHub's synthetic PR merge commit
+        env:
+          CRUCIBLE_COMMIT_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: npm run precheck
+      - name: Run verification and bounded workload
+        env:
+          CRUCIBLE_COMMIT_REF: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: npm run run

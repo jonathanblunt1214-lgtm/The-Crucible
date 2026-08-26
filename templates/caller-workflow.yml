@@ -10,6 +10,8 @@ on:
 
 permissions:
   contents: read
+  issues: write
+  pull-requests: read
 
 jobs:
   crucible:
@@ -20,3 +22,12 @@ jobs:
       config_path: .thecrucible.json
       run_workload: ${{ github.event_name != 'schedule' || github.event.schedule == '47 4 * * 0' }}
       weekly_maintenance: ${{ github.event.schedule == '47 4 * * 0' }}
+      dependency_review: true
+    # Optional: a fine-grained PAT scoped to THIS repository with the
+    # read-only "Administration" permission, stored as a repository secret.
+    # GITHUB_TOKEN can never be granted this access on its own (there is no
+    # such `permissions:` key), so without this secret the GitHub repository
+    # security settings gate reports "unable to verify" rather than a false
+    # pass. Remove this block if you do not want that gate enforced.
+    secrets:
+      security_read_token: ${{ secrets.SECURITY_READ_TOKEN }}

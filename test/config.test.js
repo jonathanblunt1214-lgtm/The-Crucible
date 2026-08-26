@@ -13,13 +13,14 @@ function fixture() {
 
 test('validates and supplies bounded workload defaults', () => {
   const config = validateConfig(fixture());
-  assert.deepEqual(config.workload, { workers:4, cycles:2, timeoutMinutes:4 });
+  assert.deepEqual(config.workload, { workers:4, cycles:2, timeoutMinutes:4, maxOutputBytes:1048576, execution:{ network:'allow', memoryMb:null, fileSizeMb:null, processes:null, denyBackground:true } });
   assert.equal(config.privacy.scanContactInformation, false);
   assert.deepEqual(config.privacy.allow, []);
   assert.equal(config.clutter.blockTrackedIgnored, false);
   assert.equal(config.commands.verify[0].run, 'node');
-  assert.deepEqual(config.security, { enabled:true, allow:[], allowBinaries:[], maxTextBytes:1048576, dependencyAudit:[] });
-  assert.deepEqual(config.authenticity, { claims:[] });
+  assert.deepEqual(config.security, { enabled:true, allow:[], allowBinaries:[], maxTextBytes:1048576, dependencyAudit:[], provenanceAudit:[], dependencyPolicy:{ enabled:false, denyGit:true, denyHttp:true, denyLocal:false, allowedRegistryHosts:[], denyLicenses:[] } });
+  assert.deepEqual(config.authenticity, { claims:[], requireArtifacts:false });
+  assert.deepEqual(config.reproducibility, { enabled:false, commands:[], artifacts:[] });
 });
 
 test('requires shell-free evidence commands for declared claims', () => {

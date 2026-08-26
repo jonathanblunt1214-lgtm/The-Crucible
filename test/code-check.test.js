@@ -13,6 +13,7 @@ test('pre-check exposes exactly the four report action classes', () => {
 test('language-aware parser checks changed JSON and JavaScript without executing them', () => {
   assert.equal(parseCandidate('package.json', '{"ok":true}'), null);
   assert.equal(parseCandidate('src/good.js', 'const answer = 42;'), null);
+  assert.equal(parseCandidate('src/cli.js', '#!/usr/bin/env node\nconst answer = 42;'), null);
   assert.equal(parseCandidate('README.md', 'not code'), null);
   assert.ok(parseCandidate('bad.json', '{'));
   assert.equal(parseCandidate('bad.json', '{').action, 'human code review required');

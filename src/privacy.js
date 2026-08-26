@@ -58,14 +58,14 @@ function trackedFiles(root) {
   return execFileSync('git', ['ls-files', '-z'], { cwd:root, encoding:'utf8', windowsHide:true }).split('\0').filter(Boolean);
 }
 
-function auditPrivacy(root, config) {
+function auditPrivacy(root, config, snapshot = null) {
   const findings = [];
-  const files = trackedFiles(root);
-  const allow = (config.privacy.allow || []).map(glob);
+  const files = snapshot?.files || trackedFiles(root);
+  const allow = (config.privacy.allow || []).map((entry) => glob(typeof entry === 'string' ? entry : entry.path));
   for (const file of files) {
     if (allow.some((rule) => rule.test(file))) continue;
     let content;
-    try { content = execFileSync('git', ['show', `:${file}`], { cwd:root, encoding:'utf8', windowsHide:true, maxBuffer:20 * 1024 * 1024 }); }
+    try { content = snapshot?.entries.get(file)?.buffer.toString('utf8') ?? execFileSync('git', ['show', `:${file}`], { cwd:root, encoding:'utf8', windowsHide:true, maxBuffer:20 * 1024 * 1024 }); }
     catch { continue; }
     if (!content || content.includes('\0')) continue;
     for (const finding of findingsForText(content, config.privacy.githubIdentity)) {
@@ -79,7 +79,7 @@ function auditPrivacy(root, config) {
 
 function scrubPrivacy(root, config) {
   const changed = [];
-  const allow = (config.privacy.allow || []).map(glob);
+  const allow = (config.privacy.allow || []).map((entry) => glob(typeof entry === 'string' ? entry : entry.path));
   for (const file of trackedFiles(root)) {
     if (allow.some((rule) => rule.test(file))) continue;
     const target = path.resolve(root, file);

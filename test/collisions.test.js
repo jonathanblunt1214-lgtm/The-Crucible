@@ -22,5 +22,5 @@ test('reports only files shared with another open pull request', async () => {
     return { ok:true, json:async () => responses.get(key) || [] };
   };
   const result = await auditCollisions({ GITHUB_REPOSITORY:'owner/repo', GITHUB_TOKEN:'token', GITHUB_EVENT_PATH:eventPath }, fetchImpl);
-  assert.deepEqual(result.findings, [{ number:9, title:'Other work', paths:['src/app.js'] }]);
+  assert.deepEqual(result.findings, [{ number:9, title:'Other work', paths:['src/app.js'], severity:'code' }]);
 });

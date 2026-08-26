@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
+const { languageFindings } = require('./syntax');
 
 const TEXT_RULES = [
   ['encoded PowerShell execution', /powershell(?:\.exe)?[^\r\n]{0,160}(?:-[Ee](?:ncodedCommand)?\s+|frombase64string\s*\()/i],
@@ -8,7 +9,9 @@ const TEXT_RULES = [
   ['reverse-shell payload', /(?:bash\s+-i[^\r\n]{0,160}\/dev\/tcp\/|\bnc\b[^\r\n]{0,120}\s-e\s+(?:\/bin\/(?:ba)?sh|cmd\.exe)|socket\.[^\r\n]{0,100}connect\([^\r\n]{0,160}dup2\()/i],
   ['obfuscated dynamic execution', /(?:eval|Function)\s*\(\s*(?:atob\s*\(|Buffer\.from\s*\([^\r\n]{0,120}['"]base64['"]|(?:unescape|decodeURIComponent)\s*\()/i],
   ['credential-store theft behavior', /(?:Login Data|Cookies|logins\.json|key4\.db)[^\r\n]{0,240}(?:sqlite|decrypt|dpapi|password|token)|(?:sqlite|decrypt|dpapi)[^\r\n]{0,240}(?:Login Data|logins\.json|key4\.db)/i],
-  ['keylogging or covert capture behavior', /(?:SetWindowsHookEx|GetAsyncKeyState|pynput\.keyboard|iohook)[^\r\n]{0,240}(?:fetch\s*\(|requests\.post|https?\.request|socket\.send|webhook)|(?:pyautogui\.screenshot|ImageGrab\.grab|CopyFromScreen)[^\r\n]{0,240}(?:fetch\s*\(|requests\.post|https?\.request|socket\.send|webhook)/i],
+  ['keylogging or covert capture behavior', /(?:SetWindowsHookEx|GetAsyncKeyState|RegisterRawInputDevices|CGEventTapCreate|pynput\.keyboard|iohook)[^\r\n]{0,240}(?:fetch\s*\(|requests\.post|https?\.request|socket\.send|webhook)|(?:pyautogui\.screenshot|ImageGrab\.grab|CopyFromScreen)[^\r\n]{0,240}(?:fetch\s*\(|requests\.post|https?\.request|socket\.send|webhook)/i],
+  ['clipboard exfiltration behavior', /(?:navigator\.clipboard\.readText|pyperclip\.paste|Clipboard\.GetText)\s*\([^\r\n]{0,240}(?:fetch\s*\(|requests\.post|https?\.request|socket\.send|webhook)/i],
+  ['unauthorized microphone or camera capture', /(?:getUserMedia|sounddevice\.rec|pyaudio\.PyAudio|cv2\.VideoCapture)\s*\([^\r\n]{0,240}(?:fetch\s*\(|requests\.post|https?\.request|socket\.send|webhook)/i],
   ['AWS access key', /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/],
   ['Slack credential', /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/],
   ['npm credential', /\bnpm_[A-Za-z0-9]{30,}\b/],
@@ -93,23 +96,24 @@ function auditArtifactSecurity(root, config) {
   return { files:files.length, findings, skipped:false };
 }
 
-function auditSecurity(root, config) {
+function auditSecurity(root, config, snapshot = null) {
   if (!config.security.enabled) return { files:0, findings:[], skipped:true };
-  const allow = config.security.allow.map(glob);
-  const allowedBinaries = config.security.allowBinaries.map(glob);
+  const allow = config.security.allow.map((entry) => ({ entry, rule:glob(typeof entry === 'string' ? entry : entry.path) }));
+  const allowedBinaries = config.security.allowBinaries.map((entry) => glob(typeof entry === 'string' ? entry : entry.path));
   const findings = [];
-  const files = trackedFiles(root);
+  const files = snapshot?.files || trackedFiles(root);
   for (const file of files) {
-    if (allow.some((rule) => rule.test(file))) continue;
     let buffer;
-    try { buffer = gitBuffer(root, `:${file}`); } catch { continue; }
+    try { buffer = snapshot?.entries.get(file)?.buffer || gitBuffer(root, `:${file}`); } catch { continue; }
     const magic = executableMagic(buffer);
     if ((magic || SUSPICIOUS_BINARY_EXTENSION.test(file)) && !allowedBinaries.some((rule) => rule.test(file))) {
       findings.push({ type:magic || 'suspicious executable binary extension', path:file });
       continue;
     }
     if (buffer.length > config.security.maxTextBytes || buffer.includes(0)) continue;
-    for (const finding of findingsForText(buffer.toString('utf8'))) findings.push({ path:file, ...finding });
+    const permitted = (type) => allow.some(({ entry, rule }) => rule.test(file) && (typeof entry === 'string' || !entry.rules?.length || entry.rules.includes(type)));
+    for (const finding of findingsForText(buffer.toString('utf8'))) if (!permitted(finding.type)) findings.push({ path:file, ...finding });
+    for (const finding of languageFindings(buffer.toString('utf8'), file)) if (!permitted(finding.type)) findings.push({ path:file, ...finding });
   }
   return { files:files.length, findings, skipped:false };
 }

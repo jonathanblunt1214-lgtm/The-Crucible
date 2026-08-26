@@ -22,9 +22,24 @@ on:
         required: false
         default: false
         type: boolean
+      dependency_review:
+        description: Review pull-request dependency changes for vulnerabilities and invalid sources
+        required: false
+        default: false
+        type: boolean
+    secrets:
+      security_read_token:
+        description: >-
+          Optional fine-grained PAT with read-only "Administration" repository
+          permission, used only to check Dependabot/secret-scanning settings.
+          GITHUB_TOKEN cannot be granted this access (there is no such
+          `permissions:` key), so without this secret the check reports
+          "unable to verify" rather than a false pass or a workflow error.
+        required: false
 
 permissions:
   contents: read
+  issues: write
   pull-requests: read
 
 jobs:
@@ -32,6 +47,8 @@ jobs:
     name: The Crucible
     runs-on: ubuntu-latest
     timeout-minutes: 35
+    env:
+      CRUCIBLE_REPORT_PATH: ${{ github.workspace }}/.the-crucible-report.json
     steps:
       - name: Check out the caller repository
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -47,11 +64,43 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
+      - name: Initialize project report
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+        run: node .the-crucible-runtime/src/cli.js report-init
+      - name: Review dependency changes
+        if: github.event_name == 'pull_request' && inputs.dependency_review
+        uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5
+        with:
+          fail-on-severity: moderate
+      - name: Check the installed design brief hasn't been deleted
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+        run: node .the-crucible-runtime/src/cli.js design-brief
+      - name: Verify the pinned Crucible commit is reachable and passed its own Self-Test
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CRUCIBLE_CORE_REF: ${{ inputs.core_ref }}
+        run: node .the-crucible-runtime/src/cli.js core-ref
+      - name: Scan the checked-out Crucible engine code for malicious patterns
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}/.the-crucible-runtime
+        run: node .the-crucible-runtime/src/cli.js security
       - name: Validate .thecrucible.json
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
           CRUCIBLE_CONFIG: ${{ inputs.config_path }}
         run: node .the-crucible-runtime/src/cli.js validate
+      - name: Enforce configuration and exception governance
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+          CRUCIBLE_CONFIG: ${{ inputs.config_path }}
+        run: node .the-crucible-runtime/src/cli.js governance
+      - name: Lint GitHub Actions workflow permissions
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+          CRUCIBLE_CONFIG: ${{ inputs.config_path }}
+        run: node .the-crucible-runtime/src/cli.js workflow-lint
       - name: Pre-check changed commit and code
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
@@ -73,6 +122,13 @@ jobs:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
           CRUCIBLE_CONFIG: ${{ inputs.config_path }}
         run: node .the-crucible-runtime/src/cli.js security
+      - name: Check required GitHub repository security settings
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CRUCIBLE_SECURITY_READ_TOKEN: ${{ secrets.security_read_token }}
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+          CRUCIBLE_CONFIG: ${{ inputs.config_path }}
+        run: node .the-crucible-runtime/src/cli.js github-security
       - name: Verify evidence-backed project claims
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
@@ -97,3 +153,18 @@ jobs:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
           CRUCIBLE_CONFIG: ${{ inputs.config_path }}
         run: node .the-crucible-runtime/src/cli.js maintain
+      - name: Create or update the Crucible failure issue
+        if: failure()
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+          CRUCIBLE_CONFIG: ${{ inputs.config_path }}
+        run: node .the-crucible-runtime/src/cli.js failure-issue
+      - name: Save Crucible report with this workflow run
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: the-crucible-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ github.workspace }}/.the-crucible-report.json
+          if-no-files-found: warn
+          retention-days: 90
