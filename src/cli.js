@@ -11,6 +11,7 @@ const { runCommand } = require('./runner');
 const { auditCollisions } = require('./collisions');
 const { auditCommit, fixCommit } = require('./commit');
 const { repairInternalChecks, formatReport: formatRepairReport, publishReport: publishRepairReport } = require('./repair');
+const { VALID_PERMISSION_KEYS, auditWorkflowPermissions } = require('./workflowLint');
 const { formatReport, publishReport, runPrecheck } = require('./precheck');
 
 async function precheckGate(root, config) {
@@ -38,6 +39,16 @@ async function githubSecurityGate(config) {
   console.log(report);
   publishGithubSecurityReport(report);
   if (result.findings.length) throw new Error('GitHub repository security settings gate requires the fixes listed in the report above. See "GitHub repository security settings gate" in README.md for the full walkthrough.');
+  return result;
+}
+
+function workflowLintGate(root) {
+  const extraDirs = (process.env.CRUCIBLE_WORKFLOW_LINT_DIRS || '').split(',').map((item) => item.trim()).filter(Boolean);
+  const result = auditWorkflowPermissions(root, extraDirs);
+  if (result.findings.length) {
+    const details = result.findings.map((item) => `- ${item.path}:${item.line}: ${item.type}`).join('\n');
+    throw new Error(`Unrecognized GitHub Actions permissions key(s) found:\n${details}\nAn unrecognized key does not just fail to grant access - GitHub rejects the entire workflow file as invalid, so every job in it stops running. Valid keys are: ${[...VALID_PERMISSION_KEYS].sort().join(', ')}.`);
+  }
   return result;
 }
 
@@ -104,6 +115,10 @@ async function main() {
     if (result.findings.length) throw new Error(`Clutter detected:\n${result.findings.map((item) => `- ${item.type}: ${item.path}`).join('\n')}`);
     return console.log(`[The Crucible] Clutter audit passed across ${result.files} tracked files.`);
   }
+  if (action === 'workflow-lint') {
+    const result = workflowLintGate(root);
+    return console.log(`[The Crucible] Workflow permissions lint passed across ${result.files} workflow file(s).`);
+  }
   if (action === 'security') {
     const result = await securityGate(root, config);
     return console.log(result.skipped ? '[The Crucible] Security Gate is explicitly disabled.' : `[The Crucible] Security Gate passed across ${result.files} tracked files and ${config.security.dependencyAudit.length} dependency audit command(s).`);
@@ -132,6 +147,7 @@ async function main() {
   if (privacy.findings.length) throw new Error(`Personal identifiers detected:\n${privacy.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}`);
   const clutter = auditClutter(root, config);
   if (clutter.findings.length) throw new Error(`Clutter detected:\n${clutter.findings.map((item) => `- ${item.type}: ${item.path}`).join('\n')}`);
+  workflowLintGate(root);
   await securityGate(root, config);
   await githubSecurityGate(config);
   await authenticityGate(root, config);

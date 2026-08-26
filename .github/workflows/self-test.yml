@@ -9,7 +9,6 @@ on:
 
 permissions:
   contents: read
-  administration: read
 
 jobs:
   verify:
@@ -23,6 +22,7 @@ jobs:
     timeout-minutes: 10
     env:
       GITHUB_TOKEN: ${{ github.token }}
+      CRUCIBLE_SECURITY_READ_TOKEN: ${{ secrets.SECURITY_READ_TOKEN }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -30,6 +30,10 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: ${{ matrix.node }}
+      - name: Lint GitHub Actions workflow permissions
+        env:
+          CRUCIBLE_WORKFLOW_LINT_DIRS: templates
+        run: npm run lint:workflows
       - run: npm test
       - run: npm run validate
       - run: npm run audit:clutter

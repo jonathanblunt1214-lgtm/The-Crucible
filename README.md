@@ -92,7 +92,7 @@ This requirement applies to two repositories on every run:
 - The calling project's own repository (`GITHUB_REPOSITORY`).
 - The linked Crucible engine repository, `jonathanblunt1214-lgtm/The-Crucible`, that every caller pins and checks out into `.the-crucible-runtime`. A project that trusts this engine to gate its code should also be able to trust that this engine's own repository keeps the same protections turned on.
 
-The gate reads settings through the GitHub REST API using the workflow's own token; it never modifies them. **The calling (linking) repository's workflow must grant the `administration: read` permission** for its own repository to be checked — `templates/caller-workflow.yml` already requests it, so a project that copies the template unmodified satisfies this automatically. Without it, GitHub silently omits the security settings from its API response (it does not return an error), so The Crucible reports that repository as unverified rather than guessing or assuming it is safe, and blocks the run exactly as it would for a confirmed-disabled setting. The same applies to the linked engine repository check: it succeeds here because this engine repository is checking itself, but a caller cannot use its own token to read admin settings on an unrelated third-party repository, so that side of the check depends on the engine repository keeping its own protections on and being self-verified in its own CI. Outside a GitHub Actions context (no `GITHUB_TOKEN`/`GITHUB_REPOSITORY`, for example running `node src/cli.js` locally) the gate skips safely rather than blocking local development. Set `githubSecurity.enabled` to `false` to explicitly opt a project out.
+The gate reads settings through the GitHub REST API; it never modifies them. Reading `security_and_analysis` and vulnerability-alert status requires a token with read-only **Administration** repository access — and **the automatic `GITHUB_TOKEN` can never have that access**, because `administration` is not a valid GitHub Actions `permissions:` key for any token (an earlier version of this gate incorrectly asked callers to add `administration: read` to their workflow's `permissions:` block; that is invalid YAML and breaks the entire workflow file outright, it does not merely fail to grant access). The only way to satisfy this check is a maintainer-provided fine-grained personal access token, scoped to the repository being checked, with the read-only Administration permission, stored as a repository secret and threaded through as `secrets.security_read_token` (see `templates/caller-workflow.yml`). Without that secret — on the calling repository, on this engine repository, or both — GitHub returns a normal response with the security settings silently left out rather than an error, so this gate reports the repository as unverified rather than guessing or assuming it is safe, and blocks the run exactly as it would for a confirmed-disabled setting. Outside a GitHub Actions context (no `GITHUB_TOKEN`/`GITHUB_REPOSITORY`, for example running `node src/cli.js` locally) the gate skips safely rather than blocking local development. Set `githubSecurity.enabled` to `false` to explicitly opt a project out.
 
 ### Collision protection
 
@@ -126,11 +126,12 @@ There is no runtime dependency in the application being tested. The engine exist
 
 1. Copy `templates/thecrucible.example.json` to the project root as `.thecrucible.json`.
 2. Replace its example commands and artifact paths with real project values.
-3. Copy `templates/caller-workflow.yml` to `.github/workflows/the-crucible.yml`. Keep its `permissions:` block intact, including `administration: read` — the GitHub repository security settings gate requires it to read your repository's settings, and without it the gate cannot tell the difference between "disabled" and "not permitted to check", so it fails either way.
+3. Copy `templates/caller-workflow.yml` to `.github/workflows/the-crucible.yml`.
 4. Replace both `REPLACE_WITH_EXACT_COMMIT_SHA` values with the same tested commit SHA from this repository.
 5. Commit and push both files.
 6. In the project repository's branch protection or ruleset, require the check named **The Crucible**.
 7. In the project repository's **Settings → Code security and analysis** page, enable Dependabot alerts, Dependabot security updates, secret scanning, and push protection. The GitHub repository security settings gate fails the run until all four are turned on.
+8. Optional but recommended: create a fine-grained personal access token scoped to this repository with the read-only **Administration** permission, and add it as a repository secret named `SECURITY_READ_TOKEN`. The template already forwards it to the gate as `secrets.security_read_token`. Without it, step 7's settings can never actually be verified — GitHub's automatic `GITHUB_TOKEN` has no way to be granted this access, so the gate always reports that repository as unverified (and fails, the same as a confirmed-disabled setting) until this secret exists.
 
 The duplicated commit SHA is intentional. The workflow itself and the engine checkout are pinned to the same immutable version. Updating The Crucible requires an explicit project commit changing both values.
 
@@ -155,16 +156,7 @@ The gate could read the repository's settings and confirmed one or more of the f
 
 The gate could not tell whether the settings are on or off, and fails closed rather than guessing. The `detail` in the finding says why:
 
-- **`the workflow is missing the required "administration: read" permission`** — this is the common case for a newly adopted project. GitHub does not return an error for a missing permission here; it silently leaves `security_and_analysis` out of an otherwise-successful response, so the gate cannot distinguish "off" from "not allowed to check" and has to fail either way. Fix it by adding the permission to the failing repository's own workflow:
-
-  ```yaml
-  permissions:
-    contents: read
-    pull-requests: read
-    administration: read
-  ```
-
-  `templates/caller-workflow.yml` already includes this block — if your workflow file still fails on this, check that you copied the template's `permissions:` section rather than writing your own, and that nothing later in the file narrows it back down.
+- **`no token with repository-administration read access was available`** — this is the common case, including for this engine's own repository. `GITHUB_TOKEN` can never satisfy this: `administration` is not a valid GitHub Actions `permissions:` key for any token, so there is no `permissions:` change that grants it (an earlier version of this gate asked for exactly that and it made the whole workflow file invalid — see the note at the top of the "GitHub repository security settings gate" section above). Fix it by creating a fine-grained personal access token scoped to the repository named in the finding, with the read-only **Administration** permission, and storing it as a repository secret named `SECURITY_READ_TOKEN`. `templates/caller-workflow.yml` already forwards a secret with that name to the gate as `secrets.security_read_token` — if your caller workflow still fails on this, confirm the secret exists on the repository named in the finding (the calling repository and the linked engine repository are checked, and each needs its own secret) and that you copied the template's `secrets:` block rather than a `uses:` line without one.
 - **`HTTP 404` / a repository-not-found style detail** — the repository name The Crucible tried to check does not exist or is misspelled. For the calling project this should not happen (it comes from `GITHUB_REPOSITORY`, set automatically by GitHub Actions); for the linked engine repository, confirm the pinned commit SHA in your caller workflow still points at `jonathanblunt1214-lgtm/The-Crucible`.
 - **Any other `HTTP` status** — a transient GitHub API problem or an outage. Re-running the workflow is usually sufficient; if it persists, check [githubstatus.com](https://www.githubstatus.com/) before assuming it is a Crucible bug.
 

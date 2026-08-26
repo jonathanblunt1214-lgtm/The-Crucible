@@ -55,6 +55,21 @@ test('skips the commit-gate fix and explains why when targeting already-committe
   assert.match(result.skipReason, /Commit Gate auto-fix only applies to staged working-tree changes/);
 });
 
+test('strips an unrecognized permissions key from this repository\'s own workflow files, including templates', () => {
+  const root = repository();
+  fs.mkdirSync(path.join(root, '.github', 'workflows'), { recursive: true });
+  fs.writeFileSync(path.join(root, '.github', 'workflows', 'the-crucible.yml'), 'permissions:\n  contents: read\n  administration: read\njobs: {}\n');
+  fs.mkdirSync(path.join(root, 'templates'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'templates', 'caller-workflow.yml'), 'permissions:\n  contents: read\n  administration: read\n');
+  git(root, ['add', '.']);
+  const result = repairInternalChecks(root, config(), { ref: '--cached' });
+  assert.ok(result.changed.includes('.github/workflows/the-crucible.yml'));
+  assert.ok(result.changed.includes('templates/caller-workflow.yml'));
+  assert.equal(result.removedPermissions.length, 2);
+  assert.equal(fs.readFileSync(path.join(root, '.github', 'workflows', 'the-crucible.yml'), 'utf8'), 'permissions:\n  contents: read\njobs: {}\n');
+  assert.equal(fs.readFileSync(path.join(root, 'templates', 'caller-workflow.yml'), 'utf8'), 'permissions:\n  contents: read\n');
+});
+
 test('reports remaining issues that cannot be auto-fixed', () => {
   const root = repository();
   fs.writeFileSync(path.join(root, 'app.js'), '<<<<<<< ours\nconst value = 1;\n=======\nconst value = 2;\n>>>>>>> theirs\n');

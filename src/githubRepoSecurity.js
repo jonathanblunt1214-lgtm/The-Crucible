@@ -1,8 +1,8 @@
 const fs = require('node:fs');
 
 const ENGINE_REPOSITORY = 'jonathanblunt1214-lgtm/The-Crucible';
-const MISSING_PERMISSION_HINT = 'the workflow is missing the required "administration: read" permission';
-const PERMISSION_REMEDIATION = 'Add "administration: read" to the workflow\'s permissions block (see templates/caller-workflow.yml for the exact shape), commit, and re-run. Without it GitHub returns a normal response with the security settings silently left out, so this gate cannot tell "disabled" apart from "not permitted to check" and fails either way.';
+const MISSING_PERMISSION_HINT = 'no token with repository-administration read access was available (GITHUB_TOKEN cannot be granted this - there is no such "permissions:" key)';
+const PERMISSION_REMEDIATION = 'GITHUB_TOKEN can never read these settings: "administration" is not a valid GitHub Actions "permissions:" key for any token, so no workflow-level permission grants it. Create a fine-grained personal access token scoped to this repository with the read-only "Administration" repository permission, store it as a repository secret, and pass it to the caller workflow as `secrets.security_read_token` (see templates/caller-workflow.yml). Without that secret this check always reports "unable to verify" rather than a false pass.';
 
 function settingsUrl(repository) {
   return `https://github.com/${repository}/settings/security_analysis`;
@@ -54,7 +54,10 @@ function missingRequirements(status) {
 
 async function auditGithubRepositorySecurity(config, environment = process.env, fetchImpl = globalThis.fetch) {
   if (config.githubSecurity && config.githubSecurity.enabled === false) return { skipped: true, disabled: true, findings: [], results: [] };
-  const token = environment.GITHUB_TOKEN;
+  // GITHUB_TOKEN can never read repository-administration settings (no such
+  // permissions: key exists for it), so a maintainer-provided PAT with
+  // read-only Administration access takes priority when present.
+  const token = environment.CRUCIBLE_SECURITY_READ_TOKEN || environment.GITHUB_TOKEN;
   const repository = environment.GITHUB_REPOSITORY;
   if (!token || !repository) return { skipped: true, disabled: false, findings: [], results: [] };
   const apiBase = environment.GITHUB_API_URL || 'https://api.github.com';

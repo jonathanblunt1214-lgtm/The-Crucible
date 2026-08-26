@@ -43,6 +43,28 @@ function fetchImplFor(statusByRepository) {
   };
 }
 
+test('prefers a maintainer-provided admin-read token over the default GITHUB_TOKEN', async () => {
+  const seenAuthorization = [];
+  const fetchImpl = async (url, init) => {
+    seenAuthorization.push(init.headers.Authorization);
+    if (url.endsWith('/vulnerability-alerts')) return { ok: true, status: 204 };
+    return repoResponse();
+  };
+  await auditGithubRepositorySecurity(config(), { GITHUB_TOKEN: 'default-token', CRUCIBLE_SECURITY_READ_TOKEN: 'admin-pat', GITHUB_REPOSITORY: ENGINE_REPOSITORY }, fetchImpl);
+  assert.ok(seenAuthorization.every((value) => value === 'Bearer admin-pat'));
+});
+
+test('falls back to GITHUB_TOKEN when no admin-read token is provided', async () => {
+  const seenAuthorization = [];
+  const fetchImpl = async (url, init) => {
+    seenAuthorization.push(init.headers.Authorization);
+    if (url.endsWith('/vulnerability-alerts')) return { ok: true, status: 204 };
+    return repoResponse();
+  };
+  await auditGithubRepositorySecurity(config(), { GITHUB_TOKEN: 'default-token', GITHUB_REPOSITORY: ENGINE_REPOSITORY }, fetchImpl);
+  assert.ok(seenAuthorization.every((value) => value === 'Bearer default-token'));
+});
+
 test('skips outside a GitHub Actions context', async () => {
   const result = await auditGithubRepositorySecurity(config(), {}, async () => { throw new Error('not called'); });
   assert.deepEqual(result, { skipped: true, disabled: false, findings: [], results: [] });
@@ -96,7 +118,7 @@ test('reports an unreachable repository instead of throwing', async () => {
   assert.match(finding.remediation, /Confirm .* exists/);
 });
 
-test('reports missing administration:read instead of falsely claiming settings are disabled', async () => {
+test('reports an unverifiable-permission token instead of falsely claiming settings are disabled', async () => {
   const fetchImpl = fetchImplFor({
     'octocat/example': { noAdminAccess: true },
     [ENGINE_REPOSITORY]: {},
@@ -108,7 +130,7 @@ test('reports missing administration:read instead of falsely claiming settings a
   assert.equal(finding.remediation, PERMISSION_REMEDIATION);
 });
 
-test('reports missing administration:read when the vulnerability-alerts endpoint is forbidden', async () => {
+test('reports an unverifiable-permission token when the vulnerability-alerts endpoint is forbidden', async () => {
   const fetchImpl = fetchImplFor({
     'octocat/example': { alertsStatus: 403 },
     [ENGINE_REPOSITORY]: {},

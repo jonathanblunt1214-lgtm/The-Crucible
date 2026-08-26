@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const { fixCommit } = require('./commit');
 const { scrubPrivacy } = require('./privacy');
+const { fixWorkflowPermissions } = require('./workflowLint');
 
 // This module exists only to keep The Crucible's own repository green. It
 // must never be reachable for a project that adopts The Crucible: the guard
@@ -27,6 +28,7 @@ function repairInternalChecks(root, config, options = {}) {
   assertInternalProject(config);
   const ref = options.ref || '--cached';
   const privacy = scrubPrivacy(root, config);
+  const workflows = fixWorkflowPermissions(root, ['templates']);
   let commit = { changed: [], review: [] };
   let skipReason = null;
   if (ref === '--cached') {
@@ -34,13 +36,14 @@ function repairInternalChecks(root, config, options = {}) {
   } else {
     skipReason = 'Commit Gate auto-fix only applies to staged working-tree changes, not already-committed history. Run "npm run repair" locally, before committing, to apply it.';
   }
-  const changed = [...new Set([...privacy.changed, ...commit.changed])];
-  return { changed, remaining: commit.review || [], skipReason };
+  const changed = [...new Set([...privacy.changed, ...workflows.changed, ...commit.changed])];
+  return { changed, removedPermissions: workflows.removed, remaining: commit.review || [], skipReason };
 }
 
 function formatReport(result) {
   const lines = [`[The Crucible] Internal repair report: ${result.changed.length} working file(s) updated, ${result.remaining.length} issue(s) still need human review.`];
   for (const file of result.changed) lines.push(`- fixed: ${file}`);
+  for (const item of result.removedPermissions || []) lines.push(`- removed unrecognized permissions key "${item.key}" from ${item.path}:${item.line} (it never granted real access; leaving it in made the whole workflow file invalid)`);
   for (const item of result.remaining) lines.push(`- needs review: ${item.type}: ${item.path}${item.line ? `:${item.line}` : ''}`);
   if (result.skipReason) lines.push(`- ${result.skipReason}`);
   if (!result.changed.length && !result.remaining.length && !result.skipReason) lines.push('- No fixable internal hygiene issues found. This cannot repair failing tests or logic bugs.');
