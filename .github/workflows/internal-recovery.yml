@@ -1,9 +1,20 @@
 name: Recover Crucible from canonical snapshot
 
+# This workflow used to trigger automatically on every failed Self-Test run
+# on main and force-push a recovery commit with no human involved. That is
+# invisible self-repair - exactly what this project's own agent-boundaries
+# policy prohibits everywhere else - so the automatic trigger has been
+# removed. A human decides a real recovery is warranted, supplies the exact
+# failing commit SHA, and runs this manually; it still verifies the
+# restored tree before promoting it, and still force-pushes with a lease
+# scoped to that exact SHA so it can never clobber unrelated newer work.
 on:
-  workflow_run:
-    workflows: ['The Crucible Self-Test']
-    types: [completed]
+  workflow_dispatch:
+    inputs:
+      failed_sha:
+        description: The exact failing commit SHA on main to recover from
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -14,26 +25,23 @@ concurrency:
 
 jobs:
   recover:
-    if: >-
-      github.event.workflow_run.conclusion == 'failure' &&
-      github.event.workflow_run.head_branch == 'main' &&
-      github.event.workflow_run.head_repository.full_name == github.repository &&
-      github.repository == 'jonathanblunt1214-lgtm/The-Crucible'
+    if: github.repository == 'jonathanblunt1214-lgtm/The-Crucible'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          ref: ${{ github.event.workflow_run.head_sha }}
+          ref: ${{ inputs.failed_sha }}
           fetch-depth: 0
           persist-credentials: true
       - name: Restore the complete tracked tree from the canonical snapshot
         shell: bash
         env:
-          FAILED_SHA: ${{ github.event.workflow_run.head_sha }}
+          FAILED_SHA: ${{ inputs.failed_sha }}
         run: |
           git fetch origin main crucible-canonical
           test "$(git rev-parse HEAD)" = "$FAILED_SHA"
+          test "$(git rev-parse origin/main)" = "$FAILED_SHA"
           git read-tree --reset -u origin/crucible-canonical
           if git diff --cached --quiet; then
             echo 'The failed tree already matches the canonical snapshot; refusing an empty recovery loop.'
@@ -41,7 +49,7 @@ jobs:
           fi
           git config user.name 'The Crucible Recovery'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m "Auto-recover Crucible from verified canonical snapshot"
+          git commit -m "Recover Crucible from verified canonical snapshot"
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: '24'
@@ -60,8 +68,8 @@ jobs:
       - name: Preserve the recovery branch and promote it atomically
         shell: bash
         env:
-          FAILED_SHA: ${{ github.event.workflow_run.head_sha }}
-          RECOVERY_BRANCH: crucible-recovery-${{ github.event.workflow_run.id }}
+          FAILED_SHA: ${{ inputs.failed_sha }}
+          RECOVERY_BRANCH: crucible-recovery-${{ github.run_id }}
         run: |
           git push origin HEAD:"refs/heads/$RECOVERY_BRANCH"
           git push origin HEAD:refs/heads/main --force-with-lease=refs/heads/main:"$FAILED_SHA"
