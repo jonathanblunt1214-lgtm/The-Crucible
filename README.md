@@ -11,14 +11,15 @@ The caller workflow checks out the project commit that triggered the run, checks
 The engine then:
 
 1. Confirms `THE-CRUCIBLE-DESIGN-BRIEF.md`, if it was ever installed via `connect-workflow.yml`, has not since been deleted - fails immediately, before anything else, if it has (see "Severing: what happens if the installed design brief is deleted" below).
-2. Loads `.thecrucible.json` from the project.
-3. Rejects malformed configuration, unsupported schema versions, absolute paths, parent-directory traversal, unbounded workload values, and executable paths embedded in configuration.
-4. Audits every Git-tracked project file for clutter.
-5. Audits staged tracked text for personal identifiers, credentials, and private keys.
-6. Runs the Security Gate against the staged Git snapshot before any project preparation or heavy workload begins.
-7. Checks that Dependabot alerts, Dependabot security updates, secret scanning, and secret scanning push protection are enabled on both the calling project's repository and the linked Crucible engine repository.
-8. On pull requests, reports files that overlap another open pull request before workload execution.
-9. Pre-checks the exact staged snapshot locally (or commit SHA in CI), then parses changed JSON/JavaScript and runs only configured checks whose path patterns match changed files.
+2. Confirms the pinned `core_ref` commit exists, is reachable from The Crucible's `main` branch, and has a passing Self-Test recorded for it - see "Pinned commit integrity" below.
+3. Loads `.thecrucible.json` from the project.
+4. Rejects malformed configuration, unsupported schema versions, absolute paths, parent-directory traversal, unbounded workload values, and executable paths embedded in configuration.
+5. Audits every Git-tracked project file for clutter.
+6. Audits staged tracked text for personal identifiers, credentials, and private keys.
+7. Runs the Security Gate against the staged Git snapshot before any project preparation or heavy workload begins.
+8. Checks that Dependabot alerts, Dependabot security updates, secret scanning, and secret scanning push protection are enabled on both the calling project's repository and the linked Crucible engine repository.
+9. On pull requests, reports files that overlap another open pull request before workload execution.
+10. Pre-checks the exact staged snapshot locally (or commit SHA in CI), then parses changed JSON/JavaScript and runs only configured checks whose path patterns match changed files.
 
 ## Language-aware pre-check report
 
@@ -101,6 +102,12 @@ Installing `THE-CRUCIBLE-DESIGN-BRIEF.md` via `templates/connect-workflow.yml` (
 
 This is deliberate, not a bug to work around. There are exactly two legitimate responses to a severed link: restore the file by re-running `connect-workflow.yml`, or actually end the connection by removing the caller workflow and `.thecrucible.json` entirely. Deleting the design brief while leaving the caller workflow in place is not a valid state - it doesn't disable The Crucible, it just fails every check until one of those two things happens.
 
+### Pinned commit integrity
+
+A pinned commit's own content cannot be silently altered - git identifies a commit by the hash of its content, so "the same SHA with different code" is not a thing that can happen without the hash changing too. What a technical check *can* catch is a different problem: `core_ref` getting re-pinned, deliberately or by mistake, to a real commit that is nonetheless the wrong one - one that was reverted, abandoned on an unmerged branch, or never had its Self-Test pass. That looks exactly like a legitimate update to anyone skimming a diff, but it's a downgrade to a version of The Crucible that was never cleared for use.
+
+Before validating configuration, every run checks the pinned `core_ref` against The Crucible's own repository: that the commit exists, that it is reachable from `main` (an ancestor of it or `main` itself - not an orphaned or reverted commit), and that its Self-Test matrix actually recorded a pass. Any of those failing blocks the run with a report naming exactly which check failed and why. This only verifies the pin's provenance; it cannot verify intent - a human with legitimate repository access can still choose to re-pin to an old commit on purpose. Requiring review on the caller workflow file (see the `CODEOWNERS` recommendation above) is what makes that a decision someone has to notice and approve, rather than one this check alone can prevent.
+
 ### Collision protection
 
 For pull-request runs, the reusable workflow uses read-only pull-request access to compare the current PR's changed files with every other open PR. Any overlap fails before the heavy workload and reports only PR numbers, titles, and paths. Outside a GitHub pull-request context the collision audit skips safely. It never closes, modifies, approves, or merges a pull request.
@@ -141,6 +148,14 @@ There is no runtime dependency in the application being tested. The engine exist
 8. Optional but recommended: create a fine-grained personal access token scoped to this repository with the read-only **Administration** permission, and add it as a repository secret named `SECURITY_READ_TOKEN`. The template already forwards it to the gate as `secrets.security_read_token`. Without it, step 7's settings can never actually be verified — GitHub's automatic `GITHUB_TOKEN` has no way to be granted this access, so the gate always reports that repository as unverified (and fails, the same as a confirmed-disabled setting) until this secret exists.
 9. Append `templates/agent-boundaries.md` to this project's AI agent instructions (`CLAUDE.md`, `AGENTS.md`, or whatever file your tooling reads). It states, in terms meant for an agent rather than a human, that everything installed here to run The Crucible - `.thecrucible.json`, the caller workflow, the pin, the checked-out engine code - belongs to The Crucible and is off-limits to modify, that CI failures here get a visible human-reviewed fix rather than autonomous self-repair, and that a pinned commit that fails to resolve is a link problem to report - not a bug to chase into this project's own permissions or workflow files. See "Why `agent-boundaries.md` exists" below for what this is protecting against.
 10. Copy `templates/connect-workflow.yml` to `.github/workflows/connect-the-crucible.yml`, replace its `REPLACE_WITH_EXACT_COMMIT_SHA`, commit and push it, then run it once from the Actions tab (`workflow_dispatch`). It writes `THE-CRUCIBLE-DESIGN-BRIEF.md` - a longer, standalone version of `agent-boundaries.md`'s rules with the full design explained - into the project root, as the one and only commit it will ever make. Once it has run, **delete `.github/workflows/connect-the-crucible.yml` (the workflow file only, never the design-brief commit it produced)**: this removes the `contents: write` permission it briefly held, which is otherwise never granted anywhere in The Crucible's design. This step is optional - `agent-boundaries.md` alone covers the same rules - but gives any agent working in the project a standalone, always-on-disk document instead of relying on it having been appended somewhere agent tooling happens to read. **Once installed, do not delete `THE-CRUCIBLE-DESIGN-BRIEF.md` itself** - see "Severing" below for what happens if it's removed after being committed.
+11. Optional but recommended: add a `CODEOWNERS` entry requiring review from a trusted maintainer for changes to the files that run The Crucible:
+    ```
+    /.github/workflows/the-crucible.yml   @your-org/security-reviewers
+    /.github/workflows/connect-the-crucible.yml   @your-org/security-reviewers
+    /.thecrucible.json   @your-org/security-reviewers
+    /THE-CRUCIBLE-DESIGN-BRIEF.md   @your-org/security-reviewers
+    ```
+    Pair it with a branch protection rule requiring that review before merge. The Crucible has no access to configure this itself - it can only verify the pin's own integrity (see "Pinned commit integrity" below) - so a human re-pinning `core_ref` to an old or unreviewed commit is a code-review problem, not something a CI check run by the pinned commit itself can fully police. Requiring review on these specific paths is the actual control for that.
 
 The duplicated commit SHA is intentional. The workflow itself and the engine checkout are pinned to the same immutable version. Updating The Crucible requires an explicit project commit changing both values.
 

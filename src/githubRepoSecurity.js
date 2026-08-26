@@ -1,4 +1,5 @@
 const fs = require('node:fs');
+const { assertWellFormedApiUrl, assertSafeRepository } = require('./apiGuard');
 
 const ENGINE_REPOSITORY = 'jonathanblunt1214-lgtm/The-Crucible';
 const MISSING_PERMISSION_HINT = 'no token with repository-administration read access was available (GITHUB_TOKEN cannot be granted this - there is no such "permissions:" key)';
@@ -9,7 +10,9 @@ function settingsUrl(repository) {
 }
 
 async function githubRequest(apiBase, path, token, fetchImpl) {
-  return fetchImpl(`${apiBase}${path}`, {
+  const url = `${apiBase}${path}`;
+  assertWellFormedApiUrl(url);
+  return fetchImpl(url, {
     headers: {
       Accept: 'application/vnd.github+json',
       Authorization: `Bearer ${token}`,
@@ -65,6 +68,12 @@ async function auditGithubRepositorySecurity(config, environment = process.env, 
   const findings = [];
   const results = [];
   for (const target of targets) {
+    try {
+      assertSafeRepository(target);
+    } catch (error) {
+      findings.push({ repository: target, type: 'unable to verify required GitHub security settings', detail: error.message, remediation: 'GITHUB_REPOSITORY should always be a plain "owner/repo" string, set automatically by GitHub Actions - if it is not, something upstream of this gate is misconfigured.' });
+      continue;
+    }
     const status = await fetchRepositorySecurity(apiBase, target, token, fetchImpl);
     results.push(status);
     if (!status.reachable) {

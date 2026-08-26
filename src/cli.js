@@ -13,6 +13,7 @@ const { auditCommit, fixCommit } = require('./commit');
 const { repairInternalChecks, formatReport: formatRepairReport, publishReport: publishRepairReport } = require('./repair');
 const { VALID_PERMISSION_KEYS, auditWorkflowPermissions } = require('./workflowLint');
 const { auditDesignBrief, formatSeveredNotice, publishSeveredNotice } = require('./designBriefGate');
+const { auditCoreRefIntegrity, formatReport: formatCoreRefReport, publishReport: publishCoreRefReport } = require('./coreRefIntegrity');
 const { formatReport, publishReport, runPrecheck } = require('./precheck');
 
 function designBriefGate(root) {
@@ -22,6 +23,17 @@ function designBriefGate(root) {
   console.error(notice);
   publishSeveredNotice(notice);
   throw new Error('The Crucible link is severed: THE-CRUCIBLE-DESIGN-BRIEF.md was deleted after being installed. See the notice above.');
+}
+
+async function coreRefGate() {
+  const coreRef = process.env.CRUCIBLE_CORE_REF;
+  const result = await auditCoreRefIntegrity(coreRef);
+  if (result.skipped) return result;
+  const report = formatCoreRefReport(coreRef, result);
+  console.log(report);
+  publishCoreRefReport(report);
+  if (result.findings.length) throw new Error('Pinned Crucible commit failed integrity verification. See the report above.');
+  return result;
 }
 
 async function precheckGate(root, config) {
@@ -86,6 +98,11 @@ async function main() {
   if (action === 'design-brief') {
     designBriefGate(root);
     return console.log('[The Crucible] Link is intact: THE-CRUCIBLE-DESIGN-BRIEF.md is present, or was never installed.');
+  }
+  if (action === 'core-ref') {
+    const result = await coreRefGate();
+    if (result.skipped) console.log('[The Crucible] Pinned commit integrity check skipped: no CRUCIBLE_CORE_REF set.');
+    return;
   }
   if (action === 'commit') {
     const result = commitGate(root);
@@ -157,6 +174,7 @@ async function main() {
   }
   if (action !== 'run') throw new Error(`Unknown action: ${action}`);
   designBriefGate(root);
+  await coreRefGate();
   await precheckGate(root, config);
   const privacy = auditPrivacy(root, config);
   if (privacy.findings.length) throw new Error(`Personal identifiers detected:\n${privacy.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}`);
@@ -174,4 +192,4 @@ async function main() {
 
 main().catch((error) => { console.error(`[The Crucible] FAIL: ${error.message}`); process.exitCode = 1; });
 
-module.exports = { securityGate, githubSecurityGate, authenticityGate, commitGate, precheckGate, designBriefGate };
+module.exports = { securityGate, githubSecurityGate, authenticityGate, commitGate, precheckGate, designBriefGate, coreRefGate };

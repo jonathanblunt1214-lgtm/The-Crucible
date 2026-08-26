@@ -60,6 +60,11 @@ jobs:
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
         run: node .the-crucible-runtime/src/cli.js design-brief
+      - name: Verify the pinned Crucible commit is reachable and passed its own Self-Test
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          CRUCIBLE_CORE_REF: ${{ inputs.core_ref }}
+        run: node .the-crucible-runtime/src/cli.js core-ref
       - name: Validate .thecrucible.json
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
