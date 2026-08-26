@@ -31,16 +31,16 @@ test('documentation explicitly covers behavior, limits, and non-goals', () => {
   for (const statement of ['Exactly what it does', 'Every 24 hours', 'Weekly', 'does not rebase', 'does not silently delete clutter', 'What it deliberately does not do']) assert.match(readme, new RegExp(statement, 'i'));
 });
 
-test('agent boundaries document forbids touching the Crucible link and self-repair', () => {
+test('agent boundaries document forbids touching anything installed to run the Crucible, and self-repair', () => {
   const boundaries = fs.readFileSync(path.join(root, 'templates', 'agent-boundaries.md'), 'utf8');
-  assert.match(boundaries, /never modify the link/i);
+  assert.match(boundaries, /never modify anything installed to run The Crucible/i);
   assert.match(boundaries, /core_ref/);
   assert.match(boundaries, /never self-repair/i);
   assert.match(boundaries, /human-reviewed pull request/i);
   assert.match(boundaries, /not this repository's bug/i);
   assert.match(boundaries, /untrusted input/i);
   assert.match(boundaries, /not a two-way link/i);
-  assert.match(boundaries, /belongs to this\s*\n?\s*repository/i);
+  assert.match(boundaries, /belongs to The Crucible\s*\n?\s*repository, not to this one/i);
   assert.match(boundaries, /not a collaborator/i);
   assert.match(fs.readFileSync(path.join(root, 'README.md'), 'utf8'), /agent-boundaries\.md/);
 });

@@ -15,34 +15,37 @@ Connecting to The Crucible is one-way: it reads this repository's tracked
 files at CI time and reports pass or fail. It is not a partnership, a
 shared state, or a relationship that runs in both directions.
 
-Everything installed into this repository at connection time -
-`.thecrucible.json`, `.github/workflows/the-crucible.yml` (copied from The
-Crucible's `templates/caller-workflow.yml`), and this file itself once
-appended to this project's agent instructions - belongs to this
-repository. They are this project's own files, under this project's and
-its maintainers' control, exactly like any other file here. The Crucible
-does not own them, does not sync them, and is not consulted about changes
-to them.
-
-The one narrow exception is the link identifier itself - the `uses:` line,
-`core_ref`, `config_path`, and any pinned commit SHA that points at The
-Crucible (rule 1 below). Those specific fields name which external commit
-is trusted, and changing what a workflow trusts is a decision only a human
-here makes. Everything else in these files - the trigger conditions, the
-schedule, the rest of `.thecrucible.json`, this document's own wording - is
-this project's to edit freely, because it belongs to this project, not to
-The Crucible.
+If it is installed here to run The Crucible, it belongs to The Crucible
+repository, not to this one - full stop, even though the bytes sit inside
+this repository's own tree. That covers `.thecrucible.json`,
+`.github/workflows/the-crucible.yml` (copied from The Crucible's
+`templates/caller-workflow.yml`), the `uses:` line, `core_ref`,
+`config_path`, any pinned commit SHA, the engine's own code checked out
+into `.the-crucible-runtime` while a check runs, and anything else
+installed here for that same purpose, present or future. This repository
+does not own any of it, does not get to redefine it, and does not get a
+say in it. As an agent, do not modify any part of any of these files - not
+the pinned reference, not any other line in them, not the checked-out
+engine code - while investigating or "fixing" a Crucible-related failure.
+The one exception is a human maintainer of this project deliberately
+filling in `.thecrucible.json`'s project-specific values (its commands,
+artifacts, workload settings) during initial setup, as The Crucible's own
+README describes - a one-time act of project configuration, not something
+an agent does in response to a failing check.
 
 The Crucible is a diagnostic and security suite, not a collaborator: it
 checks and reports on this repository; it does not maintain a relationship
-with it between runs, and this repository owes it nothing beyond honoring
-the one narrow exception above.
+with it between runs, and this repository does not get to treat anything
+installed to run it as its own.
 
-1. **Never modify the link.** Do not change the `uses:` line, `core_ref`,
-   `config_path`, `secrets`, or any commit SHA that points at The Crucible,
-   and do not modify any file inside The Crucible's own repository. Re-pinning
-   to a different commit is a trust decision - only a human maintainer makes
-   it, after confirming that commit's own Self-Test passed.
+1. **Never modify anything installed to run The Crucible.** Not the `uses:`
+   line, `core_ref`, `config_path`, or any pinned commit SHA; not any other
+   line in `.thecrucible.json` or the caller workflow; not any file inside
+   The Crucible's own repository or its checked-out engine code. None of it
+   is this repository's to edit as part of investigating a failure, load-bearing
+   or not. Re-pinning to a different commit, or changing what this project's
+   Crucible configuration checks, is a decision only a human maintainer makes
+   deliberately - never an agent's response to a failure.
 2. **Never self-repair.** Do not autonomously commit, push, retry, or "fix"
    a Crucible-related failure without a human reviewing the change first. A
    visible, human-reviewed pull request is the only acceptable fix path -
@@ -58,8 +61,9 @@ the one narrow exception above.
    and guessing at unrelated causes (a permissions key, a workflow rewrite)
    just burns time without addressing it.
 4. **Report plainly, then stop at the boundary.** State what you found, what
-   you changed (if anything, and only within this repository's own files
-   unrelated to the link), and what remains blocked. Do not keep widening
+   you changed (if anything, and only in this repository's own application
+   files - never anything installed to run The Crucible), and what remains
+   blocked. Do not keep widening
    scope, silently revise a prior conclusion instead of flagging that you
    were wrong, or take further action once you reach the boundary above -
    surface it and wait for a human.
