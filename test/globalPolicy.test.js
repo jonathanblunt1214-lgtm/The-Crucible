@@ -12,7 +12,7 @@ test('Crucible and from-now-on commands become reviewed global project variables
     const result = interpretGlobalInstruction(command);
     assert.equal(result.kind, kind);
     assert.equal(result.updatesGlobalPolicy, true);
-    assert.match(result.userNotice, new RegExp(GLOBAL_POLICY_FILE.replace(/\./g, '\\.')));
+    assert.match(result.userNotice, new RegExp(GLOBAL_POLICY_FILE.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
     assert.match(result.userNotice, /shared across project repositories after review and commit/);
   }
 });
