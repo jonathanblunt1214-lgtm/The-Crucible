@@ -139,12 +139,12 @@ async function main() {
   if (action === 'report-init') return console.log('[The Crucible] Report initialized.');
   if (action === 'docs-sync') {
     const result = syncReadme(root);
-    return console.log(result.changed ? '[The Crucible] README.md workflow-steps list updated. Review and commit the change.' : '[The Crucible] README.md workflow-steps list already matches the workflow.');
+    return console.log(result.changed ? '[The Crucible] README.md generated sections updated. Review and commit the change.' : '[The Crucible] README.md generated sections already match their source.');
   }
   if (action === 'docs-check') {
     const result = auditDocSync(root);
     if (!result.inSync) throw new Error(`README.md is out of date:\n${result.findings.map((item) => `- ${item.type}${item.detail ? ` (${item.detail})` : ''}`).join('\n')}\nRun \`npm run docs:sync\`, review the diff, and commit it.`);
-    return console.log('[The Crucible] README.md workflow-steps list matches the workflow.');
+    return console.log('[The Crucible] README.md generated sections match their source.');
   }
   if (action === 'failure-issue') {
     const result = await publishFailureIssue();

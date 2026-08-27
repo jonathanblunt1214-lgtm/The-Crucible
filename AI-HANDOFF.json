@@ -2,29 +2,34 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Claude",
-    "objective": "Add a 2026-08-27 dated changelog section to DEVLOG.md's historical log, per the owner's explicit request for a dev log covering today's real commit history.",
+    "objective": "Extend docs:sync/docs:check to auto-generate README's ### workload field list from src/config.js, per the owner's request to auto write the readme.",
     "steps": [
-      "Reconstruct the true chronological commit order for the day (a97a508..f764336) via git log --format='%h %aI %s', converting mixed UTC/-04:00 timestamps to a single timeline.",
-      "Write dated sub-sections (morning / mid-morning / midday / afternoon) matching this file's existing style: real commit hashes and descriptions, not a narrative summary, with bolded call-outs for notable bugs and a closing Result line per section.",
-      "Note PR #8 (development -> main, opened this session, all 27 checks green, not yet merged - the owner's call) and the PR #7 merge/replacement-hook status in the final Result line.",
-      "Update AI-HANDOFF.json alongside it to satisfy the AI handoff policy gate, since this is a documentation-only change with no code to re-verify beyond the existing test suite."
+      "Extract the inline boundedInteger(...) bounds/defaults for workers/cycles/timeoutMinutes/maxOutputBytes/heartbeatSeconds in src/config.js into one exported WORKLOAD_FIELDS array, and rebuild the workload validation object from it so it stays the single source of truth.",
+      "Generalize src/docSync.js from one hardcoded marker pair to a list of SECTIONS (workflow-steps, workload fields), each with its own markers and generator, so auditDocSync/syncReadme check and fix both independently.",
+      "Wrap README's ### workload list in new CRUCIBLE_WORKLOAD_FIELDS markers and regenerate it by actually running npm run docs:sync, rather than writing the content by hand.",
+      "Update test/docSync.test.js: give existing workflow-steps fixtures a matching in-sync workload block so the new section doesn't break isolated tests, and add dedicated tests for workload-block drift detection, fix-without-disturbing-the-other-block, and missing-markers fail-closed behavior.",
+      "Generalize src/cli.js's docs-sync/docs-check console messages beyond 'workflow-steps' since they now cover more than one generated section.",
+      "Run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T11:45:00-04:00",
-    "lastUpdatedAt": "2026-08-27T11:48:00-04:00"
+    "startedAt": "2026-08-27T11:55:00-04:00",
+    "lastUpdatedAt": "2026-08-27T12:05:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Added three dated DEVLOG.md sections for 2026-08-27 covering all 15 real commits from a97a508 to f764336, in true chronological order, matching the file's established per-entry style.",
-      "Documented the two real bugs found and fixed this session (the Windows chmod-mode test assertion, and the clutter-audit duplicate-content regression plus its regression guard) inline where they occurred rather than only in the Shared AI handoff summary.",
-      "Recorded PR #8's status (open, green, unmerged) and the PR #7 merge/live-monitoring gap in the closing Result line."
+      "Added WORKLOAD_FIELDS to src/config.js (key, fallback, minimum, maximum, description per field) and rebuilt workload validation from it, so bounds/defaults exist in exactly one place.",
+      "Generalized src/docSync.js to support multiple independently-checked generated README sections; added generatedWorkloadBlock() and WORKLOAD_MARKER_START/END, keeping all prior exports (MARKER_START, MARKER_END, generatedBlock) unchanged for backward compatibility.",
+      "Regenerated README's ### workload list via npm run docs:sync itself, which also surfaced and added the previously-undocumented maxOutputBytes field to that list, plus a short lead-in sentence naming the generation mechanism (matching the workflow-steps section's existing pattern).",
+      "Updated test/docSync.test.js's existing synthetic fixtures to include an in-sync workload block so they stay isolated to workflow-steps behavior, and added three new tests for the workload section."
     ],
     "verification": [
-      "Documentation-only change; no source files touched. Full local suite still passes 200/200 from the prior verification at this same tip."
+      "Full local suite passes 203/203 (200 + 3 new).",
+      "npm run docs:check passes against the real repository, confirming the actually-committed README matches WORKLOAD_FIELDS.",
+      "lint:workflows, validate, audit:clutter, audit:privacy, and audit:security all pass."
     ],
     "remaining": [
-      "Push and confirm AI handoff policy is green for this commit.",
-      "Open item, not yet acted on: PR #7 (the live CI-failure webhook) was merged by the owner and can never fire again. The owner approved opening a replacement permanent monitoring PR, then interrupted before it was created - still needs the owner's go-ahead to actually proceed. Until then, real-time failure notification in this session is down to the 60-minute hourly fallback poll.",
+      "Push and confirm Self-Test, CodeQL, and AI handoff policy are green.",
+      "Open item, not yet acted on: PR #7 (the live CI-failure webhook) was merged by the owner and can never fire again. A replacement permanent monitoring PR was approved but not yet created - still needs the owner's go-ahead to actually proceed. Until then, real-time failure notification in this session is down to the 60-minute hourly fallback poll.",
       "PR #8 (development -> main) is open with all checks green; merging remains the owner's explicit decision, not yet made.",
       "Codex's own remaining items still stand: the hosted multi-repository integration workflow is intentionally report-only and untested against real repositories/tokens; no promotion or branch-protection activation is authorized without the owner's explicit instruction."
     ]

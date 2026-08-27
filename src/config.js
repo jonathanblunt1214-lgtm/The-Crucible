@@ -43,6 +43,17 @@ function boundedInteger(value, fallback, minimum, maximum, label) {
   return number;
 }
 
+// Single source of truth for workload's bounded integer fields: validation
+// below and README's generated `### workload` field list (see src/docSync.js)
+// both read from this array, so the two can never drift out of sync.
+const WORKLOAD_FIELDS = [
+  { key:'workers', fallback:4, minimum:1, maximum:8, description:'Concurrent workers' },
+  { key:'cycles', fallback:2, minimum:1, maximum:20, description:'Complete verification cycles per worker' },
+  { key:'timeoutMinutes', fallback:4, minimum:1, maximum:30, description:'Maximum time for each command' },
+  { key:'maxOutputBytes', fallback:1_048_576, minimum:4096, maximum:10_485_760, description:'Bytes of command output retained for failure messages' },
+  { key:'heartbeatSeconds', fallback:60, minimum:5, maximum:300, description:'Seconds between "still running" progress lines while a command produces no other output' },
+];
+
 function validateProjectRepositories(project) {
   const mainRepository = project.mainRepository;
   const repositories = project.repositories;
@@ -137,11 +148,7 @@ function validateConfig(input) {
     governance:{ requireExceptionMetadata:Boolean(input.governance?.requireExceptionMetadata), failOnDisabledSecurity:input.governance?.failOnDisabledSecurity !== false },
     reproducibility:{ enabled:Boolean(reproducibility.enabled), commands:reproductionCommands.map((item, index) => validateCommand(item, 'reproducibility.commands', index)), artifacts:reproductionArtifacts },
     workload:{
-      workers:boundedInteger(workload.workers, 4, 1, 8, 'workload.workers'),
-      cycles:boundedInteger(workload.cycles, 2, 1, 20, 'workload.cycles'),
-      timeoutMinutes:boundedInteger(workload.timeoutMinutes, 4, 1, 30, 'workload.timeoutMinutes'),
-      maxOutputBytes:boundedInteger(workload.maxOutputBytes, 1_048_576, 4096, 10_485_760, 'workload.maxOutputBytes'),
-      heartbeatSeconds:boundedInteger(workload.heartbeatSeconds, 60, 5, 300, 'workload.heartbeatSeconds'),
+      ...Object.fromEntries(WORKLOAD_FIELDS.map((field) => [field.key, boundedInteger(workload[field.key], field.fallback, field.minimum, field.maximum, `workload.${field.key}`)])),
       execution:{ network:execution.network || 'allow', memoryMb:execution.memoryMb || null, fileSizeMb:execution.fileSizeMb || null, processes:execution.processes || null, denyBackground:execution.denyBackground !== false },
     },
   };
@@ -156,4 +163,4 @@ function loadConfig(root, configPath = '.thecrucible.json') {
   return validateConfig(parsed);
 }
 
-module.exports = { loadConfig, validateConfig };
+module.exports = { loadConfig, validateConfig, WORKLOAD_FIELDS };
