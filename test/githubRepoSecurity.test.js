@@ -145,7 +145,7 @@ test('reports an unlisted caller and a repository renamed since configuration', 
   assert.ok(result.findings.some((finding) => /calling repository is missing/.test(finding.type)));
   const renamed = result.findings.find((finding) => /project manifest repository name is stale/.test(finding.type));
   assert.equal(renamed.repository, 'octocat/current-api');
-  assert.match(renamed.remediation, new RegExp(PROJECT_REPOSITORY_MANIFEST.replace(/\./g, '\\.')));
+  assert.match(renamed.remediation, new RegExp(PROJECT_REPOSITORY_MANIFEST.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 });
 
 test('fails closed when the Main repository manifest cannot be pulled or is invalid', async () => {
