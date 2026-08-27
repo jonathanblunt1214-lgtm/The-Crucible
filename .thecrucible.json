@@ -13,7 +13,8 @@
   "artifacts": ["package.json"],
   "clutter": {
     "allow": [
-      { "path": "templates/ai-conflicts.example.json", "reason": "The adopter template intentionally begins byte-for-byte identical to this repository's empty mandatory AI conflict ledger.", "owner": "jonathanblunt1214-lgtm", "expires": "2027-08-26" }
+      { "path": "templates/ai-conflicts.example.json", "reason": "The adopter template intentionally begins byte-for-byte identical to this repository's empty mandatory AI conflict ledger.", "owner": "jonathanblunt1214-lgtm", "expires": "2027-08-26" },
+      { "path": "templates/thecrucible-local.example.json", "reason": "The local policy template intentionally starts byte-for-byte identical to the global policy template: both scopes share the exact same empty preferences/rules/settings schema (see src/globalPolicy.js), differing only in which tracked file the resulting policy is written to.", "owner": "jonathanblunt1214-lgtm", "expires": "2027-08-27" }
     ],
     "allowDuplicateContent": false,
     "blockTrackedIgnored": true
