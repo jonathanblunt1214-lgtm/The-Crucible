@@ -14,38 +14,39 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-27T23:55:30Z"
+    "lastActionAt": "2026-08-27T23:58:30Z"
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
     "objective": "Keep natural-language test requests governed exclusively by the Orchestrator and leave the implementation green after proving a random-category request.",
     "currentPrompt": "good now implement it then run a random test category",
     "steps": [
-      "Forward the user's natural-language test request through Self-Test without workflow-side test selection.",
-      "Let src/testCadence.js alone interpret the request and select the actual tests.",
-      "Prove the request 'run a random test category' through a development push and capture the Orchestrator decision and result.",
-      "Correct any regression contract that conflicts with the newly authorized request behavior without changing the successful Orchestrator selection.",
-      "Confirm Self-Test and CodeQL are green on the correction commit."
+      "Forward the user's natural-language request through Self-Test without workflow-side test selection.",
+      "Let src/testCadence.js alone interpret the request and select actual tests.",
+      "Prove 'run a random test category' through a development push and capture the Orchestrator decision and result.",
+      "Align regression tests with authorized random-category behavior while isolating programmatic request assertions from transport-only CI environment variables.",
+      "Confirm Self-Test and CodeQL are green on the final correction commit."
     ],
     "status": "active",
     "startedAt": "2026-08-27T23:47:00Z",
-    "lastUpdatedAt": "2026-08-27T23:55:30Z"
+    "lastUpdatedAt": "2026-08-27T23:58:30Z"
   },
   "handoffNotes": {
     "completed": [
-      "Implemented natural-language request transport on development in commit 4f3dab59e9c206ac36f57e6341d4d19ddfb5cce8 using the exact commit message 'CRUCIBLE TEST REQUEST: run a random test category'.",
-      "Self-Test run 166 proves the workflow passed the request to the Orchestrator; the Orchestrator independently chose Security, selected all 10 Security test files, and ran 92 individual tests with 92 passing and 0 failing.",
-      "The governed Orchestrator request step passed across observed matrix jobs; the overall run failed later in pre-check because test/testCadence.test.js still asserted that the old bare 'random' request must throw.",
-      "Prepared a regression-contract correction that now verifies a natural-language random-category request yields exactly one Orchestrator-chosen main category and exactly that category's governed test files."
+      "Implemented natural-language request transport in commit 4f3dab59e9c206ac36f57e6341d4d19ddfb5cce8 with exact request 'run a random test category'.",
+      "Self-Test run 166 proves the Orchestrator independently chose Security, selected all 10 Security test files, and ran 92 individual tests with 92 passing and 0 failing.",
+      "First regression correction removed the obsolete expectation that random-category behavior must throw.",
+      "Self-Test run 167 exposed a test-harness environment leak: programmatic runRequested assertions inherited CRUCIBLE_TEST_REQUEST_SOURCE=push from the surrounding workflow step and were therefore treated as push transport payloads.",
+      "Prepared a second regression correction that temporarily clears the transport-only environment variable around direct programmatic all/random request assertions and restores it afterward; production Orchestrator behavior is unchanged."
     ],
     "verification": [
-      "Representative Ubuntu/Node 24 log: received test request 'run a random test category'; request decision 'category security'; selected 10/34 test subcategories apiGuard, authenticity, coreRefIntegrity, githubRepoSecurity, hardening, malwareScan, privacy, quarantine, requiredCheckBoundary, security; 92 tests passed, 0 failed.",
-      "The failing pre-check was isolated to test/testCadence.test.js expecting /Unknown governed test request \"random\"/; no Security test selected by the requested run failed.",
-      "Self-Test workflow still contains no test-file or category-selection map; selection authority remains in src/testCadence.js."
+      "Run 166 Ubuntu/Node 24 log: Orchestrator decision category security; selected apiGuard, authenticity, coreRefIntegrity, githubRepoSecurity, hardening, malwareScan, privacy, quarantine, requiredCheckBoundary, security; 92/92 passed.",
+      "Run 167 failure is isolated to the regression harness reporting 2 calls where 1 was expected because ambient source=push forced a change-impact path; the production transport correctly converted a normal non-prefixed push message to 'orchestrator'.",
+      "No workflow-side category or test-file selection has been introduced."
     ],
     "remaining": [
-      "Push the regression-contract correction to development with paired AI-HANDOFF.json and DEVLOG.md updates.",
-      "Confirm Self-Test and CodeQL are green on the correction commit; fix further development-only failures if required.",
+      "Push the environment-isolated regression correction to development with paired governance updates.",
+      "Confirm Self-Test and CodeQL are green; correct further development-only failures if required.",
       "Do not promote to main or release unless separately and explicitly instructed."
     ]
   }
