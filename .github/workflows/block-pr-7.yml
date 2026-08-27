@@ -31,4 +31,3 @@ jobs:
             exit 1
           fi
           echo "Not PR #7 - nothing to block."
-      

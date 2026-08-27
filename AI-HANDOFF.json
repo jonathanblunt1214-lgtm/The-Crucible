@@ -20,6 +20,7 @@
       "Confirmed the PR-native Nexus gate reaches the collision step and fails only because the valid repository identifier jonathanblunt1214-lgtm/Nexus- is rejected.",
       "Updated the guard and regression tests without relaxing rejection of schemes, queries, traversal, whitespace, or extra path segments.",
       "Preserved PR #7's failing pull-request path and added a genuine passing block status on development pushes so direct promotions no longer require disabling governance."
+      ,"Removed inherited trailing whitespace from the edited block workflow after the hosted commit pre-check correctly identified it."
     ],
     "verification": [
       "Full local suite passes 172/172, including the new Nexus- regression and all existing unsafe-identifier cases.",
