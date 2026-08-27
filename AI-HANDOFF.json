@@ -12,34 +12,41 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session, no matter which agent or tool is running it, and again any time more than 10 minutes have passed since lastActionAt below - even if it is the same agent continuing the same conversation. Branch policy, PR locks (e.g. PR #11), and handoff state can all change while an agent is idle; a long gap is treated the same as a fresh session. See AGENTS.md's 'Recheck governingDocuments at the start of every session' rule.",
-    "lastActionAt": "2026-08-27T20:42:11Z"
+    "lastActionAt": "2026-08-27T20:49:46Z"
   },
   "activePlan": {
     "agent": "Claude",
-    "objective": "Per the owner's explicit request: require every session (same agent or different, after any 10+ minute gap) to recheck AI-HANDOFF.json's governingDocuments before acting.",
+    "objective": "Turn DEVLOG.md into an enforced chain of custody: every command logged with a start and finish time, and a reference to a dev plan (this file's activePlan) that holds the current verbatim prompt plus exactly what is completed and left to finish.",
+    "currentPrompt": "i want DEVLOG.md to work like a chin of custody every command is logged when it is started and finished and reference a dev plan in it dev plan will house the current prompt and exactly what is completed and left to finish",
     "steps": [
-      "Extend AGENTS.md's 'Read DEVLOG.md first, always' section with a new rule requiring governingDocuments to be re-read at the start of every session and after any 10+ minute idle gap, same or different agent.",
-      "Add a sessionPolicy object to AI-HANDOFF.json with a lastActionAt timestamp so an agent can concretely tell how long it has been idle, plus a human-readable statement of the rule.",
-      "Update DEVLOG.md's Shared AI handoff section to match.",
-      "Add test coverage asserting the new AGENTS.md text and the sessionPolicy fields exist.",
+      "Extend validateHandoffPlan in src/handoffPolicy.js to require activePlan.currentPrompt (the verbatim triggering prompt), alongside the existing required fields.",
+      "Add validateDevlogChainOfCustody to src/handoffPolicy.js: requires DEVLOG.md's Shared AI handoff section to reference the dev plan in AI-HANDOFF.json and to include a Command log with at least one start/finish pair.",
+      "Wire validateDevlogChainOfCustody into checkHandoffRange so the AI handoff policy CI check enforces both structural requirements on every push/PR.",
+      "Document the new rule in AGENTS.md as a new section, 'DEVLOG.md is a chain of custody'.",
+      "Rewrite DEVLOG.md's Shared AI handoff section in the new format: a Dev plan reference plus a real Command log covering every command run for this change.",
+      "Add/update tests in test/handoffPolicy.test.js and test/workflow.test.js covering the new validation and the new AGENTS.md/DEVLOG.md/AI-HANDOFF.json content.",
       "Run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T20:42:00Z",
-    "lastUpdatedAt": "2026-08-27T20:42:11Z"
+    "startedAt": "2026-08-27T20:49:00Z",
+    "lastUpdatedAt": "2026-08-27T20:49:46Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed 40db26b (the governingDocuments cross-reference commit) fully green on development: Block locked monitoring PRs, AI handoff policy, AI conflict governance, Sync CI monitoring branch, CodeQL, and The Crucible Self-Test all succeeded.",
-      "Added AGENTS.md's 'Recheck governingDocuments at the start of every session' rule, directly under 'Read DEVLOG.md first, always'.",
-      "Added AI-HANDOFF.json's new top-level sessionPolicy object: recheckGoverningDocuments (the rule, human-readable) and lastActionAt (an ISO timestamp every future commit touching this file should refresh, so the next agent can compute elapsed idle time)."
+      "Confirmed c7132d8 (the sessionPolicy/governingDocuments-recheck commit) pushed to development; CI check was still confirmed in-session.",
+      "Added activePlan.currentPrompt as a required field in validateHandoffPlan (src/handoffPolicy.js), holding this file's verbatim triggering prompt rather than a paraphrase.",
+      "Added validateDevlogChainOfCustody (src/handoffPolicy.js), wired into checkHandoffRange, so the AI handoff policy check now fails a push whose DEVLOG.md lacks a dev-plan reference or a Command log with a start/finish pair.",
+      "Added AGENTS.md's 'DEVLOG.md is a chain of custody' section documenting both requirements and their enforcement, and being explicit about what CI can and cannot verify (structure yes, exhaustive completeness no).",
+      "Rewrote DEVLOG.md's Shared AI handoff section: a Dev plan reference plus a Command log itemizing every command run for this exact change, each with a start and finish timestamp.",
+      "Added/updated tests: test/handoffPolicy.test.js covers validateDevlogChainOfCustody directly and the currentPrompt rejection case; test/workflow.test.js asserts the new AGENTS.md text and the DEVLOG.md/AI-HANDOFF.json structural requirements."
     ],
     "verification": [
-      "Full local suite passes 207/207 plus any new assertions added for this change.",
-      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass."
+      "Full local suite passes 211/211 (209 previous + 2 new unit tests in handoffPolicy.test.js + 1 new structural test in workflow.test.js, net of the currentPrompt rejection line added to an existing test).",
+      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass - see DEVLOG.md's Command log for exact start/finish timestamps of each."
     ],
     "remaining": [
-      "Push this commit to development, confirm all six checks green, then fast-forward release to it so main picks up this rule too.",
+      "Push this commit to development and confirm all six checks pass, in particular AI handoff policy since it now runs the new validateDevlogChainOfCustody logic for the first time against a real commit.",
+      "Fast-forward release to development's latest tip (still behind since the PR #10 merge) so main picks up this and the two prior documentation commits (40db26b, c7132d8).",
       "guard-ci-monitor-pr.yml still has not been exercised live - per the standing rule, it should not be deliberately triggered just to test it; only a genuine close/merge event should exercise it.",
       "The owner should confirm 'block' is added as a required status check on main (Settings -> Branches -> Branch protection rules) if not already done - no tool available here can do that remotely.",
       "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",

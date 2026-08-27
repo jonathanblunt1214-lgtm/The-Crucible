@@ -39,6 +39,31 @@ handoff section above. Update `sessionPolicy.lastActionAt` to the current
 time in every commit that touches `AI-HANDOFF.json`, so the next agent -
 same or different - can tell how long it has been idle.
 
+## `DEVLOG.md` is a chain of custody
+
+`DEVLOG.md`'s **Shared AI handoff** section is not just a status summary -
+it is an auditable record of exactly what ran and when. Every entry must:
+
+- **Reference the dev plan instead of restating it.** The dev plan lives
+  in `AI-HANDOFF.json`'s `activePlan`: `currentPrompt` holds the exact,
+  verbatim request driving the current work (not a paraphrase), and
+  `handoffNotes.completed`/`handoffNotes.remaining` hold exactly what is
+  finished and what is left. `DEVLOG.md` should point to that plan, not
+  duplicate it from scratch each time.
+- **Include a Command log.** List every command run for that unit of
+  work - tests, audits, lint, git operations, anything with a real
+  effect - each with a start time and a finish time
+  (`` `command` — started TIMESTAMP, finished TIMESTAMP, exit CODE ``).
+  This is the chain-of-custody trail: what ran, in what order, when it
+  started, when it ended, and whether it succeeded.
+
+The **AI handoff policy** check enforces the structural parts of this
+automatically (a `Shared AI handoff` section that references the dev plan
+in `AI-HANDOFF.json` and includes a `Command log` with start/finish
+times) via `src/handoffPolicy.js`'s `validateDevlogChainOfCustody`. It
+cannot verify that literally every command is listed - that is on the
+agent's own honesty, the same as every other rule in this file.
+
 ## Branch policy
 
 - Resolve every conflict between agents, instructions, plans, concurrent work, or claimed authority with `templates/ai-conflict-resolution.md`. Freeze the contested mutation, preserve both sides in the Shared AI handoff, and obtain an explicit owner decision; never silently pick a side.
