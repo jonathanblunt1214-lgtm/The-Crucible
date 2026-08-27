@@ -2,32 +2,33 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Claude",
-    "objective": "Continue Codex's just-landed work at the owner's request: Self-Test was red on every OS at development's tip (7e6ba23) even though tests, CodeQL, and AI handoff policy all passed.",
+    "objective": "Root-cause why the audit:clutter regression (fixed in f0f3c88) was ever able to reach development, and close the gap that let it happen, per the owner's explicit request.",
     "steps": [
-      "Sync development, read Codex's Shared AI handoff and AI-HANDOFF.json plan (status: complete, categorized suite + repository protections + global/local policy scopes), and reproduce the CI failure.",
-      "Reproduce locally: npm run audit:clutter fails with duplicate tracked content between templates/thecrucible-global.example.json and templates/thecrucible-local.example.json.",
-      "Confirm the two templates are legitimately meant to be identical (shared KINDS schema in src/globalPolicy.js for both policy scopes), matching the same finding shape Codex previously resolved for templates/ai-conflicts.example.json.",
-      "Add a clutter.allow exception for templates/thecrucible-local.example.json in .thecrucible.json, with the owner/reason/expires metadata governance.requireExceptionMetadata requires.",
+      "Confirm via git show --stat 7e6ba23 that the commit which broke Self-Test added both colliding templates but never touched .thecrucible.json, while its own AI-HANDOFF.json/DEVLOG.md changes (same commit) claimed clutter passed.",
+      "Confirm test/engine.test.js's only auditClutter coverage runs against a synthetic fixture, never the real repository, so npm test alone cannot catch a real-repo clutter regression.",
+      "Add a self-check test in test/workflow.test.js that runs auditClutter against the real repo root via loadConfig(root), inside npm test itself.",
+      "Prove it is a real guard, not a pass-through: temporarily revert .thecrucible.json to 7e6ba23's version, confirm the new test fails with the exact duplicate-content finding, then restore the fix and confirm it passes.",
       "Run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T10:45:00-04:00",
-    "lastUpdatedAt": "2026-08-27T10:52:00-04:00"
+    "startedAt": "2026-08-27T10:55:00-04:00",
+    "lastUpdatedAt": "2026-08-27T11:05:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Reproduced GitHub's red Self-Test locally: npm run audit:clutter failed with duplicate tracked content between templates/thecrucible-global.example.json and templates/thecrucible-local.example.json.",
-      "Confirmed via src/globalPolicy.js and README.md that both templates are meant to share the exact same empty preferences/rules/settings schema - not a real content bug, the same finding shape as the earlier templates/ai-conflicts.example.json exception.",
-      "Added a clutter.allow exception for templates/thecrucible-local.example.json in .thecrucible.json with owner/reason/expires metadata."
+      "Root-caused the audit:clutter regression: 7e6ba23 added the two colliding templates without ever adding the .thecrucible.json exception, and its own committed handoff notes inaccurately claimed the clutter audit passed - most likely because npm test (196/196) and the separate npm run audit:clutter invocation were conflated, or the latter was run against an earlier, incomplete state of the same in-progress commit.",
+      "Added test/workflow.test.js: \"the clutter audit passes against this repository's own real, current tracked snapshot\", running the real auditClutter against the real repo inside npm test, so this class of regression is caught by the one command almost everyone runs.",
+      "Verified the new test is a real guard: reverted .thecrucible.json to the pre-fix (7e6ba23) version, confirmed the test fails with the identical duplicate-content finding, then restored the fix and confirmed the test passes."
     ],
     "verification": [
-      "npm run audit:clutter passes (105 tracked files).",
-      "Full local suite passes 196/196.",
-      "lint:workflows, docs:check, audit:design-brief, audit:core-ref, validate, audit:privacy, audit:security, and audit:github-security (skips outside Actions, as expected) all pass."
+      "Full local suite passes 197/197 (196 + 1 new).",
+      "The new test was proven to actually fail on the pre-fix configuration, not just pass trivially.",
+      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass."
     ],
     "remaining": [
-      "Push to development and confirm Self-Test green on all three OSes, plus CodeQL and AI handoff policy, for this fix commit.",
-      "Codex's own remaining items still stand: the hosted multi-repository integration workflow is intentionally report-only and untested against real repositories/tokens; no promotion or branch-protection activation is authorized without the owner's explicit instruction."
+      "Push to development and confirm Self-Test, CodeQL, and AI handoff policy are green for this commit.",
+      "Codex's own remaining items still stand: the hosted multi-repository integration workflow is intentionally report-only and untested against real repositories/tokens; no promotion or branch-protection activation is authorized without the owner's explicit instruction.",
+      "Not fixed here (a process gap, not a code gap): whatever environment produced 7e6ba23 either didn't have .githooks/pre-push installed, or pushed through a path that bypasses local git hooks entirely (e.g. the GitHub API rather than a local git push) - hooks are a local-client feature GitHub cannot enforce server-side, so CI remains the authoritative backstop for any such path."
     ]
   }
 }

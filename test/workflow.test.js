@@ -3,6 +3,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
+const { loadConfig } = require('../src/config');
+const { auditClutter } = require('../src/clutter');
 
 const root = path.resolve(__dirname, '..');
 
@@ -212,4 +214,15 @@ test('the pre-push hook is tracked as executable and runs the fast offline verif
     assert.match(hook, new RegExp(`npm run ${script.replace(':', '\\:')}`));
   }
   assert.match(hook, /npm test/);
+});
+
+test('the clutter audit passes against this repository\'s own real, current tracked snapshot', () => {
+  // `npm test` and `npm run audit:clutter` are separate commands - it's easy to run only
+  // the former, see "196/196 pass," and ship a commit that never actually cleared the
+  // latter (this exact gap let a duplicate-content finding reach a pushed commit once
+  // already). Running the real audit against the real repo here, inside `npm test` itself,
+  // closes that gap for any environment that runs the test suite at all.
+  const config = loadConfig(root);
+  const result = auditClutter(root, config);
+  assert.deepEqual(result.findings, []);
 });
