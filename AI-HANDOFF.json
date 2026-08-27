@@ -2,36 +2,33 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Claude",
-    "objective": "Extend docs:sync/docs:check to auto-generate README's ### workload field list from src/config.js, per the owner's request to auto write the readme.",
+    "objective": "Action the owner's punch-list of open items: restore live CI-failure monitoring now that PR #7 is dead, and clearly separate what's actionable from what needs owner-supplied resources.",
     "steps": [
-      "Extract the inline boundedInteger(...) bounds/defaults for workers/cycles/timeoutMinutes/maxOutputBytes/heartbeatSeconds in src/config.js into one exported WORKLOAD_FIELDS array, and rebuild the workload validation object from it so it stays the single source of truth.",
-      "Generalize src/docSync.js from one hardcoded marker pair to a list of SECTIONS (workflow-steps, workload fields), each with its own markers and generator, so auditDocSync/syncReadme check and fix both independently.",
-      "Wrap README's ### workload list in new CRUCIBLE_WORKLOAD_FIELDS markers and regenerate it by actually running npm run docs:sync, rather than writing the content by hand.",
-      "Update test/docSync.test.js: give existing workflow-steps fixtures a matching in-sync workload block so the new section doesn't break isolated tests, and add dedicated tests for workload-block drift detection, fix-without-disturbing-the-other-block, and missing-markers fail-closed behavior.",
-      "Generalize src/cli.js's docs-sync/docs-check console messages beyond 'workflow-steps' since they now cover more than one generated section.",
-      "Run the full local suite plus every fast/offline audit before pushing."
+      "Confirm PR #8 was merged by the owner directly on GitHub (e05f7f0) and that main's own Self-Test on that merge commit is green.",
+      "Open PR #9 (development -> main, draft, [LOCKED - DO NOT MERGE]) as PR #7's replacement live-monitoring hook, matching PR #7's original body/purpose, with an explicit note naming what protection it does NOT yet have (no scoped block-pr-9.yml or AGENTS.md update).",
+      "Subscribe this session to PR #9's activity for real-time CI/comment events.",
+      "Update the hourly fallback routine's stored prompt to reference PR #9 instead of the dead PR #7.",
+      "Do not attempt the two items that require real external resources (hosted multi-repository integration test; connect-workflow.yml's activate phase) - name exactly what's missing (a real target repository, a real token) instead of faking completion.",
+      "Do not unilaterally extend PR #7's block-pr-7.yml/AGENTS.md protection to PR #9 - that's a policy decision for the owner, not something to fold silently into 'create a replacement PR.'"
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T11:55:00-04:00",
-    "lastUpdatedAt": "2026-08-27T12:05:00-04:00"
+    "startedAt": "2026-08-27T12:10:00-04:00",
+    "lastUpdatedAt": "2026-08-27T12:15:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Added WORKLOAD_FIELDS to src/config.js (key, fallback, minimum, maximum, description per field) and rebuilt workload validation from it, so bounds/defaults exist in exactly one place.",
-      "Generalized src/docSync.js to support multiple independently-checked generated README sections; added generatedWorkloadBlock() and WORKLOAD_MARKER_START/END, keeping all prior exports (MARKER_START, MARKER_END, generatedBlock) unchanged for backward compatibility.",
-      "Regenerated README's ### workload list via npm run docs:sync itself, which also surfaced and added the previously-undocumented maxOutputBytes field to that list, plus a short lead-in sentence naming the generation mechanism (matching the workflow-steps section's existing pattern).",
-      "Updated test/docSync.test.js's existing synthetic fixtures to include an in-sync workload block so they stay isolated to workflow-steps behavior, and added three new tests for the workload section."
+      "Verified PR #8's merge (e05f7f0, merged_by the owner) and that main's Self-Test on that commit is green.",
+      "Created and opened PR #9 as the new live-monitoring hook; subscribed to its activity.",
+      "Updated the hourly fallback routine (trig_01DK6joDQdxqGaoQVFCAHzKd) to name PR #9 instead of PR #7."
     ],
     "verification": [
-      "Full local suite passes 203/203 (200 + 3 new).",
-      "npm run docs:check passes against the real repository, confirming the actually-committed README matches WORKLOAD_FIELDS.",
-      "lint:workflows, validate, audit:clutter, audit:privacy, and audit:security all pass."
+      "main Self-Test run for e05f7f0 (the PR #8 merge commit): success.",
+      "PR #9 confirmed open, draft, mergeable_state clean, subscription active."
     ],
     "remaining": [
-      "Push and confirm Self-Test, CodeQL, and AI handoff policy are green.",
-      "Open item, not yet acted on: PR #7 (the live CI-failure webhook) was merged by the owner and can never fire again. A replacement permanent monitoring PR was approved but not yet created - still needs the owner's go-ahead to actually proceed. Until then, real-time failure notification in this session is down to the 60-minute hourly fallback poll.",
-      "PR #8 (development -> main) is open with all checks green; merging remains the owner's explicit decision, not yet made.",
-      "Codex's own remaining items still stand: the hosted multi-repository integration workflow is intentionally report-only and untested against real repositories/tokens; no promotion or branch-protection activation is authorized without the owner's explicit instruction."
+      "Owner decision needed: should PR #9 get the same GitHub-enforced never-merge backstop PR #7 had? That requires a new scoped block workflow (block-pr-9.yml equivalent) and updating AGENTS.md's hardcoded 'PR #7' references to PR #9.",
+      "Blocked on owner-supplied resources, not on any code/design gap: (1) the hosted multi-repository integration workflow needs a real second repository plus a real token to be exercised for real; (2) connect-workflow.yml's activate phase needs a CRUCIBLE_ADMIN_TOKEN (Administration: write) on a real target repository plus a representative PR.",
+      "Codex's own remaining items still stand: no promotion or branch-protection change is authorized without the owner's explicit instruction beyond what's already been done."
     ]
   }
 }
