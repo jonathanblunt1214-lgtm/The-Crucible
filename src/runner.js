@@ -36,7 +36,7 @@ function restrictInvocation(invocation, limits, platform = process.platform) {
   return { executable, args };
 }
 
-function runCommand(root, command, timeoutMs, suffix = '', maxOutputBytes = 1_048_576, limits = null) {
+function runCommand(root, command, timeoutMs, suffix = '', maxOutputBytes = 1_048_576, limits = null, heartbeatMs = 60_000) {
   return new Promise((resolve, reject) => {
     const cwd = path.resolve(root, command.cwd);
     if (!cwd.startsWith(`${path.resolve(root)}${path.sep}`) && cwd !== path.resolve(root)) return reject(new Error(`${command.name} escapes the repository.`));
@@ -46,14 +46,22 @@ function runCommand(root, command, timeoutMs, suffix = '', maxOutputBytes = 1_04
     const capture = (chunk, stream) => { output = `${output}${chunk}`.slice(-maxOutputBytes); stream.write(chunk); };
     child.stdout.on('data', (chunk) => capture(chunk, process.stdout));
     child.stderr.on('data', (chunk) => capture(chunk, process.stderr));
+    const startedAt = Date.now();
+    // A command that produces no output for a while looks hung, both to a
+    // human watching the terminal and to CI runners that flag silent steps.
+    // This heartbeat is evidence-only: it never affects the timeout or result.
+    const heartbeat = heartbeatMs > 0 ? setInterval(() => {
+      process.stdout.write(`[The Crucible] Still running: ${command.name}${suffix} (${Math.round((Date.now() - startedAt) / 1000)}s elapsed)\n`);
+    }, heartbeatMs) : null;
     const terminate = () => {
       if (process.platform === 'win32') spawn('taskkill', ['/pid', String(child.pid), '/t', '/f'], { shell:false, windowsHide:true, stdio:'ignore' });
       else { try { process.kill(-child.pid, 'SIGKILL'); } catch { child.kill('SIGKILL'); } }
     };
-    const timer = setTimeout(() => { terminate(); reject(new Error(`${command.name}${suffix} exceeded the configured timeout.`)); }, timeoutMs);
-    child.on('error', (error) => { clearTimeout(timer); reject(new Error(`${command.name}${suffix} could not start: ${error.message}`)); });
+    const timer = setTimeout(() => { clearInterval(heartbeat); terminate(); reject(new Error(`${command.name}${suffix} exceeded the configured timeout.`)); }, timeoutMs);
+    child.on('error', (error) => { clearTimeout(timer); clearInterval(heartbeat); reject(new Error(`${command.name}${suffix} could not start: ${error.message}`)); });
     child.on('close', (code) => {
       clearTimeout(timer);
+      clearInterval(heartbeat);
       if (limits?.denyBackground) terminate();
       if (code === 0) resolve();
       else reject(new Error(`${command.name}${suffix} failed with exit code ${code}.\n${output.slice(-4000)}`));
@@ -63,12 +71,13 @@ function runCommand(root, command, timeoutMs, suffix = '', maxOutputBytes = 1_04
 
 async function runCrucible(root, config) {
   const timeoutMs = config.workload.timeoutMinutes * 60_000;
-  for (const command of config.commands.prepare) await runCommand(root, command, timeoutMs, '', config.workload.maxOutputBytes, config.workload.execution);
+  const heartbeatMs = (config.workload.heartbeatSeconds || 60) * 1000;
+  for (const command of config.commands.prepare) await runCommand(root, command, timeoutMs, '', config.workload.maxOutputBytes, config.workload.execution, heartbeatMs);
   const jobs = [];
   for (let worker = 1; worker <= config.workload.workers; worker += 1) {
     jobs.push((async () => {
       for (let cycle = 1; cycle <= config.workload.cycles; cycle += 1) {
-        for (const command of config.commands.verify) await runCommand(root, command, timeoutMs, ` [worker ${worker}, cycle ${cycle}]`, config.workload.maxOutputBytes, config.workload.execution);
+        for (const command of config.commands.verify) await runCommand(root, command, timeoutMs, ` [worker ${worker}, cycle ${cycle}]`, config.workload.maxOutputBytes, config.workload.execution, heartbeatMs);
       }
     })());
   }

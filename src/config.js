@@ -141,6 +141,7 @@ function validateConfig(input) {
       cycles:boundedInteger(workload.cycles, 2, 1, 20, 'workload.cycles'),
       timeoutMinutes:boundedInteger(workload.timeoutMinutes, 4, 1, 30, 'workload.timeoutMinutes'),
       maxOutputBytes:boundedInteger(workload.maxOutputBytes, 1_048_576, 4096, 10_485_760, 'workload.maxOutputBytes'),
+      heartbeatSeconds:boundedInteger(workload.heartbeatSeconds, 60, 5, 300, 'workload.heartbeatSeconds'),
       execution:{ network:execution.network || 'allow', memoryMb:execution.memoryMb || null, fileSizeMb:execution.fileSizeMb || null, processes:execution.processes || null, denyBackground:execution.denyBackground !== false },
     },
   };

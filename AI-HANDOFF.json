@@ -2,33 +2,34 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Claude",
-    "objective": "Root-cause why the audit:clutter regression (fixed in f0f3c88) was ever able to reach development, and close the gap that let it happen, per the owner's explicit request.",
+    "objective": "Add a periodic 'still running' heartbeat to the workload runner, per the owner's explicit request, so a long-running Crucible command doesn't look hung.",
     "steps": [
-      "Confirm via git show --stat 7e6ba23 that the commit which broke Self-Test added both colliding templates but never touched .thecrucible.json, while its own AI-HANDOFF.json/DEVLOG.md changes (same commit) claimed clutter passed.",
-      "Confirm test/engine.test.js's only auditClutter coverage runs against a synthetic fixture, never the real repository, so npm test alone cannot catch a real-repo clutter regression.",
-      "Add a self-check test in test/workflow.test.js that runs auditClutter against the real repo root via loadConfig(root), inside npm test itself.",
-      "Prove it is a real guard, not a pass-through: temporarily revert .thecrucible.json to 7e6ba23's version, confirm the new test fails with the exact duplicate-content finding, then restore the fix and confirm it passes.",
+      "Add workload.heartbeatSeconds (bounded 5-300, default 60) to .thecrucible.schema.json and src/config.js's validated defaults.",
+      "In src/runner.js's runCommand, start a setInterval immediately after spawning the child process and clear it on close/error/timeout, so it can only fire while that exact command is actively running.",
+      "Thread config.workload.heartbeatSeconds through runCrucible's prepare and verify command loops.",
+      "Document the new field in templates/thecrucible.example.json and README's workload section.",
+      "Add tests: bounds validation, a real heartbeat firing multiple times during an artificially slow command, and zero heartbeats for a command that finishes before the interval elapses.",
       "Run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T10:55:00-04:00",
-    "lastUpdatedAt": "2026-08-27T11:05:00-04:00"
+    "startedAt": "2026-08-27T11:10:00-04:00",
+    "lastUpdatedAt": "2026-08-27T11:25:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Root-caused the audit:clutter regression: 7e6ba23 added the two colliding templates without ever adding the .thecrucible.json exception, and its own committed handoff notes inaccurately claimed the clutter audit passed - most likely because npm test (196/196) and the separate npm run audit:clutter invocation were conflated, or the latter was run against an earlier, incomplete state of the same in-progress commit.",
-      "Added test/workflow.test.js: \"the clutter audit passes against this repository's own real, current tracked snapshot\", running the real auditClutter against the real repo inside npm test, so this class of regression is caught by the one command almost everyone runs.",
-      "Verified the new test is a real guard: reverted .thecrucible.json to the pre-fix (7e6ba23) version, confirmed the test fails with the identical duplicate-content finding, then restored the fix and confirmed the test passes."
+      "Added workload.heartbeatSeconds to the schema and validated config (bounded 5-300, default 60).",
+      "runCommand now emits '[The Crucible] Still running: <command> (Ns elapsed)' to stdout on that interval, started only after the child process spawns and cleared the instant it closes, errors, or times out - never an idle tick, only while a command is genuinely running.",
+      "Documented the new field in templates/thecrucible.example.json and README's ### workload section and feature-bullet list."
     ],
     "verification": [
-      "Full local suite passes 197/197 (196 + 1 new).",
-      "The new test was proven to actually fail on the pre-fix configuration, not just pass trivially.",
+      "Full local suite passes 200/200 (197 + 3 new).",
+      "Proved the heartbeat fires multiple times for an artificially slow command and never fires for one that finishes before the interval elapses.",
       "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass."
     ],
     "remaining": [
       "Push to development and confirm Self-Test, CodeQL, and AI handoff policy are green for this commit.",
-      "Codex's own remaining items still stand: the hosted multi-repository integration workflow is intentionally report-only and untested against real repositories/tokens; no promotion or branch-protection activation is authorized without the owner's explicit instruction.",
-      "Not fixed here (a process gap, not a code gap): whatever environment produced 7e6ba23 either didn't have .githooks/pre-push installed, or pushed through a path that bypasses local git hooks entirely (e.g. the GitHub API rather than a local git push) - hooks are a local-client feature GitHub cannot enforce server-side, so CI remains the authoritative backstop for any such path."
+      "Open item, not yet acted on: PR #7 (the live CI-failure webhook) was merged by the owner and can never fire again. The owner approved opening a replacement permanent monitoring PR, then interrupted before it was created - still needs the owner's go-ahead to actually proceed. Until then, real-time failure notification in this session is down to the 60-minute hourly fallback poll.",
+      "Codex's own remaining items still stand: the hosted multi-repository integration workflow is intentionally report-only and untested against real repositories/tokens; no promotion or branch-protection activation is authorized without the owner's explicit instruction."
     ]
   }
 }

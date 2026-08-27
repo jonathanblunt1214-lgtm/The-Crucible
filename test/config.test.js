@@ -15,7 +15,7 @@ test('validates and supplies bounded workload defaults', () => {
   const config = validateConfig(fixture());
   assert.deepEqual(config.project, { name:'Fixture', projectId:null, mainRepository:null, repositories:[], folderTopology:null });
   assert.equal(config.suite.mode, 'all');
-  assert.deepEqual(config.workload, { workers:4, cycles:2, timeoutMinutes:4, maxOutputBytes:1048576, execution:{ network:'allow', memoryMb:null, fileSizeMb:null, processes:null, denyBackground:true } });
+  assert.deepEqual(config.workload, { workers:4, cycles:2, timeoutMinutes:4, maxOutputBytes:1048576, heartbeatSeconds:60, execution:{ network:'allow', memoryMb:null, fileSizeMb:null, processes:null, denyBackground:true } });
   assert.equal(config.privacy.scanContactInformation, false);
   assert.deepEqual(config.privacy.allow, []);
   assert.equal(config.clutter.blockTrackedIgnored, false);
@@ -103,4 +103,13 @@ test('rejects missing verification and unbounded stress settings', () => {
   const unbounded = fixture();
   unbounded.workload = { workers:99 };
   assert.throws(() => validateConfig(unbounded), /1 through 8/);
+});
+
+test('bounds workload.heartbeatSeconds and lets it be tuned down toward the requested 60s cadence', () => {
+  const tuned = fixture();
+  tuned.workload = { heartbeatSeconds:15 };
+  assert.equal(validateConfig(tuned).workload.heartbeatSeconds, 15);
+  const unbounded = fixture();
+  unbounded.workload = { heartbeatSeconds:1 };
+  assert.throws(() => validateConfig(unbounded), /5 through 300/);
 });

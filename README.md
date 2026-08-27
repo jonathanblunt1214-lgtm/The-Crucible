@@ -359,6 +359,7 @@ Each claim can declare `evidence` files. Crucible reports the command digest, co
 - Language-aware scanning removes language comments before checking JavaScript, TypeScript, Python, PowerShell, shell, and other common source files for dynamic execution, shell-enabled child processes, and unsafe deserialization. Projects can add full AST analyzers as ordinary verification commands.
 - `reproducibility` builds configured artifacts twice from independent staged-source copies and compares SHA-256 digests. Temporary copies are removed after the comparison; tracked project files are not rewritten.
 - `workload.maxOutputBytes` bounds retained command output while leaving live logs visible.
+- `workload.heartbeatSeconds` prints a "still running" progress line for a command that has produced no other output for that long, so a long-running command never looks hung; it only prints while that command is actively running and never on its own.
 - `workload.execution` can apply Linux `prlimit` memory, process, and file-size limits and `unshare` network denial. Enabling strict isolation on an unsupported platform fails closed.
 - Timeouts terminate the complete process tree rather than only the immediate child.
 - Collision protection compares changed line ranges, labels code versus documentation overlap, and ignores recognized stacked-PR relationships.
@@ -375,6 +376,7 @@ The normal and reusable workflows remain repository read-only. They never genera
 - `workers`: Concurrent workers, from 1 through 8. Default: 4.
 - `cycles`: Complete verification cycles per worker, from 1 through 20. Default: 2.
 - `timeoutMinutes`: Maximum time for each command, from 1 through 30. Default: 4.
+- `heartbeatSeconds`: Seconds between "still running" progress lines while a command produces no other output, from 5 through 300. Default: 60.
 
 The number of verification command executions is:
 

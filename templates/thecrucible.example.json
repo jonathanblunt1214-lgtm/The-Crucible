@@ -46,6 +46,7 @@
     "cycles": 2,
     "timeoutMinutes": 4,
     "maxOutputBytes": 1048576,
+    "heartbeatSeconds": 60,
     "execution": { "network": "allow" }
   }
 }
