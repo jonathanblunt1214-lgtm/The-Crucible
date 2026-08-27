@@ -1,0 +1,59 @@
+# `release` exists solely to carry real development -> main promotions
+# through a normal pull request, since PR #9 (the permanent, never-merge
+# monitoring hook) already occupies the only development -> main pull
+# request slot GitHub allows - see AGENTS.md's branch policy. Pushing
+# validated content to `release` (fast-forwarded from a green `development`
+# tip) is the explicit signal that it is ready for `main`; this workflow
+# does the rest automatically so no one has to open a PR or click merge by
+# hand every time: it opens (or reuses) the release -> main pull request,
+# waits for every check on it to finish, and merges only if they all pass.
+# It never pushes to `main` directly and never bypasses or weakens any
+# check - the merge goes through the exact same required-status-check
+# ruleset every other pull request into `main` must satisfy, including the
+# "block" check from block-pr-7.yml.
+name: Promote release to main
+
+on:
+  push:
+    branches: [release]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  promote:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.repository }}
+    steps:
+      - name: Open or reuse the release -> main pull request
+        id: pr
+        run: |
+          set -euo pipefail
+          existing="$(gh pr list --repo "$REPOSITORY" --head release --base main --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$existing" ]; then
+            echo "Reusing existing release -> main pull request #$existing."
+            echo "number=$existing" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          if output="$(gh pr create --repo "$REPOSITORY" --head release --base main --title 'Promote release to main' --body 'Automated promotion opened by promote-release.yml. Merges automatically once every check on this pull request passes.' 2>&1)"; then
+            number="${output##*/}"
+            echo "Opened pull request #$number."
+            echo "number=$number" >> "$GITHUB_OUTPUT"
+          elif printf '%s' "$output" | grep -qi 'No commits between'; then
+            echo "release and main are already in sync - nothing to promote."
+            echo "number=" >> "$GITHUB_OUTPUT"
+          else
+            printf '%s\n' "$output" >&2
+            exit 1
+          fi
+      - name: Wait for every check to finish, then merge
+        if: steps.pr.outputs.number != ''
+        run: |
+          set -euo pipefail
+          number="${{ steps.pr.outputs.number }}"
+          gh pr checks "$number" --repo "$REPOSITORY" --watch --interval 15
+          gh pr merge "$number" --repo "$REPOSITORY" --merge

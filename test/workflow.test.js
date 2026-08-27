@@ -196,6 +196,21 @@ test('a dedicated check blocks every locked monitoring PR, past and present, and
   assert.match(agents, /PR #9/);
 });
 
+test('release to main promotion is automated: opens or reuses a pull request, waits for every check, then merges', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'promote-release.yml'), 'utf8');
+  assert.match(workflow, /^on:\s*\n\s*push:\s*\n\s*branches: \[release\]\s*$/m);
+  assert.match(workflow, /permissions:\s*\n\s*contents: write\s*\n\s*pull-requests: write/);
+  assert.match(workflow, /gh pr list --repo "\$REPOSITORY" --head release --base main/);
+  assert.match(workflow, /gh pr create --repo "\$REPOSITORY" --head release --base main/);
+  assert.match(workflow, /No commits between/);
+  assert.match(workflow, /gh pr checks "\$number" --repo "\$REPOSITORY" --watch/);
+  assert.match(workflow, /gh pr merge "\$number" --repo "\$REPOSITORY" --merge/);
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /Never push directly to `main`, even with that explicit instruction/);
+  assert.match(agents, /promote-release\.yml/);
+  assert.match(agents, /release.*is an exception/s);
+});
+
 test('GitHub checks every development change and main PR for a current DEVLOG handoff', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'handoff-policy.yml'), 'utf8');
   assert.match(workflow, /name: AI handoff policy/);
