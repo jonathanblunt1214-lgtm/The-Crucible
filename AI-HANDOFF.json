@@ -2,34 +2,28 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Claude",
-    "objective": "Two owner-approved follow-ups: extend PR #7's never-merge backstop to PR #9, and make connect-workflow.yml's install/activate flow resumable after a partial failure.",
+    "objective": "Follow-up accuracy pass: AGENTS.md's 'Automatic CI monitoring' section still named PR #7 as the live monitoring hook after PR #9 replaced it earlier this session.",
     "steps": [
-      "Extend .github/workflows/block-pr-7.yml's block job to fail for PR #7 or #9 (LOCKED_PR_NUMBERS), keeping the file's original name and the 'block' check name so no required-check re-registration is needed.",
-      "Update AGENTS.md's absolute branch-policy rule to name PR #9 as current, keeping #7 listed as a harmless historical entry and documenting the replace-by-adding-not-swapping convention for any future successor.",
-      "Update test/workflow.test.js's block-pr-7.yml test for the new LOCKED_PR_NUMBERS logic and message text.",
-      "Before touching connect-workflow.yml: clarify 'make it never disconnect' with the owner, since the literal request would have meant removing the documented, deliberate design-brief-deletion severing check (an anti-tampering control, not a bug). Confirmed the owner meant install/activate robustness, not removing that check.",
-      "Make the install job's governance-file commit step idempotent: an exact-match 'nothing changed' diff (a resumed run after governance files were already committed but Development-branch creation then failed) is treated as done, not as a mismatch to refuse.",
-      "Tighten the Development-branch existence check to distinguish git ls-remote --exit-code's exit 2 (branch doesn't exist) from any other nonzero exit (a real failure), rather than treating all nonzero exits as 'safe to create'.",
-      "Add a dedicated test for the new resumability behavior; run the full local suite plus every fast/offline audit before pushing."
+      "Confirm CI for the prior commit (41f3a06: PR #9 lock extension + connect-workflow.yml resumability) - CodeQL and AI handoff policy green, Self-Test in progress at the time of this pass.",
+      "Re-check AGENTS.md for any remaining PR #7 references missed by the earlier edit pass (which only updated the absolute branch-policy rule and the 'CI on development' section).",
+      "Found and fixed one: the 'Automatic CI monitoring' section's 'Primary, near-live' bullet still pointed at PR #7. Updated it to name PR #9, with PR #7 noted as the predecessor merged by the owner on 2026-08-27.",
+      "Run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T12:25:00-04:00",
-    "lastUpdatedAt": "2026-08-27T12:40:00-04:00"
+    "startedAt": "2026-08-27T12:45:00-04:00",
+    "lastUpdatedAt": "2026-08-27T12:50:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "block-pr-7.yml now fails for PR #7 or PR #9 via LOCKED_PR_NUMBERS='7 9', keeping its filename and 'block' check name unchanged.",
-      "AGENTS.md's absolute branch-policy rule now names PR #9, with PR #7 kept as a historical (permanently inert) entry and a documented add-don't-swap convention for future replacements.",
-      "connect-workflow.yml's install job no longer refuses a resumed run where the governance files are already correctly in place - only a genuine partial/mismatched diff still fails closed.",
-      "connect-workflow.yml's Development-branch existence check now distinguishes 'doesn't exist yet' from 'could not confirm due to a real error', refusing to guess in the latter case."
+      "AGENTS.md's 'Automatic CI monitoring' section now names PR #9 as the current near-live monitoring hook, noting PR #7 as its merged predecessor.",
+      "No code changes; documentation accuracy only. No test asserted against the stale text, so test/workflow.test.js needed no change."
     ],
     "verification": [
-      "Full local suite passes 204/204 (203 + 1 new).",
-      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass.",
-      "The activate job's ruleset application was already idempotent (upsert-by-name) and needed no change."
+      "Full local suite passes 204/204.",
+      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass."
     ],
     "remaining": [
-      "Push and confirm Self-Test, CodeQL, and AI handoff policy are green.",
+      "Push and confirm Self-Test, CodeQL, and AI handoff policy are green for this commit and for the prior 41f3a06 (Self-Test was still in progress for it when this pass started).",
       "The owner still needs to add 'block' as a required status check on main (Settings -> Branches -> Branch protection rules) for PR #9's lock to actually GitHub-disable its merge button - no tool available here can do that remotely.",
       "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",
       "Codex's own remaining items still stand: no promotion or branch-protection change is authorized without the owner's explicit instruction beyond what's already been done."

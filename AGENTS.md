@@ -150,10 +150,12 @@ The owner should not have to notice a failure, paste a screenshot, or ask
 this, since the platform's scheduler cannot poll more often than hourly:
 
 - **Primary, near-live:** direct `development` push triggers run Self-Test and
-  CodeQL immediately. [PR #7](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/7)
+  CodeQL immediately. [PR #9](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/9)
   is a permanently-draft, never-merged `development` -> `main` pull request
   that keeps PR activity and comment events live instead of waiting for a
-  poll. It is explicitly marked
+  poll (its predecessor, PR #7, served this role until the owner merged it
+  directly on 2026-08-27, making it permanently dead as an event hook). It
+  is explicitly marked
   do-not-merge and does not change the `main` branch policy above - opening
   and keeping it open was itself an explicit, one-time owner decision, not
   something assumed going forward.
