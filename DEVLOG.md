@@ -3,11 +3,11 @@
 ## Shared AI handoff
 
 - **Agent:** Claude.
-- **Current plan:** Fix a real Windows CI failure introduced by the previous commit (`48db90f`, the pre-push-hook work): `test/installGitHooks.test.js` asserted an exact `0o755` filesystem mode after `chmodSync`, but Windows/NTFS has no POSIX executable bit - `fs.chmodSync` there only toggles the read-only attribute, so the real result is `0o666`, never `0o755`.
-- **Current development work:** Made the two exact-mode assertions in `test/installGitHooks.test.js` conditional on `process.platform !== 'win32'`, matching this codebase's existing convention for other Windows-specific behavior differences. Both tests still assert `result.installed === true` (and, in the first test, that `core.hooksPath` is set correctly) on every platform; only the literal filesystem-mode check is skipped on Windows, since it can't be meaningfully true there.
-- **Files changed:** `test/installGitHooks.test.js`, `AI-HANDOFF.json`, `DEVLOG.md`.
-- **Verification:** Full local suite passes 172/172. Also re-ran `lint:workflows`, `docs:check`, `validate`, `audit:clutter`, `audit:privacy`, and `audit:security` locally - all pass.
-- **Remaining work:** Push to `development`, then confirm Self-Test is green on all three OSes (ubuntu-latest, windows-latest, macos-latest) for the new commit, plus AI handoff policy, AI conflict governance, and CodeQL.
+- **Current plan:** Fix two real, current CI failures found while driving `development` to green: (1) a Windows-only failure in `test/installGitHooks.test.js` (exact `0o755` mode assertion, which `fs.chmodSync` can never produce on NTFS), and (2) The Crucible's own commit-message gate (`src/commit.js`) failing on the fix commit itself because its subject line was 79 characters against a 72-character cap.
+- **Current development work:** Made the two exact-mode assertions in `test/installGitHooks.test.js` conditional on `process.platform !== 'win32'` (still asserting `installGitHooks()` succeeds on every platform). Separately, at the owner's explicit direction, raised the commit-subject-length gate in `src/commit.js` from 72 to 80 characters, since the previous fix's subject legitimately needed more room. The commit that first tripped the old 72-char limit (`ee3eacd`) was amended to a shorter subject and force-pushed (`ee3eacd...c6b1625`) with the owner's explicit approval, since `CRUCIBLE_COMMIT_LONG_COMMIT_SUBJECT` is marked `fixable: false` / human-review-required by design - not something to rewrite unilaterally.
+- **Files changed:** `test/installGitHooks.test.js`, `src/commit.js`, `AI-HANDOFF.json`, `DEVLOG.md`.
+- **Verification:** Full local suite passes 172/172 after each change. Also re-ran `lint:workflows`, `docs:check`, `validate`, `audit:clutter`, `audit:privacy`, and `audit:security` locally - all pass. No test hardcodes the old 72-character threshold.
+- **Remaining work:** Push to `development`, then confirm Self-Test (including its `precheck`/commit-gate step) is green on all three OSes for the new commit, plus AI handoff policy, AI conflict governance, and CodeQL.
 
 Every AI agent must keep the current plan and status in this section accurate automatically and refresh it in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
 
