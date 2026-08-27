@@ -50,7 +50,7 @@ function inspectCommitMessage(root, ref) {
   const findings = [];
   if (!subject) findings.push({ type:'empty-commit-subject', path:'COMMIT_MESSAGE', fixable:false });
   if (/^(wip|fixup!|squash!)/i.test(subject)) findings.push({ type:'temporary-commit-subject', path:'COMMIT_MESSAGE', fixable:false });
-  if (subject.length > 80) findings.push({ type:'long-commit-subject', path:'COMMIT_MESSAGE', detail:`${subject.length} characters`, fixable:false });
+  if (subject.length > 120) findings.push({ type:'long-commit-subject', path:'COMMIT_MESSAGE', detail:`${subject.length} characters`, fixable:false });
   return findings;
 }
 

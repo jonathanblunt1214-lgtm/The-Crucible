@@ -8,23 +8,23 @@
       "Push the fix; discover a second, different failure: src/commit.js's CRUCIBLE_COMMIT_LONG_COMMIT_SUBJECT check failed on that same commit (79-character subject vs the 72-character cap), marked fixable:false / human-review-required.",
       "Ask the owner how to proceed, since clearing it requires amending an already-pushed commit's message and force-pushing to the shared development branch - not something to do unilaterally. Owner approved amend-and-force-push.",
       "Amend commit ee3eacd to a 52-character subject and force-push (ee3eacd...c6b1625).",
-      "At the owner's explicit follow-up instruction, raise the commit-subject-length cap in src/commit.js from 72 to 80 characters.",
-      "Re-run the full local suite plus lint:workflows, docs:check, validate, and the three fast audits before pushing the cap change."
+      "At the owner's explicit follow-up instruction, raise the commit-subject-length cap in src/commit.js from 72 to 80 characters, then from 80 to 120 characters (a further explicit owner request).",
+      "Re-run the full local suite plus lint:workflows, docs:check, validate, and the three fast audits before pushing each cap change."
     ],
     "status": "complete",
     "startedAt": "2026-08-27T07:05:00-04:00",
-    "lastUpdatedAt": "2026-08-27T07:20:00-04:00"
+    "lastUpdatedAt": "2026-08-27T07:25:00-04:00"
   },
   "handoffNotes": {
     "completed": [
       "Made the exact-0o755 assertions in test/installGitHooks.test.js platform-conditional (skipped on win32), since fs.chmodSync cannot set true POSIX executable bits on Windows/NTFS.",
       "Amended and force-pushed commit ee3eacd -> c6b1625 to shorten its subject below the (then) 72-character commit-gate limit, with explicit owner approval - CRUCIBLE_COMMIT_LONG_COMMIT_SUBJECT is fixable:false by design, so this was never done unilaterally.",
-      "Raised src/commit.js's commit-subject-length cap from 72 to 80 characters, per the owner's explicit instruction."
+      "Raised src/commit.js's commit-subject-length cap from 72 to 80, then from 80 to 120 characters, per the owner's explicit, successive instructions."
     ],
     "verification": [
       "Full local suite passes 172/172 after each change.",
       "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass against the current staged snapshot.",
-      "No test hardcoded the old 72-character threshold, so no test needed updating for the cap change."
+      "No test hardcoded either old threshold, so no test needed updating for either cap change."
     ],
     "remaining": [
       "Push to development, then confirm Self-Test (including its precheck/commit-gate step) is green on ubuntu-latest, windows-latest, and macos-latest for the new commit, plus AI handoff policy, AI conflict governance, and CodeQL.",
