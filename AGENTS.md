@@ -39,14 +39,16 @@ session.
   rebase, or push to `main` on your own initiative.
   - **Never push directly to `main`, even with that explicit instruction -
     promote through the `release` branch instead.** `main`'s branch
-    protection ruleset requires the `block` status check (see the PR #9
+    protection ruleset requires the `block` status check (see the PR #11
     bullet below) to already show success for the exact commit being
     pushed, but that check can only run via a pull request or a push to
     `development` - never in time for a raw push landing directly on
-    `main`, so a direct push is always rejected regardless of content. It
-    is also not possible to open a normal `development` -> `main` pull
-    request for a real promotion, because PR #9 permanently occupies the
-    only pull request GitHub allows between those two exact branches.
+    `main`, so a direct push is always rejected regardless of content. A
+    normal `development` -> `main` pull request was also not possible when
+    `release` was created, because PR #9 permanently occupied the only
+    pull request GitHub allows between those two exact branches (PR #9 has
+    since been auto-closed - see the PR #11 bullet below - but nothing
+    should be assumed to occupy that slot going forward without checking).
     `release` exists to give a promotion its own pull request: fast-forward
     `release` to the validated `development` tip and push it (a normal push
     to a branch you're allowed to push to, not `main` itself).
@@ -68,9 +70,9 @@ session.
   agent can reason its way around because deletion "seems" appropriate.
 - **Never rename files, branches, or repositories** unless the owner
   explicitly asks for it.
-- **[PR #9](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/9)
+- **[PR #11](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/11)
   is never merged or closed, under any circumstances.** It is a permanent
-  draft `development` -> `main` pull request that exists solely as a live
+  draft `ci-monitor` -> `main` pull request that exists solely as a live
   event hook for CI monitoring (see "Automatic CI monitoring" below) - not
   a normal pull request awaiting review. Never merge it, never close it -
   for any reason, including "cleanup," "this looks stale," or "its purpose
@@ -81,24 +83,50 @@ session.
   If it ever needs to not exist, that is the owner's explicit call to make
   in that exact conversation, not something inferred from its mergeable
   state, its age, or anything else about its current condition.
-  - PR #9 is a replacement: its predecessor, PR #7, served this exact role
-    until the repository owner merged it directly on 2026-08-27. A merged
-    PR is permanently dead as an event hook, so PR #9 exists to restore
-    live monitoring - the same absolute rule now applies to it instead.
-    If PR #9 is ever itself merged or closed, the same pattern applies:
-    open its replacement and update this rule to name the new PR, rather
-    than leaving the project without a live monitoring hook.
+  - PR #11 is a replacement: its predecessor, PR #7, was merged directly by
+    the repository owner on 2026-08-27; PR #9 (#7's own replacement) was
+    then auto-merged and auto-closed by GitHub with nobody touching its
+    merge button, on 2026-08-27, the instant its head - the `development`
+    branch ref directly - became reachable from `main` through an
+    unrelated promotion (`release`, used to satisfy `main`'s required
+    `block` check; see the `main` bullet above). A merged PR is
+    permanently dead as an event hook either way, so each replacement
+    exists to restore live monitoring - the same absolute rule now applies
+    to PR #11 instead.
+  - **PR #11 is structured differently specifically to prevent PR #9's
+    incident from recurring.** Its head, `ci-monitor`, is a dedicated
+    branch whose own commits are distinct new commits copying
+    `development`'s tree content - never `development`'s actual commit
+    objects. `.github/workflows/sync-ci-monitor.yml` keeps it current on
+    every `development` push by committing a fresh snapshot on top of
+    `ci-monitor`'s own separate history, never by fetching or
+    fast-forwarding `development`'s real commits onto it. Because
+    `ci-monitor`'s commits are never `development`'s real ones, they can
+    never become reachable from `main` through any future `release`
+    promotion, so PR #9's auto-merge cannot happen again this way. Never
+    change `sync-ci-monitor.yml` to merge, rebase, or fast-forward
+    `ci-monitor` from `development` directly - that would silently
+    reintroduce the exact bug this design fixes. If PR #11 is ever itself
+    merged or closed by some other means, the same pattern applies: open
+    its replacement (keeping this same distinct-commit structure) and
+    update this rule to name the new PR, rather than leaving the project
+    without a live monitoring hook.
+  - `ci-monitor` is an explicit exception to the no-new-branches rule
+    above, created specifically to serve as PR #11's head for the reasons
+    described here - this does not extend to creating further new
+    branches.
   - This is backed by a real, GitHub-enforced check, not just this
     document: `.github/workflows/block-pr-7.yml`'s `block` job fails
-    specifically and only for PR #7 or PR #9, succeeding instantly for
-    every other pull request (the file keeps its original name per the
-    no-rename rule above, even though it now also protects PR #9). Once
-    the repository owner adds `block` as a required status check on
-    `main` (Settings -> Branches -> Branch protection rules - no tool
-    available to any agent here can do this remotely), the merge button
-    on PR #9 itself becomes GitHub-disabled, without adding any friction
-    to a real, legitimate PR into `main`. Never remove, rename, or weaken
-    this workflow's `block` check to work around the lock.
+    specifically and only for PR #7, PR #9, or PR #11, succeeding
+    instantly for every other pull request (the file keeps its original
+    name per the no-rename rule above, even though it now also protects
+    PR #9 and PR #11). Once the repository owner adds `block` as a
+    required status check on `main` (Settings -> Branches -> Branch
+    protection rules - no tool available to any agent here can do this
+    remotely), the merge button on PR #11 itself becomes GitHub-disabled,
+    without adding any friction to a real, legitimate PR into `main`.
+    Never remove, rename, or weaken this workflow's `block` check to work
+    around the lock.
 
 ## CI on `development`
 
@@ -106,8 +134,10 @@ After every push you make to `development`, check the resulting CI (Self-Test
 and CodeQL) without being asked, and if anything fails, diagnose the real
 cause, fix it, push the fix, and check again - looping until it's actually
 green, not just until one attempt looks plausible. Self-Test and CodeQL both
-trigger directly on pushes to `development`; PR #9 remains the permanent draft
-`development` -> `main` event hook for near-live monitoring and PR activity.
+trigger directly on pushes to `development`; PR #11 remains the permanent
+draft `ci-monitor` -> `main` event hook for near-live monitoring and PR
+activity, kept in sync with `development`'s content by
+`.github/workflows/sync-ci-monitor.yml`.
 If a direct-push Self-Test run is missing, dispatch Self-Test manually
 (`workflow_dispatch`) rather than assuming a lack of a run means nothing to
 check.
@@ -172,11 +202,15 @@ The owner should not have to notice a failure, paste a screenshot, or ask
 this, since the platform's scheduler cannot poll more often than hourly:
 
 - **Primary, near-live:** direct `development` push triggers run Self-Test and
-  CodeQL immediately. [PR #9](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/9)
-  is a permanently-draft, never-merged `development` -> `main` pull request
+  CodeQL immediately. [PR #11](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/11)
+  is a permanently-draft, never-merged `ci-monitor` -> `main` pull request
   that keeps PR activity and comment events live instead of waiting for a
   poll (its predecessor, PR #7, served this role until the owner merged it
-  directly on 2026-08-27, making it permanently dead as an event hook). It
+  directly on 2026-08-27; PR #7's own replacement, PR #9, was then
+  auto-merged and auto-closed by GitHub on its own once its head branch,
+  `development`, became reachable from `main` through an unrelated
+  promotion - see the PR #11 bullet in the branch policy above for why
+  `ci-monitor` is structured to prevent that from happening again). It
   is explicitly marked
   do-not-merge and does not change the `main` branch policy above - opening
   and keeping it open was itself an explicit, one-time owner decision, not
