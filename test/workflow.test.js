@@ -107,6 +107,27 @@ test('connect workflow requires main and a development branch in its two-phase p
   assert.equal((workflow.match(/REPLACE_WITH_EXACT_COMMIT_SHA/g) || []).length, 1);
 });
 
+test('connect workflow install/branch-creation steps are resumable after a partial failure, never stuck half-applied', () => {
+  const workflow = fs.readFileSync(path.join(root, 'templates', 'connect-workflow.yml'), 'utf8');
+  // If a prior run committed governance files to main but then failed before
+  // creating Development-branch, re-running install must finish the job
+  // instead of refusing an already-correct "nothing changed" diff.
+  assert.match(workflow, /if \[ "\$count" -eq 0 \]/);
+  assert.match(workflow, /already installed and unchanged/);
+  // ls-remote's exit code must be inspected, not just treated as boolean:
+  // exit 2 means "branch doesn't exist" (safe to create), any other nonzero
+  // is a real failure that must not be silently treated the same way.
+  assert.match(workflow, /status=\$\?/);
+  assert.match(workflow, /if \[ "\$status" -eq 0 \]/);
+  assert.match(workflow, /elif \[ "\$status" -ne 2 \]/);
+  assert.match(workflow, /Could not confirm whether Development-branch exists/);
+  // The original fail-closed behaviors must survive unchanged.
+  assert.match(workflow, /git ls-remote --exit-code --heads origin refs\/heads\/Development-branch/);
+  assert.match(workflow, /Refusing to replace existing Development-branch/);
+  assert.match(workflow, /git status --porcelain/);
+  assert.match(workflow, /Refusing to commit/);
+});
+
 test('installed design brief matches the agent-boundaries rules and explains the one-time write', () => {
   const brief = fs.readFileSync(path.join(root, 'templates', 'the-crucible-design-brief.md'), 'utf8');
   assert.match(brief, /never modify anything installed to run The Crucible/i);
@@ -160,18 +181,19 @@ test('recovery from the canonical snapshot requires a human to manually dispatch
   assert.doesNotMatch(workflow, /repository_dispatch|issues:|pull_request_target/);
 });
 
-test('a dedicated check blocks only PR #7, the permanent do-not-merge CI-monitoring hook', () => {
+test('a dedicated check blocks every locked monitoring PR, past and present, and no other', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'block-pr-7.yml'), 'utf8');
   assert.match(workflow, /^on:\s*\n\s*push:\s*\n\s*branches: \[development\]\s*\n\s*pull_request:\s*$/m);
   assert.match(workflow, /permissions:\s*\n\s*contents: read/);
-  assert.match(workflow, /github\.event\.pull_request\.number.*=.*"7"/);
+  assert.match(workflow, /LOCKED_PR_NUMBERS:\s*"7 9"/);
   assert.match(workflow, /must never be merged/i);
-  assert.match(workflow, /Not PR #7 - nothing to block/);
+  assert.match(workflow, /Not a locked monitoring PR - nothing to block/);
   const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
   assert.match(agents, /never merged or closed, under any circumstances/i);
   assert.match(agents, /no technical backstop/i);
   assert.match(agents, /block-pr-7\.yml/);
   assert.match(agents, /required status check on\s*\n\s*`main`/);
+  assert.match(agents, /PR #9/);
 });
 
 test('GitHub checks every development change and main PR for a current DEVLOG handoff', () => {

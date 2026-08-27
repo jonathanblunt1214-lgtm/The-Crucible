@@ -2,32 +2,36 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Claude",
-    "objective": "Action the owner's punch-list of open items: restore live CI-failure monitoring now that PR #7 is dead, and clearly separate what's actionable from what needs owner-supplied resources.",
+    "objective": "Two owner-approved follow-ups: extend PR #7's never-merge backstop to PR #9, and make connect-workflow.yml's install/activate flow resumable after a partial failure.",
     "steps": [
-      "Confirm PR #8 was merged by the owner directly on GitHub (e05f7f0) and that main's own Self-Test on that merge commit is green.",
-      "Open PR #9 (development -> main, draft, [LOCKED - DO NOT MERGE]) as PR #7's replacement live-monitoring hook, matching PR #7's original body/purpose, with an explicit note naming what protection it does NOT yet have (no scoped block-pr-9.yml or AGENTS.md update).",
-      "Subscribe this session to PR #9's activity for real-time CI/comment events.",
-      "Update the hourly fallback routine's stored prompt to reference PR #9 instead of the dead PR #7.",
-      "Do not attempt the two items that require real external resources (hosted multi-repository integration test; connect-workflow.yml's activate phase) - name exactly what's missing (a real target repository, a real token) instead of faking completion.",
-      "Do not unilaterally extend PR #7's block-pr-7.yml/AGENTS.md protection to PR #9 - that's a policy decision for the owner, not something to fold silently into 'create a replacement PR.'"
+      "Extend .github/workflows/block-pr-7.yml's block job to fail for PR #7 or #9 (LOCKED_PR_NUMBERS), keeping the file's original name and the 'block' check name so no required-check re-registration is needed.",
+      "Update AGENTS.md's absolute branch-policy rule to name PR #9 as current, keeping #7 listed as a harmless historical entry and documenting the replace-by-adding-not-swapping convention for any future successor.",
+      "Update test/workflow.test.js's block-pr-7.yml test for the new LOCKED_PR_NUMBERS logic and message text.",
+      "Before touching connect-workflow.yml: clarify 'make it never disconnect' with the owner, since the literal request would have meant removing the documented, deliberate design-brief-deletion severing check (an anti-tampering control, not a bug). Confirmed the owner meant install/activate robustness, not removing that check.",
+      "Make the install job's governance-file commit step idempotent: an exact-match 'nothing changed' diff (a resumed run after governance files were already committed but Development-branch creation then failed) is treated as done, not as a mismatch to refuse.",
+      "Tighten the Development-branch existence check to distinguish git ls-remote --exit-code's exit 2 (branch doesn't exist) from any other nonzero exit (a real failure), rather than treating all nonzero exits as 'safe to create'.",
+      "Add a dedicated test for the new resumability behavior; run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T12:10:00-04:00",
-    "lastUpdatedAt": "2026-08-27T12:15:00-04:00"
+    "startedAt": "2026-08-27T12:25:00-04:00",
+    "lastUpdatedAt": "2026-08-27T12:40:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Verified PR #8's merge (e05f7f0, merged_by the owner) and that main's Self-Test on that commit is green.",
-      "Created and opened PR #9 as the new live-monitoring hook; subscribed to its activity.",
-      "Updated the hourly fallback routine (trig_01DK6joDQdxqGaoQVFCAHzKd) to name PR #9 instead of PR #7."
+      "block-pr-7.yml now fails for PR #7 or PR #9 via LOCKED_PR_NUMBERS='7 9', keeping its filename and 'block' check name unchanged.",
+      "AGENTS.md's absolute branch-policy rule now names PR #9, with PR #7 kept as a historical (permanently inert) entry and a documented add-don't-swap convention for future replacements.",
+      "connect-workflow.yml's install job no longer refuses a resumed run where the governance files are already correctly in place - only a genuine partial/mismatched diff still fails closed.",
+      "connect-workflow.yml's Development-branch existence check now distinguishes 'doesn't exist yet' from 'could not confirm due to a real error', refusing to guess in the latter case."
     ],
     "verification": [
-      "main Self-Test run for e05f7f0 (the PR #8 merge commit): success.",
-      "PR #9 confirmed open, draft, mergeable_state clean, subscription active."
+      "Full local suite passes 204/204 (203 + 1 new).",
+      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass.",
+      "The activate job's ruleset application was already idempotent (upsert-by-name) and needed no change."
     ],
     "remaining": [
-      "Owner decision needed: should PR #9 get the same GitHub-enforced never-merge backstop PR #7 had? That requires a new scoped block workflow (block-pr-9.yml equivalent) and updating AGENTS.md's hardcoded 'PR #7' references to PR #9.",
-      "Blocked on owner-supplied resources, not on any code/design gap: (1) the hosted multi-repository integration workflow needs a real second repository plus a real token to be exercised for real; (2) connect-workflow.yml's activate phase needs a CRUCIBLE_ADMIN_TOKEN (Administration: write) on a real target repository plus a representative PR.",
+      "Push and confirm Self-Test, CodeQL, and AI handoff policy are green.",
+      "The owner still needs to add 'block' as a required status check on main (Settings -> Branches -> Branch protection rules) for PR #9's lock to actually GitHub-disable its merge button - no tool available here can do that remotely.",
+      "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",
       "Codex's own remaining items still stand: no promotion or branch-protection change is authorized without the owner's explicit instruction beyond what's already been done."
     ]
   }
