@@ -268,6 +268,25 @@ test('governingDocuments must be rechecked at the start of every session, same o
   assert.ok(!Number.isNaN(Date.parse(handoff.sessionPolicy.lastActionAt)), 'sessionPolicy.lastActionAt must be a parseable timestamp');
 });
 
+test('DEVLOG.md is required to work as a chain of custody: dev-plan reference plus a command log with start/finish times', () => {
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /`DEVLOG\.md` is a chain of custody/);
+  assert.match(agents, /Reference the dev plan instead of restating it/);
+  assert.match(agents, /activePlan`:\s*`currentPrompt`/);
+  assert.match(agents, /Include a Command log/);
+  assert.match(agents, /started TIMESTAMP, finished TIMESTAMP, exit CODE/);
+  assert.match(agents, /validateDevlogChainOfCustody/);
+  const devlog = fs.readFileSync(path.join(root, 'DEVLOG.md'), 'utf8');
+  const section = devlog.split('## Shared AI handoff')[1].split(/\n##\s/)[0];
+  assert.match(section, /dev plan/i);
+  assert.match(section, /AI-HANDOFF\.json/);
+  assert.match(section, /command log/i);
+  assert.match(section, /\bstart(?:ed)?\b[\s\S]*?\bfinish(?:ed)?\b/i);
+  const handoff = JSON.parse(fs.readFileSync(path.join(root, 'AI-HANDOFF.json'), 'utf8'));
+  assert.equal(typeof handoff.activePlan.currentPrompt, 'string');
+  assert.ok(handoff.activePlan.currentPrompt.trim().length > 0);
+});
+
 test('AI conflict governance is unavoidable in the reusable workflow and monitored near real time', () => {
   const reusable = fs.readFileSync(path.join(root, '.github', 'workflows', 'the-crucible.yml'), 'utf8');
   const monitor = fs.readFileSync(path.join(root, '.github', 'workflows', 'ai-conflict-governance.yml'), 'utf8');
