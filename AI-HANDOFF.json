@@ -2,29 +2,34 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Claude",
-    "objective": "Follow-up accuracy pass: AGENTS.md's 'Automatic CI monitoring' section still named PR #7 as the live monitoring hook after PR #9 replaced it earlier this session.",
+    "objective": "Owner-requested: promote development's outstanding commits to main, then build a permanent, automated release -> main promotion path so this doesn't need manual PR/merge handling every time.",
     "steps": [
-      "Confirm CI for the prior commit (41f3a06: PR #9 lock extension + connect-workflow.yml resumability) - CodeQL and AI handoff policy green, Self-Test in progress at the time of this pass.",
-      "Re-check AGENTS.md for any remaining PR #7 references missed by the earlier edit pass (which only updated the absolute branch-policy rule and the 'CI on development' section).",
-      "Found and fixed one: the 'Automatic CI monitoring' section's 'Primary, near-live' bullet still pointed at PR #7. Updated it to name PR #9, with PR #7 noted as the predecessor merged by the owner on 2026-08-27.",
+      "Diagnose why a direct git push of the promotion content to main was rejected: main's ruleset requires the 'block' status check, which can only complete via a pull request or a push to development, never in time for a raw push landing on main.",
+      "Discover a second, structural blocker: a normal development -> main pull request for the promotion is impossible because PR #9 (the permanent, never-merge monitoring hook) already occupies the only pull request slot GitHub allows between those two branches.",
+      "With the owner's explicit permission, create a new permanent 'release' branch as the promotion gate.",
+      "Merge main into development first to align history (main's tip had diverged as its own PR #8 merge commit with no unique content), fast-forward release to development's validated tip, open PR #10 (release -> main), confirm every check green, merge it.",
+      "Per the owner's follow-up request, automate the release -> main path: add .github/workflows/promote-release.yml (push:release trigger) that opens or reuses the release -> main pull request, waits for every check, and merges only if they all pass.",
+      "Document the release branch, the direct-push-to-main prohibition, and the automation in AGENTS.md's branch policy; add a matching test in test/workflow.test.js.",
       "Run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T12:45:00-04:00",
-    "lastUpdatedAt": "2026-08-27T12:50:00-04:00"
+    "startedAt": "2026-08-27T15:45:00-04:00",
+    "lastUpdatedAt": "2026-08-27T16:05:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "AGENTS.md's 'Automatic CI monitoring' section now names PR #9 as the current near-live monitoring hook, noting PR #7 as its merged predecessor.",
-      "No code changes; documentation accuracy only. No test asserted against the stale text, so test/workflow.test.js needed no change."
+      "PR #10 (release -> main) merged as 63a42ec: main now carries all of development's previously-outstanding commits.",
+      "Added .github/workflows/promote-release.yml: on push to release, opens/reuses a release -> main pull request, waits for every check via `gh pr checks --watch`, then merges via `gh pr merge --merge` only if they all pass. Never pushes to main directly, never bypasses or weakens any required check.",
+      "AGENTS.md's branch policy now documents: never push directly to main even with explicit instruction (explains exactly why, referencing the block check + PR #9 slot conflict), the release branch's purpose, and that release is a one-time explicit exception to the no-new-branches rule, not a precedent for creating further branches.",
+      "Added a new test/workflow.test.js test asserting promote-release.yml's trigger, permissions, gh pr list/create/checks/merge invocations, and the corresponding AGENTS.md documentation."
     ],
     "verification": [
-      "Full local suite passes 204/204.",
+      "Full local suite passes 204/204 + 1 new test (205 total).",
       "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass."
     ],
     "remaining": [
-      "Push and confirm Self-Test, CodeQL, and AI handoff policy are green for this commit and for the prior 41f3a06 (Self-Test was still in progress for it when this pass started).",
-      "The owner still needs to add 'block' as a required status check on main (Settings -> Branches -> Branch protection rules) for PR #9's lock to actually GitHub-disable its merge button - no tool available here can do that remotely.",
+      "Push this commit to development, confirm Self-Test/CodeQL/AI handoff policy green, then fast-forward release to it - this promotes promote-release.yml itself through its own new automated path for the first time. Confirm that first automated run actually opens and merges the pull request correctly.",
+      "The owner should confirm 'block' is added as a required status check on main (Settings -> Branches -> Branch protection rules) if not already done - no tool available here can do that remotely.",
       "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",
       "Codex's own remaining items still stand: no promotion or branch-protection change is authorized without the owner's explicit instruction beyond what's already been done."
     ]

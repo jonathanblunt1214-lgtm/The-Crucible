@@ -37,9 +37,31 @@ session.
 - **`main` is not touched** except by the owner's own explicit, direct
   instruction to promote or release something onto it. Do not merge,
   rebase, or push to `main` on your own initiative.
+  - **Never push directly to `main`, even with that explicit instruction -
+    promote through the `release` branch instead.** `main`'s branch
+    protection ruleset requires the `block` status check (see the PR #9
+    bullet below) to already show success for the exact commit being
+    pushed, but that check can only run via a pull request or a push to
+    `development` - never in time for a raw push landing directly on
+    `main`, so a direct push is always rejected regardless of content. It
+    is also not possible to open a normal `development` -> `main` pull
+    request for a real promotion, because PR #9 permanently occupies the
+    only pull request GitHub allows between those two exact branches.
+    `release` exists to give a promotion its own pull request: fast-forward
+    `release` to the validated `development` tip and push it (a normal push
+    to a branch you're allowed to push to, not `main` itself).
+    `.github/workflows/promote-release.yml` then opens (or reuses) the
+    `release` -> `main` pull request automatically, waits for every check
+    on it to finish, and merges it only if they all pass - no PR click or
+    direct push to `main` required. Never bypass this by force-pushing
+    `main`, weakening `promote-release.yml`, or removing `block` from
+    `main`'s required checks to work around the lock.
 - **Never create a new branch** without the owner's explicit permission for
   that specific branch. This includes temporary/working branches you might
-  otherwise create for your own convenience.
+  otherwise create for your own convenience. (`release` is an exception,
+  already created with the owner's explicit permission specifically to
+  serve as the `development` -> `main` promotion gate described above -
+  this does not extend to creating further new branches.)
 - **Never delete a branch or a repository** unless the owner tells you to,
   in that exact request. This is an account-level requirement, not a
   per-session preference - it does not expire, and it is not something any
