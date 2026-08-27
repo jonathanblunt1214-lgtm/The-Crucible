@@ -3,8 +3,8 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
-  CADENCE_TIERS, TEST_CADENCE, AUDIT_CADENCE, ERROR_TRIGGERS,
-  tierRank, discoverTests, categoryForTest, categorizedTests, testsForTier,
+  CADENCE_TIERS, MAIN_CATEGORIES, TEST_MAIN_CATEGORIES, TEST_CADENCE, AUDIT_CADENCE, ERROR_TRIGGERS,
+  tierRank, discoverTests, categoryForTest, mainCategoryForTest, validateTestClassification, categorizedTests, testsForTier,
   auditsForTier, auditsForError, selectTestsForChanges, runTier, runError,
 } = require('../src/testCadence');
 
@@ -15,11 +15,81 @@ test('cadence tiers escalate in the documented order', () => {
   assert.throws(() => tierRank('yearly'), /Unknown cadence tier "yearly"/);
 });
 
-test('every test file listed in the registry actually exists', () => {
+test('Orchestrator has exactly the four owner-defined main categories', () => {
+  assert.deepEqual(MAIN_CATEGORIES, ['code', 'security', 'utility', 'maintenance']);
+  assert.deepEqual(Object.keys(TEST_MAIN_CATEGORIES), MAIN_CATEGORIES);
+});
+
+test('every current test belongs to exactly one main category', () => {
+  const files = discoverTests();
+  assert.equal(validateTestClassification(files), true);
+  const mapped = MAIN_CATEGORIES.flatMap((category) => TEST_MAIN_CATEGORIES[category]);
+  assert.equal(mapped.length, files.length);
+  assert.deepEqual([...mapped].sort(), files);
+  for (const file of files) assert.ok(MAIN_CATEGORIES.includes(mainCategoryForTest(file)));
+});
+
+test('current suite classification is stable across the four governed buckets', () => {
+  assert.deepEqual(TEST_MAIN_CATEGORIES.code, [
+    'test/code-check.test.js',
+    'test/engine.test.js',
+    'test/hostedMultiRepositoryIntegration.test.js',
+    'test/repositoryOperation.test.js',
+    'test/suiteSelection.test.js',
+  ]);
+  assert.deepEqual(TEST_MAIN_CATEGORIES.security, [
+    'test/apiGuard.test.js',
+    'test/authenticity.test.js',
+    'test/coreRefIntegrity.test.js',
+    'test/githubRepoSecurity.test.js',
+    'test/hardening.test.js',
+    'test/malwareScan.test.js',
+    'test/privacy.test.js',
+    'test/quarantine.test.js',
+    'test/requiredCheckBoundary.test.js',
+    'test/security.test.js',
+  ]);
+  assert.deepEqual(TEST_MAIN_CATEGORIES.utility, [
+    'test/commit.test.js',
+    'test/config.test.js',
+    'test/failureIssue.test.js',
+    'test/installGitHooks.test.js',
+    'test/repair.test.js',
+    'test/report.test.js',
+    'test/snapshot.test.js',
+  ]);
+  assert.deepEqual(TEST_MAIN_CATEGORIES.maintenance, [
+    'test/aiConflictLedger.test.js',
+    'test/aiConflictResolution.test.js',
+    'test/collisions.test.js',
+    'test/designBriefGate.test.js',
+    'test/docSync.test.js',
+    'test/folderTopology.test.js',
+    'test/globalPolicy.test.js',
+    'test/globalRepositoryGovernance.test.js',
+    'test/handoffPolicy.test.js',
+    'test/testCadence.test.js',
+    'test/workflow.test.js',
+    'test/workflowLint.test.js',
+  ]);
+});
+
+test('future tests fail closed until they are assigned a main category', () => {
+  assert.throws(
+    () => mainCategoryForTest('test/futureSubsystem.test.js'),
+    /Unclassified test "test\/futureSubsystem\.test\.js"/
+  );
+  assert.throws(
+    () => validateTestClassification([...discoverTests(), 'test/futureSubsystem.test.js']),
+    /Unclassified tests: test\/futureSubsystem\.test\.js/
+  );
+});
+
+test('every test file listed in the cadence registry actually exists', () => {
   for (const file of Object.keys(TEST_CADENCE)) assert.ok(fs.existsSync(path.join(__dirname, '..', file)), `${file} referenced in TEST_CADENCE does not exist`);
 });
 
-test('every test file listed in the registry has a valid tier', () => {
+test('every test file listed in the cadence registry has a valid tier', () => {
   for (const [file, tier] of Object.entries(TEST_CADENCE)) assert.ok(CADENCE_TIERS.includes(tier), `${file} has invalid tier "${tier}"`);
 });
 
@@ -37,24 +107,27 @@ test('every on-error trigger only lists read-only audits, never a mutating fixer
   }
 });
 
-test('Orchestrator automatically owns every current and future test file through discovery and category inheritance', () => {
+test('Orchestrator automatically owns every current test file through discovery plus governed classification', () => {
   const files = discoverTests();
   const categorized = categorizedTests();
   assert.equal(categorized.length, files.length);
   assert.deepEqual(categorized.map((item) => item.file), files);
   for (const item of categorized) {
     assert.equal(item.category, categoryForTest(item.file));
+    assert.equal(item.subcategory, categoryForTest(item.file));
+    assert.equal(item.mainCategory, mainCategoryForTest(item.file));
     assert.ok(item.category.length > 0);
+    assert.ok(MAIN_CATEGORIES.includes(item.mainCategory));
     assert.ok(CADENCE_TIERS.includes(item.cadence));
   }
-  assert.equal(categoryForTest(`test/${'future'}Subsystem.test.js`), 'futureSubsystem');
 });
 
-test('change-impact selection runs the matching category instead of the whole suite when impact is provable', () => {
+test('change-impact selection runs the matching subcategory instead of the whole suite when impact is provable', () => {
   const selection = selectTestsForChanges(['src/testCadence.js']);
   assert.equal(selection.fullSuite, false);
   assert.ok(selection.tests.includes('test/testCadence.test.js'));
   assert.ok(selection.categories.includes('testCadence'));
+  assert.ok(selection.mainCategories.includes('maintenance'));
   assert.ok(selection.tests.length < discoverTests().length);
 });
 
@@ -63,19 +136,22 @@ test('change-impact selection fails safe to the full suite when a runtime change
   const selection = selectTestsForChanges([unknown]);
   assert.equal(selection.fullSuite, true);
   assert.deepEqual(selection.tests, discoverTests());
+  assert.deepEqual(selection.mainCategories, MAIN_CATEGORIES);
 });
 
-test('governance changes are routed to governance categories without forcing unrelated tests', () => {
+test('governance changes are routed to maintenance subcategories without forcing unrelated tests', () => {
   const selection = selectTestsForChanges(['AI-HANDOFF.json', 'DEVLOG.md']);
   assert.equal(selection.fullSuite, false);
+  assert.deepEqual(selection.mainCategories, ['maintenance']);
   assert.ok(selection.tests.includes('test/workflow.test.js'));
   assert.ok(selection.tests.includes('test/handoffPolicy.test.js'));
   assert.ok(selection.tests.includes('test/testCadence.test.js'));
 });
 
-test('package metadata changes route through Orchestrator categories rather than forcing every unrelated test', () => {
+test('package metadata changes route through maintenance Orchestrator subcategories rather than forcing every unrelated test', () => {
   const selection = selectTestsForChanges(['package.json']);
   assert.equal(selection.fullSuite, false);
+  assert.deepEqual(selection.mainCategories, ['maintenance']);
   assert.ok(selection.tests.includes('test/testCadence.test.js'));
   assert.ok(selection.tests.includes('test/workflow.test.js'));
 });

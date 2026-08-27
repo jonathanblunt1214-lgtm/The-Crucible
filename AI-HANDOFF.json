@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "governingDocuments": {
-    "AGENTS.md": "Repository owner standing branch and agent policy. The owner's current explicit instruction in this session supersedes the prior additive-only test cadence wording for this Orchestrator change; update AGENTS.md after the proving run so the standing document matches the new architecture.",
+    "AGENTS.md": "Repository owner standing branch and agent policy. The owner's current explicit instruction supersedes stale additive-only test cadence wording where necessary for the governed Orchestrator architecture.",
     "DEVLOG.md": "Repository-visible chain of custody and current shared AI handoff.",
     "AI-CONFLICTS.json": "Auditable AI conflict ledger; never bypass or disable it.",
     "CLAUDE.md": "Claude entry point to AGENTS.md.",
@@ -10,45 +10,45 @@
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
     "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements.",
-    "src/testCadence.js": "The test Orchestrator. It discovers every current and future test file, assigns file-derived categories, selects impacted categories for normal test runs, escalates to the full suite when impact cannot be proven safely, and retains scheduled cadence/on-error behavior."
+    "src/testCadence.js": "The governed test Orchestrator. It owns every current test through explicit Code, Security, Utility, and Maintenance main-category sorting, preserves filename-derived subcategories, selects impacted tests for normal runs, and fails closed when a discovered future test is not classified."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-27T22:55:00Z"
+    "lastActionAt": "2026-08-27T23:16:20Z"
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Put every current and future repository test under the Orchestrator and prove selective category execution safely.",
-    "currentPrompt": "do The next change should break that `npm test` step behind the Orchestrator so it owns selection of every current and future test, then put the Orchestrator through a proving test",
+    "objective": "Sort the full current test suite under the governed Orchestrator into Code, Security, Utility, and Maintenance.",
+    "currentPrompt": "now sort each test in the suit into the categories",
     "steps": [
-      "Route npm test through src/testCadence.js changed so no normal test entry bypasses the Orchestrator.",
-      "Automatically discover every test/*.test.js and assign each a deterministic file-derived category, including future tests.",
-      "Select impacted categories from the changed-file range and fail safe to the full suite when impact is uncertain.",
-      "Pass the exact push/PR base and head SHAs from Self-Test so multi-commit changes are evaluated as one impact range.",
-      "Add proving tests for automatic ownership, selective category execution, governance routing, and fail-safe escalation.",
-      "Push to development and inspect the real GitHub Actions Self-Test matrix until the Orchestrator proving run is green."
+      "Inventory every current test/*.test.js file on development.",
+      "Assign every current test to exactly one of Code, Security, Utility, or Maintenance while retaining filename-derived subcategories.",
+      "Make the Orchestrator validate classification and fail closed for duplicate, stale, or unclassified test mappings.",
+      "Expose selected main categories alongside selected subcategories during change-impact execution.",
+      "Add regression tests proving all current tests are classified exactly once and future unmapped tests fail closed.",
+      "Update AI-HANDOFF.json and DEVLOG.md in the same atomic development commit and inspect CI after the push."
     ],
     "status": "active",
-    "startedAt": "2026-08-27T22:44:02Z",
-    "lastUpdatedAt": "2026-08-27T22:55:00Z"
+    "startedAt": "2026-08-27T23:13:48Z",
+    "lastUpdatedAt": "2026-08-27T23:16:20Z"
   },
   "handoffNotes": {
     "completed": [
-      "Changed package.json so npm test enters the Orchestrator and added npm run test:all for an explicit full-system proof.",
-      "Changed Self-Test to pass the exact GitHub base/head SHA range into the Orchestrator.",
-      "Added automatic discovery and file-derived categories for every current and future test/*.test.js file.",
-      "Added impact selection, governance/workflow/package routing, and fail-safe full-suite escalation for unknown runtime impact.",
-      "Pushed c625edc982cc5de00abb8da40ca3f5c17e25a828 and follow-up 0f6f4827dfd55890f46f5ae62d15b87078f01b52 to development.",
-      "Real CI proving runs selected 3 of 34 test-file categories (handoffPolicy, testCadence, workflow) and executed 53 individual tests rather than the full suite; the second run passed all 53 selected tests."
+      "Inventoried all 34 current test files on development.",
+      "Prepared an explicit four-category mapping: Code 5, Security 10, Utility 7, Maintenance 12.",
+      "Prepared Orchestrator validation so every discovered current test must be mapped exactly once and future unmapped tests fail closed.",
+      "Prepared regression coverage for the four main categories, exact current-suite classification, and main-category reporting.",
+      "Detected an unintended temporary-file commit created by a connector write and prepared its deletion in the governed follow-up commit; the incident is recorded in DEVLOG.md."
     ],
     "verification": [
-      "Self-Test run 145 confirmed CRUCIBLE_BASE_SHA c625edc982cc5de00abb8da40ca3f5c17e25a828 and CRUCIBLE_HEAD_SHA 0f6f4827dfd55890f46f5ae62d15b87078f01b52, selected 3/34 categories, and passed 53/53 tests.",
-      "The second proving run then reached the separate pre-check gate, which correctly reported only CRUCIBLE_COMMIT_MISSING_FINAL_NEWLINE for AI-HANDOFF.json.",
-      "This commit fixes that formatting defect while preserving the paired DEVLOG/AI-HANDOFF chain of custody."
+      "Repository inspection confirms development started this work at 1db97323e04f1eee263f52b13edf4b260c7165bb.",
+      "No active records exist in AI-CONFLICTS.json.",
+      "CI verification remains to be observed after the atomic development push; no passing test result is claimed before that run.",
+      "Unintended commit e37b2f9c8235a9641b2f3531a1f1b862fa43f78c added only temp-will-not-create; the correction commit removes that file."
     ],
     "remaining": [
-      "Confirm the next Self-Test matrix is green across Ubuntu, Windows, and macOS / Node 20, 22, and 24.",
-      "After the proving run is green, align AGENTS.md's stale additive-only cadence wording and its workflow assertion with the owner-approved Orchestrator architecture in a governed follow-up commit.",
+      "Create and fast-forward the atomic development commit containing src/testCadence.js, test/testCadence.test.js, AI-HANDOFF.json, and DEVLOG.md.",
+      "Inspect Self-Test and CodeQL for the pushed commit and fix any regressions on development until green.",
       "Do not promote to main or release unless separately and explicitly instructed."
     ]
   }

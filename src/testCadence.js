@@ -4,6 +4,51 @@ const { spawnSync } = require('node:child_process');
 const { resolveSpawn } = require('./runner');
 
 const CADENCE_TIERS = ['every-push', 'daily', 'weekly', 'monthly'];
+const MAIN_CATEGORIES = ['code', 'security', 'utility', 'maintenance'];
+const TEST_MAIN_CATEGORIES = {
+  code: [
+    'test/code-check.test.js',
+    'test/engine.test.js',
+    'test/hostedMultiRepositoryIntegration.test.js',
+    'test/repositoryOperation.test.js',
+    'test/suiteSelection.test.js',
+  ],
+  security: [
+    'test/apiGuard.test.js',
+    'test/authenticity.test.js',
+    'test/coreRefIntegrity.test.js',
+    'test/githubRepoSecurity.test.js',
+    'test/hardening.test.js',
+    'test/malwareScan.test.js',
+    'test/privacy.test.js',
+    'test/quarantine.test.js',
+    'test/requiredCheckBoundary.test.js',
+    'test/security.test.js',
+  ],
+  utility: [
+    'test/commit.test.js',
+    'test/config.test.js',
+    'test/failureIssue.test.js',
+    'test/installGitHooks.test.js',
+    'test/repair.test.js',
+    'test/report.test.js',
+    'test/snapshot.test.js',
+  ],
+  maintenance: [
+    'test/aiConflictLedger.test.js',
+    'test/aiConflictResolution.test.js',
+    'test/collisions.test.js',
+    'test/designBriefGate.test.js',
+    'test/docSync.test.js',
+    'test/folderTopology.test.js',
+    'test/globalPolicy.test.js',
+    'test/globalRepositoryGovernance.test.js',
+    'test/handoffPolicy.test.js',
+    'test/testCadence.test.js',
+    'test/workflow.test.js',
+    'test/workflowLint.test.js',
+  ],
+};
 const TEST_CADENCE = {
   'test/hostedMultiRepositoryIntegration.test.js': 'daily',
   'test/globalRepositoryGovernance.test.js': 'weekly',
@@ -37,8 +82,34 @@ function categoryForTest(file) {
   return path.posix.basename(file).replace(/\.test\.js$/, '');
 }
 
+function mainCategoryForTest(file) {
+  for (const mainCategory of MAIN_CATEGORIES) {
+    if (TEST_MAIN_CATEGORIES[mainCategory].includes(file)) return mainCategory;
+  }
+  throw new Error(`Unclassified test "${file}". Every discovered test must belong to one of: ${MAIN_CATEGORIES.join(', ')}.`);
+}
+
+function validateTestClassification(files = discoverTests()) {
+  const discovered = [...files].sort();
+  const mapped = MAIN_CATEGORIES.flatMap((category) => TEST_MAIN_CATEGORIES[category] || []);
+  const duplicates = mapped.filter((file, index) => mapped.indexOf(file) !== index);
+  if (duplicates.length) throw new Error(`Tests mapped to more than one main category: ${[...new Set(duplicates)].join(', ')}.`);
+  const stale = mapped.filter((file) => !discovered.includes(file));
+  if (stale.length) throw new Error(`Main-category map references missing tests: ${stale.join(', ')}.`);
+  const unmapped = discovered.filter((file) => !mapped.includes(file));
+  if (unmapped.length) throw new Error(`Unclassified tests: ${unmapped.join(', ')}.`);
+  return true;
+}
+
 function categorizedTests(files = discoverTests()) {
-  return files.map((file) => ({ file, category: categoryForTest(file), cadence: TEST_CADENCE[file] || 'every-push' }));
+  validateTestClassification(files);
+  return files.map((file) => ({
+    file,
+    mainCategory: mainCategoryForTest(file),
+    category: categoryForTest(file),
+    subcategory: categoryForTest(file),
+    cadence: TEST_CADENCE[file] || 'every-push',
+  }));
 }
 
 function collectTests(maxRank) {
@@ -81,10 +152,22 @@ function addKnown(selected, candidates, all) {
   for (const file of candidates) if (all.includes(file)) selected.add(file);
 }
 
+function selectionResult(tests, all, reason) {
+  const sorted = [...tests].sort();
+  return {
+    tests: sorted,
+    mainCategories: [...new Set(sorted.map(mainCategoryForTest))].sort(),
+    categories: sorted.map(categoryForTest),
+    fullSuite: sorted.length === all.length,
+    reason,
+  };
+}
+
 function selectTestsForChanges(changedPaths, files = discoverTests()) {
   const all = [...files].sort();
+  validateTestClassification(all);
   const changed = [...new Set((changedPaths || []).map(normalizeChangedPath).filter(Boolean))];
-  if (!changed.length) return { tests: all, categories: all.map(categoryForTest), fullSuite: true, reason: 'no change range available; fail-safe full suite' };
+  if (!changed.length) return selectionResult(all, all, 'no change range available; fail-safe full suite');
 
   const selected = new Set();
   let uncertain = false;
@@ -122,9 +205,10 @@ function selectTestsForChanges(changedPaths, files = discoverTests()) {
     if (!matched && !/\.(md|txt)$/.test(changedFile)) uncertain = true;
   }
 
-  if (uncertain || !selected.size) return { tests: all, categories: all.map(categoryForTest), fullSuite: true, reason: uncertain ? 'unmapped runtime impact; fail-safe full suite' : 'no impacted category found; fail-safe full suite' };
-  const tests = [...selected].sort();
-  return { tests, categories: tests.map(categoryForTest), fullSuite: tests.length === all.length, reason: 'impacted categories only' };
+  if (uncertain || !selected.size) {
+    return selectionResult(all, all, uncertain ? 'unmapped runtime impact; fail-safe full suite' : 'no impacted category found; fail-safe full suite');
+  }
+  return selectionResult([...selected], all, 'impacted categories only');
 }
 
 function changedFilesFromGit(base = process.env.CRUCIBLE_BASE_SHA, head = process.env.CRUCIBLE_HEAD_SHA, run = spawnSync) {
@@ -144,7 +228,8 @@ function runOne(label, invocation, run = spawnSync) {
 
 function runTestSelection(selection, run = spawnSync) {
   console.log(`[The Crucible] Orchestrator: ${selection.reason}.`);
-  console.log(`[The Crucible] Orchestrator: selected ${selection.tests.length}/${discoverTests().length} test file categories: ${selection.categories.join(', ') || '(none)'}.`);
+  console.log(`[The Crucible] Orchestrator: selected main categories: ${selection.mainCategories.join(', ') || '(none)'}.`);
+  console.log(`[The Crucible] Orchestrator: selected ${selection.tests.length}/${discoverTests().length} test subcategories: ${selection.categories.join(', ') || '(none)'}.`);
   const ok = selection.tests.length === 0 || runOne('selected tests', { executable: process.execPath, args: ['--test', ...selection.tests] }, run);
   return { selection, outcomes: [{ label: `selected tests (${selection.tests.length} file(s))`, ok }], ok };
 }
@@ -157,7 +242,8 @@ function runChanged(run = spawnSync, changedPaths = null) {
 
 function runAll(run = spawnSync) {
   const tests = discoverTests();
-  return runTestSelection({ tests, categories: tests.map(categoryForTest), fullSuite: true, reason: 'explicit full-system proof' }, run);
+  validateTestClassification(tests);
+  return runTestSelection(selectionResult(tests, tests, 'explicit full-system proof'), run);
 }
 
 function npmRunInvocation(script) {
@@ -197,8 +283,8 @@ if (require.main === module) {
 }
 
 module.exports = {
-  CADENCE_TIERS, TEST_CADENCE, AUDIT_CADENCE, ERROR_TRIGGERS,
-  tierRank, discoverTests, categoryForTest, categorizedTests,
+  CADENCE_TIERS, MAIN_CATEGORIES, TEST_MAIN_CATEGORIES, TEST_CADENCE, AUDIT_CADENCE, ERROR_TRIGGERS,
+  tierRank, discoverTests, categoryForTest, mainCategoryForTest, validateTestClassification, categorizedTests,
   testsForTier: (tier) => collectTests(tierRank(tier)), auditsForTier, auditsForError,
   selectTestsForChanges, changedFilesFromGit, runTier, runError, runChanged, runAll,
 };
