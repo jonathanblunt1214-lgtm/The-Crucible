@@ -14,7 +14,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-27T22:52:00Z"
+    "lastActionAt": "2026-08-27T22:55:00Z"
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
@@ -30,7 +30,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-27T22:44:02Z",
-    "lastUpdatedAt": "2026-08-27T22:52:00Z"
+    "lastUpdatedAt": "2026-08-27T22:55:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -38,16 +38,16 @@
       "Changed Self-Test to pass the exact GitHub base/head SHA range into the Orchestrator.",
       "Added automatic discovery and file-derived categories for every current and future test/*.test.js file.",
       "Added impact selection, governance/workflow/package routing, and fail-safe full-suite escalation for unknown runtime impact.",
-      "Pushed c625edc982cc5de00abb8da40ca3f5c17e25a828 to development.",
-      "The first real proving run confirmed selective execution: 3 of 34 test-file categories were selected (handoffPolicy, testCadence, workflow), running 53 individual tests rather than the full suite. The Orchestrator ownership/selection tests themselves passed."
+      "Pushed c625edc982cc5de00abb8da40ca3f5c17e25a828 and follow-up 0f6f4827dfd55890f46f5ae62d15b87078f01b52 to development.",
+      "Real CI proving runs selected 3 of 34 test-file categories (handoffPolicy, testCadence, workflow) and executed 53 individual tests rather than the full suite; the second run passed all 53 selected tests."
     ],
     "verification": [
-      "Self-Test run 143 proved the changed-file range was a5048deacbd79926c2652eddad13d5db98a0131b..c625edc982cc5de00abb8da40ca3f5c17e25a828 and selected only handoffPolicy, testCadence, and workflow.",
-      "The proving run failed only two workflow governance assertions because this session had shortened two required AI-HANDOFF.json prose descriptions: sessionPolicy.recheckGoverningDocuments did not contain the exact 'more than 10 minutes'/'even if it is the same agent' wording, and the src/handoffPolicy.js description omitted validateDevlogChainOfCustody.",
-      "CodeQL, AI handoff policy, AI conflict governance, and the locked-monitoring-PR guard passed on c625edc982cc5de00abb8da40ca3f5c17e25a828."
+      "Self-Test run 145 confirmed CRUCIBLE_BASE_SHA c625edc982cc5de00abb8da40ca3f5c17e25a828 and CRUCIBLE_HEAD_SHA 0f6f4827dfd55890f46f5ae62d15b87078f01b52, selected 3/34 categories, and passed 53/53 tests.",
+      "The second proving run then reached the separate pre-check gate, which correctly reported only CRUCIBLE_COMMIT_MISSING_FINAL_NEWLINE for AI-HANDOFF.json.",
+      "This commit fixes that formatting defect while preserving the paired DEVLOG/AI-HANDOFF chain of custody."
     ],
     "remaining": [
-      "Push the governance-string correction and confirm all 9 Self-Test matrix jobs pass with Orchestrator-selected categories.",
+      "Confirm the next Self-Test matrix is green across Ubuntu, Windows, and macOS / Node 20, 22, and 24.",
       "After the proving run is green, align AGENTS.md's stale additive-only cadence wording and its workflow assertion with the owner-approved Orchestrator architecture in a governed follow-up commit.",
       "Do not promote to main or release unless separately and explicitly instructed."
     ]
