@@ -185,15 +185,32 @@ test('a dedicated check blocks every locked monitoring PR, past and present, and
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'block-pr-7.yml'), 'utf8');
   assert.match(workflow, /^on:\s*\n\s*push:\s*\n\s*branches: \[development\]\s*\n\s*pull_request:\s*$/m);
   assert.match(workflow, /permissions:\s*\n\s*contents: read/);
-  assert.match(workflow, /LOCKED_PR_NUMBERS:\s*"7 9"/);
+  assert.match(workflow, /LOCKED_PR_NUMBERS:\s*"7 9 11"/);
   assert.match(workflow, /must never be merged/i);
   assert.match(workflow, /Not a locked monitoring PR - nothing to block/);
   const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
   assert.match(agents, /never merged or closed, under any circumstances/i);
   assert.match(agents, /no technical backstop/i);
   assert.match(agents, /block-pr-7\.yml/);
-  assert.match(agents, /required status check on\s*\n\s*`main`/);
+  assert.match(agents, /required status check on\s+`main`/);
   assert.match(agents, /PR #9/);
+  assert.match(agents, /PR #11/);
+});
+
+test('the monitoring branch syncs development content via distinct commits, never by reusing development\'s real commits', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'sync-ci-monitor.yml'), 'utf8');
+  assert.match(workflow, /^on:\s*\n\s*push:\s*\n\s*branches: \[development\]\s*$/m);
+  assert.match(workflow, /permissions:\s*\n\s*contents: write/);
+  assert.match(workflow, /ref: ci-monitor/);
+  assert.match(workflow, /git checkout origin\/development -- \./);
+  assert.match(workflow, /git push origin HEAD:refs\/heads\/ci-monitor/);
+  assert.match(workflow, /never change this workflow to merge, rebase, or/i);
+  assert.match(workflow, /fast-forward ci-monitor from development directly/i);
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /auto-merged and auto-closed by GitHub/);
+  assert.match(agents, /never `development`'s actual commit\s*\n\s*objects/);
+  assert.match(agents, /sync-ci-monitor\.yml/);
+  assert.match(agents, /ci-monitor.*is an explicit exception to the no-new-branches rule/s);
 });
 
 test('release to main promotion is automated: opens or reuses a pull request, waits for every check, then merges', () => {
