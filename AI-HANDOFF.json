@@ -9,49 +9,53 @@
     "templates/ai-conflict-resolution.md": "The actual conflict-resolution procedure AGENTS.md and AI-CONFLICTS.json point to: freeze the contested mutation, preserve both sides in the shared handoff, and get an explicit owner decision instead of silently picking a side.",
     "templates/required-check-rollout.md": "The rollout plan AGENTS.md requires for any new required workflow check: report-only on development first, then explicit owner promotion, then npm run audit:required-check, before it is ever added to branch protection or a ruleset. Directly relevant to how `block` must be added as a required check on main.",
     "templates/agent-boundaries.md": "The AI-agent rules for this repository's one-way link to adopter projects that pin The Crucible as a security gate - what an agent may and may not do when investigating a Crucible-related CI failure in a project that consumes this repository.",
-    "src/handoffPolicy.js": "The code that actually enforces the AI-to-AI handoff protocol and DEVLOG.md's chain-of-custody requirement, run by the AI handoff policy CI check: validateHandoffPlan (this file's activePlan/handoffNotes must contain, among other fields, a non-empty currentPrompt) and validateDevlogChainOfCustody (DEVLOG.md's Shared AI handoff section must reference this file's dev plan, and its Command log archive must hold 1-10 '### Session:' entries, none older than 180 days, with the newest having a start/finish pair). Read this to know exactly what is technically verified, not just what AGENTS.md describes in prose."
+    "src/handoffPolicy.js": "The code that actually enforces the AI-to-AI handoff protocol and DEVLOG.md's chain-of-custody requirement, run by the AI handoff policy CI check: validateHandoffPlan (this file's activePlan/handoffNotes must contain, among other fields, a non-empty currentPrompt) and validateDevlogChainOfCustody (DEVLOG.md's Shared AI handoff section must reference this file's dev plan, and its Command log archive must hold 1-10 '### Session:' entries, none older than 180 days, with the newest having a start/finish pair). Read this to know exactly what is technically verified, not just what AGENTS.md describes in prose.",
+    "src/testCadence.js": "Classifies every test/*.js file and CLI audit into an escalating cadence tier (every-push/daily/weekly/monthly) plus read-only on-error diagnostic triggers - see AGENTS.md's 'Test and audit cadence' section. Additive only: it never changes what the required Self-Test workflow runs on every push, and every on-error trigger must be read-only (test/testCadence.test.js enforces this)."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session, no matter which agent or tool is running it, and again any time more than 10 minutes have passed since lastActionAt below - even if it is the same agent continuing the same conversation. Branch policy, PR locks (e.g. PR #11), and handoff state can all change while an agent is idle; a long gap is treated the same as a fresh session. See AGENTS.md's 'Recheck governingDocuments at the start of every session' rule.",
-    "lastActionAt": "2026-08-27T21:15:34Z"
+    "lastActionAt": "2026-08-27T21:37:38Z"
   },
   "activePlan": {
     "agent": "Claude",
-    "objective": "Per the owner's explicit request: cap DEVLOG.md's Command log so it doesn't grow unbounded, using a hybrid design - keep only the 10 most recent sessions inline, with a 180-day age limit as a backup in case the count cap alone proves too strict or too loose.",
-    "currentPrompt": "if the 10-session cap with real CI enforcement gets to be to much limit it to within 180 days as a back up system",
+    "objective": "Run a full diagnostic on The Crucible's own test coverage, add real tests for every genuinely-untested module found, organize each into the matching test file by convention, and then build a cadence-classification and orchestration system for tests/audits (every-push/daily/weekly/monthly/on-error) per the owner's explicit follow-up requests.",
+    "currentPrompt": "run a full diagnostic on the Crucible if a test doesn't exist for something create it then merge all new test into their approximate category; then: build a system that determines if a test need to be run on every line, or if it's a daily/weekly thing or if its because a certain error was detected; then: both but I want a system that can determine ok this test needs to run daily, that test weekly, that one monthly, that one every line; then: I want both but I also want a system that can determine an orchestrate a testing regime not just all 245 runs every time",
     "steps": [
-      "Restructure DEVLOG.md into two parts: Shared AI handoff (current status only) and a new Command log archive section holding one ### Session: entry per unit of work, newest first.",
-      "Rewrite src/handoffPolicy.js's validateDevlogChainOfCustody to require the Command log archive section, 1-10 ### Session: entries, and the newest entry having a start/finish pair.",
-      "Find and fix a real bug surfaced by the test suite: the original section-extraction used a plain string split, which prose mentioning the heading text (in this very DEVLOG entry) could fool into extracting the wrong slice - hardened to line-anchored heading matching.",
-      "Add the 180-day backup age cap: parse each ### Session: entry's ISO timestamp and fail validation if any entry is older than 180 days, independent of the session-count cap.",
-      "Update AGENTS.md's 'DEVLOG.md is a chain of custody' section and all affected tests (test/handoffPolicy.test.js, test/workflow.test.js) for the new two-part structure and dual cap.",
-      "Run the full local suite plus every fast/offline audit before pushing."
+      "Inventory every src/*.js module against test/*.js and identify genuine coverage gaps (not files exercised indirectly through another test file, e.g. hardening.test.js/engine.test.js).",
+      "Found 4 genuinely untested modules: authenticity.js, folderTopology.js, hostedMultiRepositoryIntegration.js, snapshot.js. Write a dedicated test/<module>.test.js for each, matching this repo's 1:1 naming convention (the 'approximate category' already established).",
+      "Design and confirm scope with the owner (AskUserQuestion) for the cadence system: covers both unit tests and audits, with every-push/daily/weekly/monthly tiers plus on-error triggers, both manual and automated.",
+      "Build src/testCadence.js: an escalating-tier registry (TEST_CADENCE, AUDIT_CADENCE, ERROR_TRIGGERS) plus selection functions (testsForTier, auditsForTier, auditsForError) and an orchestrator (runTier, runError) runnable via node src/testCadence.js <tier|on-error> <trigger>.",
+      "Critical constraint: never weaken the existing required Self-Test workflow. Keep self-test.yml running the full suite unchanged; the cadence system is purely additive - a new report-only scheduled-diagnostics.yml workflow for daily/weekly/monthly, and an additive if:failure()/continue-on-error:true on-error diagnostic step appended to self-test.yml.",
+      "Enforce the standing no-invisible-self-repair rule on the new on-error automation: every ERROR_TRIGGERS entry must be read-only (never repair/fix-commit/scrub:privacy/docs:sync) - added a test asserting this explicitly.",
+      "Smoke-test the orchestrator for real (npm run cadence:every-push/daily/on-error) against this actual repository, not just mocked unit tests, and fix two real script-selection mistakes found that way (audit:handoff and audit:required-check both fail standalone since they need a specific commit range/rollout context, not a standing config).",
+      "Document everything in AGENTS.md's new 'Test and audit cadence' section, add test coverage for the new workflows and the AGENTS.md text, and run the full local suite plus every audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T21:06:00Z",
-    "lastUpdatedAt": "2026-08-27T21:15:34Z"
+    "startedAt": "2026-08-27T21:20:00Z",
+    "lastUpdatedAt": "2026-08-27T21:37:38Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed 0c54c54 fully green on development before starting this work.",
-      "Restructured DEVLOG.md into Shared AI handoff (status only) + Command log archive (### Session: entries, newest first).",
-      "Rewrote validateDevlogChainOfCustody in src/handoffPolicy.js: requires the archive section, 1-10 Session entries, the newest with a start/finish pair, and now also a 180-day-per-entry age cap (MAX_ARCHIVE_AGE_DAYS) alongside the 10-session cap (MAX_ARCHIVE_SESSIONS) - both exported for tests.",
-      "Found and fixed a real parsing bug during this work: plain content.split(headingText) could be fooled by the heading text appearing in ordinary prose earlier in the file (which this DEVLOG entry's own prose triggered) - replaced with line-anchored regex matching (^## heading) via a new extractSection helper.",
-      "Updated AGENTS.md's 'DEVLOG.md is a chain of custody' section to document both caps and call out the 180-day rule as an independent backup, not a replacement for the count cap.",
-      "Updated test/handoffPolicy.test.js (a devlogWithSessions(count) helper, cap-exceeded tests, and new age-cap tests using validateDevlogChainOfCustody's injectable now parameter) and test/workflow.test.js (rewritten structural assertions using the real validator against the real files, since the naive split the test used had the same bug as the production code).",
-      "Per the owner's explicit follow-up request to test the new systems and add coverage where missing: added a checkHandoffRange integration test for the 180-day cap (the prior age-cap test only exercised validateDevlogChainOfCustody directly, not the full git-range path), and a dedicated regression test reproducing the exact prose-fools-the-parser scenario that caused the bug above."
+      "Confirmed eede127 fully green on development before starting this work.",
+      "Audited all ~41 src/*.js modules against test/*.js; confirmed most 'missing' test files (clutter, configureSuite, dependencies, exceptions, integrity, maintenance, precheck, reproducibility, runner, syntax) are genuinely well-covered indirectly through hardening.test.js/engine.test.js/suiteSelection.test.js/code-check.test.js with real function-level assertions, not superficial smoke checks.",
+      "Added test/folderTopology.test.js (14 tests), test/snapshot.test.js (4 tests), test/authenticity.test.js (6 tests), test/hostedMultiRepositoryIntegration.test.js (6 tests) for the 4 genuinely untested modules, each following this repo's existing fixture conventions (mkdtemp + git init, fetchImpl mocking matching githubRepoSecurity.test.js/globalRepositoryGovernance.test.js's patterns).",
+      "Built src/testCadence.js: CADENCE_TIERS (every-push/daily/weekly/monthly, escalating/cumulative), TEST_CADENCE and AUDIT_CADENCE registries, ERROR_TRIGGERS for read-only on-error diagnostics, and runTier/runError orchestration using runner.js's existing resolveSpawn for Windows-safe npm invocation.",
+      "Added test/testCadence.test.js (12 tests) covering tier escalation, registry self-consistency (every referenced file/script actually exists), the read-only-only constraint on ERROR_TRIGGERS, and the orchestrator's selection/aggregation logic via mocked spawn.",
+      "Added .github/workflows/scheduled-diagnostics.yml (cron daily/weekly/monthly + workflow_dispatch, report-only, never a required check) and an additive if:failure()/continue-on-error:true diagnostic step at the end of self-test.yml's existing job - the required job's own steps and pass/fail result are untouched.",
+      "Smoke-tested npm run cadence:every-push/daily/on-error for real against this repository; found and fixed two real mistakes: audit:handoff and audit:required-check both need a specific commit range/rollout context (not standing config) and fail by default, so both are deliberately excluded from every tier with the reason documented inline.",
+      "Documented the whole system in a new AGENTS.md 'Test and audit cadence' section, added workflow.test.js assertions for the new workflows and the documentation text."
     ],
     "verification": [
-      "Full local suite passes 215/215 (206 pre-session + 9 net new tests/assertions for the archive structure, the parsing hardening, the 180-day age cap, and its integration-level and regression coverage).",
-      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass - see DEVLOG.md's Command log archive (newest entry) for exact start/finish timestamps.",
-      "Directly ran validateDevlogChainOfCustody and validateHandoffPlan against the real DEVLOG.md and AI-HANDOFF.json (not just test fixtures) and confirmed both return ok:true."
+      "Full local suite passes 260/260 (215 prior + 30 for the 4 new gap-filling test files + 12 for testCadence.test.js + 3 workflow.test.js assertions, net of two regex fixes for AGENTS.md line-wrapping).",
+      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass.",
+      "Real (non-mocked) smoke test: npm run cadence:every-push (12 checks, 0 failed), npm run cadence:daily (15 checks including the full suite, 0 failed), npm run cadence:on-error -- self-test-failure (3 checks, 0 failed), and confirmed an unknown tier/trigger fails closed with a clear message rather than silently doing nothing."
     ],
     "remaining": [
-      "Push this commit to development and confirm all six checks pass.",
-      "Fast-forward release to development's latest tip (still behind since the PR #10 merge) so main picks up this and the prior chain-of-custody commits (40db26b, c7132d8, e91a026, 0c54c54).",
+      "Push this commit to development and confirm all checks pass, then fast-forward release so main picks this up too, along with the prior queued chain-of-custody commits.",
+      "The scheduled-diagnostics.yml workflow has not fired yet (cron-triggered, first real fire is up to the schedule) - the owner should watch its first run(s) to confirm the cadence logic picks the right tier from github.event.schedule.",
       "guard-ci-monitor-pr.yml still has not been exercised live - per the standing rule, it should not be deliberately triggered just to test it; only a genuine close/merge event should exercise it.",
       "The owner should confirm 'block' is added as a required status check on main (Settings -> Branches -> Branch protection rules) if not already done - no tool available here can do that remotely.",
-      "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",
+      "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised - test/hostedMultiRepositoryIntegration.test.js only covers the code path with mocked fetch, not a real multi-repo fleet.",
       "Codex's own remaining items still stand: no promotion or branch-protection change is authorized without the owner's explicit instruction beyond what's already been done."
     ]
   }

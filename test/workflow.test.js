@@ -338,3 +338,30 @@ test('the clutter audit passes against this repository\'s own real, current trac
   const result = auditClutter(root, config);
   assert.deepEqual(result.findings, []);
 });
+
+test('scheduled diagnostics run cadence tiers on a schedule without ever becoming a required check', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'scheduled-diagnostics.yml'), 'utf8');
+  assert.match(workflow, /^on:\s*\n\s*workflow_dispatch:/m);
+  assert.match(workflow, /cron: '0 7 \* \* \*'/);
+  assert.match(workflow, /cron: '0 8 \* \* 1'/);
+  assert.match(workflow, /cron: '0 9 1 \* \*'/);
+  assert.match(workflow, /permissions:\s*\n\s*contents: read/);
+  assert.match(workflow, /node src\/testCadence\.js "\$\{\{ steps\.tier\.outputs\.tier \}\}"/);
+  assert.doesNotMatch(workflow, /pull_request:|push:/);
+});
+
+test('the required Self-Test job runs an additive, non-blocking on-error diagnostic step on failure', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'self-test.yml'), 'utf8');
+  assert.match(workflow, /if: failure\(\)\s*\n\s*continue-on-error: true\s*\n\s*run: node src\/testCadence\.js on-error self-test-failure/);
+  // The existing required steps (npm test, the audits, etc.) must be untouched.
+  assert.match(workflow, /- run: npm test\n/);
+  assert.match(workflow, /- run: npm run validate\n/);
+});
+
+test('the cadence registry itself is documented in AGENTS.md, including the no-invisible-self-repair boundary for on-error triggers', () => {
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /## Test and audit cadence/);
+  assert.match(agents, /src\/testCadence\.js/);
+  assert.match(agents, /never\s+changes what the required Self-Test workflow runs\s+on every\s+push/i);
+  assert.match(agents, /On-error triggers may never fix or repair anything unattended/i);
+});
