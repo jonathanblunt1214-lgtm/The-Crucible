@@ -4,14 +4,20 @@
 
 - **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, and `handoffNotes` for the exact owner request, current plan, completed work, verification, and remaining work.
-- **Current development work:** The Orchestrator owns all 34 current test files under Code, Security, Utility, and Maintenance. The only current CI defect is an order-sensitive regression assertion in `test/testCadence.test.js`; category membership and routing are correct.
-- **Latest verification:** Self-Test run 154 executed the full 34-file suite and 269 individual tests. 268 passed; one assertion failed because `selection.mainCategories` is deterministically alphabetical while the test compared it to the unsorted declaration order.
-- **Current correction:** Update only that assertion to compare against a sorted copy of `MAIN_CATEGORIES`, preserving all category membership and routing behavior.
-- **Remaining work:** Push the governed correction to `development`, then confirm Self-Test and CodeQL are green. No `main`/`release` promotion is authorized by this request.
+- **Current development work:** Manual Self-Test requests are being routed through one Orchestrator request boundary. The workflow may request `orchestrator`, `all`, or `category`, but only `src/testCadence.js` owns category membership, final test selection, and execution.
+- **Current correction:** The Orchestrator now resolves `orchestrator` to change-impact selection, `all` to the full governed suite, and `category` to the full governed membership of the selected Code/Security/Utility/Maintenance category. The workflow contains no test-file selection logic.
+- **Connector incident:** Dynamic GitHub tool discovery exposed contents writes while low-level Git-data actions were no longer loaded, causing temporary one-file commits for `never`, `NEVER2`, `NO`, `STOP`, `HALT`, `RECOVER`, `LASTACCIDENT`, `PLEASESTOP`, and `OHNO`. The incident was detected during the same session; the corrective Git-data commit is built from the clean pre-incident tree and removes all of those files rather than concealing the history.
+- **Remaining work:** Push the governed atomic correction to `development`, then confirm Self-Test and CodeQL are green. No `main`/`release` promotion is authorized by this request.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: governed manual test requests — 2026-08-27T23:28:00Z — GPT-5.6 Sol
+
+- GitHub governance, Orchestrator, Self-Test, and regression-test inspection — started 2026-08-27T23:28:00Z, finished 2026-08-27T23:35:30Z, exit 0.
+- Connector contents-API misfires created temporary stray files while low-level Git-data tools were not loaded — started 2026-08-27T23:36:36Z, finished 2026-08-27T23:38:20Z, exit 1 for intended atomic-write path / repository mutations recorded and corrected.
+- Reconstructed the clean pre-incident tree and prepared Orchestrator request handling, Self-Test dispatch inputs, regression tests, `AI-HANDOFF.json`, and `DEVLOG.md` as Git-data blobs — started 2026-08-27T23:39:00Z, finished 2026-08-27T23:45:00Z, exit 0.
 
 ### Session: category-order regression fix — 2026-08-27T23:22:00Z — GPT-5.6 Sol
 

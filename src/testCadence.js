@@ -163,6 +163,16 @@ function selectionResult(tests, all, reason) {
   };
 }
 
+function selectTestsForCategory(mainCategory, files = discoverTests()) {
+  const all = [...files].sort();
+  validateTestClassification(all);
+  if (!MAIN_CATEGORIES.includes(mainCategory)) {
+    throw new Error(`Unknown main category "${mainCategory}". Valid categories: ${MAIN_CATEGORIES.join(', ')}.`);
+  }
+  const selected = TEST_MAIN_CATEGORIES[mainCategory].filter((file) => all.includes(file));
+  return selectionResult(selected, all, `explicit governed category request: ${mainCategory}`);
+}
+
 function selectTestsForChanges(changedPaths, files = discoverTests()) {
   const all = [...files].sort();
   validateTestClassification(all);
@@ -246,6 +256,17 @@ function runAll(run = spawnSync) {
   return runTestSelection(selectionResult(tests, tests, 'explicit full-system proof'), run);
 }
 
+function runCategory(mainCategory, run = spawnSync) {
+  return runTestSelection(selectTestsForCategory(mainCategory), run);
+}
+
+function runRequested(request = 'orchestrator', category = '', run = spawnSync) {
+  if (request === 'orchestrator') return runChanged(run);
+  if (request === 'all') return runAll(run);
+  if (request === 'category') return runCategory(category, run);
+  throw new Error(`Unknown governed test request "${request}". Valid requests: orchestrator, all, category.`);
+}
+
 function npmRunInvocation(script) {
   return resolveSpawn({ run: 'npm', args: ['run', script] });
 }
@@ -271,6 +292,13 @@ if (require.main === module) {
     let result;
     let label;
     if (mode === 'on-error') { result = runError(arg); label = `on-error trigger "${arg}"`; }
+    else if (mode === 'request') {
+      const request = process.env.CRUCIBLE_TEST_REQUEST || 'orchestrator';
+      const category = process.env.CRUCIBLE_TEST_CATEGORY || arg || '';
+      result = runRequested(request, category);
+      label = `governed test request "${request}"`;
+    }
+    else if (mode === 'category') { result = runCategory(arg); label = `main category "${arg}"`; }
     else if (mode === 'all') { result = runAll(); label = 'full-system proof'; }
     else if (mode === 'changed' || !mode) { result = runChanged(); label = 'change-impact test selection'; }
     else { result = runTier(mode); label = `cadence tier "${result.tier}"`; }
@@ -286,5 +314,5 @@ module.exports = {
   CADENCE_TIERS, MAIN_CATEGORIES, TEST_MAIN_CATEGORIES, TEST_CADENCE, AUDIT_CADENCE, ERROR_TRIGGERS,
   tierRank, discoverTests, categoryForTest, mainCategoryForTest, validateTestClassification, categorizedTests,
   testsForTier: (tier) => collectTests(tierRank(tier)), auditsForTier, auditsForError,
-  selectTestsForChanges, changedFilesFromGit, runTier, runError, runChanged, runAll,
+  selectTestsForCategory, selectTestsForChanges, changedFilesFromGit, runTier, runError, runChanged, runAll, runCategory, runRequested,
 };

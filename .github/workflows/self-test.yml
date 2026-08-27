@@ -2,6 +2,26 @@ name: The Crucible Self-Test
 
 on:
   workflow_dispatch:
+    inputs:
+      request:
+        description: Governed test request passed to the Orchestrator
+        required: true
+        default: orchestrator
+        type: choice
+        options:
+          - orchestrator
+          - all
+          - category
+      category:
+        description: Main category used only when request is category
+        required: true
+        default: code
+        type: choice
+        options:
+          - code
+          - security
+          - utility
+          - maintenance
   push:
     branches: [main, development]
   pull_request:
@@ -37,8 +57,11 @@ jobs:
       - run: npm run docs:check
       - run: npm run audit:design-brief
       - run: npm run audit:core-ref
-      - run: npm test
+      - name: Run governed Orchestrator test request
+        run: node src/testCadence.js request
         env:
+          CRUCIBLE_TEST_REQUEST: ${{ github.event_name == 'workflow_dispatch' && inputs.request || 'orchestrator' }}
+          CRUCIBLE_TEST_CATEGORY: ${{ github.event_name == 'workflow_dispatch' && inputs.category || '' }}
           CRUCIBLE_BASE_SHA: ${{ github.event.before || github.event.pull_request.base.sha }}
           CRUCIBLE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: npm run validate

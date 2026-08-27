@@ -5,7 +5,7 @@ const path = require('node:path');
 const {
   CADENCE_TIERS, MAIN_CATEGORIES, TEST_MAIN_CATEGORIES, TEST_CADENCE, AUDIT_CADENCE, ERROR_TRIGGERS,
   tierRank, discoverTests, categoryForTest, mainCategoryForTest, validateTestClassification, categorizedTests, testsForTier,
-  auditsForTier, auditsForError, selectTestsForChanges, runTier, runError,
+  auditsForTier, auditsForError, selectTestsForCategory, selectTestsForChanges, runTier, runError, runCategory, runRequested,
 } = require('../src/testCadence');
 
 test('cadence tiers escalate in the documented order', () => {
@@ -110,6 +110,37 @@ test('Orchestrator automatically owns every current test file through discovery 
     assert.ok(MAIN_CATEGORIES.includes(item.mainCategory));
     assert.ok(CADENCE_TIERS.includes(item.cadence));
   }
+});
+
+test('explicit category requests are still selected entirely by the Orchestrator', () => {
+  const all = discoverTests();
+  for (const mainCategory of MAIN_CATEGORIES) {
+    const selection = selectTestsForCategory(mainCategory);
+    assert.deepEqual(selection.tests, [...TEST_MAIN_CATEGORIES[mainCategory]].sort());
+    assert.deepEqual(selection.mainCategories, [mainCategory]);
+    assert.equal(selection.fullSuite, selection.tests.length === all.length);
+    for (const file of selection.tests) assert.equal(mainCategoryForTest(file), mainCategory);
+  }
+  assert.throws(() => selectTestsForCategory('other'), /Unknown main category "other"/);
+});
+
+test('category and all requests execute only through Orchestrator-owned selections', () => {
+  const categoryCalls = [];
+  const categoryRun = (executable, args) => { categoryCalls.push({ executable, args }); return { status: 0 }; };
+  const categoryResult = runCategory('security', categoryRun);
+  assert.equal(categoryResult.ok, true);
+  assert.deepEqual(categoryResult.selection.tests, [...TEST_MAIN_CATEGORIES.security].sort());
+  assert.equal(categoryCalls.length, 1);
+  assert.deepEqual(categoryCalls[0].args.slice(0, 1), ['--test']);
+  assert.deepEqual(categoryCalls[0].args.slice(1), [...TEST_MAIN_CATEGORIES.security].sort());
+
+  const allCalls = [];
+  const allResult = runRequested('all', '', (executable, args) => { allCalls.push({ executable, args }); return { status: 0 }; });
+  assert.equal(allResult.ok, true);
+  assert.equal(allResult.selection.fullSuite, true);
+  assert.deepEqual(allResult.selection.tests, discoverTests());
+  assert.equal(allCalls.length, 1);
+  assert.throws(() => runRequested('random', 'code', () => ({ status: 0 })), /Unknown governed test request "random"/);
 });
 
 test('change-impact selection runs the matching subcategory instead of the whole suite when impact is provable', () => {
