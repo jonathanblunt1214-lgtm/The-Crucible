@@ -10,43 +10,44 @@
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
     "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements.",
-    "src/testCadence.js": "The governed test Orchestrator. It owns every current test through explicit Code, Security, Utility, and Maintenance main-category sorting, preserves filename-derived subcategories, is the sole authority that turns all/category/orchestrator requests into actual test selections, selects impacted tests for normal runs, and fails closed when a discovered future test is not classified."
+    "src/testCadence.js": "The governed test Orchestrator. It owns every current test through explicit Code, Security, Utility, and Maintenance main-category sorting, preserves filename-derived subcategories, receives natural-language test requests unchanged from transport, is the sole authority that interprets those requests and selects actual tests, selects impacted tests for ordinary runs, and fails closed when a discovered future test is not classified."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-27T23:45:00Z"
+    "lastActionAt": "2026-08-27T23:51:00Z"
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Make manual Self-Test requests first-class while keeping the Orchestrator as the sole authority that selects and runs tests.",
-    "currentPrompt": "and the Orchestrator governs when the other two run, it decides the tests not you",
+    "objective": "Accept natural-language test requests at the Self-Test boundary and leave every selection decision to the Orchestrator, then prove it with a random-category request.",
+    "currentPrompt": "good now implement it then run a random test category",
     "steps": [
-      "Add governed request handling for orchestrator, all, and category intents inside src/testCadence.js.",
-      "Make workflow_dispatch pass only request intent and category name to one Orchestrator entry point, with no test-file selection in the workflow.",
-      "Add regression coverage proving category and all requests resolve to Orchestrator-owned selections and invalid requests fail closed.",
-      "Remove all accidental connector-created stray files in the same corrective Git-data commit and record the incident in DEVLOG.md.",
-      "Push the atomic commit to development and verify Self-Test and CodeQL."
+      "Change the Self-Test transport to accept one natural-language request string and forward it to the Orchestrator without workflow-side test selection.",
+      "Teach src/testCadence.js to interpret all, explicit-category, random-category, and ordinary impact-driven requests while retaining sole ownership of test selection.",
+      "Correct the two stale workflow-contract assertions without restoring direct npm test execution.",
+      "Push one governed development commit whose commit message carries the exact request 'run a random test category'.",
+      "Inspect the resulting Self-Test logs to report which category and tests the Orchestrator selected and whether they passed, and confirm CodeQL."
     ],
     "status": "active",
-    "startedAt": "2026-08-27T23:28:00Z",
-    "lastUpdatedAt": "2026-08-27T23:45:00Z"
+    "startedAt": "2026-08-27T23:47:00Z",
+    "lastUpdatedAt": "2026-08-27T23:51:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Re-read the governing documents after the idle-policy threshold before implementation.",
-      "Confirmed Self-Test already permits workflow_dispatch but previously had no dispatch inputs and always ran the normal npm test change-impact path.",
-      "Prepared Orchestrator request handling where orchestrator uses change-impact selection, all requests the full governed suite, and category asks the Orchestrator for the full governed membership of one main category.",
-      "Prepared Self-Test workflow inputs that carry only request intent and category; the workflow contains no test-file mapping or selection logic.",
-      "Prepared regression coverage for category selection, all selection, invalid-category rejection, and invalid-request rejection.",
-      "Connector dynamic-tool misselection created temporary stray files named never, NEVER2, NO, STOP, HALT, RECOVER, LASTACCIDENT, PLEASESTOP, and OHNO on development while preparing the atomic write; a clean original tree was reconstructed and the corrective commit omits all of them."
+      "Read DEVLOG.md before acting and inspected the current development handoff and Orchestrator implementation.",
+      "Inspected Self-Test run 165 and confirmed the Orchestrator itself ran, but two stale workflow assertions still expected a direct npm test step; 269 of 271 tests passed and only those two assertions failed.",
+      "Prepared natural-language request interpretation inside src/testCadence.js, including deterministic Orchestrator-owned random category choice using the request plus head SHA.",
+      "Prepared Self-Test transport so workflow_dispatch accepts a free-form request string and push transport forwards the commit message; only the Orchestrator extracts the CRUCIBLE TEST REQUEST prefix and decides what to execute.",
+      "Preserved legacy runRequested all/category compatibility while ensuring ordinary natural-language requests fall back to Orchestrator change-impact selection."
     ],
     "verification": [
-      "The clean reconstructed tree matches the pre-incident development tree SHA 6ec117a42c744504cf12a4f02f0ad3bd217521b9 before applying the intended Orchestrator/workflow/test/governance changes.",
-      "The request boundary is workflow -> request intent -> Orchestrator -> selected tests; workflow YAML does not enumerate test files or make category membership decisions."
+      "Run 165 logs prove direct Orchestrator execution reached the full suite and the only failures were test/workflow.test.js assertions requiring the retired literal npm test step.",
+      "The new workflow contains no test-file map, category membership logic, or test selection logic; it passes request text and event context only.",
+      "A push commit beginning with 'CRUCIBLE TEST REQUEST:' is interpreted only inside src/testCadence.js; normal push commits without that prefix stay on change-impact Orchestrator selection."
     ],
     "remaining": [
-      "Assemble and push the atomic corrective commit to development.",
-      "Confirm Self-Test and CodeQL are green for the new development commit; if either fails, fix on development with paired AI-HANDOFF.json and DEVLOG.md updates.",
+      "Create and fast-forward the governed development commit using commit message 'CRUCIBLE TEST REQUEST: run a random test category'.",
+      "Inspect the new Self-Test run to capture the Orchestrator-selected category, selected tests, and pass/fail result.",
+      "Confirm Self-Test and CodeQL are green; if not, correct on development with paired AI-HANDOFF.json and DEVLOG.md updates.",
       "Do not promote to main or release unless separately and explicitly instructed."
     ]
   }
