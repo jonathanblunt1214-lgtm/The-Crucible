@@ -5,13 +5,19 @@
 - **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, and `handoffNotes` for the exact owner request, current plan, completed work, verification, and remaining work.
 - **Current development work:** `npm test` now enters `src/testCadence.js changed`; every current and future `test/*.test.js` file is discovered automatically and receives a deterministic file-derived category. The Orchestrator selects impacted categories from the exact changed-file range and escalates to the full suite when impact cannot be proven safely. Self-Test supplies the exact GitHub base/head range.
-- **Proving result so far:** Commit `c625edc982cc5de00abb8da40ca3f5c17e25a828` proved selective execution in real CI: the Orchestrator selected 3 of 34 test-file categories (`handoffPolicy`, `testCadence`, `workflow`) and executed 53 individual tests instead of the full suite. The Orchestrator-specific ownership, category-selection, governance-routing, and fail-safe tests passed. Self-Test failed only two existing workflow governance assertions because two required prose strings in `AI-HANDOFF.json` had been shortened; this follow-up restores the exact required meaning/keywords.
-- **Verification:** CodeQL, AI handoff policy, AI conflict governance, and the locked-monitoring-PR guard passed on `c625edc...`. The next Self-Test matrix is the second proving run and must be green across Ubuntu, Windows, and macOS / Node 20, 22, and 24 before this work is considered complete.
-- **Remaining work:** Push this handoff-string correction, inspect the resulting 9-job Self-Test matrix and Orchestrator logs, then align `AGENTS.md`'s stale additive-only wording with the owner-approved Orchestrator architecture in a governed follow-up commit. No `main`/`release` promotion is authorized.
+- **Proving result:** Self-Test run 145 on `0f6f4827...` selected only 3 of 34 categories (`handoffPolicy`, `testCadence`, `workflow`) and passed all 53 selected individual tests. The run then failed later at the separate pre-check gate solely because `AI-HANDOFF.json` lacked a final newline.
+- **Current correction:** Restore the required final newline in `AI-HANDOFF.json`, paired with this DEVLOG update. No Orchestrator logic change is needed for this correction.
+- **Remaining work:** Push this formatting correction, confirm the complete 9-job Self-Test matrix is green, then align `AGENTS.md`'s stale additive-only wording with the owner-approved Orchestrator architecture in a governed follow-up commit. No `main`/`release` promotion is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: final-newline correction — 2026-08-27T22:55:00Z — GPT-5.6 Sol
+
+- Inspected Self-Test run 145 and Ubuntu/Node 24 logs — started 2026-08-27T22:53:00Z, finished 2026-08-27T22:55:00Z, exit 0.
+- Result: Orchestrator selected 3/34 categories and passed 53/53 tests; `validate`, clutter, privacy, security, GitHub-security also passed. Pre-check alone failed with `CRUCIBLE_COMMIT_MISSING_FINAL_NEWLINE: Commit Gate: AI-HANDOFF.json`.
+- Prepared paired `AI-HANDOFF.json`/`DEVLOG.md` correction with the missing final newline restored — started 2026-08-27T22:55:00Z, finished 2026-08-27T22:56:00Z, exit 0.
 
 ### Session: orchestrator proving correction — 2026-08-27T22:52:00Z — GPT-5.6 Sol
 
