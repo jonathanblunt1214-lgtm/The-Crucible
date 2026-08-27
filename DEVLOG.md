@@ -4,20 +4,26 @@
 
 - **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, and `handoffNotes` for the exact owner request, current plan, completed work, verification, and remaining work.
-- **Current development work:** Replacing the old additive-only test cadence behavior with an Orchestrator-owned test path. `npm test` now enters `src/testCadence.js changed`; every current and future `test/*.test.js` file is discovered automatically and inherits a deterministic category from its filename. The Orchestrator selects categories from the changed-file range and escalates to the full suite when impact cannot be proven safely. Self-Test supplies the exact GitHub base/head range so a multi-commit push is evaluated as one change set.
-- **Files prepared for this commit:** `src/testCadence.js`, `test/testCadence.test.js`, `package.json`, `.github/workflows/self-test.yml`, `AI-HANDOFF.json`, `DEVLOG.md`.
-- **Verification:** The code has been prepared as Git blobs. The proving test is the real development Self-Test matrix after this commit is pushed: its `npm test` step must print the Orchestrator's changed paths, selected categories, selected-file count, and pass/fail result on all 9 OS/Node jobs.
-- **Remaining work:** Advance `development` to the single multi-file commit, inspect the resulting Self-Test/CodeQL/handoff/conflict-governance checks, and correct any real failure until green. After proof, update the stale additive-only wording in `AGENTS.md` and its workflow assertion in a separately governed follow-up commit. No `main`/`release` promotion is authorized by this request.
+- **Current development work:** `npm test` now enters `src/testCadence.js changed`; every current and future `test/*.test.js` file is discovered automatically and receives a deterministic file-derived category. The Orchestrator selects impacted categories from the exact changed-file range and escalates to the full suite when impact cannot be proven safely. Self-Test supplies the exact GitHub base/head range.
+- **Proving result so far:** Commit `c625edc982cc5de00abb8da40ca3f5c17e25a828` proved selective execution in real CI: the Orchestrator selected 3 of 34 test-file categories (`handoffPolicy`, `testCadence`, `workflow`) and executed 53 individual tests instead of the full suite. The Orchestrator-specific ownership, category-selection, governance-routing, and fail-safe tests passed. Self-Test failed only two existing workflow governance assertions because two required prose strings in `AI-HANDOFF.json` had been shortened; this follow-up restores the exact required meaning/keywords.
+- **Verification:** CodeQL, AI handoff policy, AI conflict governance, and the locked-monitoring-PR guard passed on `c625edc...`. The next Self-Test matrix is the second proving run and must be green across Ubuntu, Windows, and macOS / Node 20, 22, and 24 before this work is considered complete.
+- **Remaining work:** Push this handoff-string correction, inspect the resulting 9-job Self-Test matrix and Orchestrator logs, then align `AGENTS.md`'s stale additive-only wording with the owner-approved Orchestrator architecture in a governed follow-up commit. No `main`/`release` promotion is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
 
+### Session: orchestrator proving correction — 2026-08-27T22:52:00Z — GPT-5.6 Sol
+
+- GitHub Actions inspection of Self-Test run 143 and representative Ubuntu/Node 24 job logs — started 2026-08-27T22:49:00Z, finished 2026-08-27T22:52:00Z, exit 0.
+- Result: Orchestrator correctly selected 3/34 categories and ran 53 individual tests; two workflow assertions failed solely because required `AI-HANDOFF.json` governance descriptions were shortened.
+- GitHub Git-data preparation of corrected `AI-HANDOFF.json` and `DEVLOG.md` — started 2026-08-27T22:52:00Z, finished 2026-08-27T22:53:00Z, exit 0.
+
 ### Session: orchestrator ownership — 2026-08-27T22:44:02Z — GPT-5.6 Sol
 
 - GitHub connector read of current `development`, governing handoff, `src/testCadence.js`, `test/testCadence.test.js`, `package.json`, `.github/workflows/self-test.yml`, and current CI — started 2026-08-27T22:40:00Z, finished 2026-08-27T22:44:02Z, exit 0.
-- GitHub Git-data blob creation for the Orchestrator implementation, package test entry point, Self-Test range wiring, proving tests, `AI-HANDOFF.json`, and this `DEVLOG.md` — started 2026-08-27T22:44:02Z, finished 2026-08-27T22:48:00Z, exit 0.
-- Git tree/commit/ref update and resulting GitHub Actions proving run — starts after this entry is finalized; completion/result must be recorded in the next handoff update if any correction is required.
+- GitHub Git-data blob/tree/commit/ref creation for the Orchestrator implementation, package test entry point, Self-Test range wiring, proving tests, `AI-HANDOFF.json`, and `DEVLOG.md` — started 2026-08-27T22:44:02Z, finished 2026-08-27T22:48:04Z, exit 0.
+- Created and pushed development commit `c625edc982cc5de00abb8da40ca3f5c17e25a828` without force.
 
 ### Session: a5048de — 2026-08-27T21:47:17Z — Claude
 
