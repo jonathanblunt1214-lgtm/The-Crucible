@@ -4,20 +4,26 @@
 
 - **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, and `handoffNotes` for the exact owner request, current plan, completed work, verification, and remaining work.
-- **Current development work:** Self-Test now has one natural-language request boundary. The workflow transports request text; `src/testCadence.js` alone interprets that text and decides whether to run all tests, one governed category, a deterministic random category, or change-impact-selected tests.
-- **Latest verification:** Self-Test run 165 reached the Orchestrator and ran the governed suite. It reported 271 tests, 269 passing and exactly two failures, both stale `test/workflow.test.js` assertions that still expected a direct `npm test` workflow step.
-- **Current correction:** Keep direct test execution retired, preserve the Orchestrator as the only selection/execution authority, accept free-form workflow requests, and allow push transport through a `CRUCIBLE TEST REQUEST:` commit-message prefix that only the Orchestrator interprets.
-- **Next proof:** The implementation commit itself carries `run a random test category`; inspect the resulting Self-Test logs for the category and tests chosen by the Orchestrator. No `main`/`release` promotion is authorized.
+- **Current development work:** Natural-language test requests are transported to `src/testCadence.js`; the Orchestrator alone interprets them and selects actual tests. The requested random-category proof selected Security and passed all 92 Security test cases.
+- **Latest verification:** Self-Test run 166's governed request step passed: the Orchestrator chose Security, selected all 10 Security test files, and reported 92/92 passing. The overall run then failed in pre-check because one older regression still expected a bare `random` request to throw.
+- **Current correction:** Update that regression contract to verify the authorized natural-language random-category behavior while leaving the Orchestrator implementation and its successful Security selection unchanged.
+- **Remaining work:** Push the regression correction to `development`, then confirm Self-Test and CodeQL are green. No `main`/`release` promotion is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: random-category proof correction — 2026-08-27T23:52:00Z — GPT-5.6 Sol
+
+- Inspected Self-Test run 166 jobs and Ubuntu/Node 24 log — started 2026-08-27T23:52:00Z, finished 2026-08-27T23:54:30Z, exit 0; Orchestrator chose Security and passed 92/92 requested tests, while pre-check later failed one stale regression assertion.
+- Prepared `test/testCadence.test.js` regression update plus paired `AI-HANDOFF.json`/`DEVLOG.md` governance updates — started 2026-08-27T23:54:30Z, finished 2026-08-27T23:55:30Z, exit 0.
 
 ### Session: natural-language Orchestrator transport — 2026-08-27T23:47:00Z — GPT-5.6 Sol
 
 - Read current `DEVLOG.md`, `AI-HANDOFF.json`, Orchestrator, Self-Test workflow, and relevant test contracts — started 2026-08-27T23:47:00Z, finished 2026-08-27T23:49:00Z, exit 0.
 - Inspected Self-Test run 165 jobs and representative Ubuntu/Node 24 logs — started 2026-08-27T23:49:00Z, finished 2026-08-27T23:50:00Z, exit 0; found 269/271 passing with only two stale direct-`npm test` workflow assertions failing.
 - Prepared Git-data blobs for natural-language request interpretation, request transport, and paired governance updates — started 2026-08-27T23:50:00Z, finished 2026-08-27T23:51:00Z, exit 0.
+- Created and fast-forwarded development commit `4f3dab59e9c206ac36f57e6341d4d19ddfb5cce8` with exact message `CRUCIBLE TEST REQUEST: run a random test category` — started 2026-08-27T23:51:00Z, finished 2026-08-27T23:52:00Z, exit 0.
 
 ### Session: governed manual test requests — 2026-08-27T23:28:00Z — GPT-5.6 Sol
 
@@ -69,8 +75,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 - `npm run cadence:daily` and `npm run cadence:on-error -- self-test-failure` passed.
 - Final `npm test` — started 2026-08-27T21:37:22Z, finished 2026-08-27T21:37:25Z, exit 0 (260/260).
 - Workflow lint/docs/validate/clutter/privacy/security checks — finished 2026-08-27T21:39:09Z, exit 0.
-
-### Session: eede127 — 2026-08-27T21:12:23Z — Claude
-
-- Reworked `DEVLOG.md` into Shared AI handoff plus bounded Command log archive and hardened `src/handoffPolicy.js` validation.
-- Final `npm test` with handoff-policy regression tests — started 2026-08-27T21:14:33Z, finished 2026-08-27T21:14:36Z, exit 0 (215/215).
