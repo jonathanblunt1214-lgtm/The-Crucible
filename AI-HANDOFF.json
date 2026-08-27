@@ -10,40 +10,43 @@
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
     "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements.",
-    "src/testCadence.js": "The governed test Orchestrator. It owns every current test through explicit Code, Security, Utility, and Maintenance main-category sorting, preserves filename-derived subcategories, selects impacted tests for normal runs, and fails closed when a discovered future test is not classified."
+    "src/testCadence.js": "The governed test Orchestrator. It owns every current test through explicit Code, Security, Utility, and Maintenance main-category sorting, preserves filename-derived subcategories, is the sole authority that turns all/category/orchestrator requests into actual test selections, selects impacted tests for normal runs, and fails closed when a discovered future test is not classified."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-27T23:23:30Z"
+    "lastActionAt": "2026-08-27T23:45:00Z"
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Keep the governed Orchestrator category regression green across the Self-Test matrix.",
-    "currentPrompt": "fix this There is one CI defect to fix: a regression assertion expected category order `code, security, utility, maintenance`, while the implementation returned the same four categories alphabetically as `code, maintenance, security, utility`. The categorization itself passed; only that ordering assertion failed.",
+    "objective": "Make manual Self-Test requests first-class while keeping the Orchestrator as the sole authority that selects and runs tests.",
+    "currentPrompt": "and the Orchestrator governs when the other two run, it decides the tests not you",
     "steps": [
-      "Inspect the failed Self-Test job and confirm the only failing assertion.",
-      "Correct the regression assertion without changing category membership or test routing.",
-      "Update AI-HANDOFF.json and DEVLOG.md in the same development commit.",
-      "Push to development and verify Self-Test and CodeQL."
+      "Add governed request handling for orchestrator, all, and category intents inside src/testCadence.js.",
+      "Make workflow_dispatch pass only request intent and category name to one Orchestrator entry point, with no test-file selection in the workflow.",
+      "Add regression coverage proving category and all requests resolve to Orchestrator-owned selections and invalid requests fail closed.",
+      "Remove all accidental connector-created stray files in the same corrective Git-data commit and record the incident in DEVLOG.md.",
+      "Push the atomic commit to development and verify Self-Test and CodeQL."
     ],
     "status": "active",
-    "startedAt": "2026-08-27T23:22:00Z",
-    "lastUpdatedAt": "2026-08-27T23:23:30Z"
+    "startedAt": "2026-08-27T23:28:00Z",
+    "lastUpdatedAt": "2026-08-27T23:45:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Self-Test run 154 executed all 34 categorized test files and reported all four main categories.",
-      "The full run executed 269 individual tests: 268 passed and exactly one regression assertion failed.",
-      "The failure was isolated to test/testCadence.test.js comparing the alphabetically sorted mainCategories output to the unsorted MAIN_CATEGORIES declaration.",
-      "Prepared a regression-only correction that compares the deterministic sorted output to a sorted copy of MAIN_CATEGORIES; category membership and routing are unchanged."
+      "Re-read the governing documents after the idle-policy threshold before implementation.",
+      "Confirmed Self-Test already permits workflow_dispatch but previously had no dispatch inputs and always ran the normal npm test change-impact path.",
+      "Prepared Orchestrator request handling where orchestrator uses change-impact selection, all requests the full governed suite, and category asks the Orchestrator for the full governed membership of one main category.",
+      "Prepared Self-Test workflow inputs that carry only request intent and category; the workflow contains no test-file mapping or selection logic.",
+      "Prepared regression coverage for category selection, all selection, invalid-category rejection, and invalid-request rejection.",
+      "Connector dynamic-tool misselection created temporary stray files named never, NEVER2, NO, STOP, HALT, RECOVER, LASTACCIDENT, PLEASESTOP, and OHNO on development while preparing the atomic write; a clean original tree was reconstructed and the corrective commit omits all of them."
     ],
     "verification": [
-      "Run 154 failed identically across the matrix at the same assertion, with actual [code, maintenance, security, utility] and expected [code, security, utility, maintenance].",
-      "All category ownership tests immediately before the failing assertion passed, including exact four-category declaration, all-current-test classification, stable bucket mapping, and future-test fail-closed behavior."
+      "The clean reconstructed tree matches the pre-incident development tree SHA 6ec117a42c744504cf12a4f02f0ad3bd217521b9 before applying the intended Orchestrator/workflow/test/governance changes.",
+      "The request boundary is workflow -> request intent -> Orchestrator -> selected tests; workflow YAML does not enumerate test files or make category membership decisions."
     ],
     "remaining": [
-      "Push the governed correction commit to development.",
-      "Confirm Self-Test and CodeQL are green for the correction commit.",
+      "Assemble and push the atomic corrective commit to development.",
+      "Confirm Self-Test and CodeQL are green for the new development commit; if either fails, fix on development with paired AI-HANDOFF.json and DEVLOG.md updates.",
       "Do not promote to main or release unless separately and explicitly instructed."
     ]
   }
