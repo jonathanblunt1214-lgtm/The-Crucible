@@ -1,0 +1,40 @@
+# PR #11 (ci-monitor -> main) must stay open, per AGENTS.md's absolute
+# branch-policy rule - see block-pr-7.yml and sync-ci-monitor.yml for why
+# it exists. That rule has no technical backstop against one specific
+# action: someone or something clicking "Close pull request" without
+# merging it. This job is that backstop - it reopens the ci-monitor ->
+# main pull request immediately whenever GitHub reports it closed without
+# being merged.
+#
+# If it is ever actually merged instead - which sync-ci-monitor.yml's
+# distinct-commit design is specifically built to make impossible, see
+# AGENTS.md's PR #11 bullet for the incident this fixed - this workflow
+# deliberately does NOT try to silently open a replacement or rewrite
+# AGENTS.md/block-pr-7.yml itself. That is left to a human or an attended
+# AI session, matching this project's standing rule against invisible
+# self-repair (see internal-recovery.yml's own history in DEVLOG.md).
+name: Guard the ci-monitor pull request
+
+on:
+  pull_request:
+    types: [closed]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  guard:
+    if: github.event.pull_request.head.ref == 'ci-monitor' && github.event.pull_request.merged == false
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      GH_TOKEN: ${{ github.token }}
+      REPOSITORY: ${{ github.repository }}
+    steps:
+      - name: Reopen the permanent CI-monitoring pull request
+        run: |
+          set -euo pipefail
+          number="${{ github.event.pull_request.number }}"
+          gh pr reopen "$number" --repo "$REPOSITORY"
+          echo "Reopened pull request #$number - it must never be closed. See AGENTS.md's branch policy."

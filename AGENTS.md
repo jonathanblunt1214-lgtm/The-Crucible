@@ -115,6 +115,16 @@ session.
     above, created specifically to serve as PR #11's head for the reasons
     described here - this does not extend to creating further new
     branches.
+  - **`.github/workflows/guard-ci-monitor-pr.yml` reopens PR #11
+    automatically if it is ever closed without being merged** - the one
+    thing the `block` check below cannot prevent (a plain close needs no
+    status check to pass). It only acts when the closed PR's head branch
+    is `ci-monitor`, so it never touches any other pull request. If PR #11
+    is ever actually merged instead, this workflow deliberately does
+    nothing further - it does not silently open a replacement or rewrite
+    this document, since that decision needs a human or an attended AI
+    session, not invisible self-repair (see `internal-recovery.yml`'s
+    history in `DEVLOG.md` for why that boundary exists here).
   - This is backed by a real, GitHub-enforced check, not just this
     document: `.github/workflows/block-pr-7.yml`'s `block` job fails
     specifically and only for PR #7, PR #9, or PR #11, succeeding
