@@ -4,14 +4,20 @@
 
 - **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, and `handoffNotes` for the exact owner request, current plan, completed work, verification, and remaining work.
-- **Current development work:** Manual Self-Test requests are being routed through one Orchestrator request boundary. The workflow may request `orchestrator`, `all`, or `category`, but only `src/testCadence.js` owns category membership, final test selection, and execution.
-- **Current correction:** The Orchestrator now resolves `orchestrator` to change-impact selection, `all` to the full governed suite, and `category` to the full governed membership of the selected Code/Security/Utility/Maintenance category. The workflow contains no test-file selection logic.
-- **Connector incident:** Dynamic GitHub tool discovery exposed contents writes while low-level Git-data actions were no longer loaded, causing temporary one-file commits for `never`, `NEVER2`, `NO`, `STOP`, `HALT`, `RECOVER`, `LASTACCIDENT`, `PLEASESTOP`, and `OHNO`. The incident was detected during the same session; the corrective Git-data commit is built from the clean pre-incident tree and removes all of those files rather than concealing the history.
-- **Remaining work:** Push the governed atomic correction to `development`, then confirm Self-Test and CodeQL are green. No `main`/`release` promotion is authorized by this request.
+- **Current development work:** Self-Test now has one natural-language request boundary. The workflow transports request text; `src/testCadence.js` alone interprets that text and decides whether to run all tests, one governed category, a deterministic random category, or change-impact-selected tests.
+- **Latest verification:** Self-Test run 165 reached the Orchestrator and ran the governed suite. It reported 271 tests, 269 passing and exactly two failures, both stale `test/workflow.test.js` assertions that still expected a direct `npm test` workflow step.
+- **Current correction:** Keep direct test execution retired, preserve the Orchestrator as the only selection/execution authority, accept free-form workflow requests, and allow push transport through a `CRUCIBLE TEST REQUEST:` commit-message prefix that only the Orchestrator interprets.
+- **Next proof:** The implementation commit itself carries `run a random test category`; inspect the resulting Self-Test logs for the category and tests chosen by the Orchestrator. No `main`/`release` promotion is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: natural-language Orchestrator transport — 2026-08-27T23:47:00Z — GPT-5.6 Sol
+
+- Read current `DEVLOG.md`, `AI-HANDOFF.json`, Orchestrator, Self-Test workflow, and relevant test contracts — started 2026-08-27T23:47:00Z, finished 2026-08-27T23:49:00Z, exit 0.
+- Inspected Self-Test run 165 jobs and representative Ubuntu/Node 24 logs — started 2026-08-27T23:49:00Z, finished 2026-08-27T23:50:00Z, exit 0; found 269/271 passing with only two stale direct-`npm test` workflow assertions failing.
+- Prepared Git-data blobs for natural-language request interpretation, request transport, and paired governance updates — started 2026-08-27T23:50:00Z, finished 2026-08-27T23:51:00Z, exit 0.
 
 ### Session: governed manual test requests — 2026-08-27T23:28:00Z — GPT-5.6 Sol
 
@@ -68,8 +74,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 
 - Reworked `DEVLOG.md` into Shared AI handoff plus bounded Command log archive and hardened `src/handoffPolicy.js` validation.
 - Final `npm test` with handoff-policy regression tests — started 2026-08-27T21:14:33Z, finished 2026-08-27T21:14:36Z, exit 0 (215/215).
-
-### Session: 0c54c54 — 2026-08-27T20:56:21Z — Claude
-
-- Baseline and final `npm test` passed; workflow lint/docs/validate/clutter/privacy/security audits all passed.
-- Pushed `0c54c54` and confirmed required checks green.

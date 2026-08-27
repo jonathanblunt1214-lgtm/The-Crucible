@@ -1,5 +1,6 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 const { resolveSpawn } = require('./runner');
 
@@ -66,6 +67,7 @@ const ERROR_TRIGGERS = {
 };
 const GOVERNANCE_TESTS = ['test/workflow.test.js', 'test/handoffPolicy.test.js', 'test/testCadence.test.js'];
 const ORCHESTRATOR_TESTS = ['test/testCadence.test.js', 'test/workflow.test.js'];
+const TEST_REQUEST_PREFIX = 'CRUCIBLE TEST REQUEST:';
 
 function tierRank(tier) {
   const index = CADENCE_TIERS.indexOf(tier);
@@ -260,11 +262,54 @@ function runCategory(mainCategory, run = spawnSync) {
   return runTestSelection(selectTestsForCategory(mainCategory), run);
 }
 
+function extractTransportedRequest(request, source = process.env.CRUCIBLE_TEST_REQUEST_SOURCE || '') {
+  const raw = String(request || '').trim();
+  if (source === 'pull_request') return 'orchestrator';
+  if (source === 'push') {
+    const match = raw.match(/^CRUCIBLE TEST REQUEST:\s*(.+)$/im);
+    return match ? match[1].trim() : 'orchestrator';
+  }
+  return raw || 'orchestrator';
+}
+
+function deterministicMainCategory(request, seed = process.env.CRUCIBLE_HEAD_SHA || '') {
+  const digest = crypto.createHash('sha256').update(`${seed}\n${request}`).digest();
+  return MAIN_CATEGORIES[digest.readUInt32BE(0) % MAIN_CATEGORIES.length];
+}
+
+function interpretTestRequest(request = 'orchestrator', category = '', source = process.env.CRUCIBLE_TEST_REQUEST_SOURCE || '') {
+  const text = extractTransportedRequest(request, source);
+  const normalized = text.toLowerCase();
+
+  if (normalized === 'orchestrator') return { request: text, mode: 'orchestrator', category: '' };
+  if (normalized === 'all' || /\b(?:run|test)\s+all\b/.test(normalized) || /\ball\s+(?:tests?|testing)\b/.test(normalized)) {
+    return { request: text, mode: 'all', category: '' };
+  }
+  if (normalized === 'category') {
+    if (!MAIN_CATEGORIES.includes(category)) throw new Error(`Unknown main category "${category}". Valid categories: ${MAIN_CATEGORIES.join(', ')}.`);
+    return { request: text, mode: 'category', category };
+  }
+  if (/\brandom\b/.test(normalized) && /\bcategory\b/.test(normalized)) {
+    return { request: text, mode: 'category', category: deterministicMainCategory(text) };
+  }
+
+  const mentioned = MAIN_CATEGORIES.filter((mainCategory) => new RegExp(`\\b${mainCategory}\\b`, 'i').test(text));
+  if (mentioned.length === 1) return { request: text, mode: 'category', category: mentioned[0] };
+  if (mentioned.length > 1) throw new Error(`Ambiguous governed test request "${text}" names multiple main categories: ${mentioned.join(', ')}.`);
+
+  return { request: text, mode: 'orchestrator', category: '' };
+}
+
 function runRequested(request = 'orchestrator', category = '', run = spawnSync) {
-  if (request === 'orchestrator') return runChanged(run);
-  if (request === 'all') return runAll(run);
-  if (request === 'category') return runCategory(category, run);
-  throw new Error(`Unknown governed test request "${request}". Valid requests: orchestrator, all, category.`);
+  const decision = interpretTestRequest(request, category);
+  console.log(`[The Crucible] Orchestrator: received test request: ${decision.request}.`);
+  if (decision.mode === 'all') return runAll(run);
+  if (decision.mode === 'category') {
+    console.log(`[The Crucible] Orchestrator: request decision: category ${decision.category}.`);
+    return runCategory(decision.category, run);
+  }
+  console.log('[The Crucible] Orchestrator: request decision: change-impact selection.');
+  return runChanged(run);
 }
 
 function npmRunInvocation(script) {
@@ -296,7 +341,7 @@ if (require.main === module) {
       const request = process.env.CRUCIBLE_TEST_REQUEST || 'orchestrator';
       const category = process.env.CRUCIBLE_TEST_CATEGORY || arg || '';
       result = runRequested(request, category);
-      label = `governed test request "${request}"`;
+      label = `governed test request "${extractTransportedRequest(request)}"`;
     }
     else if (mode === 'category') { result = runCategory(arg); label = `main category "${arg}"`; }
     else if (mode === 'all') { result = runAll(); label = 'full-system proof'; }
@@ -314,5 +359,6 @@ module.exports = {
   CADENCE_TIERS, MAIN_CATEGORIES, TEST_MAIN_CATEGORIES, TEST_CADENCE, AUDIT_CADENCE, ERROR_TRIGGERS,
   tierRank, discoverTests, categoryForTest, mainCategoryForTest, validateTestClassification, categorizedTests,
   testsForTier: (tier) => collectTests(tierRank(tier)), auditsForTier, auditsForError,
-  selectTestsForCategory, selectTestsForChanges, changedFilesFromGit, runTier, runError, runChanged, runAll, runCategory, runRequested,
+  selectTestsForCategory, selectTestsForChanges, changedFilesFromGit, extractTransportedRequest, deterministicMainCategory,
+  interpretTestRequest, runTier, runError, runChanged, runAll, runCategory, runRequested,
 };
