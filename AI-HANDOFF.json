@@ -14,48 +14,42 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session, no matter which agent or tool is running it, and again any time more than 10 minutes have passed since lastActionAt below - even if it is the same agent continuing the same conversation. Branch policy, PR locks (e.g. PR #11), and handoff state can all change while an agent is idle; a long gap is treated the same as a fresh session. See AGENTS.md's 'Recheck governingDocuments at the start of every session' rule.",
-    "lastActionAt": "2026-08-27T21:37:38Z"
+    "lastActionAt": "2026-08-27T21:47:44Z"
   },
   "activePlan": {
     "agent": "Claude",
-    "objective": "Run a full diagnostic on The Crucible's own test coverage, add real tests for every genuinely-untested module found, organize each into the matching test file by convention, and then build a cadence-classification and orchestration system for tests/audits (every-push/daily/weekly/monthly/on-error) per the owner's explicit follow-up requests.",
-    "currentPrompt": "run a full diagnostic on the Crucible if a test doesn't exist for something create it then merge all new test into their approximate category; then: build a system that determines if a test need to be run on every line, or if it's a daily/weekly thing or if its because a certain error was detected; then: both but I want a system that can determine ok this test needs to run daily, that test weekly, that one monthly, that one every line; then: I want both but I also want a system that can determine an orchestrate a testing regime not just all 245 runs every time",
+    "objective": "Diagnose and fix a real Windows-only Self-Test failure on 9c16f36, caught by the hourly fallback CI-monitoring routine per AGENTS.md's Automatic CI monitoring section.",
+    "currentPrompt": "Hourly fallback CI check-in for The-Crucible, per AGENTS.md's \"Automatic CI monitoring\" section... Check the latest commit on development... Look up the Self-Test, CodeQL, and AI handoff policy workflow runs... If it's a real, current failure: diagnose the actual cause, fix it on development, push, dispatch/re-check the affected workflows, and loop until confirmed green.",
     "steps": [
-      "Inventory every src/*.js module against test/*.js and identify genuine coverage gaps (not files exercised indirectly through another test file, e.g. hardening.test.js/engine.test.js).",
-      "Found 4 genuinely untested modules: authenticity.js, folderTopology.js, hostedMultiRepositoryIntegration.js, snapshot.js. Write a dedicated test/<module>.test.js for each, matching this repo's 1:1 naming convention (the 'approximate category' already established).",
-      "Design and confirm scope with the owner (AskUserQuestion) for the cadence system: covers both unit tests and audits, with every-push/daily/weekly/monthly tiers plus on-error triggers, both manual and automated.",
-      "Build src/testCadence.js: an escalating-tier registry (TEST_CADENCE, AUDIT_CADENCE, ERROR_TRIGGERS) plus selection functions (testsForTier, auditsForTier, auditsForError) and an orchestrator (runTier, runError) runnable via node src/testCadence.js <tier|on-error> <trigger>.",
-      "Critical constraint: never weaken the existing required Self-Test workflow. Keep self-test.yml running the full suite unchanged; the cadence system is purely additive - a new report-only scheduled-diagnostics.yml workflow for daily/weekly/monthly, and an additive if:failure()/continue-on-error:true on-error diagnostic step appended to self-test.yml.",
-      "Enforce the standing no-invisible-self-repair rule on the new on-error automation: every ERROR_TRIGGERS entry must be read-only (never repair/fix-commit/scrub:privacy/docs:sync) - added a test asserting this explicitly.",
-      "Smoke-test the orchestrator for real (npm run cadence:every-push/daily/on-error) against this actual repository, not just mocked unit tests, and fix two real script-selection mistakes found that way (audit:handoff and audit:required-check both fail standalone since they need a specific commit range/rollout context, not a standing config).",
-      "Document everything in AGENTS.md's new 'Test and audit cadence' section, add test coverage for the new workflows and the AGENTS.md text, and run the full local suite plus every audit before pushing."
+      "Confirm the failing run is for development's actual current HEAD (9c16f36), not a stale/superseded commit.",
+      "Fetch the failing job's logs via mcp__github__get_job_logs and identify the exact assertion/line that failed, on which OS/Node combinations.",
+      "Diagnose root cause for each failure rather than assuming flakiness: one was a CRLF line-ending regex bug (this repo's own history already hit this class of bug once for docs:check), the other was a test wrongly assuming npm-run and unit-test invocations always resolve to different executables.",
+      "Fix both in the test files (not the underlying src/testCadence.js logic, which was correct).",
+      "Run the full local suite (Linux) to confirm no regression, while being explicit that this environment cannot itself reproduce or re-confirm a Windows-specific failure.",
+      "Update DEVLOG.md/AI-HANDOFF.json per the chain-of-custody protocol and push."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T21:20:00Z",
-    "lastUpdatedAt": "2026-08-27T21:37:38Z"
+    "startedAt": "2026-08-27T21:47:00Z",
+    "lastUpdatedAt": "2026-08-27T21:47:44Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed eede127 fully green on development before starting this work.",
-      "Audited all ~41 src/*.js modules against test/*.js; confirmed most 'missing' test files (clutter, configureSuite, dependencies, exceptions, integrity, maintenance, precheck, reproducibility, runner, syntax) are genuinely well-covered indirectly through hardening.test.js/engine.test.js/suiteSelection.test.js/code-check.test.js with real function-level assertions, not superficial smoke checks.",
-      "Added test/folderTopology.test.js (14 tests), test/snapshot.test.js (4 tests), test/authenticity.test.js (6 tests), test/hostedMultiRepositoryIntegration.test.js (6 tests) for the 4 genuinely untested modules, each following this repo's existing fixture conventions (mkdtemp + git init, fetchImpl mocking matching githubRepoSecurity.test.js/globalRepositoryGovernance.test.js's patterns).",
-      "Built src/testCadence.js: CADENCE_TIERS (every-push/daily/weekly/monthly, escalating/cumulative), TEST_CADENCE and AUDIT_CADENCE registries, ERROR_TRIGGERS for read-only on-error diagnostics, and runTier/runError orchestration using runner.js's existing resolveSpawn for Windows-safe npm invocation.",
-      "Added test/testCadence.test.js (12 tests) covering tier escalation, registry self-consistency (every referenced file/script actually exists), the read-only-only constraint on ERROR_TRIGGERS, and the orchestrator's selection/aggregation logic via mocked spawn.",
-      "Added .github/workflows/scheduled-diagnostics.yml (cron daily/weekly/monthly + workflow_dispatch, report-only, never a required check) and an additive if:failure()/continue-on-error:true diagnostic step at the end of self-test.yml's existing job - the required job's own steps and pass/fail result are untouched.",
-      "Smoke-tested npm run cadence:every-push/daily/on-error for real against this repository; found and fixed two real mistakes: audit:handoff and audit:required-check both need a specific commit range/rollout context (not standing config) and fail by default, so both are deliberately excluded from every tier with the reason documented inline.",
-      "Documented the whole system in a new AGENTS.md 'Test and audit cadence' section, added workflow.test.js assertions for the new workflows and the documentation text."
+      "Confirmed via GitHub MCP tools that 9c16f36's Self-Test failed on all 3 windows-latest jobs (Node 20/22/24) while all 6 ubuntu/macos jobs passed - a real, deterministic Windows-specific bug, not a flake, and confirmed it was for the actual current development HEAD, not a stale commit.",
+      "Pulled job logs for the windows-latest,24 job and found the exact two failures: test/workflow.test.js's new self-test.yml assertions (/- run: npm test\\n/ and /- run: npm run validate\\n/) failed because the file checks out with \\r\\n on Windows runners and the regexes had no CRLF tolerance - fixed with \\r?\\n.",
+      "test/testCadence.test.js's 'runTier with no unit tests assigned to a tier' test asserted every npm-run call's executable !== process.execPath, assuming that path was unique to the unit-test invocation - but resolveSpawn's existing Windows npm-cli.js workaround means every npm-run call also resolves to process.execPath there. Rewrote the test to distinguish by whether '--test' appears in the args instead, and renamed it since its old premise (a tier with zero tests) didn't actually hold for 'every-push'."
     ],
     "verification": [
-      "Full local suite passes 260/260 (215 prior + 30 for the 4 new gap-filling test files + 12 for testCadence.test.js + 3 workflow.test.js assertions, net of two regex fixes for AGENTS.md line-wrapping).",
+      "Full local suite passes 260/260 on this (Linux) environment - unchanged count, since both fixes were test-only corrections, not new tests.",
       "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass.",
-      "Real (non-mocked) smoke test: npm run cadence:every-push (12 checks, 0 failed), npm run cadence:daily (15 checks including the full suite, 0 failed), npm run cadence:on-error -- self-test-failure (3 checks, 0 failed), and confirmed an unknown tier/trigger fails closed with a clear message rather than silently doing nothing."
+      "Cannot verify the Windows-specific fix locally - this environment is Linux. The real confirmation is the next Self-Test run's windows-latest jobs, which must be checked once this pushes."
     ],
     "remaining": [
-      "Push this commit to development and confirm all checks pass, then fast-forward release so main picks this up too, along with the prior queued chain-of-custody commits.",
-      "The scheduled-diagnostics.yml workflow has not fired yet (cron-triggered, first real fire is up to the schedule) - the owner should watch its first run(s) to confirm the cadence logic picks the right tier from github.event.schedule.",
+      "Push this fix and confirm ALL 9 Self-Test matrix jobs are green this time, especially the 3 windows-latest ones that failed on 9c16f36 - do not consider this done until that is confirmed.",
+      "Then fast-forward release to development's latest tip so main picks up this fix plus the prior queued chain-of-custody/diagnostic/cadence commits.",
+      "The scheduled-diagnostics.yml workflow has not fired yet (cron-triggered) - the owner should watch its first run(s) to confirm the cadence logic picks the right tier.",
       "guard-ci-monitor-pr.yml still has not been exercised live - per the standing rule, it should not be deliberately triggered just to test it; only a genuine close/merge event should exercise it.",
       "The owner should confirm 'block' is added as a required status check on main (Settings -> Branches -> Branch protection rules) if not already done - no tool available here can do that remotely.",
-      "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised - test/hostedMultiRepositoryIntegration.test.js only covers the code path with mocked fetch, not a real multi-repo fleet.",
+      "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",
       "Codex's own remaining items still stand: no promotion or branch-protection change is authorized without the owner's explicit instruction beyond what's already been done."
     ]
   }

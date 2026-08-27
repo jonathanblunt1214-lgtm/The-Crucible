@@ -86,12 +86,18 @@ test('runTier runs unit tests plus every audit for the tier and reports pass/fai
   assert.ok(result.outcomes.find((item) => item.label === 'npm run validate' && item.ok === true));
 });
 
-test('runTier with no unit tests assigned to a tier still runs that tier\'s audits', () => {
+test('runTier runs exactly one unit-test invocation and one npm-run invocation per audit, never more', () => {
   const calls = [];
-  const run = (executable, args) => { calls.push({ executable, args }); return { status: 0 }; };
+  const run = (executable, args) => { calls.push(args); return { status: 0 }; };
   const result = runTier('every-push', run);
   assert.equal(result.ok, true);
-  assert.ok(calls.every((call) => call.executable !== process.execPath || call.args[0] === '--test'));
+  // resolveSpawn resolves npm to a platform-specific executable (on Windows
+  // this is process.execPath plus npm-cli.js, the same executable the unit
+  // test invocation itself uses) - so distinguish invocations by whether
+  // '--test' is present in the args, not by comparing executables.
+  const testInvocations = calls.filter((args) => args.includes('--test'));
+  assert.equal(testInvocations.length, 1);
+  assert.equal(calls.length, testInvocations.length + auditsForTier('every-push').length);
 });
 
 test('runError runs only the mapped diagnostics and never touches an audit outside the trigger\'s list', () => {

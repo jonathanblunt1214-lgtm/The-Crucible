@@ -354,8 +354,8 @@ test('the required Self-Test job runs an additive, non-blocking on-error diagnos
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'self-test.yml'), 'utf8');
   assert.match(workflow, /if: failure\(\)\s*\n\s*continue-on-error: true\s*\n\s*run: node src\/testCadence\.js on-error self-test-failure/);
   // The existing required steps (npm test, the audits, etc.) must be untouched.
-  assert.match(workflow, /- run: npm test\n/);
-  assert.match(workflow, /- run: npm run validate\n/);
+  assert.match(workflow, /- run: npm test\r?\n/);
+  assert.match(workflow, /- run: npm run validate\r?\n/);
 });
 
 test('the cadence registry itself is documented in AGENTS.md, including the no-invisible-self-repair boundary for on-error triggers', () => {
