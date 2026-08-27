@@ -22,8 +22,13 @@ test('makes every hook file executable and points core.hooksPath at .githooks', 
   const result = installGitHooks(root);
   assert.equal(result.installed, true);
   assert.deepEqual(result.hooks, ['pre-push']);
-  const mode = fs.statSync(path.join(root, HOOKS_DIR, 'pre-push')).mode & 0o777;
-  assert.equal(mode, 0o755);
+  // Windows/NTFS has no POSIX executable bit: fs.chmodSync there only toggles
+  // the read-only attribute, so the resulting mode is never 0o755. Only
+  // assert the exact mode on platforms where it's meaningful.
+  if (process.platform !== 'win32') {
+    const mode = fs.statSync(path.join(root, HOOKS_DIR, 'pre-push')).mode & 0o777;
+    assert.equal(mode, 0o755);
+  }
   assert.equal(git(root, ['config', 'core.hooksPath']).trim(), HOOKS_DIR);
 });
 
@@ -44,7 +49,11 @@ test('fails closed with a reason instead of throwing when Git is unavailable', (
 test('re-chmods a hook that lost its executable bit, so the gate self-heals', () => {
   const root = repository();
   fs.chmodSync(path.join(root, HOOKS_DIR, 'pre-push'), 0o644);
-  installGitHooks(root);
-  const mode = fs.statSync(path.join(root, HOOKS_DIR, 'pre-push')).mode & 0o777;
-  assert.equal(mode, 0o755);
+  const result = installGitHooks(root);
+  assert.equal(result.installed, true);
+  // See the platform note above: Windows has no POSIX executable bit to check.
+  if (process.platform !== 'win32') {
+    const mode = fs.statSync(path.join(root, HOOKS_DIR, 'pre-push')).mode & 0o777;
+    assert.equal(mode, 0o755);
+  }
 });

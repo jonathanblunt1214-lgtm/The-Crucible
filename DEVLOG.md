@@ -3,11 +3,11 @@
 ## Shared AI handoff
 
 - **Agent:** Claude.
-- **Current plan:** Add a local pre-push Git hook enforcing The Crucible's own fast verification set, prompted by the owner sharing a fix from another repository (`Nexus-`) where a tracked-but-non-executable pre-push hook silently skipped its stale-manifest check five times before anyone noticed.
-- **Current development work:** Confirmed this repository had no `.githooks` setup at all (so that specific bug couldn't have happened here, but the underlying gap - no local enforcement before a push reaches GitHub - did apply). Added `.githooks/pre-push` (lint:workflows, docs:check, test, validate, audit:clutter, audit:privacy, audit:security) and `src/installGitHooks.js`, wired into npm's `prepare` lifecycle so a lost executable bit self-heals on the next `npm install`/`npm ci`.
-- **Files changed:** `.githooks/pre-push`, `src/installGitHooks.js`, `test/installGitHooks.test.js`, `test/workflow.test.js`, `package.json`, `AGENTS.md`, `AI-HANDOFF.json`, and `DEVLOG.md`.
-- **Verification:** Full local suite passes 172/172 (167 + 5 new). `git ls-files -s .githooks/pre-push` confirms mode 100755 in the index. Ran `node src/installGitHooks.js && sh .githooks/pre-push` directly against this real repository end-to-end, not just its component npm scripts individually.
-- **Remaining work:** Push to `development`, then verify AI handoff policy, AI conflict governance, Self-Test, and CodeQL for the exact commit. No default-branch or repository-setting change is involved.
+- **Current plan:** Fix a real Windows CI failure introduced by the previous commit (`48db90f`, the pre-push-hook work): `test/installGitHooks.test.js` asserted an exact `0o755` filesystem mode after `chmodSync`, but Windows/NTFS has no POSIX executable bit - `fs.chmodSync` there only toggles the read-only attribute, so the real result is `0o666`, never `0o755`.
+- **Current development work:** Made the two exact-mode assertions in `test/installGitHooks.test.js` conditional on `process.platform !== 'win32'`, matching this codebase's existing convention for other Windows-specific behavior differences. Both tests still assert `result.installed === true` (and, in the first test, that `core.hooksPath` is set correctly) on every platform; only the literal filesystem-mode check is skipped on Windows, since it can't be meaningfully true there.
+- **Files changed:** `test/installGitHooks.test.js`, `AI-HANDOFF.json`, `DEVLOG.md`.
+- **Verification:** Full local suite passes 172/172. Also re-ran `lint:workflows`, `docs:check`, `validate`, `audit:clutter`, `audit:privacy`, and `audit:security` locally - all pass.
+- **Remaining work:** Push to `development`, then confirm Self-Test is green on all three OSes (ubuntu-latest, windows-latest, macos-latest) for the new commit, plus AI handoff policy, AI conflict governance, and CodeQL.
 
 Every AI agent must keep the current plan and status in this section accurate automatically and refresh it in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
 

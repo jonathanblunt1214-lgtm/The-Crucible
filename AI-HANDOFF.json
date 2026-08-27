@@ -2,32 +2,28 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Claude",
-    "objective": "Add a local pre-push Git hook enforcing The Crucible's own fast verification set, so a red push never leaves the machine, mirroring a fix the owner shared from another repository where a non-executable tracked hook silently skipped its check.",
+    "objective": "Fix a real Windows CI failure introduced by the pre-push-hook commit (48db90f): test/installGitHooks.test.js asserted an exact 0o755 filesystem mode after chmodSync, but Windows/NTFS has no POSIX executable bit, so the real result there is 0o666, never 0o755.",
     "steps": [
-      "Confirm this repository has no existing .githooks setup (it did not) before adding one.",
-      "Add .githooks/pre-push running the fast offline checks: lint:workflows, docs:check, test, validate, audit:clutter, audit:privacy, audit:security.",
-      "Add src/installGitHooks.js to chmod the hook executable and set core.hooksPath, wired into the standard npm \"prepare\" lifecycle so a lost executable bit self-heals on the next install.",
-      "Verify live: staged the hook, confirmed Git tracks it as mode 100755, and ran it end-to-end against this real repository."
+      "Confirm the failure via the Windows job logs (438 !== 493, i.e. 0o666 vs 0o755) for jobs windows-latest/22 and windows-latest/24.",
+      "Make the two exact-mode assertions in test/installGitHooks.test.js conditional on process.platform !== 'win32', matching this codebase's existing convention for Windows-specific behavior differences elsewhere in the suite.",
+      "Keep asserting result.installed === true (and core.hooksPath) on every platform; only the literal filesystem-mode check is skipped on Windows.",
+      "Run the full local suite plus lint:workflows, docs:check, validate, and the three fast audits before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T06:40:00-04:00",
-    "lastUpdatedAt": "2026-08-27T06:47:56-04:00"
+    "startedAt": "2026-08-27T07:05:00-04:00",
+    "lastUpdatedAt": "2026-08-27T07:15:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Added .githooks/pre-push and src/installGitHooks.js, wired via package.json's \"prepare\" script.",
-      "Added test/installGitHooks.test.js (self-heal, no-op without .githooks, fails closed if Git is unavailable) and a workflow.test.js check that the hook stays tracked at mode 100755.",
-      "Documented the hook in AGENTS.md's \"CI on development\" section.",
-      "Ran the hook itself end-to-end against this repository, not just its component npm scripts individually."
+      "Made the exact-0o755 assertions in test/installGitHooks.test.js platform-conditional (skipped on win32), since fs.chmodSync cannot set true POSIX executable bits on Windows/NTFS.",
+      "Both affected tests still assert installGitHooks() reported success on every platform, including Windows."
     ],
     "verification": [
-      "Full local suite passes 172/172 (167 + 5 new).",
-      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass against the current staged snapshot.",
-      "git ls-files -s .githooks/pre-push confirms mode 100755 in the index, not just on disk.",
-      "Ran `node src/installGitHooks.js && sh .githooks/pre-push` directly and it completed successfully end-to-end."
+      "Full local suite passes 172/172.",
+      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass against the current staged snapshot."
     ],
     "remaining": [
-      "Commit and push to development, then verify AI handoff policy, AI conflict governance, Self-Test, and CodeQL for the exact commit.",
+      "Push to development, then confirm Self-Test is green on ubuntu-latest, windows-latest, and macos-latest for the new commit, plus AI handoff policy, AI conflict governance, and CodeQL.",
       "No default-branch or repository-setting change involved; nothing further requires owner authorization."
     ]
   }
