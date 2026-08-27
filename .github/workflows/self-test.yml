@@ -59,3 +59,7 @@ jobs:
           path: .the-crucible-quarantine
           if-no-files-found: ignore
           retention-days: 90
+      - name: Run on-error diagnostics for extra context (read-only, does not change this job's result)
+        if: failure()
+        continue-on-error: true
+        run: node src/testCadence.js on-error self-test-failure

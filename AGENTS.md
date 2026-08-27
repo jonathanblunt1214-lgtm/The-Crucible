@@ -84,6 +84,54 @@ cannot verify that literally every command in a session is listed -
 that is on the agent's own honesty, the same as every other rule in
 this file.
 
+## Test and audit cadence
+
+`src/testCadence.js` classifies every `test/*.js` file and every CLI audit
+(`npm run audit:*` and friends) into one of four escalating tiers -
+`every-push`, `daily`, `weekly`, `monthly` - plus a separate set of
+`on-error` triggers. This is additive tooling, not a replacement for
+anything that already runs:
+
+- It **never changes what the required Self-Test workflow runs on every
+  push** - `.github/workflows/self-test.yml` still runs the full `npm
+  test` suite and the full audit list on every push/PR, on the full
+  OS/Node matrix, exactly as before. Moving a test or audit to a slower
+  tier in this registry only affects the separate, non-required
+  `.github/workflows/scheduled-diagnostics.yml` workflow described below;
+  it can never remove coverage from the actual required check.
+- **Escalating tiers**: each slower tier's real run includes every faster
+  tier's tests/audits too (`weekly` = `every-push` + `daily` + `weekly`'s
+  own additions), so a monthly run is the most complete, not a different
+  slice. Unlisted tests/audits default to `every-push` - the safe default,
+  since an unlisted item is treated as needing the fastest cadence, never
+  silently dropped.
+- **`.github/workflows/scheduled-diagnostics.yml`** runs `node
+  src/testCadence.js <tier>` on a cron schedule (daily/weekly/monthly) or
+  via `workflow_dispatch`. It is report-only and must never be added to
+  branch protection or a ruleset as a required check - see
+  `templates/required-check-rollout.md` if that is ever proposed.
+- **`on-error` triggers** (e.g. `self-test-failure`) map a specific
+  failure to a list of read-only diagnostic audits to run automatically,
+  for extra context in the same CI run - wired as an additive
+  `if: failure()`, `continue-on-error: true` step at the end of the
+  Self-Test job, so it can never change that job's own pass/fail result.
+  **On-error triggers may never fix or repair anything unattended** -
+  every script an `ERROR_TRIGGERS` entry names must be read-only
+  (`repair`, `fix-commit`, `scrub:privacy`, and `docs:sync` are
+  explicitly forbidden there, and `test/testCadence.test.js` asserts
+  this). This follows the same standing rule against invisible
+  self-repair as everywhere else in this file: automated diagnosis is
+  fine, automated unattended fixing is not.
+- `audit:required-check` and `audit:handoff` are deliberately absent from
+  every tier - both need a specific per-invocation range or rollout
+  context to mean anything and fail by default without it, so they stay
+  manual/human-invoked or triggered by their own dedicated workflow
+  (`.github/workflows/handoff-policy.yml`) rather than a generic cadence.
+- To change the classification, edit `TEST_CADENCE`/`AUDIT_CADENCE`/
+  `ERROR_TRIGGERS` in `src/testCadence.js` directly; `test/testCadence.test.js`
+  checks the registry stays internally consistent (every referenced file
+  exists, every referenced script is real, every tier is valid).
+
 ## Branch policy
 
 - Resolve every conflict between agents, instructions, plans, concurrent work, or claimed authority with `templates/ai-conflict-resolution.md`. Freeze the contested mutation, preserve both sides in the Shared AI handoff, and obtain an explicit owner decision; never silently pick a side.

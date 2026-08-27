@@ -1,0 +1,57 @@
+# Additive, report-only diagnostics on a cadence slower than every push.
+# This workflow never becomes a required check and never changes what
+# self-test.yml runs on every push/PR - it only runs the daily/weekly/
+# monthly tiers described in src/testCadence.js on their own schedule, so
+# expensive or low-value-per-run checks (real GitHub API calls, dependency
+# audits, repository reproducibility rebuilds) don't have to run on every
+# single commit. See AGENTS.md's "Test and audit cadence" section.
+name: Scheduled diagnostics (cadence tiers)
+
+on:
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: Cadence tier to run (every-push, daily, weekly, monthly)
+        required: false
+        default: daily
+        type: string
+  schedule:
+    - cron: '0 7 * * *'    # daily
+    - cron: '0 8 * * 1'    # weekly (Mondays)
+    - cron: '0 9 1 * *'    # monthly (1st of the month)
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostics:
+    name: Run cadence tier
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GITHUB_TOKEN: ${{ github.token }}
+      CRUCIBLE_SECURITY_READ_TOKEN: ${{ secrets.SECURITY_READ_TOKEN }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+      - name: Determine which cadence tier fired
+        id: tier
+        run: |
+          set -euo pipefail
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tier="${{ inputs.tier }}"
+          else
+            case "${{ github.event.schedule }}" in
+              '0 7 * * *') tier=daily ;;
+              '0 8 * * 1') tier=weekly ;;
+              '0 9 1 * *') tier=monthly ;;
+              *) tier=daily ;;
+            esac
+          fi
+          echo "tier=$tier" >> "$GITHUB_OUTPUT"
+          echo "[The Crucible] Scheduled diagnostics: running cadence tier $tier."
+      - run: node src/testCadence.js "${{ steps.tier.outputs.tier }}"
