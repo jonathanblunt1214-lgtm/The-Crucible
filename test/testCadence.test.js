@@ -4,7 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const {
   CADENCE_TIERS, TEST_CADENCE, AUDIT_CADENCE, ERROR_TRIGGERS,
-  tierRank, testsForTier, auditsForTier, auditsForError, runTier, runError,
+  tierRank, discoverTests, categoryForTest, categorizedTests, testsForTier,
+  auditsForTier, auditsForError, selectTestsForChanges, runTier, runError,
 } = require('../src/testCadence');
 
 test('cadence tiers escalate in the documented order', () => {
@@ -36,8 +37,51 @@ test('every on-error trigger only lists read-only audits, never a mutating fixer
   }
 });
 
+test('Orchestrator automatically owns every current and future test file through discovery and category inheritance', () => {
+  const files = discoverTests();
+  const categorized = categorizedTests();
+  assert.equal(categorized.length, files.length);
+  assert.deepEqual(categorized.map((item) => item.file), files);
+  for (const item of categorized) {
+    assert.equal(item.category, categoryForTest(item.file));
+    assert.ok(item.category.length > 0);
+    assert.ok(CADENCE_TIERS.includes(item.cadence));
+  }
+  assert.equal(categoryForTest(`test/${'future'}Subsystem.test.js`), 'futureSubsystem');
+});
+
+test('change-impact selection runs the matching category instead of the whole suite when impact is provable', () => {
+  const selection = selectTestsForChanges(['src/testCadence.js']);
+  assert.equal(selection.fullSuite, false);
+  assert.ok(selection.tests.includes('test/testCadence.test.js'));
+  assert.ok(selection.categories.includes('testCadence'));
+  assert.ok(selection.tests.length < discoverTests().length);
+});
+
+test('change-impact selection fails safe to the full suite when a runtime change cannot be mapped', () => {
+  const unknown = ['src', `${'future'}UnknownSubsystem.js`].join('/');
+  const selection = selectTestsForChanges([unknown]);
+  assert.equal(selection.fullSuite, true);
+  assert.deepEqual(selection.tests, discoverTests());
+});
+
+test('governance changes are routed to governance categories without forcing unrelated tests', () => {
+  const selection = selectTestsForChanges(['AI-HANDOFF.json', 'DEVLOG.md']);
+  assert.equal(selection.fullSuite, false);
+  assert.ok(selection.tests.includes('test/workflow.test.js'));
+  assert.ok(selection.tests.includes('test/handoffPolicy.test.js'));
+  assert.ok(selection.tests.includes('test/testCadence.test.js'));
+});
+
+test('package metadata changes route through Orchestrator categories rather than forcing every unrelated test', () => {
+  const selection = selectTestsForChanges(['package.json']);
+  assert.equal(selection.fullSuite, false);
+  assert.ok(selection.tests.includes('test/testCadence.test.js'));
+  assert.ok(selection.tests.includes('test/workflow.test.js'));
+});
+
 test('testsForTier("every-push") includes every test file the registry does not explicitly move elsewhere', () => {
-  const allFiles = fs.readdirSync(path.join(__dirname, '..', 'test')).filter((name) => name.endsWith('.test.js')).map((name) => `test/${name}`);
+  const allFiles = discoverTests();
   const everyPush = testsForTier('every-push');
   const explicitlyMoved = Object.keys(TEST_CADENCE).filter((file) => TEST_CADENCE[file] !== 'every-push');
   for (const file of allFiles) {
@@ -91,10 +135,6 @@ test('runTier runs exactly one unit-test invocation and one npm-run invocation p
   const run = (executable, args) => { calls.push(args); return { status: 0 }; };
   const result = runTier('every-push', run);
   assert.equal(result.ok, true);
-  // resolveSpawn resolves npm to a platform-specific executable (on Windows
-  // this is process.execPath plus npm-cli.js, the same executable the unit
-  // test invocation itself uses) - so distinguish invocations by whether
-  // '--test' is present in the args, not by comparing executables.
   const testInvocations = calls.filter((args) => args.includes('--test'));
   assert.equal(testInvocations.length, 1);
   assert.equal(calls.length, testInvocations.length + auditsForTier('every-push').length);

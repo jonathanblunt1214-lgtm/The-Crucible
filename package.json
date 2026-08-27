@@ -6,7 +6,8 @@
   "scripts": {
     "prepare": "node src/installGitHooks.js",
     "configure:suite": "node src/configureSuite.js",
-    "test": "node --test",
+    "test": "node src/testCadence.js changed",
+    "test:all": "node src/testCadence.js all",
     "validate": "node src/cli.js validate",
     "audit:clutter": "node src/cli.js clutter",
     "lint:workflows": "node src/cli.js workflow-lint",

@@ -38,6 +38,9 @@ jobs:
       - run: npm run audit:design-brief
       - run: npm run audit:core-ref
       - run: npm test
+        env:
+          CRUCIBLE_BASE_SHA: ${{ github.event.before || github.event.pull_request.base.sha }}
+          CRUCIBLE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: npm run validate
       - run: npm run audit:clutter
       - run: npm run audit:privacy
