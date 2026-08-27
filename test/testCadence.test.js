@@ -124,7 +124,7 @@ test('explicit category requests are still selected entirely by the Orchestrator
   assert.throws(() => selectTestsForCategory('other'), /Unknown main category "other"/);
 });
 
-test('category and all requests execute only through Orchestrator-owned selections', () => {
+test('category, all, and random-category requests execute only through Orchestrator-owned selections', () => {
   const categoryCalls = [];
   const categoryRun = (executable, args) => { categoryCalls.push({ executable, args }); return { status: 0 }; };
   const categoryResult = runCategory('security', categoryRun);
@@ -140,7 +140,17 @@ test('category and all requests execute only through Orchestrator-owned selectio
   assert.equal(allResult.selection.fullSuite, true);
   assert.deepEqual(allResult.selection.tests, discoverTests());
   assert.equal(allCalls.length, 1);
-  assert.throws(() => runRequested('random', 'code', () => ({ status: 0 })), /Unknown governed test request "random"/);
+
+  const randomCalls = [];
+  const randomResult = runRequested('run a random test category', '', (executable, args) => { randomCalls.push({ executable, args }); return { status: 0 }; });
+  assert.equal(randomResult.ok, true);
+  assert.equal(randomResult.selection.mainCategories.length, 1);
+  const chosen = randomResult.selection.mainCategories[0];
+  assert.ok(MAIN_CATEGORIES.includes(chosen));
+  assert.deepEqual(randomResult.selection.tests, [...TEST_MAIN_CATEGORIES[chosen]].sort());
+  assert.equal(randomCalls.length, 1);
+  assert.deepEqual(randomCalls[0].args.slice(0, 1), ['--test']);
+  assert.deepEqual(randomCalls[0].args.slice(1), [...TEST_MAIN_CATEGORIES[chosen]].sort());
 });
 
 test('change-impact selection runs the matching subcategory instead of the whole suite when impact is provable', () => {
