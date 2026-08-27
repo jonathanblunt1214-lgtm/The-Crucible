@@ -77,3 +77,31 @@ This log reflects exactly what has happened on **this branch** (`development`), 
 - `59f2790` Fix precheck checking GitHub's synthetic PR merge commit — Self-Test's `precheck`/`run` steps fell back to `GITHUB_SHA` (a synthetic PR merge commit on `pull_request` events) instead of the actual head commit.
 
 **Result:** PR #6 (`development` → `main`) went from failing on four independent causes (a real CRLF bug, a missing `SECURITY_READ_TOKEN` secret, CodeQL's "Default setup" conflicting with the repo's own `codeql.yml`, and the synthetic-merge-commit bug) to fully green across every job. It is not merged; merging remains an explicit decision for the repository owner.
+
+## 2026-08-27, morning — a local pre-push gate, commit-hygiene tuning, and a real Windows bug
+
+- `48db90f` Add a local pre-push hook running the fast verification suite — `.githooks/pre-push` plus `src/installGitHooks.js`, wired into npm's `prepare` lifecycle so a lost executable bit self-heals on the next install, prompted by a bug the owner shared from another repository (a non-executable tracked hook that Git silently skips).
+- `c6b1625` Fix Windows CI: skip exact chmod-mode check on win32 — real bug in the previous commit's own test: `fs.chmodSync` cannot set true POSIX executable bits on NTFS, so the exact-`0o755` assertion was always false there. The commit that introduced this (`48db90f`, amended in place) also tripped the repo's own commit-subject-length gate at 79 characters against a 72-character cap; amended to a 52-character subject and force-pushed with the owner's explicit approval, since that gate is `fixable:false` by design.
+- `ec8de1f` Raise commit-subject length cap from 72 to 80 characters — at the owner's explicit request.
+- `1c141c1` Raise commit-subject length cap from 80 to 120 characters — a further explicit owner request.
+
+## 2026-08-27, mid-morning — Codex's multi-repository governance work
+
+- `f5cb442` Accept valid trailing-hyphen repository names
+- `cb8dd6d` Allow verified direct Crucible promotions
+- `9d52a29` Remove workflow trailing whitespace
+- `da39554` Add AI-link governance bootstrap — rewrote `templates/connect-workflow.yml` from a single-shot install script into a two-phase `install`/`activate` flow; `activate` now re-verifies both AI governance checks actually succeeded on a representative PR before applying zero-bypass branch rulesets.
+- `7e6ba23` Add global project topology governance — categorized selectable suite execution, multi-repository project topology with a Main-repository manifest and immutable snapshots, global/local natural-language policy scopes, explicit folder-topology setup for multi-folder projects, and a report-only hosted multi-repository integration workflow. **Shipped with a real bug**: its own committed `AI-HANDOFF.json` claimed the clutter audit passed, but the commit never added the `.thecrucible.json` exception its two new (intentionally identical) example templates needed — see next entry.
+
+## 2026-08-27, midday — a genuine 9-way CI failure, fixed and guarded against recurring
+
+- `f0f3c88` Fix Self-Test: allow the intentionally identical policy templates — `templates/thecrucible-global.example.json` and `templates/thecrucible-local.example.json` are meant to start byte-for-byte identical (both scopes share one schema), so the clutter audit's duplicate-content check failed all 9 OS/Node jobs. Added the same kind of `clutter.allow` exception already used once before for `ai-conflicts.example.json`.
+- `cf0fcb0` Guard against the clutter regression reaching development again — root-caused *why* `7e6ba23` shipped broken: `npm test` and `npm run audit:clutter` are separate commands, and the only existing clutter-audit test coverage ran against a synthetic fixture, never the real repository. Added a self-check test running the real audit against this repository's own tracked files, inside `npm test` itself; proved it's a real guard by reverting the fix and watching the new test fail with the identical finding before restoring it.
+
+## 2026-08-27, afternoon — a heartbeat feature, and a Copilot Autofix catch-up
+
+- `a0cf985` Add a still-running heartbeat to the workload runner — requested directly by the owner. `workload.heartbeatSeconds` (bounded 5–300, default 60) prints a "still running" progress line while a command is actively executing; the timer starts only after the child process spawns and clears the instant it closes, errors, or times out, so it cannot fire when nothing is running.
+- `641cbac`, `2d4abe9` Two GitHub Copilot Autofix commits the owner accepted directly on GitHub, each correctly fixing a real CodeQL "Incomplete string escaping or encoding" finding (a dot-only `.replace()` building a `RegExp` from a filename, missing the rest of the metacharacter set) in `test/githubRepoSecurity.test.js` and `test/globalPolicy.test.js`. Copilot Autofix has no awareness of this repository's handoff protocol, so neither commit updated `DEVLOG.md`/`AI-HANDOFF.json`, and `AI handoff policy` correctly failed both pushes.
+- `f764336` Update Shared AI handoff after Copilot Autofix commits — supplies the missing handoff update for the two commits above; both underlying fixes were kept as-is.
+
+**Result:** `development` went from a genuine 9-way CI failure (`7e6ba23`) to fully green, gained a regression guard against that specific failure recurring, and gained a new opt-in progress-visibility feature. PR #8 (`development` → `main`) opened with all 27 checks green; merging remains an explicit decision for the repository owner. Separately, PR #7 (the permanent CI-monitoring event hook) was merged by the owner during this window and can never fire again — real-time CI-failure notification in this session is down to the 60-minute hourly fallback poll until a replacement hook is created.
