@@ -9,12 +9,12 @@
     "templates/ai-conflict-resolution.md": "Conflict-resolution procedure.",
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
-    "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody.",
+    "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements.",
     "src/testCadence.js": "The test Orchestrator. It discovers every current and future test file, assigns file-derived categories, selects impacted categories for normal test runs, escalates to the full suite when impact cannot be proven safely, and retains scheduled cadence/on-error behavior."
   },
   "sessionPolicy": {
-    "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again after any gap longer than 10 minutes.",
-    "lastActionAt": "2026-08-27T22:44:02Z"
+    "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
+    "lastActionAt": "2026-08-27T22:52:00Z"
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
@@ -26,27 +26,29 @@
       "Select impacted categories from the changed-file range and fail safe to the full suite when impact is uncertain.",
       "Pass the exact push/PR base and head SHAs from Self-Test so multi-commit changes are evaluated as one impact range.",
       "Add proving tests for automatic ownership, selective category execution, governance routing, and fail-safe escalation.",
-      "Push the single development commit and inspect the real GitHub Actions Self-Test matrix to confirm the Orchestrator selected and passed the intended categories."
+      "Push to development and inspect the real GitHub Actions Self-Test matrix until the Orchestrator proving run is green."
     ],
     "status": "active",
     "startedAt": "2026-08-27T22:44:02Z",
-    "lastUpdatedAt": "2026-08-27T22:44:02Z"
+    "lastUpdatedAt": "2026-08-27T22:52:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed the previous required Self-Test directly invoked npm test and the old testCadence implementation was additive only.",
-      "Prepared a new Orchestrator implementation that automatically owns every current and future *.test.js file, supports change-impact selection, and escalates safely when impact is unknown.",
-      "Prepared package.json so npm test itself enters the Orchestrator, plus npm run test:all for an explicit full-system proof.",
-      "Prepared Self-Test to provide the exact GitHub base/head range to the Orchestrator.",
-      "Prepared proving unit tests for category ownership, selective execution, governance mapping, and full-suite fallback."
+      "Changed package.json so npm test enters the Orchestrator and added npm run test:all for an explicit full-system proof.",
+      "Changed Self-Test to pass the exact GitHub base/head SHA range into the Orchestrator.",
+      "Added automatic discovery and file-derived categories for every current and future test/*.test.js file.",
+      "Added impact selection, governance/workflow/package routing, and fail-safe full-suite escalation for unknown runtime impact.",
+      "Pushed c625edc982cc5de00abb8da40ca3f5c17e25a828 to development.",
+      "The first real proving run confirmed selective execution: 3 of 34 test-file categories were selected (handoffPolicy, testCadence, workflow), running 53 individual tests rather than the full suite. The Orchestrator ownership/selection tests themselves passed."
     ],
     "verification": [
-      "The implementation has been staged as Git objects only; branch CI proof is still pending until the development ref is advanced to the new commit."
+      "Self-Test run 143 proved the changed-file range was a5048deacbd79926c2652eddad13d5db98a0131b..c625edc982cc5de00abb8da40ca3f5c17e25a828 and selected only handoffPolicy, testCadence, and workflow.",
+      "The proving run failed only two workflow governance assertions because this session had shortened two required AI-HANDOFF.json prose descriptions: sessionPolicy.recheckGoverningDocuments did not contain the exact 'more than 10 minutes'/'even if it is the same agent' wording, and the src/handoffPolicy.js description omitted validateDevlogChainOfCustody.",
+      "CodeQL, AI handoff policy, AI conflict governance, and the locked-monitoring-PR guard passed on c625edc982cc5de00abb8da40ca3f5c17e25a828."
     ],
     "remaining": [
-      "Create the single multi-file commit on development and advance the branch without force.",
-      "Inspect Self-Test across Ubuntu, Windows, and macOS / Node 20, 22, and 24 and confirm the npm test step reports Orchestrator category selection rather than an unconditional full-suite run.",
-      "If the proving run is green, update AGENTS.md's stale additive-only wording and its corresponding workflow assertion in a follow-up governed commit so standing documentation exactly matches the owner-approved architecture.",
+      "Push the governance-string correction and confirm all 9 Self-Test matrix jobs pass with Orchestrator-selected categories.",
+      "After the proving run is green, align AGENTS.md's stale additive-only cadence wording and its workflow assertion with the owner-approved Orchestrator architecture in a governed follow-up commit.",
       "Do not promote to main or release unless separately and explicitly instructed."
     ]
   }
