@@ -2,34 +2,33 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Claude",
-    "objective": "Two owner-requested follow-ups after a full CI diagnostic: (1) run CodeQL, AI handoff policy, the local suite, and lint/docs/audits directly on main, (2) something that permanently keeps PR #11 open no matter what.",
+    "objective": "Confirmed prior commit (47383c7) green, then documented an owner-issued standing rule: never deliberately close or merge PR #11 to test its lock/guard systems. Also refreshed the stale hourly fallback CI-monitoring trigger.",
     "steps": [
-      "For (1): check codeql.yml, self-test.yml, and handoff-policy.yml's push triggers against main.",
-      "Find codeql.yml and self-test.yml already trigger on push: branches: [main, development] - only handoff-policy.yml was missing main from its push trigger (it only had push:development and pull_request:main, which fires before a merge, not on the resulting push to main).",
-      "Add main to handoff-policy.yml's push trigger.",
-      "For (2): design a safe, deterministic automation - reopen PR #11 immediately if closed without being merged (block-pr-7.yml's check cannot prevent a plain close). Do NOT auto-open a replacement or rewrite AGENTS.md if it is ever actually merged instead - that stays a human/attended-AI decision, per this repo's standing rule against invisible self-repair.",
-      "Add .github/workflows/guard-ci-monitor-pr.yml: pull_request:closed trigger, scoped to head.ref == 'ci-monitor' && merged == false, reopening via gh pr reopen.",
-      "Document both changes in AGENTS.md's PR #11 bullet; add matching test/workflow.test.js coverage for both.",
+      "Confirm 47383c7 (main-push handoff-policy trigger + guard-ci-monitor-pr.yml) is fully green on development: Self-Test, CodeQL, AI handoff policy all success.",
+      "Notice the hourly fallback trigger's stored prompt still referenced merged PR #9 as the live monitoring hook and only checked Self-Test/CodeQL - update it to name PR #11 and also check AI handoff policy.",
+      "Per the owner's explicit instruction: document that a future 'test everything'/'test all systems' request must never be read as license to deliberately close or merge PR #11 to exercise block-pr-7.yml's lock or guard-ci-monitor-pr.yml's reopen behavior live - only a genuine close/merge event should exercise them.",
+      "Add this as a new sub-bullet in AGENTS.md's PR #11 section, directly after the guard-ci-monitor-pr.yml/block-pr-7.yml description.",
+      "Add a matching assertion to the existing guard-ci-monitor-pr.yml test in test/workflow.test.js.",
       "Run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T16:30:00-04:00",
-    "lastUpdatedAt": "2026-08-27T16:45:00-04:00"
+    "startedAt": "2026-08-27T16:50:00-04:00",
+    "lastUpdatedAt": "2026-08-27T16:55:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "handoff-policy.yml's push trigger is now branches: [development, main], so it verifies the DEVLOG/AI-HANDOFF handoff on the actual post-merge commit landing on main, not just the pre-merge PR diff.",
-      "Added .github/workflows/guard-ci-monitor-pr.yml: reopens PR #11 automatically the instant it's closed without being merged, scoped strictly to head branch ci-monitor so no other PR is ever touched. Explicitly does nothing if PR #11 is actually merged - no silent replacement PR or AGENTS.md rewrite.",
-      "AGENTS.md's PR #11 bullet now documents guard-ci-monitor-pr.yml and the human-in-the-loop boundary for the merged case.",
-      "Added two test/workflow.test.js updates: one asserting handoff-policy.yml's new push trigger, one new test asserting guard-ci-monitor-pr.yml's trigger/permissions/condition/command and the corresponding AGENTS.md text."
+      "Confirmed 47383c7 fully green: Self-Test, CodeQL, and AI handoff policy all success on development.",
+      "Updated the hourly fallback trigger (trig_01DK6joDQdxqGaoQVFCAHzKd) to name PR #11 (not the now-merged PR #9) as the live monitoring hook, and to check AI handoff policy alongside Self-Test/CodeQL.",
+      "AGENTS.md's PR #11 bullet now includes: never deliberately close or merge PR #11 to test block-pr-7.yml or guard-ci-monitor-pr.yml - only a genuine close/merge event is the real test.",
+      "Added a matching assertion to test/workflow.test.js's existing guard-ci-monitor-pr.yml test."
     ],
     "verification": [
-      "Full local suite passes 207/207 (206 + 1 new).",
+      "Full local suite passes 207/207.",
       "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass."
     ],
     "remaining": [
-      "Push this commit to development, confirm Self-Test/CodeQL/AI handoff policy green, then fast-forward release to it so the next main promotion exercises handoff-policy.yml's new push:main trigger for real.",
-      "guard-ci-monitor-pr.yml has not yet been exercised live (no PR has been closed-without-merging since it was added) - worth a manual sanity check if the owner wants to verify it before trusting it fully.",
+      "Push this commit to development, confirm Self-Test/CodeQL/AI handoff policy green, then fast-forward release to it so the next main promotion carries this documentation update too.",
+      "guard-ci-monitor-pr.yml still has not been exercised live - per the new rule, it should not be deliberately triggered just to test it; only a genuine close/merge event should exercise it.",
       "The owner should confirm 'block' is added as a required status check on main (Settings -> Branches -> Branch protection rules) if not already done - no tool available here can do that remotely.",
       "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",
       "Codex's own remaining items still stand: no promotion or branch-protection change is authorized without the owner's explicit instruction beyond what's already been done."

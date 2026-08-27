@@ -137,6 +137,15 @@ session.
     without adding any friction to a real, legitimate PR into `main`.
     Never remove, rename, or weaken this workflow's `block` check to work
     around the lock.
+  - **Never deliberately close or merge PR #11 to "test" `block-pr-7.yml`
+    or `guard-ci-monitor-pr.yml`.** A broad request like "test everything"
+    or "test all systems" does not include exercising these two live -
+    doing so would mean violating the exact policy they exist to enforce,
+    just to check that the enforcement works. If PR #11 is ever actually
+    closed or merged by some other means, that event is the real test:
+    confirm `guard-ci-monitor-pr.yml` reopens it (a plain close) or handle
+    a merge per the human-in-the-loop process described above (a merge) -
+    don't manufacture the scenario on purpose.
 
 ## CI on `development`
 

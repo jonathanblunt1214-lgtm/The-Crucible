@@ -223,6 +223,7 @@ test('the ci-monitor pull request is automatically reopened if closed without be
   const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
   assert.match(agents, /guard-ci-monitor-pr\.yml.*reopens PR #11\s*\n\s*automatically/s);
   assert.match(agents, /invisible self-repair/);
+  assert.match(agents, /Never deliberately close or merge PR #11 to "test"/);
 });
 
 test('release to main promotion is automated: opens or reuses a pull request, waits for every check, then merges', () => {
