@@ -75,14 +75,8 @@ test('current suite classification is stable across the four governed buckets', 
 });
 
 test('future tests fail closed until they are assigned a main category', () => {
-  assert.throws(
-    () => mainCategoryForTest('test/futureSubsystem.test.js'),
-    /Unclassified test "test\/futureSubsystem\.test\.js"/
-  );
-  assert.throws(
-    () => validateTestClassification([...discoverTests(), 'test/futureSubsystem.test.js']),
-    /Unclassified tests: test\/futureSubsystem\.test\.js/
-  );
+  assert.throws(() => mainCategoryForTest('test/futureSubsystem.test.js'), /Unclassified test "test\/futureSubsystem\.test\.js"/);
+  assert.throws(() => validateTestClassification([...discoverTests(), 'test/futureSubsystem.test.js']), /Unclassified tests: test\/futureSubsystem\.test\.js/);
 });
 
 test('every test file listed in the cadence registry actually exists', () => {
@@ -95,16 +89,12 @@ test('every test file listed in the cadence registry has a valid tier', () => {
 
 test('every audit script listed in AUDIT_CADENCE is a real package.json script', () => {
   const scripts = require('../package.json').scripts;
-  for (const tier of CADENCE_TIERS) {
-    for (const script of AUDIT_CADENCE[tier] || []) assert.ok(scripts[script], `AUDIT_CADENCE.${tier} references unknown script "${script}"`);
-  }
+  for (const tier of CADENCE_TIERS) for (const script of AUDIT_CADENCE[tier] || []) assert.ok(scripts[script], `AUDIT_CADENCE.${tier} references unknown script "${script}"`);
 });
 
 test('every on-error trigger only lists read-only audits, never a mutating fixer', () => {
   const forbidden = ['repair', 'fix-commit', 'scrub:privacy', 'docs:sync'];
-  for (const [trigger, scripts] of Object.entries(ERROR_TRIGGERS)) {
-    for (const script of scripts) assert.ok(!forbidden.includes(script), `on-error trigger "${trigger}" must not run mutating script "${script}" unattended`);
-  }
+  for (const [trigger, scripts] of Object.entries(ERROR_TRIGGERS)) for (const script of scripts) assert.ok(!forbidden.includes(script), `on-error trigger "${trigger}" must not run mutating script "${script}" unattended`);
 });
 
 test('Orchestrator automatically owns every current test file through discovery plus governed classification', () => {
@@ -136,7 +126,7 @@ test('change-impact selection fails safe to the full suite when a runtime change
   const selection = selectTestsForChanges([unknown]);
   assert.equal(selection.fullSuite, true);
   assert.deepEqual(selection.tests, discoverTests());
-  assert.deepEqual(selection.mainCategories, MAIN_CATEGORIES);
+  assert.deepEqual(selection.mainCategories, [...MAIN_CATEGORIES].sort());
 });
 
 test('governance changes are routed to maintenance subcategories without forcing unrelated tests', () => {
