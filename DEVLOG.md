@@ -4,20 +4,26 @@
 
 - **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, and `handoffNotes` for the exact owner request, current plan, completed work, verification, and remaining work.
-- **Current development work:** The Orchestrator is being upgraded from flat filename-derived categories to four governed main categories — Code, Security, Utility, and Maintenance — while retaining filename-derived subcategories and selective change-impact execution.
-- **Current suite classification:** 34 test files total: Code 5, Security 10, Utility 7, Maintenance 12. Every current test is assigned exactly once. New unmapped tests fail closed until classified.
-- **Verification:** Repository state and classification inventory were inspected on `development`. CI verification is still pending after the atomic push; no green result is claimed yet.
-- **Remaining work:** Push the atomic Orchestrator/category/governance commit to `development`, then inspect Self-Test and CodeQL and correct any failures there. No `main`/`release` promotion is authorized by this request.
+- **Current development work:** The Orchestrator owns all 34 current test files under Code, Security, Utility, and Maintenance. The only current CI defect is an order-sensitive regression assertion in `test/testCadence.test.js`; category membership and routing are correct.
+- **Latest verification:** Self-Test run 154 executed the full 34-file suite and 269 individual tests. 268 passed; one assertion failed because `selection.mainCategories` is deterministically alphabetical while the test compared it to the unsorted declaration order.
+- **Current correction:** Update only that assertion to compare against a sorted copy of `MAIN_CATEGORIES`, preserving all category membership and routing behavior.
+- **Remaining work:** Push the governed correction to `development`, then confirm Self-Test and CodeQL are green. No `main`/`release` promotion is authorized by this request.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
 
+### Session: category-order regression fix — 2026-08-27T23:22:00Z — GPT-5.6 Sol
+
+- Inspected Self-Test run 154 matrix and representative Ubuntu/Node 24 logs — started 2026-08-27T23:22:00Z, finished 2026-08-27T23:23:00Z, exit 0.
+- Result: all 34 test files were selected across Code, Security, Utility, and Maintenance; 269 tests ran, 268 passed, and one assertion failed solely on category ordering.
+- Prepared regression assertion correction plus paired `AI-HANDOFF.json`/`DEVLOG.md` governance update — started 2026-08-27T23:23:00Z, finished 2026-08-27T23:23:30Z, exit 0.
+
 ### Session: four-category test sorting — 2026-08-27T23:14:00Z — GPT-5.6 Sol
 
 - GitHub governance and suite inventory reads — started 2026-08-27T23:13:48Z, finished 2026-08-27T23:14:00Z, exit 0.
 - Prepared atomic Orchestrator/category mapping, regression tests, `AI-HANDOFF.json`, and `DEVLOG.md` update — started 2026-08-27T23:14:00Z, finished 2026-08-27T23:14:30Z, exit 0.
-- Connector contents-API write accidentally created `temp-will-not-create` in commit `e37b2f9c8235a9641b2f3531a1f1b862fa43f78c`; detected immediately and included for deletion in the governed follow-up commit — started 2026-08-27T23:15:54Z, finished 2026-08-27T23:16:20Z, exit 1 for intended atomic-write path / repository mutation occurred and is being corrected.
+- Connector contents-API write accidentally created `temp-will-not-create` in commit `e37b2f9c8235a9641b2f3531a1f1b862fa43f78c`; detected immediately and included for deletion in the governed follow-up commit — started 2026-08-27T23:15:54Z, finished 2026-08-27T23:16:20Z, exit 1 for intended atomic-write path / repository mutation occurred and was corrected.
 
 ### Session: final-newline correction — 2026-08-27T22:55:00Z — GPT-5.6 Sol
 
