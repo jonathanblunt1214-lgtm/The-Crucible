@@ -185,28 +185,118 @@ test('a dedicated check blocks every locked monitoring PR, past and present, and
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'block-pr-7.yml'), 'utf8');
   assert.match(workflow, /^on:\s*\n\s*push:\s*\n\s*branches: \[development\]\s*\n\s*pull_request:\s*$/m);
   assert.match(workflow, /permissions:\s*\n\s*contents: read/);
-  assert.match(workflow, /LOCKED_PR_NUMBERS:\s*"7 9"/);
+  assert.match(workflow, /LOCKED_PR_NUMBERS:\s*"7 9 11"/);
   assert.match(workflow, /must never be merged/i);
   assert.match(workflow, /Not a locked monitoring PR - nothing to block/);
   const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
   assert.match(agents, /never merged or closed, under any circumstances/i);
   assert.match(agents, /no technical backstop/i);
   assert.match(agents, /block-pr-7\.yml/);
-  assert.match(agents, /required status check on\s*\n\s*`main`/);
+  assert.match(agents, /required status check on\s+`main`/);
   assert.match(agents, /PR #9/);
+  assert.match(agents, /PR #11/);
+});
+
+test('the monitoring branch syncs development content via distinct commits, never by reusing development\'s real commits', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'sync-ci-monitor.yml'), 'utf8');
+  assert.match(workflow, /^on:\s*\n\s*push:\s*\n\s*branches: \[development\]\s*$/m);
+  assert.match(workflow, /permissions:\s*\n\s*contents: write/);
+  assert.match(workflow, /ref: ci-monitor/);
+  assert.match(workflow, /git checkout origin\/development -- \./);
+  assert.match(workflow, /git push origin HEAD:refs\/heads\/ci-monitor/);
+  assert.match(workflow, /never change this workflow to merge, rebase, or/i);
+  assert.match(workflow, /fast-forward ci-monitor from development directly/i);
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /auto-merged and auto-closed by GitHub/);
+  assert.match(agents, /never `development`'s actual commit\s*\n\s*objects/);
+  assert.match(agents, /sync-ci-monitor\.yml/);
+  assert.match(agents, /ci-monitor.*is an explicit exception to the no-new-branches rule/s);
+});
+
+test('the ci-monitor pull request is automatically reopened if closed without being merged', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'guard-ci-monitor-pr.yml'), 'utf8');
+  assert.match(workflow, /^on:\s*\n\s*pull_request:\s*\n\s*types: \[closed\]\s*$/m);
+  assert.match(workflow, /permissions:\s*\n\s*contents: read\s*\n\s*pull-requests: write/);
+  assert.match(workflow, /if: github\.event\.pull_request\.head\.ref == 'ci-monitor' && github\.event\.pull_request\.merged == false/);
+  assert.match(workflow, /gh pr reopen "\$number" --repo "\$REPOSITORY"/);
+  assert.match(workflow, /does NOT try to silently open a replacement/);
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /guard-ci-monitor-pr\.yml.*reopens PR #11\s*\n\s*automatically/s);
+  assert.match(agents, /invisible self-repair/);
+  assert.match(agents, /Never deliberately close or merge PR #11 to "test"/);
+});
+
+test('release to main promotion is automated: opens or reuses a pull request, waits for every check, then merges', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'promote-release.yml'), 'utf8');
+  assert.match(workflow, /^on:\s*\n\s*push:\s*\n\s*branches: \[release\]\s*$/m);
+  assert.match(workflow, /permissions:\s*\n\s*contents: write\s*\n\s*pull-requests: write/);
+  assert.match(workflow, /gh pr list --repo "\$REPOSITORY" --head release --base main/);
+  assert.match(workflow, /gh pr create --repo "\$REPOSITORY" --head release --base main/);
+  assert.match(workflow, /No commits between/);
+  assert.match(workflow, /gh pr checks "\$number" --repo "\$REPOSITORY" --watch/);
+  assert.match(workflow, /gh pr merge "\$number" --repo "\$REPOSITORY" --merge/);
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /Never push directly to `main`, even with that explicit instruction/);
+  assert.match(agents, /promote-release\.yml/);
+  assert.match(agents, /release.*is an exception/s);
 });
 
 test('GitHub checks every development change and main PR for a current DEVLOG handoff', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'handoff-policy.yml'), 'utf8');
   assert.match(workflow, /name: AI handoff policy/);
   assert.match(workflow, /workflow_dispatch:[\s\S]*base_sha:[\s\S]*required: true/);
-  assert.match(workflow, /push:\s*\n\s*branches: \[development\]/);
+  assert.match(workflow, /push:\s*\n\s*branches: \[development, main\]/);
   assert.match(workflow, /pull_request:\s*\n\s*branches: \[main\]/);
   assert.match(workflow, /fetch-depth: 0/);
   assert.match(workflow, /HANDOFF_BASE_SHA:/);
   assert.match(workflow, /HANDOFF_HEAD_SHA:/);
   assert.match(workflow, /npm run audit:handoff/);
   assert.match(workflow, /takeover-ready AI development plan/);
+});
+
+test('governingDocuments must be rechecked at the start of every session, same or different agent, after any 10+ minute gap', () => {
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /Recheck `governingDocuments` at the start of every session/);
+  assert.match(agents, /no matter which agent or tool is\s*\n\s*running it/);
+  assert.match(agents, /more than 10 minutes have passed/);
+  assert.match(agents, /even if it is the same agent continuing the\s*\n\s*same conversation/);
+  assert.match(agents, /sessionPolicy\.lastActionAt/);
+  const handoff = JSON.parse(fs.readFileSync(path.join(root, 'AI-HANDOFF.json'), 'utf8'));
+  assert.ok(handoff.sessionPolicy, 'AI-HANDOFF.json must have a top-level sessionPolicy object');
+  assert.match(handoff.sessionPolicy.recheckGoverningDocuments, /more than 10 minutes/);
+  assert.match(handoff.sessionPolicy.recheckGoverningDocuments, /even if it is the same agent/);
+  assert.ok(!Number.isNaN(Date.parse(handoff.sessionPolicy.lastActionAt)), 'sessionPolicy.lastActionAt must be a parseable timestamp');
+});
+
+test('DEVLOG.md is required to work as a chain of custody: dev-plan reference plus a command log archive capped at 10 sessions and 180 days', () => {
+  const { validateDevlogChainOfCustody, MAX_ARCHIVE_SESSIONS, MAX_ARCHIVE_AGE_DAYS } = require('../src/handoffPolicy');
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /`DEVLOG\.md` is a chain of custody/);
+  assert.match(agents, /Reference the dev\s*\n\s*plan instead of restating it/);
+  assert.match(agents, /activePlan`:\s*`currentPrompt`/);
+  assert.match(agents, /## Command log archive/);
+  assert.match(agents, /capped at the 10 most recent sessions/);
+  assert.match(agents, /180-day backup limit/);
+  assert.match(agents, /started TIMESTAMP, finished TIMESTAMP, exit CODE/);
+  assert.match(agents, /no\s*\n\s*more than 10 `### Session:` entries and none older than 180 days/);
+  assert.match(agents, /validateDevlogChainOfCustody/);
+  const devlog = fs.readFileSync(path.join(root, 'DEVLOG.md'), 'utf8');
+  const result = validateDevlogChainOfCustody(devlog);
+  assert.equal(result.ok, true, result.message);
+  const archiveSection = /^## Command log archive.*$/m.exec(devlog);
+  assert.ok(archiveSection, 'DEVLOG.md must have a Command log archive section');
+  const archiveBody = devlog.slice(archiveSection.index + archiveSection[0].length).split(/\n##\s/)[0];
+  const sessionEntries = archiveBody.match(/^### Session: /gm) || [];
+  assert.ok(sessionEntries.length >= 1, 'Command log archive must have at least one Session entry');
+  assert.ok(sessionEntries.length <= MAX_ARCHIVE_SESSIONS, `Command log archive must hold at most ${MAX_ARCHIVE_SESSIONS} sessions (found ${sessionEntries.length})`);
+  const newestEntry = archiveBody.split(/^### Session: /m)[1] || '';
+  assert.match(newestEntry, /\bstart(?:ed)?\b[\s\S]*?\bfinish(?:ed)?\b/i);
+  assert.equal(MAX_ARCHIVE_AGE_DAYS, 180);
+  const handoff = JSON.parse(fs.readFileSync(path.join(root, 'AI-HANDOFF.json'), 'utf8'));
+  assert.equal(typeof handoff.activePlan.currentPrompt, 'string');
+  assert.ok(handoff.activePlan.currentPrompt.trim().length > 0);
+  assert.ok(handoff.governingDocuments['src/handoffPolicy.js'], 'governingDocuments must reference src/handoffPolicy.js, the code that enforces the chain-of-custody requirement it just added');
+  assert.match(handoff.governingDocuments['src/handoffPolicy.js'], /validateDevlogChainOfCustody/);
 });
 
 test('AI conflict governance is unavoidable in the reusable workflow and monitored near real time', () => {
@@ -247,4 +337,31 @@ test('the clutter audit passes against this repository\'s own real, current trac
   const config = loadConfig(root);
   const result = auditClutter(root, config);
   assert.deepEqual(result.findings, []);
+});
+
+test('scheduled diagnostics run cadence tiers on a schedule without ever becoming a required check', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'scheduled-diagnostics.yml'), 'utf8');
+  assert.match(workflow, /^on:\s*\n\s*workflow_dispatch:/m);
+  assert.match(workflow, /cron: '0 7 \* \* \*'/);
+  assert.match(workflow, /cron: '0 8 \* \* 1'/);
+  assert.match(workflow, /cron: '0 9 1 \* \*'/);
+  assert.match(workflow, /permissions:\s*\n\s*contents: read/);
+  assert.match(workflow, /node src\/testCadence\.js "\$\{\{ steps\.tier\.outputs\.tier \}\}"/);
+  assert.doesNotMatch(workflow, /pull_request:|push:/);
+});
+
+test('the required Self-Test job runs an additive, non-blocking on-error diagnostic step on failure', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'self-test.yml'), 'utf8');
+  assert.match(workflow, /if: failure\(\)\s*\n\s*continue-on-error: true\s*\n\s*run: node src\/testCadence\.js on-error self-test-failure/);
+  // The existing required steps (npm test, the audits, etc.) must be untouched.
+  assert.match(workflow, /- run: npm test\r?\n/);
+  assert.match(workflow, /- run: npm run validate\r?\n/);
+});
+
+test('the cadence registry itself is documented in AGENTS.md, including the no-invisible-self-repair boundary for on-error triggers', () => {
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /## Test and audit cadence/);
+  assert.match(agents, /src\/testCadence\.js/);
+  assert.match(agents, /never\s+changes what the required Self-Test workflow runs\s+on every\s+push/i);
+  assert.match(agents, /On-error triggers may never fix or repair anything unattended/i);
 });

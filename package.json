@@ -6,7 +6,8 @@
   "scripts": {
     "prepare": "node src/installGitHooks.js",
     "configure:suite": "node src/configureSuite.js",
-    "test": "node --test",
+    "test": "node src/testCadence.js changed",
+    "test:all": "node src/testCadence.js all",
     "validate": "node src/cli.js validate",
     "audit:clutter": "node src/cli.js clutter",
     "lint:workflows": "node src/cli.js workflow-lint",
@@ -31,7 +32,12 @@
     "scrub:privacy": "node src/cli.js scrub",
     "repair": "node src/cli.js repair",
     "run": "node src/cli.js run",
-    "maintain": "node src/cli.js maintain"
+    "maintain": "node src/cli.js maintain",
+    "cadence:every-push": "node src/testCadence.js every-push",
+    "cadence:daily": "node src/testCadence.js daily",
+    "cadence:weekly": "node src/testCadence.js weekly",
+    "cadence:monthly": "node src/testCadence.js monthly",
+    "cadence:on-error": "node src/testCadence.js on-error"
   },
   "engines": {
     "node": ">=20"

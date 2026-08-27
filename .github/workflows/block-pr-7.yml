@@ -1,19 +1,22 @@
 name: "Block locked monitoring PRs"
 
-# PR #9 (development -> main) is a permanent draft that exists solely as a
+# PR #11 (ci-monitor -> main) is a permanent draft that exists solely as a
 # live CI-monitoring event hook - see AGENTS.md's branch policy. It must
-# never be merged, by any agent or by accident. Its predecessor, PR #7,
-# served this exact role until the repository owner merged it directly;
-# it is kept in the blocked list below purely as a historical safeguard
-# (a merged PR cannot be reopened, so this can never actually trigger for
-# it again) rather than removed and forgotten. This check reports failure
-# only for a locked PR number and succeeds instantly for every other pull
-# request. It also reports success on development pushes so an explicitly
-# approved direct promotion carries a genuine passing required check.
+# never be merged, by any agent or by accident. Its predecessors: PR #7,
+# merged directly by the repository owner; PR #9, auto-merged and
+# auto-closed by GitHub with nobody touching its merge button, the moment
+# its head (the `development` branch ref) became reachable from `main`
+# through an unrelated promotion. Both are kept in the blocked list below
+# purely as a historical safeguard (a merged PR cannot be reopened, so this
+# can never actually trigger for either again) rather than removed and
+# forgotten. This check reports failure only for a locked PR number and
+# succeeds instantly for every other pull request. It also reports success
+# on development pushes so an explicitly approved direct promotion carries
+# a genuine passing required check.
 #
 # This file keeps its original name (block-pr-7.yml) even though it now
-# protects PR #9 as well, per AGENTS.md's no-rename-without-being-asked
-# rule. If PR #9 is ever replaced by a new monitoring PR, add its number
+# protects PR #11 as well, per AGENTS.md's no-rename-without-being-asked
+# rule. If PR #11 is ever replaced by a new monitoring PR, add its number
 # to LOCKED_PR_NUMBERS below and update AGENTS.md's branch-policy section
 # to name it - never remove an old number, only add the new one.
 #
@@ -34,7 +37,7 @@ jobs:
   block:
     runs-on: ubuntu-latest
     env:
-      LOCKED_PR_NUMBERS: "7 9"
+      LOCKED_PR_NUMBERS: "7 9 11"
     steps:
       - name: Fail only for a locked, permanent CI-monitoring hook PR
         run: |

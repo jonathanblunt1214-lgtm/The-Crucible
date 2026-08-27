@@ -1,32 +1,55 @@
 {
   "schemaVersion": 1,
+  "governingDocuments": {
+    "AGENTS.md": "Repository owner standing branch and agent policy. The owner's current explicit instruction in this session supersedes the prior additive-only test cadence wording for this Orchestrator change; update AGENTS.md after the proving run so the standing document matches the new architecture.",
+    "DEVLOG.md": "Repository-visible chain of custody and current shared AI handoff.",
+    "AI-CONFLICTS.json": "Auditable AI conflict ledger; never bypass or disable it.",
+    "CLAUDE.md": "Claude entry point to AGENTS.md.",
+    "README.md": "Project documentation.",
+    "templates/ai-conflict-resolution.md": "Conflict-resolution procedure.",
+    "templates/required-check-rollout.md": "Required-check rollout boundary.",
+    "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
+    "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements.",
+    "src/testCadence.js": "The test Orchestrator. It discovers every current and future test file, assigns file-derived categories, selects impacted categories for normal test runs, escalates to the full suite when impact cannot be proven safely, and retains scheduled cadence/on-error behavior."
+  },
+  "sessionPolicy": {
+    "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
+    "lastActionAt": "2026-08-27T22:55:00Z"
+  },
   "activePlan": {
-    "agent": "Claude",
-    "objective": "Follow-up accuracy pass: AGENTS.md's 'Automatic CI monitoring' section still named PR #7 as the live monitoring hook after PR #9 replaced it earlier this session.",
+    "agent": "GPT-5.6 Sol",
+    "objective": "Put every current and future repository test under the Orchestrator and prove selective category execution safely.",
+    "currentPrompt": "do The next change should break that `npm test` step behind the Orchestrator so it owns selection of every current and future test, then put the Orchestrator through a proving test",
     "steps": [
-      "Confirm CI for the prior commit (41f3a06: PR #9 lock extension + connect-workflow.yml resumability) - CodeQL and AI handoff policy green, Self-Test in progress at the time of this pass.",
-      "Re-check AGENTS.md for any remaining PR #7 references missed by the earlier edit pass (which only updated the absolute branch-policy rule and the 'CI on development' section).",
-      "Found and fixed one: the 'Automatic CI monitoring' section's 'Primary, near-live' bullet still pointed at PR #7. Updated it to name PR #9, with PR #7 noted as the predecessor merged by the owner on 2026-08-27.",
-      "Run the full local suite plus every fast/offline audit before pushing."
+      "Route npm test through src/testCadence.js changed so no normal test entry bypasses the Orchestrator.",
+      "Automatically discover every test/*.test.js and assign each a deterministic file-derived category, including future tests.",
+      "Select impacted categories from the changed-file range and fail safe to the full suite when impact is uncertain.",
+      "Pass the exact push/PR base and head SHAs from Self-Test so multi-commit changes are evaluated as one impact range.",
+      "Add proving tests for automatic ownership, selective category execution, governance routing, and fail-safe escalation.",
+      "Push to development and inspect the real GitHub Actions Self-Test matrix until the Orchestrator proving run is green."
     ],
-    "status": "complete",
-    "startedAt": "2026-08-27T12:45:00-04:00",
-    "lastUpdatedAt": "2026-08-27T12:50:00-04:00"
+    "status": "active",
+    "startedAt": "2026-08-27T22:44:02Z",
+    "lastUpdatedAt": "2026-08-27T22:55:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "AGENTS.md's 'Automatic CI monitoring' section now names PR #9 as the current near-live monitoring hook, noting PR #7 as its merged predecessor.",
-      "No code changes; documentation accuracy only. No test asserted against the stale text, so test/workflow.test.js needed no change."
+      "Changed package.json so npm test enters the Orchestrator and added npm run test:all for an explicit full-system proof.",
+      "Changed Self-Test to pass the exact GitHub base/head SHA range into the Orchestrator.",
+      "Added automatic discovery and file-derived categories for every current and future test/*.test.js file.",
+      "Added impact selection, governance/workflow/package routing, and fail-safe full-suite escalation for unknown runtime impact.",
+      "Pushed c625edc982cc5de00abb8da40ca3f5c17e25a828 and follow-up 0f6f4827dfd55890f46f5ae62d15b87078f01b52 to development.",
+      "Real CI proving runs selected 3 of 34 test-file categories (handoffPolicy, testCadence, workflow) and executed 53 individual tests rather than the full suite; the second run passed all 53 selected tests."
     ],
     "verification": [
-      "Full local suite passes 204/204.",
-      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass."
+      "Self-Test run 145 confirmed CRUCIBLE_BASE_SHA c625edc982cc5de00abb8da40ca3f5c17e25a828 and CRUCIBLE_HEAD_SHA 0f6f4827dfd55890f46f5ae62d15b87078f01b52, selected 3/34 categories, and passed 53/53 tests.",
+      "The second proving run then reached the separate pre-check gate, which correctly reported only CRUCIBLE_COMMIT_MISSING_FINAL_NEWLINE for AI-HANDOFF.json.",
+      "This commit fixes that formatting defect while preserving the paired DEVLOG/AI-HANDOFF chain of custody."
     ],
     "remaining": [
-      "Push and confirm Self-Test, CodeQL, and AI handoff policy are green for this commit and for the prior 41f3a06 (Self-Test was still in progress for it when this pass started).",
-      "The owner still needs to add 'block' as a required status check on main (Settings -> Branches -> Branch protection rules) for PR #9's lock to actually GitHub-disable its merge button - no tool available here can do that remotely.",
-      "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",
-      "Codex's own remaining items still stand: no promotion or branch-protection change is authorized without the owner's explicit instruction beyond what's already been done."
+      "Confirm the next Self-Test matrix is green across Ubuntu, Windows, and macOS / Node 20, 22, and 24.",
+      "After the proving run is green, align AGENTS.md's stale additive-only cadence wording and its workflow assertion with the owner-approved Orchestrator architecture in a governed follow-up commit.",
+      "Do not promote to main or release unless separately and explicitly instructed."
     ]
   }
 }
