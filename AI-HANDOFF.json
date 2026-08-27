@@ -1,34 +1,30 @@
 {
   "schemaVersion": 1,
   "activePlan": {
-    "agent": "Claude",
-    "objective": "Fix two real, current CI failures found while driving development to green: a Windows-only chmod-mode test assertion, and The Crucible's own commit-message-length gate failing on the fix commit's own subject line.",
+    "agent": "Codex",
+    "objective": "Repair the repository identifier guard exposed by Nexus PR #119 so valid GitHub repository names ending in a hyphen can pass the mandatory Crucible gate without weakening URL-injection protections.",
     "steps": [
-      "Confirm the Windows failure via job logs (438 !== 493, i.e. 0o666 vs 0o755) for windows-latest/22 and windows-latest/24; make the two exact-mode assertions in test/installGitHooks.test.js conditional on process.platform !== 'win32'.",
-      "Push the fix; discover a second, different failure: src/commit.js's CRUCIBLE_COMMIT_LONG_COMMIT_SUBJECT check failed on that same commit (79-character subject vs the 72-character cap), marked fixable:false / human-review-required.",
-      "Ask the owner how to proceed, since clearing it requires amending an already-pushed commit's message and force-pushing to the shared development branch - not something to do unilaterally. Owner approved amend-and-force-push.",
-      "Amend commit ee3eacd to a 52-character subject and force-push (ee3eacd...c6b1625).",
-      "At the owner's explicit follow-up instruction, raise the commit-subject-length cap in src/commit.js from 72 to 80 characters, then from 80 to 120 characters (a further explicit owner request).",
-      "Re-run the full local suite plus lint:workflows, docs:check, validate, and the three fast audits before pushing each cap change."
+      "Reproduce the hosted failure for GITHUB_REPOSITORY=jonathanblunt1214-lgtm/Nexus- and isolate it to src/apiGuard.js.",
+      "Separate the owner and repository segment rules so an owner cannot end in a hyphen while the repository may, retaining the single owner/repository shape and the existing URL/path-injection rejections.",
+      "Add regression coverage for Nexus- and an unsafe trailing-hyphen owner, update the README and shared handoff, then run the complete deterministic verification set.",
+      "Push only to development, confirm hosted Self-Test and CodeQL, and provide the verified immutable commit for the explicitly authorized Nexus gate repair."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T07:05:00-04:00",
-    "lastUpdatedAt": "2026-08-27T07:25:00-04:00"
+    "startedAt": "2026-08-27T08:26:00-04:00",
+    "lastUpdatedAt": "2026-08-27T08:28:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Made the exact-0o755 assertions in test/installGitHooks.test.js platform-conditional (skipped on win32), since fs.chmodSync cannot set true POSIX executable bits on Windows/NTFS.",
-      "Amended and force-pushed commit ee3eacd -> c6b1625 to shorten its subject below the (then) 72-character commit-gate limit, with explicit owner approval - CRUCIBLE_COMMIT_LONG_COMMIT_SUBJECT is fixable:false by design, so this was never done unilaterally.",
-      "Raised src/commit.js's commit-subject-length cap from 72 to 80, then from 80 to 120 characters, per the owner's explicit, successive instructions."
+      "Confirmed the PR-native Nexus gate reaches the collision step and fails only because the valid repository identifier jonathanblunt1214-lgtm/Nexus- is rejected.",
+      "Updated the guard and regression tests without relaxing rejection of schemes, queries, traversal, whitespace, or extra path segments."
     ],
     "verification": [
-      "Full local suite passes 172/172 after each change.",
-      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass against the current staged snapshot.",
-      "No test hardcoded either old threshold, so no test needed updating for either cap change."
+      "Full local suite passes 172/172, including the new Nexus- regression and all existing unsafe-identifier cases.",
+      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, audit:security, and audit:ai-conflict-governance all pass.",
+      "git diff --check passes. The standalone handoff command correctly refused invocation without its required exact 40-character base/head range; CI supplies that changed range."
     ],
     "remaining": [
-      "Push to development, then confirm Self-Test (including its precheck/commit-gate step) is green on ubuntu-latest, windows-latest, and macos-latest for the new commit, plus AI handoff policy, AI conflict governance, and CodeQL.",
-      "No default-branch or repository-setting change involved; nothing further requires owner authorization."
+      "Commit and push the handoff-complete repair to development, then verify hosted CI before updating the Nexus immutable pin."
     ]
   }
 }

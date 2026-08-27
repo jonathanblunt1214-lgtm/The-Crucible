@@ -22,10 +22,10 @@ function assertWellFormedApiUrl(url) {
   return parsed;
 }
 
-// GitHub usernames/org names and repo names: alphanumeric plus - _ . , never
-// empty, never starting/ending in a way GitHub itself would reject. Applied
-// to "owner/repo" as a whole.
-const REPOSITORY_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?\/[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?$/;
+// GitHub owner names cannot end in a hyphen, but repository names may (for
+// example, "Nexus-"). Keep the two segments separate so valid repositories
+// are accepted without permitting extra path segments or URL syntax.
+const REPOSITORY_PATTERN = /^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?\/[A-Za-z0-9][A-Za-z0-9._-]*$/;
 
 function assertSafeRepository(repository) {
   if (typeof repository !== 'string' || !REPOSITORY_PATTERN.test(repository)) {

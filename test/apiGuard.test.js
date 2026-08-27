@@ -20,6 +20,7 @@ test('rejects a malformed URL', () => {
 
 test('accepts a plain owner/repo identifier', () => {
   assert.equal(assertSafeRepository('jonathanblunt1214-lgtm/The-Crucible'), 'jonathanblunt1214-lgtm/The-Crucible');
+  assert.equal(assertSafeRepository('jonathanblunt1214-lgtm/Nexus-'), 'jonathanblunt1214-lgtm/Nexus-');
 });
 
 test('rejects a repository identifier with no owner/repo separator', () => {
@@ -27,7 +28,7 @@ test('rejects a repository identifier with no owner/repo separator', () => {
 });
 
 test('rejects a repository identifier carrying a scheme or host, not just owner/repo', () => {
-  for (const bad of ['https://evil.com/owner/repo', 'owner/repo/../../etc', 'owner/repo?x=1', 'owner repo/x']) {
+  for (const bad of ['https://evil.com/owner/repo', 'owner/repo/../../etc', 'owner/repo?x=1', 'owner repo/x', 'owner-/repo']) {
     assert.throws(() => assertSafeRepository(bad), `expected rejection for ${bad}`);
   }
 });

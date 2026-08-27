@@ -2,12 +2,12 @@
 
 ## Shared AI handoff
 
-- **Agent:** Claude.
-- **Current plan:** Fix two real, current CI failures found while driving `development` to green: (1) a Windows-only failure in `test/installGitHooks.test.js` (exact `0o755` mode assertion, which `fs.chmodSync` can never produce on NTFS), and (2) The Crucible's own commit-message gate (`src/commit.js`) failing on the fix commit itself because its subject line was 79 characters against a 72-character cap.
-- **Current development work:** Made the two exact-mode assertions in `test/installGitHooks.test.js` conditional on `process.platform !== 'win32'` (still asserting `installGitHooks()` succeeds on every platform). The commit that first tripped the old 72-char limit (`ee3eacd`) was amended to a shorter subject and force-pushed (`ee3eacd...c6b1625`) with the owner's explicit approval, since `CRUCIBLE_COMMIT_LONG_COMMIT_SUBJECT` is marked `fixable: false` / human-review-required by design - not something to rewrite unilaterally. At the owner's explicit, successive requests, the commit-subject-length gate in `src/commit.js` was then raised twice: 72 -> 80, then 80 -> 120.
-- **Files changed:** `test/installGitHooks.test.js`, `src/commit.js`, `AI-HANDOFF.json`, `DEVLOG.md`.
-- **Verification:** Full local suite passes 172/172 after each change. Also re-ran `lint:workflows`, `docs:check`, `validate`, `audit:clutter`, `audit:privacy`, and `audit:security` locally - all pass. No test hardcodes the old thresholds.
-- **Remaining work:** Push to `development`, then confirm Self-Test (including its `precheck`/commit-gate step) is green on all three OSes for the new commit, plus AI handoff policy, AI conflict governance, and CodeQL.
+- **Agent:** Codex.
+- **Current plan:** Repair the repository identifier guard exposed by Nexus PR #119, preserve its URL/path-injection boundary, verify the complete Crucible suite, push only to `development`, and confirm hosted CI before Nexus pins the new immutable revision.
+- **Current development work:** The genuine pull-request Crucible run for Nexus reached every prior gate successfully, then rejected the valid GitHub repository identifier `jonathanblunt1214-lgtm/Nexus-`. Updated `src/apiGuard.js` to apply the stricter no-trailing-hyphen rule to the owner segment while allowing GitHub-valid trailing hyphens in the repository segment. Added positive and negative regression cases and documented the boundary.
+- **Files changed:** `src/apiGuard.js`, `test/apiGuard.test.js`, `README.md`, `AI-HANDOFF.json`, `DEVLOG.md`.
+- **Verification:** Full local suite passes 172/172, including the new `Nexus-` regression and all existing unsafe-identifier cases. `lint:workflows`, `docs:check`, `validate`, `audit:clutter`, `audit:privacy`, `audit:security`, `audit:ai-conflict-governance`, and `git diff --check` pass. The standalone handoff command correctly refused invocation without its required exact 40-character base/head range; CI supplies that changed range.
+- **Remaining work:** Commit and push to `development`, confirm Self-Test, AI handoff policy, AI conflict governance, and CodeQL, then update Nexus to the verified immutable Crucible commit.
 
 Every AI agent must keep the current plan and status in this section accurate automatically and refresh it in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
 

@@ -2,6 +2,8 @@
 
 The Crucible is a repository-independent GitHub Actions quality gate. A project opts in by adding `.thecrucible.json` and a small caller workflow. The project remains independent: The Crucible does not copy application code between repositories, does not require another application, and receives no project-content write access. Its only recurring write permission is `issues: write`, used after a failed gate to create or update the visible failure issue in the scanned repository.
 
+GitHub repository identifiers are validated as a single `owner/repository` pair before API use. Valid GitHub repository names are supported even when the repository segment ends in a hyphen, while schemes, query strings, whitespace, traversal, and additional path segments remain blocked.
+
 ## Exactly what it does
 
 ### On every push and pull request
