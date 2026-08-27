@@ -41,28 +41,48 @@ same or different - can tell how long it has been idle.
 
 ## `DEVLOG.md` is a chain of custody
 
-`DEVLOG.md`'s **Shared AI handoff** section is not just a status summary -
-it is an auditable record of exactly what ran and when. Every entry must:
+`DEVLOG.md` has two parts working together, not one growing log:
 
-- **Reference the dev plan instead of restating it.** The dev plan lives
-  in `AI-HANDOFF.json`'s `activePlan`: `currentPrompt` holds the exact,
+- **`## Shared AI handoff`** - current status only. **Reference the dev
+  plan instead of restating it.** The dev plan lives in
+  `AI-HANDOFF.json`'s `activePlan`: `currentPrompt` holds the exact,
   verbatim request driving the current work (not a paraphrase), and
   `handoffNotes.completed`/`handoffNotes.remaining` hold exactly what is
-  finished and what is left. `DEVLOG.md` should point to that plan, not
-  duplicate it from scratch each time.
-- **Include a Command log.** List every command run for that unit of
-  work - tests, audits, lint, git operations, anything with a real
-  effect - each with a start time and a finish time
-  (`` `command` — started TIMESTAMP, finished TIMESTAMP, exit CODE ``).
-  This is the chain-of-custody trail: what ran, in what order, when it
-  started, when it ended, and whether it succeeded.
+  finished and what is left. This section should point to that plan and
+  summarize current work/files/verification/remaining - it does not hold
+  the command log itself.
+- **`## Command log archive`** - the actual chain-of-custody trail,
+  capped at the 10 most recent sessions **and** a 180-day backup limit
+  (whichever forces a prune first). Each unit of work gets its own
+  entry, newest first:
 
-The **AI handoff policy** check enforces the structural parts of this
-automatically (a `Shared AI handoff` section that references the dev plan
-in `AI-HANDOFF.json` and includes a `Command log` with start/finish
-times) via `src/handoffPolicy.js`'s `validateDevlogChainOfCustody`. It
-cannot verify that literally every command is listed - that is on the
-agent's own honesty, the same as every other rule in this file.
+  ```
+  ### Session: <short label> — <ISO timestamp> — <agent>
+  - `command` — started TIMESTAMP, finished TIMESTAMP, exit CODE
+  ```
+
+  List every command with a real effect for that session - tests,
+  audits, lint, git operations - each with a start time and a finish
+  time. When adding a new session's entry pushes the archive past 10, or
+  any entry's timestamp is more than 180 days old, prune the offending
+  entry (or entries) in the same commit. The 180-day rule is a backup,
+  not the primary limit: it exists so a handful of very old, infrequent
+  sessions can't linger under the 10-session cap forever - if 10 recent
+  sessions alone ever turns out to be the wrong granularity, age is the
+  second, independent backstop. Older history beyond what the archive
+  keeps is not lost - it is still retrievable via `git log -p
+  DEVLOG.md` - it is just not kept inline, so the file a new session
+  reads first stays bounded instead of growing forever.
+
+The **AI handoff policy** check enforces this automatically via
+`src/handoffPolicy.js`'s `validateDevlogChainOfCustody`: a `Shared AI
+handoff` section referencing the dev plan, a `Command log archive`
+section with at least one `### Session:` entry, that entry having a
+start/finish pair, and - genuinely enforced, not just documented - no
+more than 10 `### Session:` entries and none older than 180 days. It
+cannot verify that literally every command in a session is listed -
+that is on the agent's own honesty, the same as every other rule in
+this file.
 
 ## Branch policy
 

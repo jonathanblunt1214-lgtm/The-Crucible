@@ -1,48 +1,54 @@
 {
   "schemaVersion": 1,
   "governingDocuments": {
-    "AGENTS.md": "The repository owner's standing branch policy and agent rules (also linked from CLAUDE.md) - read this before acting on anything in this file. Covers: development is the only branch to push to without explicit permission; main is only touched on explicit owner instruction, and only via the release branch + promote-release.yml, never a direct push; PR #11 (ci-monitor -> main) must never be merged or closed, backed by block-pr-7.yml's check and guard-ci-monitor-pr.yml's auto-reopen; the AI-to-AI handoff protocol requiring this file and DEVLOG.md to be updated together in every project commit, DEVLOG.md's chain-of-custody format (dev-plan reference + Command log), the governingDocuments recheck rule after any 10+ minute idle gap; and the standing rule against invisible self-repair.",
-    "DEVLOG.md": "The chronological, per-commit development log, enforced as a chain of custody: its 'Shared AI handoff' section must reference the dev plan in this file (activePlan.currentPrompt, handoffNotes.completed/remaining) and include a Command log of every command run, each with a start and finish time - read it first, every time, per AGENTS.md's 'Read DEVLOG.md first, always' rule. This file (AI-HANDOFF.json) and DEVLOG.md must be updated together in the same commit; neither supersedes the other. See src/handoffPolicy.js for exactly how this is validated.",
+    "AGENTS.md": "The repository owner's standing branch policy and agent rules (also linked from CLAUDE.md) - read this before acting on anything in this file. Covers: development is the only branch to push to without explicit permission; main is only touched on explicit owner instruction, and only via the release branch + promote-release.yml, never a direct push; PR #11 (ci-monitor -> main) must never be merged or closed, backed by block-pr-7.yml's check and guard-ci-monitor-pr.yml's auto-reopen; the AI-to-AI handoff protocol requiring this file and DEVLOG.md to be updated together in every project commit, DEVLOG.md's chain-of-custody format (dev-plan reference + a Command log archive capped at 10 sessions and 180 days), the governingDocuments recheck rule after any 10+ minute idle gap; and the standing rule against invisible self-repair.",
+    "DEVLOG.md": "The chronological, per-commit development log, enforced as a chain of custody with two parts: 'Shared AI handoff' (current status, referencing the dev plan in this file's activePlan.currentPrompt/handoffNotes.completed/remaining) and 'Command log archive' (one '### Session:' entry per unit of work, newest first, capped at 10 sessions and a 180-day backup age limit). Read the Shared AI handoff section first, every time, per AGENTS.md's 'Read DEVLOG.md first, always' rule. This file (AI-HANDOFF.json) and DEVLOG.md must be updated together in the same commit; neither supersedes the other. See src/handoffPolicy.js for exactly how this is validated.",
     "AI-CONFLICTS.json": "The auditable ledger of AI-agent conflicts (concurrent or contradictory work between agents), governed by templates/ai-conflict-resolution.md and enforced by .github/workflows/ai-conflict-governance.yml. Never delete, bypass, or disable it.",
     "CLAUDE.md": "Claude-specific entry point; it just points to AGENTS.md, which applies to every AI agent working here, not only Claude.",
     "README.md": "The project's own generated/maintained documentation of what The Crucible does, its CLI, and its workflow steps - kept in sync with source via npm run docs:sync/docs:check.",
     "templates/ai-conflict-resolution.md": "The actual conflict-resolution procedure AGENTS.md and AI-CONFLICTS.json point to: freeze the contested mutation, preserve both sides in the shared handoff, and get an explicit owner decision instead of silently picking a side.",
     "templates/required-check-rollout.md": "The rollout plan AGENTS.md requires for any new required workflow check: report-only on development first, then explicit owner promotion, then npm run audit:required-check, before it is ever added to branch protection or a ruleset. Directly relevant to how `block` must be added as a required check on main.",
     "templates/agent-boundaries.md": "The AI-agent rules for this repository's one-way link to adopter projects that pin The Crucible as a security gate - what an agent may and may not do when investigating a Crucible-related CI failure in a project that consumes this repository.",
-    "src/handoffPolicy.js": "The code that actually enforces the AI-to-AI handoff protocol and DEVLOG.md's chain-of-custody requirement, run by the AI handoff policy CI check: validateHandoffPlan (this file's activePlan/handoffNotes must contain, among other fields, a non-empty currentPrompt) and validateDevlogChainOfCustody (DEVLOG.md's Shared AI handoff section must reference this file's dev plan and include a Command log with at least one start/finish pair). Read this to know exactly what is technically verified, not just what AGENTS.md describes in prose."
+    "src/handoffPolicy.js": "The code that actually enforces the AI-to-AI handoff protocol and DEVLOG.md's chain-of-custody requirement, run by the AI handoff policy CI check: validateHandoffPlan (this file's activePlan/handoffNotes must contain, among other fields, a non-empty currentPrompt) and validateDevlogChainOfCustody (DEVLOG.md's Shared AI handoff section must reference this file's dev plan, and its Command log archive must hold 1-10 '### Session:' entries, none older than 180 days, with the newest having a start/finish pair). Read this to know exactly what is technically verified, not just what AGENTS.md describes in prose."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session, no matter which agent or tool is running it, and again any time more than 10 minutes have passed since lastActionAt below - even if it is the same agent continuing the same conversation. Branch policy, PR locks (e.g. PR #11), and handoff state can all change while an agent is idle; a long gap is treated the same as a fresh session. See AGENTS.md's 'Recheck governingDocuments at the start of every session' rule.",
-    "lastActionAt": "2026-08-27T20:55:18Z"
+    "lastActionAt": "2026-08-27T21:15:34Z"
   },
   "activePlan": {
     "agent": "Claude",
-    "objective": "Per the owner's explicit request: make sure everything just created to support DEVLOG.md's new chain-of-custody behavior is cross-referenced inside governingDocuments, not just AGENTS.md and DEVLOG.md themselves.",
-    "currentPrompt": "make sure everything that was just created to support DEVLOG is inside governingDocuments",
+    "objective": "Per the owner's explicit request: cap DEVLOG.md's Command log so it doesn't grow unbounded, using a hybrid design - keep only the 10 most recent sessions inline, with a 180-day age limit as a backup in case the count cap alone proves too strict or too loose.",
+    "currentPrompt": "if the 10-session cap with real CI enforcement gets to be to much limit it to within 180 days as a back up system",
     "steps": [
-      "Confirm e91a026 (the chain-of-custody commit: validateDevlogChainOfCustody, activePlan.currentPrompt requirement, AGENTS.md's new section) is green on development - AI handoff policy already confirmed passing in-session.",
-      "Identify what was actually added/changed to support the chain-of-custody feature: AGENTS.md (already listed), DEVLOG.md (already listed), and src/handoffPolicy.js (the enforcement code - not yet listed).",
-      "Add src/handoffPolicy.js as a governingDocuments entry describing exactly what it enforces (validateHandoffPlan, validateDevlogChainOfCustody).",
-      "Refresh AGENTS.md's and DEVLOG.md's existing governingDocuments descriptions to mention the chain-of-custody requirement, so those entries stay accurate rather than describing only the pre-chain-of-custody state.",
+      "Restructure DEVLOG.md into two parts: Shared AI handoff (current status only) and a new Command log archive section holding one ### Session: entry per unit of work, newest first.",
+      "Rewrite src/handoffPolicy.js's validateDevlogChainOfCustody to require the Command log archive section, 1-10 ### Session: entries, and the newest entry having a start/finish pair.",
+      "Find and fix a real bug surfaced by the test suite: the original section-extraction used a plain string split, which prose mentioning the heading text (in this very DEVLOG entry) could fool into extracting the wrong slice - hardened to line-anchored heading matching.",
+      "Add the 180-day backup age cap: parse each ### Session: entry's ISO timestamp and fail validation if any entry is older than 180 days, independent of the session-count cap.",
+      "Update AGENTS.md's 'DEVLOG.md is a chain of custody' section and all affected tests (test/handoffPolicy.test.js, test/workflow.test.js) for the new two-part structure and dual cap.",
       "Run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T20:53:00Z",
-    "lastUpdatedAt": "2026-08-27T20:55:18Z"
+    "startedAt": "2026-08-27T21:06:00Z",
+    "lastUpdatedAt": "2026-08-27T21:15:34Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed e91a026's AI handoff policy check passed (validateDevlogChainOfCustody's first real-commit run); CodeQL/Self-Test were still in progress when last checked.",
-      "Added src/handoffPolicy.js to governingDocuments, describing validateHandoffPlan and validateDevlogChainOfCustody so an agent knows exactly what is technically verified, not just what AGENTS.md describes in prose.",
-      "Refreshed AGENTS.md's and DEVLOG.md's own governingDocuments descriptions to mention the chain-of-custody requirement (dev-plan reference + Command log) and the governingDocuments-recheck rule, so they describe the current state rather than the pre-this-session state."
+      "Confirmed 0c54c54 fully green on development before starting this work.",
+      "Restructured DEVLOG.md into Shared AI handoff (status only) + Command log archive (### Session: entries, newest first).",
+      "Rewrote validateDevlogChainOfCustody in src/handoffPolicy.js: requires the archive section, 1-10 Session entries, the newest with a start/finish pair, and now also a 180-day-per-entry age cap (MAX_ARCHIVE_AGE_DAYS) alongside the 10-session cap (MAX_ARCHIVE_SESSIONS) - both exported for tests.",
+      "Found and fixed a real parsing bug during this work: plain content.split(headingText) could be fooled by the heading text appearing in ordinary prose earlier in the file (which this DEVLOG entry's own prose triggered) - replaced with line-anchored regex matching (^## heading) via a new extractSection helper.",
+      "Updated AGENTS.md's 'DEVLOG.md is a chain of custody' section to document both caps and call out the 180-day rule as an independent backup, not a replacement for the count cap.",
+      "Updated test/handoffPolicy.test.js (a devlogWithSessions(count) helper, cap-exceeded tests, and new age-cap tests using validateDevlogChainOfCustody's injectable now parameter) and test/workflow.test.js (rewritten structural assertions using the real validator against the real files, since the naive split the test used had the same bug as the production code).",
+      "Per the owner's explicit follow-up request to test the new systems and add coverage where missing: added a checkHandoffRange integration test for the 180-day cap (the prior age-cap test only exercised validateDevlogChainOfCustody directly, not the full git-range path), and a dedicated regression test reproducing the exact prose-fools-the-parser scenario that caused the bug above."
     ],
     "verification": [
-      "Full local suite passes (no new test logic added this step; existing coverage already exercises validateDevlogChainOfCustody and validateHandoffPlan directly).",
-      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass - see DEVLOG.md's Command log for exact start/finish timestamps."
+      "Full local suite passes 215/215 (206 pre-session + 9 net new tests/assertions for the archive structure, the parsing hardening, the 180-day age cap, and its integration-level and regression coverage).",
+      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass - see DEVLOG.md's Command log archive (newest entry) for exact start/finish timestamps.",
+      "Directly ran validateDevlogChainOfCustody and validateHandoffPlan against the real DEVLOG.md and AI-HANDOFF.json (not just test fixtures) and confirmed both return ok:true."
     ],
     "remaining": [
       "Push this commit to development and confirm all six checks pass.",
-      "Fast-forward release to development's latest tip (still behind since the PR #10 merge) so main picks up this and the prior documentation/chain-of-custody commits (40db26b, c7132d8, e91a026).",
+      "Fast-forward release to development's latest tip (still behind since the PR #10 merge) so main picks up this and the prior chain-of-custody commits (40db26b, c7132d8, e91a026, 0c54c54).",
       "guard-ci-monitor-pr.yml still has not been exercised live - per the standing rule, it should not be deliberately triggered just to test it; only a genuine close/merge event should exercise it.",
       "The owner should confirm 'block' is added as a required status check on main (Settings -> Branches -> Branch protection rules) if not already done - no tool available here can do that remotely.",
       "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",

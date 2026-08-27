@@ -3,21 +3,51 @@
 ## Shared AI handoff
 
 - **Agent:** Claude.
-- **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt` for the exact, verbatim owner request driving this work, and `activePlan.steps`/`handoffNotes.completed`/`handoffNotes.remaining` for the plan and what is finished versus left to do.
-- **Command log** (chain of custody - every command run for this unit of work, start and finish time, exit status):
-  - `npm test` (baseline, before this entry's edits) — started 2026-08-27T20:54:15Z, finished 2026-08-27T20:54:19Z, exit 0 (211/211, confirming `e91a026` untouched by this task's edits so far)
-  - `npm run lint:workflows` — started 2026-08-27T20:55:05Z, finished 2026-08-27T20:55:05Z, exit 0
-  - `npm run docs:check` — started 2026-08-27T20:55:05Z, finished 2026-08-27T20:55:06Z, exit 0
-  - `npm run validate` — started 2026-08-27T20:55:06Z, finished 2026-08-27T20:55:06Z, exit 0
-  - `npm run audit:clutter` — started 2026-08-27T20:55:06Z, finished 2026-08-27T20:55:07Z, exit 0
-  - `npm run audit:privacy` — started 2026-08-27T20:55:07Z, finished 2026-08-27T20:55:08Z, exit 0
-  - `npm run audit:security` — started 2026-08-27T20:55:08Z, finished 2026-08-27T20:55:08Z, exit 0
-  - `npm test` (final, after writing this DEVLOG entry) — see the Verification bullet below.
-  - `git add AGENTS.md AI-HANDOFF.json DEVLOG.md test/workflow.test.js`, `git commit`, `git push -u origin development` — run after the final `npm test` pass, per this repository's local pre-push hook (which re-runs the full suite and every audit itself before allowing the push through).
-- **Current development work:** After confirming `e91a026` (the chain-of-custody commit) went fully green on `development` - including `AI handoff policy`, whose `validateDevlogChainOfCustody` check ran for the first time against a real commit and passed - the owner asked that everything just created to support DEVLOG.md's new chain-of-custody behavior also be cross-referenced inside `AI-HANDOFF.json`'s `governingDocuments`. `AGENTS.md` and `DEVLOG.md` were already listed there, but `src/handoffPolicy.js` - the actual enforcement code (`validateHandoffPlan`, `validateDevlogChainOfCustody`) - was not. Added it as a new entry, and refreshed the existing `AGENTS.md`/`DEVLOG.md` entry descriptions so they mention the chain-of-custody requirement and the governingDocuments-recheck rule instead of describing an earlier state. Added a `workflow.test.js` assertion locking in that `governingDocuments['src/handoffPolicy.js']` exists and mentions `validateDevlogChainOfCustody`.
-- **Files changed:** `AI-HANDOFF.json`, `DEVLOG.md`, `test/workflow.test.js`.
-- **Verification:** Full local suite passes 211/211 (same test count as `e91a026` - the new coverage is two extra assertions inside the existing "DEVLOG.md is required to work as a chain of custody" test, not a new test). `lint:workflows`, `docs:check`, `validate`, `audit:clutter`, `audit:privacy`, and `audit:security` all pass - see Command log above for exact timestamps.
-- **Remaining work:** Push this commit to `development` and confirm all six checks are green, then fast-forward `release` to `development`'s latest tip (still behind since the PR #10 merge) so `main` picks up this and the prior three documentation/chain-of-custody commits (`40db26b`, `c7132d8`, `e91a026`). `guard-ci-monitor-pr.yml` still has not been exercised live; per the standing rule in `AGENTS.md`, do not deliberately trigger it just to test it. The owner still needs to add `block` as a required status check on `main` (Settings -> Branches -> Branch protection rules) if not already done - no tool available here can do that remotely. Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and `connect-workflow.yml`'s `activate` phase both need a real target repository/token to actually be exercised.
+- **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt` for the exact, verbatim owner request driving this work, and `activePlan.steps`/`handoffNotes.completed`/`handoffNotes.remaining` for the plan and what is finished versus left to do. The command-level record for this and recent sessions lives below in **Command log archive**, not here.
+- **Current development work:** After confirming `0c54c54` went fully green, the owner asked whether an unbounded, ever-growing Command log inline in Shared AI handoff would eventually slow down the "read this first" goal, then asked for a hybrid fix: keep command logs, but only for the 10 most recent sessions. Restructured `DEVLOG.md` into two parts: `Shared AI handoff` (current status only) and a new `Command log archive` section holding one `### Session:` entry per unit of work, newest first, capped at 10 - genuinely enforced by `src/handoffPolicy.js`'s `validateDevlogChainOfCustody`, not just documented. While building this, found and fixed a real parsing bug: the first version located sections with a plain `content.split('## Command log archive')`, which a mention of that same heading text inside ordinary prose (in this very entry, as it happens) could fool into extracting the wrong slice. Hardened it to match only a genuine line-start heading (`^## Command log archive`). The owner then asked for a backup limit in case 10 sessions alone proves too strict or too loose: added a 180-day age cap alongside the 10-session cap - whichever forces a prune first - so a handful of very old, infrequent sessions can't linger under the count cap forever. Finally, the owner asked for the new systems to be tested with real coverage, creating tests where none existed yet: added a `checkHandoffRange` integration test for the 180-day cap (not just the direct unit test), and a dedicated regression test reproducing the exact prose-fools-the-parser scenario that caused the bug above, proving the line-anchored fix actually holds.
+- **Files changed:** `AGENTS.md`, `AI-HANDOFF.json`, `DEVLOG.md`, `src/handoffPolicy.js`, `test/handoffPolicy.test.js`, `test/workflow.test.js`.
+- **Verification:** See the Command log archive's newest entry below for the exact commands and timestamps run to verify this change.
+- **Remaining work:** Push this commit to `development` and confirm all six checks are green, then fast-forward `release` to `development`'s latest tip (still behind since the PR #10 merge) so `main` picks up this and the prior chain-of-custody commits (`40db26b`, `c7132d8`, `e91a026`, `0c54c54`). `guard-ci-monitor-pr.yml` still has not been exercised live; per the standing rule in `AGENTS.md`, do not deliberately trigger it just to test it. The owner still needs to add `block` as a required status check on `main` (Settings -> Branches -> Branch protection rules) if not already done - no tool available here can do that remotely. Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and `connect-workflow.yml`'s `activate` phase both need a real target repository/token to actually be exercised.
+
+## Command log archive (last 10 sessions, newest first)
+
+Chain-of-custody record of commands run for recent units of work, each
+with a start and finish time. Capped at 10 `### Session:` entries and a
+180-day backup age limit, whichever forces a prune first -
+`src/handoffPolicy.js`'s `validateDevlogChainOfCustody` fails the AI
+handoff policy check if either limit is exceeded, so prune the offending
+entry (or entries) in the same commit that adds a new one. Older
+sessions remain retrievable via `git log -p DEVLOG.md`.
+
+### Session: pending (this commit) — 2026-08-27T21:12:23Z — Claude
+
+- `npm test` (baseline) — started 2026-08-27T20:54:15Z, finished 2026-08-27T20:54:19Z, exit 0 (carried over from the prior session's baseline)
+- Rewrote `src/handoffPolicy.js`'s `validateDevlogChainOfCustody`: added the `Command log archive`/`### Session:` structure with a 1-10 entry cap, hardened section-extraction to line-anchored headings (fixing a real false-match bug this entry's own prose triggered), and added the 180-day age cap as a second, independent limit.
+- Rewrote this file's `Shared AI handoff` and `Command log archive` sections into the new two-part structure.
+- Updated `AGENTS.md`'s "`DEVLOG.md` is a chain of custody" section to document both caps.
+- `npm test` (after the archive restructuring, before the age-cap and hardening work) — started 2026-08-27T21:06:53Z, finished 2026-08-27T21:06:56Z, exit 1 (3 expected failures: test regexes and fixtures still assumed the old inline-Command-log format)
+- `npm test` (after fixing the parser bug and updating fixtures) — started 2026-08-27T21:12:01Z, finished 2026-08-27T21:12:04Z, exit 0 (213/213)
+- `npm run lint:workflows` — started 2026-08-27T21:12:20Z, finished 2026-08-27T21:12:20Z, exit 0
+- `npm run docs:check` — started 2026-08-27T21:12:20Z, finished 2026-08-27T21:12:20Z, exit 0
+- `npm run validate` — started 2026-08-27T21:12:20Z, finished 2026-08-27T21:12:21Z, exit 0
+- `npm run audit:clutter` — started 2026-08-27T21:12:21Z, finished 2026-08-27T21:12:22Z, exit 0
+- `npm run audit:privacy` — started 2026-08-27T21:12:22Z, finished 2026-08-27T21:12:22Z, exit 0
+- `npm run audit:security` — started 2026-08-27T21:12:22Z, finished 2026-08-27T21:12:23Z, exit 0
+- Added two more tests per the owner's explicit request to verify the new systems: a `checkHandoffRange` integration test for the 180-day cap, and a regression test reproducing the exact prose-fools-the-parser bug found above.
+- `npm test` (final, with the two new tests) — started 2026-08-27T21:14:33Z, finished 2026-08-27T21:14:36Z, exit 0 (215/215)
+- `git add AGENTS.md AI-HANDOFF.json DEVLOG.md src/handoffPolicy.js test/handoffPolicy.test.js test/workflow.test.js`, `git commit`, `git push -u origin development`
+
+### Session: 0c54c54 — 2026-08-27T20:56:21Z — Claude
+
+- `npm test` (baseline, before this session's edits) — started 2026-08-27T20:54:15Z, finished 2026-08-27T20:54:19Z, exit 0 (211/211, confirming `e91a026` untouched)
+- `npm run lint:workflows` — started 2026-08-27T20:55:05Z, finished 2026-08-27T20:55:05Z, exit 0
+- `npm run docs:check` — started 2026-08-27T20:55:05Z, finished 2026-08-27T20:55:06Z, exit 0
+- `npm run validate` — started 2026-08-27T20:55:06Z, finished 2026-08-27T20:55:06Z, exit 0
+- `npm run audit:clutter` — started 2026-08-27T20:55:06Z, finished 2026-08-27T20:55:07Z, exit 0
+- `npm run audit:privacy` — started 2026-08-27T20:55:07Z, finished 2026-08-27T20:55:08Z, exit 0
+- `npm run audit:security` — started 2026-08-27T20:55:08Z, finished 2026-08-27T20:55:08Z, exit 0
+- `npm test` (final) — started 2026-08-27T20:55:31Z, finished 2026-08-27T20:55:34Z, exit 0
+- `git add AI-HANDOFF.json DEVLOG.md test/workflow.test.js`, `git commit`, `git push -u origin development` — pushed as `0c54c54`, confirmed all six checks green
 
 Every AI agent must keep the current plan and status in this section accurate automatically and refresh it in the same commit as its work, including the Command log for whatever it actually ran. Read it before editing; do not rely on private chat history to learn what another agent changed.
 

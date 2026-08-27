@@ -268,20 +268,30 @@ test('governingDocuments must be rechecked at the start of every session, same o
   assert.ok(!Number.isNaN(Date.parse(handoff.sessionPolicy.lastActionAt)), 'sessionPolicy.lastActionAt must be a parseable timestamp');
 });
 
-test('DEVLOG.md is required to work as a chain of custody: dev-plan reference plus a command log with start/finish times', () => {
+test('DEVLOG.md is required to work as a chain of custody: dev-plan reference plus a command log archive capped at 10 sessions and 180 days', () => {
+  const { validateDevlogChainOfCustody, MAX_ARCHIVE_SESSIONS, MAX_ARCHIVE_AGE_DAYS } = require('../src/handoffPolicy');
   const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
   assert.match(agents, /`DEVLOG\.md` is a chain of custody/);
-  assert.match(agents, /Reference the dev plan instead of restating it/);
+  assert.match(agents, /Reference the dev\s*\n\s*plan instead of restating it/);
   assert.match(agents, /activePlan`:\s*`currentPrompt`/);
-  assert.match(agents, /Include a Command log/);
+  assert.match(agents, /## Command log archive/);
+  assert.match(agents, /capped at the 10 most recent sessions/);
+  assert.match(agents, /180-day backup limit/);
   assert.match(agents, /started TIMESTAMP, finished TIMESTAMP, exit CODE/);
+  assert.match(agents, /no\s*\n\s*more than 10 `### Session:` entries and none older than 180 days/);
   assert.match(agents, /validateDevlogChainOfCustody/);
   const devlog = fs.readFileSync(path.join(root, 'DEVLOG.md'), 'utf8');
-  const section = devlog.split('## Shared AI handoff')[1].split(/\n##\s/)[0];
-  assert.match(section, /dev plan/i);
-  assert.match(section, /AI-HANDOFF\.json/);
-  assert.match(section, /command log/i);
-  assert.match(section, /\bstart(?:ed)?\b[\s\S]*?\bfinish(?:ed)?\b/i);
+  const result = validateDevlogChainOfCustody(devlog);
+  assert.equal(result.ok, true, result.message);
+  const archiveSection = /^## Command log archive.*$/m.exec(devlog);
+  assert.ok(archiveSection, 'DEVLOG.md must have a Command log archive section');
+  const archiveBody = devlog.slice(archiveSection.index + archiveSection[0].length).split(/\n##\s/)[0];
+  const sessionEntries = archiveBody.match(/^### Session: /gm) || [];
+  assert.ok(sessionEntries.length >= 1, 'Command log archive must have at least one Session entry');
+  assert.ok(sessionEntries.length <= MAX_ARCHIVE_SESSIONS, `Command log archive must hold at most ${MAX_ARCHIVE_SESSIONS} sessions (found ${sessionEntries.length})`);
+  const newestEntry = archiveBody.split(/^### Session: /m)[1] || '';
+  assert.match(newestEntry, /\bstart(?:ed)?\b[\s\S]*?\bfinish(?:ed)?\b/i);
+  assert.equal(MAX_ARCHIVE_AGE_DAYS, 180);
   const handoff = JSON.parse(fs.readFileSync(path.join(root, 'AI-HANDOFF.json'), 'utf8'));
   assert.equal(typeof handoff.activePlan.currentPrompt, 'string');
   assert.ok(handoff.activePlan.currentPrompt.trim().length > 0);
