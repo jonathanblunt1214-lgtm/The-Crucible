@@ -1,35 +1,32 @@
 {
   "schemaVersion": 1,
   "activePlan": {
-    "agent": "Codex",
-    "objective": "Promote the verified Nexus repository-name repair while preserving PR #7's permanent lock and making its required block check satisfiable by explicitly approved direct promotions.",
+    "agent": "Claude",
+    "objective": "Add a 2026-08-27 dated changelog section to DEVLOG.md's historical log, per the owner's explicit request for a dev log covering today's real commit history.",
     "steps": [
-      "Reproduce the hosted failure for GITHUB_REPOSITORY=jonathanblunt1214-lgtm/Nexus- and isolate it to src/apiGuard.js.",
-      "Separate the owner and repository segment rules so an owner cannot end in a hyphen while the repository may, retaining the single owner/repository shape and the existing URL/path-injection rejections.",
-      "Add regression coverage for Nexus- and an unsafe trailing-hyphen owner, update the README and shared handoff, then run the complete deterministic verification set.",
-      "Push only to development, confirm hosted Self-Test and CodeQL, and provide the verified immutable commit for the explicitly authorized Nexus gate repair.",
-      "After the approved promotion was blocked by PR #7's required failing status, add a development-push success path to the same block workflow while retaining the unconditional PR #7 failure.",
-      "Verify the workflow regression, push the follow-up commit to development, confirm its genuine block status succeeds, then fast-forward main only after every required check passes."
+      "Reconstruct the true chronological commit order for the day (a97a508..f764336) via git log --format='%h %aI %s', converting mixed UTC/-04:00 timestamps to a single timeline.",
+      "Write dated sub-sections (morning / mid-morning / midday / afternoon) matching this file's existing style: real commit hashes and descriptions, not a narrative summary, with bolded call-outs for notable bugs and a closing Result line per section.",
+      "Note PR #8 (development -> main, opened this session, all 27 checks green, not yet merged - the owner's call) and the PR #7 merge/replacement-hook status in the final Result line.",
+      "Update AI-HANDOFF.json alongside it to satisfy the AI handoff policy gate, since this is a documentation-only change with no code to re-verify beyond the existing test suite."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T08:26:00-04:00",
-    "lastUpdatedAt": "2026-08-27T08:39:00-04:00"
+    "startedAt": "2026-08-27T11:45:00-04:00",
+    "lastUpdatedAt": "2026-08-27T11:48:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed the PR-native Nexus gate reaches the collision step and fails only because the valid repository identifier jonathanblunt1214-lgtm/Nexus- is rejected.",
-      "Updated the guard and regression tests without relaxing rejection of schemes, queries, traversal, whitespace, or extra path segments.",
-      "Preserved PR #7's failing pull-request path and added a genuine passing block status on development pushes so direct promotions no longer require disabling governance."
-      ,"Removed inherited trailing whitespace from the edited block workflow after the hosted commit pre-check correctly identified it."
+      "Added three dated DEVLOG.md sections for 2026-08-27 covering all 15 real commits from a97a508 to f764336, in true chronological order, matching the file's established per-entry style.",
+      "Documented the two real bugs found and fixed this session (the Windows chmod-mode test assertion, and the clutter-audit duplicate-content regression plus its regression guard) inline where they occurred rather than only in the Shared AI handoff summary.",
+      "Recorded PR #8's status (open, green, unmerged) and the PR #7 merge/live-monitoring gap in the closing Result line."
     ],
     "verification": [
-      "Full local suite passes 172/172, including the new Nexus- regression and all existing unsafe-identifier cases.",
-      "The block-check push integration also passes the full 172-test suite, workflow lint, documentation consistency, configuration validation, AI conflict governance, and git diff validation.",
-      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, audit:security, and audit:ai-conflict-governance all pass.",
-      "git diff --check passes. The standalone handoff command correctly refused invocation without its required exact 40-character base/head range; CI supplies that changed range."
+      "Documentation-only change; no source files touched. Full local suite still passes 200/200 from the prior verification at this same tip."
     ],
     "remaining": [
-      "Verify, commit, and push the block-check integration follow-up to development; confirm hosted CI and then complete the already authorized fast-forward promotion before updating Nexus."
+      "Push and confirm AI handoff policy is green for this commit.",
+      "Open item, not yet acted on: PR #7 (the live CI-failure webhook) was merged by the owner and can never fire again. The owner approved opening a replacement permanent monitoring PR, then interrupted before it was created - still needs the owner's go-ahead to actually proceed. Until then, real-time failure notification in this session is down to the 60-minute hourly fallback poll.",
+      "PR #8 (development -> main) is open with all checks green; merging remains the owner's explicit decision, not yet made.",
+      "Codex's own remaining items still stand: the hosted multi-repository integration workflow is intentionally report-only and untested against real repositories/tokens; no promotion or branch-protection activation is authorized without the owner's explicit instruction."
     ]
   }
 }

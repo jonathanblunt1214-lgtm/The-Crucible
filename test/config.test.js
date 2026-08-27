@@ -13,7 +13,9 @@ function fixture() {
 
 test('validates and supplies bounded workload defaults', () => {
   const config = validateConfig(fixture());
-  assert.deepEqual(config.workload, { workers:4, cycles:2, timeoutMinutes:4, maxOutputBytes:1048576, execution:{ network:'allow', memoryMb:null, fileSizeMb:null, processes:null, denyBackground:true } });
+  assert.deepEqual(config.project, { name:'Fixture', projectId:null, mainRepository:null, repositories:[], folderTopology:null });
+  assert.equal(config.suite.mode, 'all');
+  assert.deepEqual(config.workload, { workers:4, cycles:2, timeoutMinutes:4, maxOutputBytes:1048576, heartbeatSeconds:60, execution:{ network:'allow', memoryMb:null, fileSizeMb:null, processes:null, denyBackground:true } });
   assert.equal(config.privacy.scanContactInformation, false);
   assert.deepEqual(config.privacy.allow, []);
   assert.equal(config.clutter.blockTrackedIgnored, false);
@@ -21,6 +23,36 @@ test('validates and supplies bounded workload defaults', () => {
   assert.deepEqual(config.security, { enabled:true, allow:[], allowBinaries:[], maxTextBytes:1048576, dependencyAudit:[], provenanceAudit:[], dependencyPolicy:{ enabled:false, denyGit:true, denyHttp:true, denyLocal:false, allowedRegistryHosts:[], denyLicenses:[] }, malwareScan:{ enabled:false } });
   assert.deepEqual(config.authenticity, { claims:[], requireArtifacts:false });
   assert.deepEqual(config.reproducibility, { enabled:false, commands:[], artifacts:[] });
+});
+
+test('validates a multi-repository project with one Main repository role independent of repository name', () => {
+  const value = fixture();
+  value.project = {
+    name:'Product suite',
+    projectId:'product-suite',
+    mainRepository:'octocat/customer-portal',
+  };
+  assert.deepEqual(validateConfig(value).project, { ...value.project, repositories:[], folderTopology:null });
+
+  value.project.folderTopology = { mode:'explicit', folders:[
+    { path:'app', roles:['influences-main'], links:['123'] },
+    { path:'tests', roles:['checks-only'], links:['123'] },
+    { path:'old', roles:['archive'], links:[] },
+  ] };
+  assert.equal(validateConfig(value).project.folderTopology.folders[2].roles[0], 'archive');
+  value.project.folderTopology.folders[2].roles = ['archive', 'independent'];
+  assert.throws(() => validateConfig(value), /independent folder/);
+});
+
+test('rejects unsafe Main repository names and local repository lists', () => {
+  const unsafe = fixture();
+  unsafe.project.mainRepository = 'https://github.com/octocat/customer-portal';
+  assert.throws(() => validateConfig(unsafe), /unsafe repository identifier/);
+
+  const localList = fixture();
+  localList.project.mainRepository = 'octocat/customer-portal';
+  localList.project.repositories = ['octocat/customer-portal', 'octocat/worker'];
+  assert.throws(() => validateConfig(localList), /supplied by the Main repository manifest/);
 });
 
 test('requires shell-free evidence commands for declared claims', () => {
@@ -71,4 +103,13 @@ test('rejects missing verification and unbounded stress settings', () => {
   const unbounded = fixture();
   unbounded.workload = { workers:99 };
   assert.throws(() => validateConfig(unbounded), /1 through 8/);
+});
+
+test('bounds workload.heartbeatSeconds and lets it be tuned down toward the requested 60s cadence', () => {
+  const tuned = fixture();
+  tuned.workload = { heartbeatSeconds:15 };
+  assert.equal(validateConfig(tuned).workload.heartbeatSeconds, 15);
+  const unbounded = fixture();
+  unbounded.workload = { heartbeatSeconds:1 };
+  assert.throws(() => validateConfig(unbounded), /5 through 300/);
 });

@@ -1,6 +1,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { verifyConfigurationDigest } = require('./integrity');
+const { assertSafeRepository } = require('./apiGuard');
+const { validateSuiteSelection } = require('./suiteSelection');
+const { validateFolderTopology } = require('./folderTopology');
 
 function assert(condition, message) { if (!condition) throw new Error(message); }
 function isObject(value) { return Boolean(value) && typeof value === 'object' && !Array.isArray(value); }
@@ -40,10 +43,22 @@ function boundedInteger(value, fallback, minimum, maximum, label) {
   return number;
 }
 
+function validateProjectRepositories(project) {
+  const mainRepository = project.mainRepository;
+  const repositories = project.repositories;
+  assert(repositories === undefined, 'project.repositories is supplied by the Main repository manifest, not local configuration.');
+  if (mainRepository === undefined) return { mainRepository:null, repositories:[] };
+  assert(typeof mainRepository === 'string', 'project.mainRepository must be an owner/repository name.');
+  return { mainRepository:assertSafeRepository(mainRepository), repositories:[] };
+}
+
 function validateConfig(input) {
   assert(isObject(input), 'Configuration must be a JSON object.');
   assert(input.schemaVersion === 1, 'schemaVersion must be 1.');
   assert(isObject(input.project) && typeof input.project.name === 'string' && input.project.name.trim(), 'project.name is required.');
+  const projectRepositories = validateProjectRepositories(input.project);
+  const folderTopology = validateFolderTopology(input.project.folderTopology);
+  const suite = validateSuiteSelection(input.suite);
   assert(isObject(input.commands), 'commands is required.');
   const prepare = input.commands.prepare || [];
   const verify = input.commands.verify;
@@ -100,7 +115,8 @@ function validateConfig(input) {
   assert(Array.isArray(reproductionArtifacts) && reproductionArtifacts.every((item) => typeof item === 'string' && item && !path.isAbsolute(item) && !item.split(/[\\/]/).includes('..')), 'reproducibility.artifacts must contain safe paths.');
   return {
     schemaVersion:1,
-    project:{ name:input.project.name.trim(), projectId:input.project.projectId || null },
+    project:{ name:input.project.name.trim(), projectId:input.project.projectId || null, ...projectRepositories, folderTopology },
+    suite,
     commands:{ prepare:prepare.map((item, index) => validateCommand(item, 'commands.prepare', index)), verify:verify.map((item, index) => validateCommand(item, 'commands.verify', index)) },
     artifacts,
     clutter:{ allow, allowDuplicateContent:Boolean(clutter.allowDuplicateContent), blockTrackedIgnored:Boolean(clutter.blockTrackedIgnored) },
@@ -125,6 +141,7 @@ function validateConfig(input) {
       cycles:boundedInteger(workload.cycles, 2, 1, 20, 'workload.cycles'),
       timeoutMinutes:boundedInteger(workload.timeoutMinutes, 4, 1, 30, 'workload.timeoutMinutes'),
       maxOutputBytes:boundedInteger(workload.maxOutputBytes, 1_048_576, 4096, 10_485_760, 'workload.maxOutputBytes'),
+      heartbeatSeconds:boundedInteger(workload.heartbeatSeconds, 60, 5, 300, 'workload.heartbeatSeconds'),
       execution:{ network:execution.network || 'allow', memoryMb:execution.memoryMb || null, fileSizeMb:execution.fileSizeMb || null, processes:execution.processes || null, denyBackground:execution.denyBackground !== false },
     },
   };

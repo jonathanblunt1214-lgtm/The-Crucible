@@ -1,0 +1,35 @@
+name: Multi-repository integration (report only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      main_repository:
+        description: Current owner/repository name of the project's Main repository
+        required: true
+        type: string
+      member_repository:
+        description: Current owner/repository member used as the calling repository
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  integration:
+    name: Multi-repository integration report
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@1e60f620b9541dbe92d9afac4d6a2a23e152641f # v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Run hosted project repository gates
+        env:
+          CRUCIBLE_MAIN_REPOSITORY: ${{ inputs.main_repository }}
+          GITHUB_REPOSITORY: ${{ inputs.member_repository }}
+          CRUCIBLE_SECURITY_READ_TOKEN: ${{ secrets.MULTI_REPOSITORY_READ_TOKEN }}
+        run: node src/hostedMultiRepositoryIntegration.js

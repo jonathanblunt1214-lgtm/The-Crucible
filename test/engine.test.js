@@ -5,7 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { auditClutter, glob } = require('../src/clutter');
-const { resolveSpawn, runCrucible } = require('../src/runner');
+const { resolveSpawn, runCommand, runCrucible } = require('../src/runner');
 const { maintain } = require('../src/maintenance');
 
 function git(root, args) { return execFileSync('git', args, { cwd:root, encoding:'utf8', windowsHide:true }).trim(); }
@@ -47,6 +47,33 @@ test('bounded workers run direct commands and verify artifacts', async () => {
   const result = await runCrucible(root, value);
   assert.equal(result.workers * result.cycles * result.commands, 4);
   assert.equal(fs.readFileSync(output, 'utf8'), 'ok');
+});
+
+test('prints a heartbeat only while a long-running command is actually running', async () => {
+  const root = repository();
+  const written = [];
+  const original = process.stdout.write.bind(process.stdout);
+  process.stdout.write = (chunk, ...rest) => { written.push(String(chunk)); return original(chunk, ...rest); };
+  try {
+    await runCommand(root, { name:'Sleep', run:process.execPath, args:['-e', 'setTimeout(() => {}, 260)'], cwd:'.' }, 5_000, '', 1_048_576, null, 50);
+  } finally {
+    process.stdout.write = original;
+  }
+  const heartbeats = written.filter((line) => line.includes('Still running: Sleep'));
+  assert.ok(heartbeats.length >= 2, `expected multiple heartbeats while the command ran, got ${heartbeats.length}`);
+});
+
+test('never prints a heartbeat for a command that finishes before the interval elapses', async () => {
+  const root = repository();
+  const written = [];
+  const original = process.stdout.write.bind(process.stdout);
+  process.stdout.write = (chunk, ...rest) => { written.push(String(chunk)); return original(chunk, ...rest); };
+  try {
+    await runCommand(root, { name:'Quick', run:process.execPath, args:['-e', "''"], cwd:'.' }, 5_000, '', 1_048_576, null, 60_000);
+  } finally {
+    process.stdout.write = original;
+  }
+  assert.equal(written.filter((line) => line.includes('Still running')).length, 0);
 });
 
 test('package-manager commands retain shell-free Windows compatibility', () => {

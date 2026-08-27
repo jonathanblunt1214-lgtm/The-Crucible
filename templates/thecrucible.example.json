@@ -3,7 +3,19 @@
   "schemaVersion": 1,
   "project": {
     "name": "Example project",
-    "projectId": "example-project"
+    "projectId": "example-project",
+    "mainRepository": "octocat/example-web",
+    "folderTopology": {
+      "mode": "explicit",
+      "folders": [
+        { "path": "web", "roles": ["influences-main"], "links": ["123"] },
+        { "path": "api", "roles": ["influences-main", "checks-only"], "links": ["123"] },
+        { "path": "archive", "roles": ["archive"], "links": [] }
+      ]
+    }
+  },
+  "suite": {
+    "mode": "all"
   },
   "commands": {
     "prepare": [
@@ -34,6 +46,7 @@
     "cycles": 2,
     "timeoutMinutes": 4,
     "maxOutputBytes": 1048576,
+    "heartbeatSeconds": 60,
     "execution": { "network": "allow" }
   }
 }
