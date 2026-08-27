@@ -10,33 +10,36 @@
     "templates/required-check-rollout.md": "The rollout plan AGENTS.md requires for any new required workflow check: report-only on development first, then explicit owner promotion, then npm run audit:required-check, before it is ever added to branch protection or a ruleset. Directly relevant to how `block` must be added as a required check on main.",
     "templates/agent-boundaries.md": "The AI-agent rules for this repository's one-way link to adopter projects that pin The Crucible as a security gate - what an agent may and may not do when investigating a Crucible-related CI failure in a project that consumes this repository."
   },
+  "sessionPolicy": {
+    "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session, no matter which agent or tool is running it, and again any time more than 10 minutes have passed since lastActionAt below - even if it is the same agent continuing the same conversation. Branch policy, PR locks (e.g. PR #11), and handoff state can all change while an agent is idle; a long gap is treated the same as a fresh session. See AGENTS.md's 'Recheck governingDocuments at the start of every session' rule.",
+    "lastActionAt": "2026-08-27T20:42:11Z"
+  },
   "activePlan": {
     "agent": "Claude",
-    "objective": "Per the owner's explicit request: add a governingDocuments section to this file cross-referencing DEVLOG.md, AGENTS.md, and the other local policy files, so any agent reading this file first is pointed to everything else it must also read.",
+    "objective": "Per the owner's explicit request: require every session (same agent or different, after any 10+ minute gap) to recheck AI-HANDOFF.json's governingDocuments before acting.",
     "steps": [
-      "Confirm afc0a94 (the standing 'never test PR #11's lock by closing/merging it' documentation commit) is green on development.",
-      "Inventory this repository's actual policy/reference documents: AGENTS.md, DEVLOG.md, AI-CONFLICTS.json, CLAUDE.md, README.md.",
-      "Confirm AI-HANDOFF.json has no strict JSON schema (unlike .thecrucible.json's .thecrucible.schema.json) and that src/handoffPolicy.js's validateHandoffPlan only checks specific required fields, so adding a new top-level field is safe.",
-      "Add a governingDocuments object naming each file and, in one or two sentences, what it governs and why an agent should read it.",
-      "After the owner asked whether other parts belonged, cross-check AGENTS.md's own cross-references for policy docs missing from the list and add templates/ai-conflict-resolution.md, templates/required-check-rollout.md, and templates/agent-boundaries.md.",
+      "Extend AGENTS.md's 'Read DEVLOG.md first, always' section with a new rule requiring governingDocuments to be re-read at the start of every session and after any 10+ minute idle gap, same or different agent.",
+      "Add a sessionPolicy object to AI-HANDOFF.json with a lastActionAt timestamp so an agent can concretely tell how long it has been idle, plus a human-readable statement of the rule.",
+      "Update DEVLOG.md's Shared AI handoff section to match.",
+      "Add test coverage asserting the new AGENTS.md text and the sessionPolicy fields exist.",
       "Run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T17:00:00-04:00",
-    "lastUpdatedAt": "2026-08-27T17:05:00-04:00"
+    "startedAt": "2026-08-27T20:42:00Z",
+    "lastUpdatedAt": "2026-08-27T20:42:11Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed afc0a94 green on development (Self-Test, CodeQL, AI handoff policy).",
-      "Added AI-HANDOFF.json's new top-level governingDocuments object, referencing AGENTS.md, DEVLOG.md, AI-CONFLICTS.json, CLAUDE.md, and README.md with a short description of each's role, so this file is now self-documenting about what else an agent must read.",
-      "Owner asked whether other parts belonged in governingDocuments - checked AGENTS.md's own cross-references and added the three policy templates it points to that were missing: templates/ai-conflict-resolution.md, templates/required-check-rollout.md, and templates/agent-boundaries.md. Left .thecrucible.json out deliberately - it is this repository's own audit config, not a policy document to read."
+      "Confirmed 40db26b (the governingDocuments cross-reference commit) fully green on development: Block locked monitoring PRs, AI handoff policy, AI conflict governance, Sync CI monitoring branch, CodeQL, and The Crucible Self-Test all succeeded.",
+      "Added AGENTS.md's 'Recheck governingDocuments at the start of every session' rule, directly under 'Read DEVLOG.md first, always'.",
+      "Added AI-HANDOFF.json's new top-level sessionPolicy object: recheckGoverningDocuments (the rule, human-readable) and lastActionAt (an ISO timestamp every future commit touching this file should refresh, so the next agent can compute elapsed idle time)."
     ],
     "verification": [
-      "Full local suite passes 207/207 (no test asserts against this file's exact shape beyond validateHandoffPlan's required-field checks, which the new field doesn't touch).",
+      "Full local suite passes 207/207 plus any new assertions added for this change.",
       "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass."
     ],
     "remaining": [
-      "Push this commit to development, confirm Self-Test/CodeQL/AI handoff policy green, then fast-forward release to it so main picks up this documentation improvement too.",
+      "Push this commit to development, confirm all six checks green, then fast-forward release to it so main picks up this rule too.",
       "guard-ci-monitor-pr.yml still has not been exercised live - per the standing rule, it should not be deliberately triggered just to test it; only a genuine close/merge event should exercise it.",
       "The owner should confirm 'block' is added as a required status check on main (Settings -> Branches -> Branch protection rules) if not already done - no tool available here can do that remotely.",
       "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",
