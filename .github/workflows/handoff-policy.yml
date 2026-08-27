@@ -8,7 +8,7 @@ on:
         required: true
         type: string
   push:
-    branches: [development]
+    branches: [development, main]
   pull_request:
     branches: [main]
 

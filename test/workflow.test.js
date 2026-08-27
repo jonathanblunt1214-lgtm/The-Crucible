@@ -213,6 +213,18 @@ test('the monitoring branch syncs development content via distinct commits, neve
   assert.match(agents, /ci-monitor.*is an explicit exception to the no-new-branches rule/s);
 });
 
+test('the ci-monitor pull request is automatically reopened if closed without being merged', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'guard-ci-monitor-pr.yml'), 'utf8');
+  assert.match(workflow, /^on:\s*\n\s*pull_request:\s*\n\s*types: \[closed\]\s*$/m);
+  assert.match(workflow, /permissions:\s*\n\s*contents: read\s*\n\s*pull-requests: write/);
+  assert.match(workflow, /if: github\.event\.pull_request\.head\.ref == 'ci-monitor' && github\.event\.pull_request\.merged == false/);
+  assert.match(workflow, /gh pr reopen "\$number" --repo "\$REPOSITORY"/);
+  assert.match(workflow, /does NOT try to silently open a replacement/);
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /guard-ci-monitor-pr\.yml.*reopens PR #11\s*\n\s*automatically/s);
+  assert.match(agents, /invisible self-repair/);
+});
+
 test('release to main promotion is automated: opens or reuses a pull request, waits for every check, then merges', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'promote-release.yml'), 'utf8');
   assert.match(workflow, /^on:\s*\n\s*push:\s*\n\s*branches: \[release\]\s*$/m);
@@ -232,7 +244,7 @@ test('GitHub checks every development change and main PR for a current DEVLOG ha
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'handoff-policy.yml'), 'utf8');
   assert.match(workflow, /name: AI handoff policy/);
   assert.match(workflow, /workflow_dispatch:[\s\S]*base_sha:[\s\S]*required: true/);
-  assert.match(workflow, /push:\s*\n\s*branches: \[development\]/);
+  assert.match(workflow, /push:\s*\n\s*branches: \[development, main\]/);
   assert.match(workflow, /pull_request:\s*\n\s*branches: \[main\]/);
   assert.match(workflow, /fetch-depth: 0/);
   assert.match(workflow, /HANDOFF_BASE_SHA:/);

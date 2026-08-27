@@ -2,37 +2,34 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Claude",
-    "objective": "Fix an unintended consequence of the release->main promotion automation: PR #9 (the permanent monitoring hook) was auto-merged and auto-closed by GitHub, and would keep recurring on every future promotion unless the monitoring hook's design changes.",
+    "objective": "Two owner-requested follow-ups after a full CI diagnostic: (1) run CodeQL, AI handoff policy, the local suite, and lint/docs/audits directly on main, (2) something that permanently keeps PR #11 open no matter what.",
     "steps": [
-      "Diagnose the auto-merge: merging PR #10 (release -> main, 63a42ec) made development's history - including PR #9's exact head commit, since PR #9's head was the development branch ref directly - reachable from main, so GitHub auto-closed and auto-merged PR #9 with nobody touching its merge button.",
-      "Recognize this is structural: every future release promotion will do the same thing to whatever PR is currently serving as the monitoring hook, if that PR's head is development itself.",
-      "Per the owner's explicit direction, redesign the mechanism: create a dedicated ci-monitor branch whose own commits are distinct new commits copying development's tree content - never development's actual commit objects.",
-      "Add .github/workflows/sync-ci-monitor.yml (push:development trigger) to keep ci-monitor current this way, never by merging/rebasing/fast-forwarding development's real commits onto it.",
-      "Open PR #11 (ci-monitor -> main) as PR #9's replacement and subscribe to its activity.",
-      "Extend block-pr-7.yml's LOCKED_PR_NUMBERS to '7 9 11'.",
-      "Update AGENTS.md throughout: the absolute never-merge rule now names PR #11 and documents the incident and the fix, ci-monitor is added as an explicit branch-creation exception, and the 'Automatic CI monitoring' / 'CI on development' sections now reference PR #11 and sync-ci-monitor.yml.",
-      "Add matching test/workflow.test.js coverage for sync-ci-monitor.yml and the updated LOCKED_PR_NUMBERS/AGENTS.md text.",
+      "For (1): check codeql.yml, self-test.yml, and handoff-policy.yml's push triggers against main.",
+      "Find codeql.yml and self-test.yml already trigger on push: branches: [main, development] - only handoff-policy.yml was missing main from its push trigger (it only had push:development and pull_request:main, which fires before a merge, not on the resulting push to main).",
+      "Add main to handoff-policy.yml's push trigger.",
+      "For (2): design a safe, deterministic automation - reopen PR #11 immediately if closed without being merged (block-pr-7.yml's check cannot prevent a plain close). Do NOT auto-open a replacement or rewrite AGENTS.md if it is ever actually merged instead - that stays a human/attended-AI decision, per this repo's standing rule against invisible self-repair.",
+      "Add .github/workflows/guard-ci-monitor-pr.yml: pull_request:closed trigger, scoped to head.ref == 'ci-monitor' && merged == false, reopening via gh pr reopen.",
+      "Document both changes in AGENTS.md's PR #11 bullet; add matching test/workflow.test.js coverage for both.",
       "Run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T16:10:00-04:00",
-    "lastUpdatedAt": "2026-08-27T16:25:00-04:00"
+    "startedAt": "2026-08-27T16:30:00-04:00",
+    "lastUpdatedAt": "2026-08-27T16:45:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Created the ci-monitor branch (one commit, parent = main's tip, tree = development's tip at the time) and pushed it.",
-      "Opened PR #11 (ci-monitor -> main), draft, explaining both the PR #9 incident and why ci-monitor's design prevents recurrence. Subscribed to its activity.",
-      "Added .github/workflows/sync-ci-monitor.yml: on push to development, replaces ci-monitor's tree with development's current content and commits it as a new commit on top of ci-monitor's own separate history - never fetching or fast-forwarding development's real commits.",
-      "block-pr-7.yml's LOCKED_PR_NUMBERS is now '7 9 11'; its header comment records all three PRs' history (PR #7 manually merged, PR #9 auto-merged as a side effect, PR #11 current).",
-      "AGENTS.md's absolute branch-policy rule now names PR #11, documents the PR #9 auto-merge incident and root cause, explains ci-monitor's distinct-commit design and why it prevents recurrence, and lists ci-monitor as an explicit branch-creation exception. The 'CI on development' and 'Automatic CI monitoring' sections, and the main-promotion bullet's PR #9 cross-reference, were all updated to match.",
-      "Added two new test/workflow.test.js tests: one updated for LOCKED_PR_NUMBERS='7 9 11' plus PR #11 documentation, one new test asserting sync-ci-monitor.yml's trigger/permissions/commands and the corresponding AGENTS.md text."
+      "handoff-policy.yml's push trigger is now branches: [development, main], so it verifies the DEVLOG/AI-HANDOFF handoff on the actual post-merge commit landing on main, not just the pre-merge PR diff.",
+      "Added .github/workflows/guard-ci-monitor-pr.yml: reopens PR #11 automatically the instant it's closed without being merged, scoped strictly to head branch ci-monitor so no other PR is ever touched. Explicitly does nothing if PR #11 is actually merged - no silent replacement PR or AGENTS.md rewrite.",
+      "AGENTS.md's PR #11 bullet now documents guard-ci-monitor-pr.yml and the human-in-the-loop boundary for the merged case.",
+      "Added two test/workflow.test.js updates: one asserting handoff-policy.yml's new push trigger, one new test asserting guard-ci-monitor-pr.yml's trigger/permissions/condition/command and the corresponding AGENTS.md text."
     ],
     "verification": [
-      "Full local suite passes 206/206 (204 + 2 new/updated).",
+      "Full local suite passes 207/207 (206 + 1 new).",
       "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass."
     ],
     "remaining": [
-      "Push this commit to development, confirm Self-Test/CodeQL/AI handoff policy green, then confirm sync-ci-monitor.yml actually fires on that push and commits a fresh snapshot onto ci-monitor - this is the mechanism's first real exercise (ci-monitor's current content was seeded manually, not yet by the automated workflow).",
+      "Push this commit to development, confirm Self-Test/CodeQL/AI handoff policy green, then fast-forward release to it so the next main promotion exercises handoff-policy.yml's new push:main trigger for real.",
+      "guard-ci-monitor-pr.yml has not yet been exercised live (no PR has been closed-without-merging since it was added) - worth a manual sanity check if the owner wants to verify it before trusting it fully.",
       "The owner should confirm 'block' is added as a required status check on main (Settings -> Branches -> Branch protection rules) if not already done - no tool available here can do that remotely.",
       "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",
       "Codex's own remaining items still stand: no promotion or branch-protection change is authorized without the owner's explicit instruction beyond what's already been done."
