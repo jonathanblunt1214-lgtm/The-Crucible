@@ -2,31 +2,57 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Codex",
-    "objective": "Add a reusable two-phase AI-link bootstrap for future repositories that creates Development-branch and applies governance only after the workflows are verified on main.",
+    "objective": "Add categorized selectable suite execution with persisted initial configuration and implement the eight requested repository protections and tests.",
     "steps": [
-      "Extend the human-dispatched AI link with separate install and activate phases.",
-      "Require main as the default branch, create Development-branch during installation, and install the mandatory AI governance files without activating required checks.",
-      "Before activation, verify the installed workflows on main and verify their exact check names on a representative pull request.",
-      "Apply zero-bypass rulesets through an explicitly supplied administration token, while preserving the rule that development is the only writable AI branch.",
-      "Add regression tests and documentation, run the complete verification set, and push only to development."
+      "Add persisted all-or-selected suite configuration and an initial interactive configurator.",
+      "Route the main run through selected categories while retaining mandatory configuration and handoff baselines.",
+      "Implement the eight requested repository identity, snapshot, governance, resilience, token, manifest-change, hosted-integration, and parser protections in their categories.",
+      "Update schema, templates, workflows, documentation, and regression coverage.",
+      "Run the complete verification set and report any remaining work."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T09:47:00-04:00",
-    "lastUpdatedAt": "2026-08-27T09:58:00-04:00"
+    "startedAt": "2026-08-27T10:00:00-04:00",
+    "lastUpdatedAt": "2026-08-27T13:00:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed the current link is repository-local, human-dispatched, and presently installs files only.",
-      "Selected a two-phase design so required checks cannot be enabled before their workflows exist on main and have reported on a representative pull request.",
-      "Implemented installation of the mandatory AI governance files and safe creation of Development-branch without replacing an existing branch.",
-      "Implemented fail-closed activation with exact owner confirmation, a repository-scoped Administration token, representative pull-request check verification, and zero-bypass rulesets."
+      "Preserved the completed main and development branch bootstrap changes from the current worktree.",
+      "Fetched origin/development and confirmed local HEAD still matches da395548d8928180f48b7d9c4c0baba0e4b8e9d2.",
+      "Confirmed the existing projectId did not aggregate repositories and the GitHub security gate previously checked only the caller and engine.",
+      "Added optional project.mainRepository and project.repositories topology with safe owner/repository validation, case-insensitive uniqueness, a 2 through 50 member bound, and a requirement that the Main repository be listed.",
+      "Made the Main repository a stable project role independent of the repository's actual GitHub name.",
+      "Expanded the GitHub repository security gate to check every configured member plus The Crucible engine, fail for an unlisted caller, and detect stale names from GitHub's current full_name response.",
+      "Recorded each repository check with source, target, operation, cross-repository status, and Main repository context, and documented that every interaction with another repository is a fail-closed repository gate.",
+      "Updated the JSON schema, example configuration, README, and regression tests while preserving single-repository behavior.",
+      "Fetched origin/development again and confirmed the shared branch has not moved before this extension.",
+      "Added case-insensitive normalization so update repository, Update the repository, and Update Repository resolve to the same bounded update repository operation.",
+      "Moved multi-repository membership authority into .thecrucible-repositories.json on the Main repository and added a reusable manifest template.",
+      "The global gate now pulls the manifest fresh through the GitHub API, validates 2 through 50 safe unique members including the Main repository, and fails closed when the list cannot be read or validated.",
+      "Removed local project.repositories configuration so member repositories cannot diverge from the Main repository's authoritative list.",
+      "Documented required Contents read access, manifest setup, current-name detection, and canonical update operation behavior.",
+      "Fetched origin/development and confirmed the shared branch remains unchanged before broadening command recognition.",
+      "Reviewed the current suite and documented non-goals for missing protection and test opportunities.",
+      "Expanded Update Repository normalization for repo abbreviation, polite request prefixes, optional articles and possessives, harmless suffixes, whitespace, capitalization, and trailing sentence punctuation.",
+      "Kept plural, destructive, target-bearing, compound, negated, and ambiguous commands outside the shorthand.",
+      "Updated README behavior documentation and regression fixtures.",
+      "Added structured operation metadata with updatesCrucibleRepositoryList=true and a mandatory user notice naming .thecrucible-repositories.json on the Main repository.",
+      "Verified the mandatory disclosure specifically for please update this repository and can you update the repo question forms.",
+      "Added persisted all-or-selected suite categories with an initial interactive configurator.",
+      "Added stable repository IDs, immutable manifest SHA snapshots, global member governance, bounded API retry, token-boundary assertions, CODEOWNERS manifest protection, a report-only hosted multi-repository workflow, and parser fuzzing.",
+      "Added tracked global policy variables for Crucible and from-now-on commands, with any command containing in this project stored in the current repository's local policy file instead.",
+      "Replaced the flat project repository manifest with schema version 2 branch sections, assigning Development-branch only to repositories explicitly directed by the user and verifying each repository against only its assigned branches.",
+      "Added fail-closed main-<link> and development-<link> pairing by case-insensitive suffix, while retaining exact GitHub branch spelling and the unsuffixed default pair.",
+      "Added slash-style linked sets where branches such as ABC/123 and xyz/123 share the case-insensitive identifier after the final slash and fail as one gate.",
+      "Added an initial setup prompt for projects with three or more top-level folders, persisting explicit influences-main, checks-only, archive, independent, combined, and link topology without inference."
     ],
     "verification": [
-      "Full local suite passes 172/172.",
-      "Workflow permissions lint, documentation consistency, configuration validation, AI conflict governance, clutter, privacy, security, and git diff validation pass."
+      "Focused repository-operation suite passes 3/3.",
+      "Full local suite passes 196/196 after explicit folder-topology setup changes.",
+      "Configuration validation, workflow permissions lint across 9 workflows, documentation consistency, AI conflict governance, privacy, security, clutter, JSON parsing, and git diff validation pass."
     ],
     "remaining": [
-      "Push the verified commit only to development and confirm hosted Self-Test and CodeQL. Adoption remains per-repository unless a separate template or organization provisioning service places the link into future repositories."
+      "Run the report-only hosted integration against explicitly supplied repositories and token when authorized.",
+      "Commit and push only to development if requested; no promotion or branch-protection activation is authorized."
     ]
   }
 }

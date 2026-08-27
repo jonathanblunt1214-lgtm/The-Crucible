@@ -7,13 +7,22 @@
   "required": ["schemaVersion", "project", "commands"],
   "properties": {
     "schemaVersion": { "const": 1 },
+    "suite": {
+      "type": "object", "additionalProperties": false,
+      "properties": {
+        "mode": { "enum": ["all", "selected"] },
+        "categories": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["governance", "repository", "security", "privacy", "quality", "hygiene", "resilience"] } }
+      }
+    },
     "project": {
       "type": "object",
       "additionalProperties": false,
       "required": ["name"],
       "properties": {
         "name": { "type": "string", "minLength": 1, "maxLength": 100 },
-        "projectId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$" }
+        "projectId": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]{0,79}$" },
+        "mainRepository": { "$ref": "#/$defs/repository" },
+        "folderTopology": { "$ref": "#/$defs/folderTopology" }
       }
     },
     "commands": {
@@ -153,6 +162,24 @@
     }
   },
   "$defs": {
+    "repository": { "type": "string", "pattern": "^[A-Za-z0-9](?:[A-Za-z0-9._-]*[A-Za-z0-9])?/[A-Za-z0-9][A-Za-z0-9._-]*$" },
+    "folderTopology": {
+      "type": "object", "additionalProperties": false, "required": ["mode", "folders"],
+      "properties": {
+        "mode": { "const": "explicit" },
+        "folders": {
+          "type": "array", "minItems": 3, "maxItems": 50,
+          "items": {
+            "type": "object", "additionalProperties": false, "required": ["path", "roles"],
+            "properties": {
+              "path": { "type": "string", "pattern": "^[^./\\\\][^/\\\\]{0,239}$" },
+              "roles": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "enum": ["influences-main", "checks-only", "archive", "independent"] } },
+              "links": { "type": "array", "uniqueItems": true, "maxItems": 20, "items": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,80}$" } }
+            }
+          }
+        }
+      }
+    },
     "commands": {
       "type": "array",
       "minItems": 1,

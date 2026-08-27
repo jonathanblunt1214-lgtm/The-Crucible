@@ -26,10 +26,16 @@ const { auditDocSync, syncReadme } = require('./docSync');
 const { auditMalware } = require('./malwareScan');
 const { quarantineFindings, quarantineNote } = require('./quarantine');
 const { auditAIConflictLedger } = require('./aiConflictLedger');
+const { categoryEnabled } = require('./suiteSelection');
+const { auditGlobalRepositoryGovernance } = require('./globalRepositoryGovernance');
 
 const action = process.argv[2] || 'run';
 const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
 let activeConfig = null;
+const ACTION_CATEGORIES = Object.freeze({
+  'core-ref':'repository', precheck:'quality', clutter:'hygiene', privacy:'privacy', security:'security',
+  'github-security':'repository', authenticity:'quality', collisions:'repository', maintain:'hygiene', 'workflow-lint':'hygiene', reproducibility:'quality',
+});
 
 function designBriefGate(root) {
   const result = auditDesignBrief(root);
@@ -100,6 +106,8 @@ async function githubSecurityGate(config) {
   console.log(report);
   publishGithubSecurityReport(report);
   if (result.findings.length) throw new Error('GitHub repository security settings gate requires the fixes listed in the report above. See "GitHub repository security settings gate" in README.md for the full walkthrough.');
+  const globalGovernance = await auditGlobalRepositoryGovernance(result.manifestSnapshot);
+  if (globalGovernance.findings.length) throw new Error(`Global repository governance gate failed at manifest ${globalGovernance.manifestSha || 'unknown'}:\n${globalGovernance.findings.map((item) => `- ${item.repository}: ${item.type}`).join('\n')}`);
   return result;
 }
 
@@ -144,6 +152,8 @@ async function main() {
   }
   const config = loadConfig(root, process.env.CRUCIBLE_CONFIG || '.thecrucible.json');
   activeConfig = config;
+  const actionCategory = ACTION_CATEGORIES[action];
+  if (actionCategory && !categoryEnabled(config.suite, actionCategory) && !(actionCategory === 'repository' && categoryEnabled(config.suite, 'resilience'))) return console.log(`[The Crucible] Skipped ${action}: ${actionCategory} is not selected in the persisted suite configuration.`);
   if (action === 'validate') return console.log(`[The Crucible] Valid configuration for ${config.project.name}.`);
   if (action === 'commit') { const result = commitGate(root); return console.log(`[The Crucible] Commit Gate passed ${result.paths.length} changed path(s).`); }
   if (action === 'precheck') { await precheckGate(root, config); return; }
@@ -220,29 +230,36 @@ async function main() {
   }
   if (action !== 'run') throw new Error(`Unknown action: ${action}`);
   const snapshot = stagedSnapshot(root);
-  designBriefGate(root);
-  await coreRefGate();
-  await precheckGate(root, config);
-  const privacy = auditPrivacy(root, config, snapshot);
-  if (privacy.findings.length) throw new Error(`Personal identifiers detected:\n${privacy.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}`);
-  const clutter = auditClutter(root, config, snapshot);
-  if (clutter.findings.length) throw new Error(`Clutter detected:\n${clutter.findings.map((item) => `- ${item.type}: ${item.path}`).join('\n')}`);
-  governanceGate(root, config, snapshot);
-  await securityGate(root, config, snapshot);
-  workflowLintGate(root);
-  await githubSecurityGate(config);
-  await authenticityGate(root, config);
-  const result = await runCrucible(root, config);
-  const artifactSecurity = auditArtifactSecurity(root, config);
-  if (artifactSecurity.findings.length) {
-    const quarantine = quarantineFindings(root, artifactSecurity.findings);
-    const error = new Error(`Generated artifact security scan failed:\n${artifactSecurity.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}${quarantineNote(quarantine)}`);
-    error.findings = artifactSecurity.findings;
-    error.quarantined = quarantine.quarantined;
-    throw error;
+  const selected = config.suite.categories;
+  if (categoryEnabled(config.suite, 'governance')) { designBriefGate(root); governanceGate(root, config, snapshot); }
+  if (categoryEnabled(config.suite, 'repository') || categoryEnabled(config.suite, 'resilience')) { await coreRefGate(); await githubSecurityGate(config); }
+  if (categoryEnabled(config.suite, 'quality')) await precheckGate(root, config);
+  if (categoryEnabled(config.suite, 'privacy')) {
+    const privacy = auditPrivacy(root, config, snapshot);
+    if (privacy.findings.length) throw new Error(`Personal identifiers detected:\n${privacy.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}`);
   }
-  await verifyReproducibility(root, config);
-  console.log(`[The Crucible] PASS: ${config.project.name} completed ${result.workers * result.cycles * result.commands} verification command runs with ${result.artifacts} required artifact(s).`);
+  if (categoryEnabled(config.suite, 'hygiene')) {
+    const clutter = auditClutter(root, config, snapshot);
+    if (clutter.findings.length) throw new Error(`Clutter detected:\n${clutter.findings.map((item) => `- ${item.type}: ${item.path}`).join('\n')}`);
+    workflowLintGate(root);
+  }
+  if (categoryEnabled(config.suite, 'security')) await securityGate(root, config, snapshot);
+  let result = null;
+  if (categoryEnabled(config.suite, 'quality')) {
+    await authenticityGate(root, config);
+    result = await runCrucible(root, config);
+    const artifactSecurity = auditArtifactSecurity(root, config);
+    if (artifactSecurity.findings.length) {
+      const quarantine = quarantineFindings(root, artifactSecurity.findings);
+      const error = new Error(`Generated artifact security scan failed:\n${artifactSecurity.findings.map((item) => `- ${item.type}: ${item.path}:${item.line}`).join('\n')}${quarantineNote(quarantine)}`);
+      error.findings = artifactSecurity.findings;
+      error.quarantined = quarantine.quarantined;
+      throw error;
+    }
+    await verifyReproducibility(root, config);
+  }
+  const workload = result ? `; ${result.workers * result.cycles * result.commands} verification command runs and ${result.artifacts} required artifact(s)` : '';
+  console.log(`[The Crucible] PASS: ${config.project.name} completed suite categories: ${selected.join(', ')}${workload}.`);
 }
 
 main()

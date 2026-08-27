@@ -1,6 +1,6 @@
 # Copy this file to a new repository's main branch, replace the pinned
 # Crucible SHA, and run it manually in two phases. Install creates the
-# governance baseline and Development-branch. Activate is allowed only after
+# governance baseline and required Development-branch. Activate is allowed only after
 # a representative pull request has produced both named checks.
 name: Connect The Crucible governance
 
@@ -28,7 +28,7 @@ permissions:
 jobs:
   install:
     if: inputs.phase == 'install'
-    name: Install AI governance and Development-branch
+    name: Install AI governance and required branches
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -72,7 +72,7 @@ jobs:
           git add AI-CONFLICTS.json AI-HANDOFF.json THE-CRUCIBLE-DESIGN-BRIEF.md .github/workflows/ai-conflict-governance.yml .github/workflows/ai-handoff-policy.yml
           git commit -m "Install Crucible AI governance"
           git push origin HEAD:refs/heads/main
-      - name: Create Development-branch at the governance commit
+      - name: Create required Development-branch at the governance commit
         run: |
           set -euo pipefail
           if git ls-remote --exit-code --heads origin refs/heads/Development-branch >/dev/null 2>&1; then
@@ -81,7 +81,7 @@ jobs:
           fi
           git push origin HEAD:refs/heads/Development-branch
       - name: Preserve the safe enforcement boundary
-        run: echo "Open a representative Development-branch to main pull request. Do not activate until both AI checks succeed."
+        run: echo "Both required branches now exist: main and Development-branch. Open a representative Development-branch to main pull request. Do not activate until both AI checks succeed."
 
   activate:
     if: inputs.phase == 'activate'
@@ -143,4 +143,4 @@ jobs:
           apply_ruleset 'Crucible default branch governance' "$default_rules"
           apply_ruleset 'AI branch scope - Development-branch only' "$scope_rules"
       - name: Confirm governance
-        run: echo "main is protected; Development-branch is the only AI development branch; other branch creation, update, and deletion are blocked."
+        run: echo "Both required branches exist: main and Development-branch. main is protected; Development-branch is the only AI development branch; other branch creation, update, and deletion are blocked."
