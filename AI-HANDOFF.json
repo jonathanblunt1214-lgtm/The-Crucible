@@ -2,32 +2,29 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Claude",
-    "objective": "Add a periodic 'still running' heartbeat to the workload runner, per the owner's explicit request, so a long-running Crucible command doesn't look hung.",
+    "objective": "Restore AI handoff policy compliance after two GitHub Copilot Autofix commits landed on development without updating DEVLOG.md/AI-HANDOFF.json.",
     "steps": [
-      "Add workload.heartbeatSeconds (bounded 5-300, default 60) to .thecrucible.schema.json and src/config.js's validated defaults.",
-      "In src/runner.js's runCommand, start a setInterval immediately after spawning the child process and clear it on close/error/timeout, so it can only fire while that exact command is actively running.",
-      "Thread config.workload.heartbeatSeconds through runCrucible's prepare and verify command loops.",
-      "Document the new field in templates/thecrucible.example.json and README's workload section.",
-      "Add tests: bounds validation, a real heartbeat firing multiple times during an artificially slow command, and zero heartbeats for a command that finishes before the interval elapses.",
-      "Run the full local suite plus every fast/offline audit before pushing."
+      "Confirm the AI handoff policy failure on 641cbac and 2d4abe9 is real and current: both are Copilot Autofix commits accepted directly on GitHub, each touching exactly one test file.",
+      "Read both diffs: each fixes a genuine CodeQL 'Incomplete string escaping or encoding' finding by replacing a dot-only regex escape with full metacharacter escaping in a RegExp built from a filename.",
+      "Confirm the fixes are correct and test-only (no production code path affected); keep them as-is rather than reverting.",
+      "Run the full local suite at the new tip to confirm nothing else broke.",
+      "Update DEVLOG.md and AI-HANDOFF.json to describe these two commits, satisfying the handoff policy, and push."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T11:10:00-04:00",
-    "lastUpdatedAt": "2026-08-27T11:25:00-04:00"
+    "startedAt": "2026-08-27T11:29:00-04:00",
+    "lastUpdatedAt": "2026-08-27T11:32:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Added workload.heartbeatSeconds to the schema and validated config (bounded 5-300, default 60).",
-      "runCommand now emits '[The Crucible] Still running: <command> (Ns elapsed)' to stdout on that interval, started only after the child process spawns and cleared the instant it closes, errors, or times out - never an idle tick, only while a command is genuinely running.",
-      "Documented the new field in templates/thecrucible.example.json and README's ### workload section and feature-bullet list."
+      "Verified 641cbac (test/githubRepoSecurity.test.js) and 2d4abe9 (test/globalPolicy.test.js) each correctly fix a CodeQL-flagged incomplete-escaping bug: .replace(/\\./g, '\\\\.') only escapes literal dots, not the full regex metacharacter set, when building a RegExp from an arbitrary filename constant.",
+      "Confirmed both are test-only changes with no production code impact.",
+      "This commit supplies the handoff update those two commits omitted, restoring AI handoff policy compliance without altering either fix."
     ],
     "verification": [
-      "Full local suite passes 200/200 (197 + 3 new).",
-      "Proved the heartbeat fires multiple times for an artificially slow command and never fires for one that finishes before the interval elapses.",
-      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass."
+      "Full local suite passes 200/200 at the new tip (2d4abe9), confirming the two regex fixes introduced no regressions."
     ],
     "remaining": [
-      "Push to development and confirm Self-Test, CodeQL, and AI handoff policy are green for this commit.",
+      "Push and confirm AI handoff policy (and Self-Test/CodeQL, unaffected by the underlying change) are green.",
       "Open item, not yet acted on: PR #7 (the live CI-failure webhook) was merged by the owner and can never fire again. The owner approved opening a replacement permanent monitoring PR, then interrupted before it was created - still needs the owner's go-ahead to actually proceed. Until then, real-time failure notification in this session is down to the 60-minute hourly fallback poll.",
       "Codex's own remaining items still stand: the hosted multi-repository integration workflow is intentionally report-only and untested against real repositories/tokens; no promotion or branch-protection activation is authorized without the owner's explicit instruction."
     ]
