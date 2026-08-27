@@ -254,6 +254,20 @@ test('GitHub checks every development change and main PR for a current DEVLOG ha
   assert.match(workflow, /takeover-ready AI development plan/);
 });
 
+test('governingDocuments must be rechecked at the start of every session, same or different agent, after any 10+ minute gap', () => {
+  const agents = fs.readFileSync(path.join(root, 'AGENTS.md'), 'utf8');
+  assert.match(agents, /Recheck `governingDocuments` at the start of every session/);
+  assert.match(agents, /no matter which agent or tool is\s*\n\s*running it/);
+  assert.match(agents, /more than 10 minutes have passed/);
+  assert.match(agents, /even if it is the same agent continuing the\s*\n\s*same conversation/);
+  assert.match(agents, /sessionPolicy\.lastActionAt/);
+  const handoff = JSON.parse(fs.readFileSync(path.join(root, 'AI-HANDOFF.json'), 'utf8'));
+  assert.ok(handoff.sessionPolicy, 'AI-HANDOFF.json must have a top-level sessionPolicy object');
+  assert.match(handoff.sessionPolicy.recheckGoverningDocuments, /more than 10 minutes/);
+  assert.match(handoff.sessionPolicy.recheckGoverningDocuments, /even if it is the same agent/);
+  assert.ok(!Number.isNaN(Date.parse(handoff.sessionPolicy.lastActionAt)), 'sessionPolicy.lastActionAt must be a parseable timestamp');
+});
+
 test('AI conflict governance is unavoidable in the reusable workflow and monitored near real time', () => {
   const reusable = fs.readFileSync(path.join(root, '.github', 'workflows', 'the-crucible.yml'), 'utf8');
   const monitor = fs.readFileSync(path.join(root, '.github', 'workflows', 'ai-conflict-governance.yml'), 'utf8');

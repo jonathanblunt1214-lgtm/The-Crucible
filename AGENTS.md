@@ -19,6 +19,26 @@ without reading it risks duplicating, undoing, or contradicting work
 already done. This holds every single time, not just the first time in a
 session.
 
+## Recheck `governingDocuments` at the start of every session
+
+`AI-HANDOFF.json`'s top-level `governingDocuments` object lists every
+policy/reference file in this repository (this file included) that an
+agent must have read before acting. Re-read every file it lists:
+
+- at the start of every session, no matter which agent or tool is
+  running it, and
+- any time more than 10 minutes have passed since the last recorded
+  action in this repository (see `sessionPolicy.lastActionAt` in
+  `AI-HANDOFF.json`) - **even if it is the same agent continuing the
+  same conversation.** Branch policy, PR locks (e.g. PR #11), and
+  handoff state can all change while an agent is idle, and a long gap
+  is treated the same as a fresh session for this purpose.
+
+This is in addition to, not instead of, reading `DEVLOG.md`'s Shared AI
+handoff section above. Update `sessionPolicy.lastActionAt` to the current
+time in every commit that touches `AI-HANDOFF.json`, so the next agent -
+same or different - can tell how long it has been idle.
+
 ## Branch policy
 
 - Resolve every conflict between agents, instructions, plans, concurrent work, or claimed authority with `templates/ai-conflict-resolution.md`. Freeze the contested mutation, preserve both sides in the Shared AI handoff, and obtain an explicit owner decision; never silently pick a side.
