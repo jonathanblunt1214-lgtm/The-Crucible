@@ -5,9 +5,9 @@
 - **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, and `handoffNotes` for the exact owner request, current plan, completed work, verification, and remaining work.
 - **Current development work:** Natural-language test requests are transported to `src/testCadence.js`; the Orchestrator alone interprets them and selects actual tests. The requested random-category proof selected Security and passed all 92 Security test cases.
-- **Latest verification:** Self-Test run 166's governed request step passed: the Orchestrator chose Security, selected all 10 Security test files, and reported 92/92 passing. The overall run then failed in pre-check because one older regression still expected a bare `random` request to throw.
-- **Current correction:** Update that regression contract to verify the authorized natural-language random-category behavior while leaving the Orchestrator implementation and its successful Security selection unchanged.
-- **Remaining work:** Push the regression correction to `development`, then confirm Self-Test and CodeQL are green. No `main`/`release` promotion is authorized.
+- **Latest verification:** Self-Test run 166's requested Orchestrator execution passed 92/92 Security tests. Run 167 then exposed only a regression-harness environment leak: direct `runRequested` assertions inherited the surrounding workflow step's transport source and took the push transport path.
+- **Current correction:** Isolate direct programmatic request assertions from `CRUCIBLE_TEST_REQUEST_SOURCE` while restoring that environment after the test. Production transport and Orchestrator selection behavior are unchanged.
+- **Remaining work:** Push this regression-harness correction to `development`, then confirm Self-Test and CodeQL are green. No `main`/`release` promotion is authorized.
 
 ## Command log archive
 
@@ -16,7 +16,9 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 ### Session: random-category proof correction — 2026-08-27T23:52:00Z — GPT-5.6 Sol
 
 - Inspected Self-Test run 166 jobs and Ubuntu/Node 24 log — started 2026-08-27T23:52:00Z, finished 2026-08-27T23:54:30Z, exit 0; Orchestrator chose Security and passed 92/92 requested tests, while pre-check later failed one stale regression assertion.
-- Prepared `test/testCadence.test.js` regression update plus paired `AI-HANDOFF.json`/`DEVLOG.md` governance updates — started 2026-08-27T23:54:30Z, finished 2026-08-27T23:55:30Z, exit 0.
+- Prepared and pushed first `test/testCadence.test.js` random-category regression update with paired governance files as commit `6f1b616826ac118f8445bc69bd0c1c72e52902fd` — started 2026-08-27T23:54:30Z, finished 2026-08-27T23:55:37Z, exit 0.
+- Inspected Self-Test run 167 and isolated its failure to direct request assertions inheriting `CRUCIBLE_TEST_REQUEST_SOURCE=push` from the surrounding Orchestrator workflow step — started 2026-08-27T23:55:37Z, finished 2026-08-27T23:57:30Z, exit 0.
+- Prepared environment-isolated regression assertions plus paired `AI-HANDOFF.json`/`DEVLOG.md` updates — started 2026-08-27T23:57:30Z, finished 2026-08-27T23:58:30Z, exit 0.
 
 ### Session: natural-language Orchestrator transport — 2026-08-27T23:47:00Z — GPT-5.6 Sol
 
