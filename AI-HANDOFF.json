@@ -2,31 +2,31 @@
   "schemaVersion": 1,
   "activePlan": {
     "agent": "Claude",
-    "objective": "Add a 2026-08-27 dated changelog section to DEVLOG.md's historical log, per the owner's explicit request for a dev log covering today's real commit history.",
+    "objective": "Follow-up accuracy pass: AGENTS.md's 'Automatic CI monitoring' section still named PR #7 as the live monitoring hook after PR #9 replaced it earlier this session.",
     "steps": [
-      "Reconstruct the true chronological commit order for the day (a97a508..f764336) via git log --format='%h %aI %s', converting mixed UTC/-04:00 timestamps to a single timeline.",
-      "Write dated sub-sections (morning / mid-morning / midday / afternoon) matching this file's existing style: real commit hashes and descriptions, not a narrative summary, with bolded call-outs for notable bugs and a closing Result line per section.",
-      "Note PR #8 (development -> main, opened this session, all 27 checks green, not yet merged - the owner's call) and the PR #7 merge/replacement-hook status in the final Result line.",
-      "Update AI-HANDOFF.json alongside it to satisfy the AI handoff policy gate, since this is a documentation-only change with no code to re-verify beyond the existing test suite."
+      "Confirm CI for the prior commit (41f3a06: PR #9 lock extension + connect-workflow.yml resumability) - CodeQL and AI handoff policy green, Self-Test in progress at the time of this pass.",
+      "Re-check AGENTS.md for any remaining PR #7 references missed by the earlier edit pass (which only updated the absolute branch-policy rule and the 'CI on development' section).",
+      "Found and fixed one: the 'Automatic CI monitoring' section's 'Primary, near-live' bullet still pointed at PR #7. Updated it to name PR #9, with PR #7 noted as the predecessor merged by the owner on 2026-08-27.",
+      "Run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T11:45:00-04:00",
-    "lastUpdatedAt": "2026-08-27T11:48:00-04:00"
+    "startedAt": "2026-08-27T12:45:00-04:00",
+    "lastUpdatedAt": "2026-08-27T12:50:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Added three dated DEVLOG.md sections for 2026-08-27 covering all 15 real commits from a97a508 to f764336, in true chronological order, matching the file's established per-entry style.",
-      "Documented the two real bugs found and fixed this session (the Windows chmod-mode test assertion, and the clutter-audit duplicate-content regression plus its regression guard) inline where they occurred rather than only in the Shared AI handoff summary.",
-      "Recorded PR #8's status (open, green, unmerged) and the PR #7 merge/live-monitoring gap in the closing Result line."
+      "AGENTS.md's 'Automatic CI monitoring' section now names PR #9 as the current near-live monitoring hook, noting PR #7 as its merged predecessor.",
+      "No code changes; documentation accuracy only. No test asserted against the stale text, so test/workflow.test.js needed no change."
     ],
     "verification": [
-      "Documentation-only change; no source files touched. Full local suite still passes 200/200 from the prior verification at this same tip."
+      "Full local suite passes 204/204.",
+      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass."
     ],
     "remaining": [
-      "Push and confirm AI handoff policy is green for this commit.",
-      "Open item, not yet acted on: PR #7 (the live CI-failure webhook) was merged by the owner and can never fire again. The owner approved opening a replacement permanent monitoring PR, then interrupted before it was created - still needs the owner's go-ahead to actually proceed. Until then, real-time failure notification in this session is down to the 60-minute hourly fallback poll.",
-      "PR #8 (development -> main) is open with all checks green; merging remains the owner's explicit decision, not yet made.",
-      "Codex's own remaining items still stand: the hosted multi-repository integration workflow is intentionally report-only and untested against real repositories/tokens; no promotion or branch-protection activation is authorized without the owner's explicit instruction."
+      "Push and confirm Self-Test, CodeQL, and AI handoff policy are green for this commit and for the prior 41f3a06 (Self-Test was still in progress for it when this pass started).",
+      "The owner still needs to add 'block' as a required status check on main (Settings -> Branches -> Branch protection rules) for PR #9's lock to actually GitHub-disable its merge button - no tool available here can do that remotely.",
+      "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",
+      "Codex's own remaining items still stand: no promotion or branch-protection change is authorized without the owner's explicit instruction beyond what's already been done."
     ]
   }
 }

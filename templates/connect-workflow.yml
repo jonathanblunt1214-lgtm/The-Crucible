@@ -52,6 +52,14 @@ jobs:
           path: .the-crucible-runtime
           persist-credentials: false
       - name: Install only the mandatory AI governance files
+        # Idempotent by design: a prior run may have committed and pushed
+        # these files to main and then failed before creating
+        # Development-branch (a network blip, a concurrent push, a runner
+        # loss). Re-running install must be able to finish the job, not get
+        # stuck re-refusing a state it already produced correctly - so an
+        # exact-match "nothing changed" result is treated as already done,
+        # not as an error. Anything else that isn't exactly these five
+        # files still fails closed, unchanged from before.
         run: |
           set -euo pipefail
           cp .the-crucible-runtime/templates/the-crucible-design-brief.md THE-CRUCIBLE-DESIGN-BRIEF.md
@@ -62,21 +70,37 @@ jobs:
           rm -rf .the-crucible-runtime
           changed="$(git status --porcelain)"
           count="$(printf '%s\n' "$changed" | grep -c . || true)"
-          if [ "$count" -ne 5 ] || ! printf '%s\n' "$changed" | grep -q 'AI-CONFLICTS.json' || ! printf '%s\n' "$changed" | grep -q 'AI-HANDOFF.json' || ! printf '%s\n' "$changed" | grep -q 'THE-CRUCIBLE-DESIGN-BRIEF.md' || ! printf '%s\n' "$changed" | grep -q '.github/workflows/ai-conflict-governance.yml' || ! printf '%s\n' "$changed" | grep -q '.github/workflows/ai-handoff-policy.yml'; then
-            echo "Refusing to commit: expected exactly the design brief, both AI ledgers, and both AI governance workflows. Found:" >&2
+          if [ "$count" -eq 0 ]; then
+            echo "Governance files already installed and unchanged - resuming a previous run. Nothing to commit."
+          elif [ "$count" -ne 5 ] || ! printf '%s\n' "$changed" | grep -q 'AI-CONFLICTS.json' || ! printf '%s\n' "$changed" | grep -q 'AI-HANDOFF.json' || ! printf '%s\n' "$changed" | grep -q 'THE-CRUCIBLE-DESIGN-BRIEF.md' || ! printf '%s\n' "$changed" | grep -q '.github/workflows/ai-conflict-governance.yml' || ! printf '%s\n' "$changed" | grep -q '.github/workflows/ai-handoff-policy.yml'; then
+            echo "Refusing to commit: expected exactly the design brief, both AI ledgers, and both AI governance workflows (or no changes, if already installed). Found:" >&2
             printf '%s\n' "$changed" >&2
             exit 1
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add AI-CONFLICTS.json AI-HANDOFF.json THE-CRUCIBLE-DESIGN-BRIEF.md .github/workflows/ai-conflict-governance.yml .github/workflows/ai-handoff-policy.yml
+            git commit -m "Install Crucible AI governance"
+            git push origin HEAD:refs/heads/main
           fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add AI-CONFLICTS.json AI-HANDOFF.json THE-CRUCIBLE-DESIGN-BRIEF.md .github/workflows/ai-conflict-governance.yml .github/workflows/ai-handoff-policy.yml
-          git commit -m "Install Crucible AI governance"
-          git push origin HEAD:refs/heads/main
       - name: Create required Development-branch at the governance commit
+        # Distinguishes "branch genuinely doesn't exist yet" (ls-remote
+        # --exit-code exits 2) from a real connectivity/auth failure (any
+        # other nonzero exit) - treating the latter as "safe to create"
+        # would silently attempt a push that's likely to fail anyway for
+        # the same underlying reason, or worse, race a branch that does
+        # exist but couldn't be confirmed.
         run: |
           set -euo pipefail
-          if git ls-remote --exit-code --heads origin refs/heads/Development-branch >/dev/null 2>&1; then
+          set +e
+          git ls-remote --exit-code --heads origin refs/heads/Development-branch >/dev/null 2>&1
+          status=$?
+          set -e
+          if [ "$status" -eq 0 ]; then
             echo "Refusing to replace existing Development-branch." >&2
+            exit 1
+          elif [ "$status" -ne 2 ]; then
+            echo "Could not confirm whether Development-branch exists (git ls-remote exited $status); refusing to guess. Check connectivity and access, then retry." >&2
             exit 1
           fi
           git push origin HEAD:refs/heads/Development-branch

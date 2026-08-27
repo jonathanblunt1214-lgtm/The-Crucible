@@ -1,11 +1,21 @@
-name: "Block PR #7"
+name: "Block locked monitoring PRs"
 
-# PR #7 (development -> main) is a permanent draft that exists solely as a
+# PR #9 (development -> main) is a permanent draft that exists solely as a
 # live CI-monitoring event hook - see AGENTS.md's branch policy. It must
-# never be merged, by any agent or by accident. This check reports failure
-# only for PR #7 specifically and succeeds instantly for every other pull
+# never be merged, by any agent or by accident. Its predecessor, PR #7,
+# served this exact role until the repository owner merged it directly;
+# it is kept in the blocked list below purely as a historical safeguard
+# (a merged PR cannot be reopened, so this can never actually trigger for
+# it again) rather than removed and forgotten. This check reports failure
+# only for a locked PR number and succeeds instantly for every other pull
 # request. It also reports success on development pushes so an explicitly
 # approved direct promotion carries a genuine passing required check.
+#
+# This file keeps its original name (block-pr-7.yml) even though it now
+# protects PR #9 as well, per AGENTS.md's no-rename-without-being-asked
+# rule. If PR #9 is ever replaced by a new monitoring PR, add its number
+# to LOCKED_PR_NUMBERS below and update AGENTS.md's branch-policy section
+# to name it - never remove an old number, only add the new one.
 #
 # Adding it as required is a one-time manual step in this repository's own
 # Settings -> Branches -> Branch protection rules (no API this project's
@@ -23,11 +33,16 @@ permissions:
 jobs:
   block:
     runs-on: ubuntu-latest
+    env:
+      LOCKED_PR_NUMBERS: "7 9"
     steps:
-      - name: Fail only for PR #7, the permanent CI-monitoring hook
+      - name: Fail only for a locked, permanent CI-monitoring hook PR
         run: |
-          if [ "${{ github.event.pull_request.number }}" = "7" ]; then
-            echo "PR #7 is a permanent CI-monitoring event hook and must never be merged. See AGENTS.md's branch policy." >&2
-            exit 1
-          fi
-          echo "Not PR #7 - nothing to block."
+          number="${{ github.event.pull_request.number }}"
+          for locked in $LOCKED_PR_NUMBERS; do
+            if [ "$number" = "$locked" ]; then
+              echo "PR #$number is a permanent CI-monitoring event hook and must never be merged. See AGENTS.md's branch policy." >&2
+              exit 1
+            fi
+          done
+          echo "Not a locked monitoring PR - nothing to block."

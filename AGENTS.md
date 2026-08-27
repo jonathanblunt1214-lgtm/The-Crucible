@@ -46,7 +46,7 @@ session.
   agent can reason its way around because deletion "seems" appropriate.
 - **Never rename files, branches, or repositories** unless the owner
   explicitly asks for it.
-- **[PR #7](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/7)
+- **[PR #9](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/9)
   is never merged or closed, under any circumstances.** It is a permanent
   draft `development` -> `main` pull request that exists solely as a live
   event hook for CI monitoring (see "Automatic CI monitoring" below) - not
@@ -59,15 +59,24 @@ session.
   If it ever needs to not exist, that is the owner's explicit call to make
   in that exact conversation, not something inferred from its mergeable
   state, its age, or anything else about its current condition.
+  - PR #9 is a replacement: its predecessor, PR #7, served this exact role
+    until the repository owner merged it directly on 2026-08-27. A merged
+    PR is permanently dead as an event hook, so PR #9 exists to restore
+    live monitoring - the same absolute rule now applies to it instead.
+    If PR #9 is ever itself merged or closed, the same pattern applies:
+    open its replacement and update this rule to name the new PR, rather
+    than leaving the project without a live monitoring hook.
   - This is backed by a real, GitHub-enforced check, not just this
-    document: `.github/workflows/block-pr-7.yml` fails specifically and
-    only for PR #7, succeeding instantly for every other pull request.
-    Once the repository owner adds it as a required status check on
+    document: `.github/workflows/block-pr-7.yml`'s `block` job fails
+    specifically and only for PR #7 or PR #9, succeeding instantly for
+    every other pull request (the file keeps its original name per the
+    no-rename rule above, even though it now also protects PR #9). Once
+    the repository owner adds `block` as a required status check on
     `main` (Settings -> Branches -> Branch protection rules - no tool
     available to any agent here can do this remotely), the merge button
-    on PR #7 itself becomes GitHub-disabled, without adding any friction
+    on PR #9 itself becomes GitHub-disabled, without adding any friction
     to a real, legitimate PR into `main`. Never remove, rename, or weaken
-    this workflow's PR-#7 check to work around the lock.
+    this workflow's `block` check to work around the lock.
 
 ## CI on `development`
 
@@ -75,7 +84,7 @@ After every push you make to `development`, check the resulting CI (Self-Test
 and CodeQL) without being asked, and if anything fails, diagnose the real
 cause, fix it, push the fix, and check again - looping until it's actually
 green, not just until one attempt looks plausible. Self-Test and CodeQL both
-trigger directly on pushes to `development`; PR #7 remains the permanent draft
+trigger directly on pushes to `development`; PR #9 remains the permanent draft
 `development` -> `main` event hook for near-live monitoring and PR activity.
 If a direct-push Self-Test run is missing, dispatch Self-Test manually
 (`workflow_dispatch`) rather than assuming a lack of a run means nothing to
@@ -141,10 +150,12 @@ The owner should not have to notice a failure, paste a screenshot, or ask
 this, since the platform's scheduler cannot poll more often than hourly:
 
 - **Primary, near-live:** direct `development` push triggers run Self-Test and
-  CodeQL immediately. [PR #7](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/7)
+  CodeQL immediately. [PR #9](https://github.com/jonathanblunt1214-lgtm/The-Crucible/pull/9)
   is a permanently-draft, never-merged `development` -> `main` pull request
   that keeps PR activity and comment events live instead of waiting for a
-  poll. It is explicitly marked
+  poll (its predecessor, PR #7, served this role until the owner merged it
+  directly on 2026-08-27, making it permanently dead as an event hook). It
+  is explicitly marked
   do-not-merge and does not change the `main` branch policy above - opening
   and keeping it open was itself an explicit, one-time owner decision, not
   something assumed going forward.
