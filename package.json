@@ -4,6 +4,7 @@
   "private": true,
   "description": "Repository-independent verification, stress, clutter, and Git maintenance gates.",
   "scripts": {
+    "prepare": "node src/installGitHooks.js",
     "test": "node --test",
     "validate": "node src/cli.js validate",
     "audit:clutter": "node src/cli.js clutter",

@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 
 const root = path.resolve(__dirname, '..');
 
@@ -176,4 +177,15 @@ test('AI conflict governance is unavoidable in the reusable workflow and monitor
     assert.match(workflow, /cli\.js ai-conflicts/);
     assert.doesNotMatch(workflow, /contents: write|git push/);
   }
+});
+
+test('the pre-push hook is tracked as executable and runs the fast offline verification set', () => {
+  const tracked = execFileSync('git', ['ls-files', '-s', '.githooks/pre-push'], { cwd: root, encoding: 'utf8' });
+  assert.match(tracked, /^100755 /, 'the pre-push hook must be tracked with the executable bit (mode 100755), or Git silently skips it');
+  const hook = fs.readFileSync(path.join(root, '.githooks', 'pre-push'), 'utf8');
+  assert.match(hook, /^#!\/bin\/sh/);
+  for (const script of ['lint:workflows', 'docs:check', 'audit:clutter', 'audit:privacy', 'audit:security']) {
+    assert.match(hook, new RegExp(`npm run ${script.replace(':', '\\:')}`));
+  }
+  assert.match(hook, /npm test/);
 });

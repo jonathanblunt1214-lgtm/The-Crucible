@@ -81,6 +81,15 @@ If a direct-push Self-Test run is missing, dispatch Self-Test manually
 (`workflow_dispatch`) rather than assuming a lack of a run means nothing to
 check.
 
+A local pre-push Git hook (`.githooks/pre-push`) runs the fast, offline
+subset of this same suite before a push leaves the machine at all, so a red
+state ideally never reaches GitHub in the first place. It's installed and
+re-made executable automatically by `src/installGitHooks.js` on every `npm
+install`/`npm ci` (the `prepare` script) - if a checkout or platform ever
+strips the executable bit, the next install silently restores it rather than
+Git silently skipping the hook forever. Never delete, bypass, or weaken this
+hook to get past a failing check; fix the actual failure instead.
+
 ## AI-to-AI handoff protocol
 
 Codex, Claude, Perplexity, Gemini, and any later AI agent working here share

@@ -2,12 +2,12 @@
 
 ## Shared AI handoff
 
-- **Agent:** Codex, continuing the safe-enforcement-boundary work.
-- **Current plan:** Require every starting AI to submit a structured, takeover-ready development plan to the AI handoff policy while retaining mandatory near-real-time conflict governance.
-- **Current development work:** Added `AI-HANDOFF.json` with agent identity, objective, ordered steps, timestamps, status, completed work, verification, and remaining work. The AI handoff check now requires every project change to update both `DEVLOG.md` and this structured plan and validates the plan from the head commit. Added adopter templates and one-time installation. Existing mandatory conflict governance and monitoring remain intact. No protected/default branch or repository setting is modified.
-- **Files changed:** `AI-HANDOFF.json`, `src/handoffPolicy.js`, `.github/workflows/handoff-policy.yml`, adopter handoff templates, connection workflow, tests, documentation, configuration, `AGENTS.md`, and `DEVLOG.md`.
-- **Verification:** The full local suite passes 167/167. Documentation check, workflow lint, clutter, governance with 6 reviewed exceptions, and Security Gate pass. The exact staged snapshot passes pre-check across 14 changed paths and Security Gate across 87 tracked files. Structured-plan tests cover dual-file enforcement, head-commit plan loading, shell-free Git calls, and incomplete takeover-plan rejection.
-- **Remaining work:** Commit and push only to `development`, then verify **AI handoff policy**, **AI conflict governance**, Self-Test, and CodeQL for the exact commit. Default-branch promotion and required-check activation remain separate owner decisions.
+- **Agent:** Claude.
+- **Current plan:** Add a local pre-push Git hook enforcing The Crucible's own fast verification set, prompted by the owner sharing a fix from another repository (`Nexus-`) where a tracked-but-non-executable pre-push hook silently skipped its stale-manifest check five times before anyone noticed.
+- **Current development work:** Confirmed this repository had no `.githooks` setup at all (so that specific bug couldn't have happened here, but the underlying gap - no local enforcement before a push reaches GitHub - did apply). Added `.githooks/pre-push` (lint:workflows, docs:check, test, validate, audit:clutter, audit:privacy, audit:security) and `src/installGitHooks.js`, wired into npm's `prepare` lifecycle so a lost executable bit self-heals on the next `npm install`/`npm ci`.
+- **Files changed:** `.githooks/pre-push`, `src/installGitHooks.js`, `test/installGitHooks.test.js`, `test/workflow.test.js`, `package.json`, `AGENTS.md`, `AI-HANDOFF.json`, and `DEVLOG.md`.
+- **Verification:** Full local suite passes 172/172 (167 + 5 new). `git ls-files -s .githooks/pre-push` confirms mode 100755 in the index. Ran `node src/installGitHooks.js && sh .githooks/pre-push` directly against this real repository end-to-end, not just its component npm scripts individually.
+- **Remaining work:** Push to `development`, then verify AI handoff policy, AI conflict governance, Self-Test, and CodeQL for the exact commit. No default-branch or repository-setting change is involved.
 
 Every AI agent must keep the current plan and status in this section accurate automatically and refresh it in the same commit as its work. Read it before editing; do not rely on private chat history to learn what another agent changed.
 

@@ -1,32 +1,34 @@
 {
   "schemaVersion": 1,
   "activePlan": {
-    "agent": "Codex",
-    "objective": "Require every starting AI to publish a takeover-ready development plan through the AI handoff policy.",
+    "agent": "Claude",
+    "objective": "Add a local pre-push Git hook enforcing The Crucible's own fast verification set, so a red push never leaves the machine, mirroring a fix the owner shared from another repository where a non-executable tracked hook silently skipped its check.",
     "steps": [
-      "Define and validate a structured AI development plan.",
-      "Require both DEVLOG.md and AI-HANDOFF.json on every project change.",
-      "Install the plan template in adopting repositories.",
-      "Verify locally and through GitHub status checks on development."
+      "Confirm this repository has no existing .githooks setup (it did not) before adding one.",
+      "Add .githooks/pre-push running the fast offline checks: lint:workflows, docs:check, test, validate, audit:clutter, audit:privacy, audit:security.",
+      "Add src/installGitHooks.js to chmod the hook executable and set core.hooksPath, wired into the standard npm \"prepare\" lifecycle so a lost executable bit self-heals on the next install.",
+      "Verify live: staged the hook, confirmed Git tracks it as mode 100755, and ran it end-to-end against this real repository."
     ],
-    "status": "handoff-ready",
-    "startedAt": "2026-08-26T15:30:00-04:00",
-    "lastUpdatedAt": "2026-08-26T15:42:00-04:00"
+    "status": "complete",
+    "startedAt": "2026-08-27T06:40:00-04:00",
+    "lastUpdatedAt": "2026-08-27T06:47:56-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Defined and validated the structured development plan schema.",
-      "Required both handoff surfaces on every project change.",
-      "Added adopter plan and workflow installation templates."
+      "Added .githooks/pre-push and src/installGitHooks.js, wired via package.json's \"prepare\" script.",
+      "Added test/installGitHooks.test.js (self-heal, no-op without .githooks, fails closed if Git is unavailable) and a workflow.test.js check that the hook stays tracked at mode 100755.",
+      "Documented the hook in AGENTS.md's \"CI on development\" section.",
+      "Ran the hook itself end-to-end against this repository, not just its component npm scripts individually."
     ],
     "verification": [
-      "Full local suite passes 167/167.",
-      "Documentation, workflow lint, clutter, governance, and Security Gate pass.",
-      "The exact staged snapshot passes pre-check across 14 changed paths and Security Gate across 87 tracked files."
+      "Full local suite passes 172/172 (167 + 5 new).",
+      "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass against the current staged snapshot.",
+      "git ls-files -s .githooks/pre-push confirms mode 100755 in the index, not just on disk.",
+      "Ran `node src/installGitHooks.js && sh .githooks/pre-push` directly and it completed successfully end-to-end."
     ],
     "remaining": [
-      "Commit, push, and verify the implementation on development.",
-      "Do not promote or require the check on the default branch without separate owner authorization."
+      "Commit and push to development, then verify AI handoff policy, AI conflict governance, Self-Test, and CodeQL for the exact commit.",
+      "No default-branch or repository-setting change involved; nothing further requires owner authorization."
     ]
   }
 }
