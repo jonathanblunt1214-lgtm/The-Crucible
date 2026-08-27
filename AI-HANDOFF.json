@@ -1,34 +1,43 @@
 {
   "schemaVersion": 1,
+  "governingDocuments": {
+    "AGENTS.md": "The repository owner's standing branch policy and agent rules (also linked from CLAUDE.md) - read this before acting on anything in this file. Covers: development is the only branch to push to without explicit permission; main is only touched on explicit owner instruction, and only via the release branch + promote-release.yml, never a direct push; PR #11 (ci-monitor -> main) must never be merged or closed, backed by block-pr-7.yml's check and guard-ci-monitor-pr.yml's auto-reopen; the AI-to-AI handoff protocol requiring this file and DEVLOG.md to be updated together in every project commit; and the standing rule against invisible self-repair.",
+    "DEVLOG.md": "The chronological, per-commit development log. Its 'Shared AI handoff' section at the top is the human-readable counterpart to this file's structured plan - read it first, every time, per AGENTS.md's 'Read DEVLOG.md first, always' rule. This file (AI-HANDOFF.json) and DEVLOG.md must be updated together in the same commit; neither supersedes the other.",
+    "AI-CONFLICTS.json": "The auditable ledger of AI-agent conflicts (concurrent or contradictory work between agents), governed by templates/ai-conflict-resolution.md and enforced by .github/workflows/ai-conflict-governance.yml. Never delete, bypass, or disable it.",
+    "CLAUDE.md": "Claude-specific entry point; it just points to AGENTS.md, which applies to every AI agent working here, not only Claude.",
+    "README.md": "The project's own generated/maintained documentation of what The Crucible does, its CLI, and its workflow steps - kept in sync with source via npm run docs:sync/docs:check.",
+    "templates/ai-conflict-resolution.md": "The actual conflict-resolution procedure AGENTS.md and AI-CONFLICTS.json point to: freeze the contested mutation, preserve both sides in the shared handoff, and get an explicit owner decision instead of silently picking a side.",
+    "templates/required-check-rollout.md": "The rollout plan AGENTS.md requires for any new required workflow check: report-only on development first, then explicit owner promotion, then npm run audit:required-check, before it is ever added to branch protection or a ruleset. Directly relevant to how `block` must be added as a required check on main.",
+    "templates/agent-boundaries.md": "The AI-agent rules for this repository's one-way link to adopter projects that pin The Crucible as a security gate - what an agent may and may not do when investigating a Crucible-related CI failure in a project that consumes this repository."
+  },
   "activePlan": {
     "agent": "Claude",
-    "objective": "Confirmed prior commit (47383c7) green, then documented an owner-issued standing rule: never deliberately close or merge PR #11 to test its lock/guard systems. Also refreshed the stale hourly fallback CI-monitoring trigger.",
+    "objective": "Per the owner's explicit request: add a governingDocuments section to this file cross-referencing DEVLOG.md, AGENTS.md, and the other local policy files, so any agent reading this file first is pointed to everything else it must also read.",
     "steps": [
-      "Confirm 47383c7 (main-push handoff-policy trigger + guard-ci-monitor-pr.yml) is fully green on development: Self-Test, CodeQL, AI handoff policy all success.",
-      "Notice the hourly fallback trigger's stored prompt still referenced merged PR #9 as the live monitoring hook and only checked Self-Test/CodeQL - update it to name PR #11 and also check AI handoff policy.",
-      "Per the owner's explicit instruction: document that a future 'test everything'/'test all systems' request must never be read as license to deliberately close or merge PR #11 to exercise block-pr-7.yml's lock or guard-ci-monitor-pr.yml's reopen behavior live - only a genuine close/merge event should exercise them.",
-      "Add this as a new sub-bullet in AGENTS.md's PR #11 section, directly after the guard-ci-monitor-pr.yml/block-pr-7.yml description.",
-      "Add a matching assertion to the existing guard-ci-monitor-pr.yml test in test/workflow.test.js.",
+      "Confirm afc0a94 (the standing 'never test PR #11's lock by closing/merging it' documentation commit) is green on development.",
+      "Inventory this repository's actual policy/reference documents: AGENTS.md, DEVLOG.md, AI-CONFLICTS.json, CLAUDE.md, README.md.",
+      "Confirm AI-HANDOFF.json has no strict JSON schema (unlike .thecrucible.json's .thecrucible.schema.json) and that src/handoffPolicy.js's validateHandoffPlan only checks specific required fields, so adding a new top-level field is safe.",
+      "Add a governingDocuments object naming each file and, in one or two sentences, what it governs and why an agent should read it.",
+      "After the owner asked whether other parts belonged, cross-check AGENTS.md's own cross-references for policy docs missing from the list and add templates/ai-conflict-resolution.md, templates/required-check-rollout.md, and templates/agent-boundaries.md.",
       "Run the full local suite plus every fast/offline audit before pushing."
     ],
     "status": "complete",
-    "startedAt": "2026-08-27T16:50:00-04:00",
-    "lastUpdatedAt": "2026-08-27T16:55:00-04:00"
+    "startedAt": "2026-08-27T17:00:00-04:00",
+    "lastUpdatedAt": "2026-08-27T17:05:00-04:00"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed 47383c7 fully green: Self-Test, CodeQL, and AI handoff policy all success on development.",
-      "Updated the hourly fallback trigger (trig_01DK6joDQdxqGaoQVFCAHzKd) to name PR #11 (not the now-merged PR #9) as the live monitoring hook, and to check AI handoff policy alongside Self-Test/CodeQL.",
-      "AGENTS.md's PR #11 bullet now includes: never deliberately close or merge PR #11 to test block-pr-7.yml or guard-ci-monitor-pr.yml - only a genuine close/merge event is the real test.",
-      "Added a matching assertion to test/workflow.test.js's existing guard-ci-monitor-pr.yml test."
+      "Confirmed afc0a94 green on development (Self-Test, CodeQL, AI handoff policy).",
+      "Added AI-HANDOFF.json's new top-level governingDocuments object, referencing AGENTS.md, DEVLOG.md, AI-CONFLICTS.json, CLAUDE.md, and README.md with a short description of each's role, so this file is now self-documenting about what else an agent must read.",
+      "Owner asked whether other parts belonged in governingDocuments - checked AGENTS.md's own cross-references and added the three policy templates it points to that were missing: templates/ai-conflict-resolution.md, templates/required-check-rollout.md, and templates/agent-boundaries.md. Left .thecrucible.json out deliberately - it is this repository's own audit config, not a policy document to read."
     ],
     "verification": [
-      "Full local suite passes 207/207.",
+      "Full local suite passes 207/207 (no test asserts against this file's exact shape beyond validateHandoffPlan's required-field checks, which the new field doesn't touch).",
       "lint:workflows, docs:check, validate, audit:clutter, audit:privacy, and audit:security all pass."
     ],
     "remaining": [
-      "Push this commit to development, confirm Self-Test/CodeQL/AI handoff policy green, then fast-forward release to it so the next main promotion carries this documentation update too.",
-      "guard-ci-monitor-pr.yml still has not been exercised live - per the new rule, it should not be deliberately triggered just to test it; only a genuine close/merge event should exercise it.",
+      "Push this commit to development, confirm Self-Test/CodeQL/AI handoff policy green, then fast-forward release to it so main picks up this documentation improvement too.",
+      "guard-ci-monitor-pr.yml still has not been exercised live - per the standing rule, it should not be deliberately triggered just to test it; only a genuine close/merge event should exercise it.",
       "The owner should confirm 'block' is added as a required status check on main (Settings -> Branches -> Branch protection rules) if not already done - no tool available here can do that remotely.",
       "Still blocked on owner-supplied resources, not a code gap: the hosted multi-repository integration workflow and connect-workflow.yml's activate phase both need a real target repository/token to actually be exercised.",
       "Codex's own remaining items still stand: no promotion or branch-protection change is authorized without the owner's explicit instruction beyond what's already been done."
