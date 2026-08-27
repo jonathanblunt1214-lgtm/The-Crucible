@@ -136,7 +136,7 @@ test('recovery from the canonical snapshot requires a human to manually dispatch
 
 test('a dedicated check blocks only PR #7, the permanent do-not-merge CI-monitoring hook', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'block-pr-7.yml'), 'utf8');
-  assert.match(workflow, /^on:\s*\n\s*pull_request:\s*$/m);
+  assert.match(workflow, /^on:\s*\n\s*push:\s*\n\s*branches: \[development\]\s*\n\s*pull_request:\s*$/m);
   assert.match(workflow, /permissions:\s*\n\s*contents: read/);
   assert.match(workflow, /github\.event\.pull_request\.number.*=.*"7"/);
   assert.match(workflow, /must never be merged/i);

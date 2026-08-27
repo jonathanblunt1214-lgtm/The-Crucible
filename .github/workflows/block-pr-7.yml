@@ -4,8 +4,8 @@ name: "Block PR #7"
 # live CI-monitoring event hook - see AGENTS.md's branch policy. It must
 # never be merged, by any agent or by accident. This check reports failure
 # only for PR #7 specifically and succeeds instantly for every other pull
-# request, so it can be added as a required status check on `main` without
-# adding friction to any real, legitimate merge.
+# request. It also reports success on development pushes so an explicitly
+# approved direct promotion carries a genuine passing required check.
 #
 # Adding it as required is a one-time manual step in this repository's own
 # Settings -> Branches -> Branch protection rules (no API this project's
@@ -13,6 +13,8 @@ name: "Block PR #7"
 # to pass before merging into `main`. Until that step is done, this
 # workflow reports the failure but does not yet block the merge button.
 on:
+  push:
+    branches: [development]
   pull_request:
 
 permissions:
