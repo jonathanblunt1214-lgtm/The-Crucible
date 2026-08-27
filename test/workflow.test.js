@@ -72,12 +72,16 @@ test('agent boundaries document forbids touching anything installed to run the C
   assert.match(readme, /persist-credentials: false.*ephemeral runner/);
 });
 
-test('connect workflow is a one-time, human-triggered, bounded governance-file write with no other trigger', () => {
+test('connect workflow uses a human-triggered two-phase governance bootstrap with no other trigger', () => {
   const workflow = fs.readFileSync(path.join(root, 'templates', 'connect-workflow.yml'), 'utf8');
-  assert.match(workflow, /^on:\s*\n\s*workflow_dispatch:\s*$/m);
+  assert.match(workflow, /^on:\s*\n\s*workflow_dispatch:/m);
   assert.doesNotMatch(workflow, /\n\s*push:|\n\s*pull_request:|\n\s*schedule:/);
   assert.match(workflow, /permissions:\s*\n\s*contents: write/);
   assert.match(workflow, /persist-credentials: false/);
+  assert.match(workflow, /options: \[install, activate\]/);
+  assert.match(workflow, /default branch must be main/);
+  assert.match(workflow, /HEAD:refs\/heads\/Development-branch/);
+  assert.match(workflow, /Refusing to replace existing Development-branch/);
   assert.match(workflow, /THE-CRUCIBLE-DESIGN-BRIEF\.md/);
   assert.match(workflow, /AI-CONFLICTS\.json/);
   assert.match(workflow, /AI-HANDOFF\.json/);
@@ -86,8 +90,14 @@ test('connect workflow is a one-time, human-triggered, bounded governance-file w
   assert.match(workflow, /templates\/the-crucible-design-brief\.md/);
   assert.match(workflow, /git status --porcelain/);
   assert.match(workflow, /Refusing to commit/);
-  assert.match(workflow, /delete THIS WORKFLOW FILE/);
-  assert.match(workflow, /Do not delete or revert the\s*\n#\s*THE-CRUCIBLE-DESIGN-BRIEF\.md commit/);
+  assert.match(workflow, /ACTIVATE_CRUCIBLE_GOVERNANCE/);
+  assert.match(workflow, /CRUCIBLE_ADMIN_TOKEN/);
+  assert.match(workflow, /representative pull request/i);
+  assert.match(workflow, /AI conflict governance/);
+  assert.match(workflow, /AI handoff policy/);
+  assert.match(workflow, /bypass_actors:\[\]/);
+  assert.match(workflow, /~DEFAULT_BRANCH/);
+  assert.match(workflow, /refs\/heads\/Development-branch/);
   assert.equal((workflow.match(/REPLACE_WITH_EXACT_COMMIT_SHA/g) || []).length, 1);
 });
 
