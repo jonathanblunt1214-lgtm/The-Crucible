@@ -11,8 +11,9 @@
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
     "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody.",
     "src/testCadence.js": "Governed Orchestrator entry point and run-governance wrapper.",
-    "src/testCadenceCore.js": "Orchestrator selection side of the checks-and-balances system. It receives cadence obligations, independently resolves due categories to tests, and proves its selection satisfies the cadence obligation before execution.",
-    "src/testCadencePolicy.js": "Independent cadence side of the checks-and-balances system. It declares only when categories are due; it does not select test files or execute tests.",
+    "src/testCadenceCore.js": "Orchestrator selection side of the checks-and-balances system. It receives cadence obligations, classifies new tests through the independent matcher when necessary, selects tests, and proves cadence coverage before execution.",
+    "src/testCadencePolicy.js": "Independent cadence authority. It declares only when categories are due and never selects or executes tests.",
+    "src/testFeatureClassifier.js": "Independent closest-feature classifier for newly discovered unmapped tests. Explicit mappings remain authoritative; a unique evidence-backed closest match may supply a category, while ties or no evidence fail closed. It cannot set cadence or execute tests.",
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
@@ -22,7 +23,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T01:18:00Z"
+    "lastActionAt": "2026-08-28T01:30:00Z"
   },
   "temporaryInfrastructure": {
     "syntheticTestRequestCommitTransport": {
@@ -36,11 +37,13 @@
     }
   },
   "testCadencePolicy": {
-    "systemArchitecture": "Orchestrator and Cadence operate as one governed testing system but remain independent authorities for checks and balances; they must not be collapsed into one selector.",
-    "cadenceAuthority": "Cadence decides only when a category is due. It produces a due-category obligation and never selects files, interprets natural-language test scope, or executes tests.",
-    "orchestratorAuthority": "The Orchestrator alone selects categories/subcategories/test files and execution scope from explicit requests, change impact, dependencies, and cadence obligations.",
-    "balanceRule": "For cadence-triggered work, Cadence first declares the categories due; the Orchestrator independently resolves those obligations into tests; a separate balance check rejects the run before execution if the Orchestrator selection omits any due category. Neither authority silently overrides the other.",
-    "explicitRequestRule": "A specific owner test request is interpreted and run immediately by the Orchestrator. Cadence cannot delay, randomize, narrow, or replace an explicit request.",
+    "systemArchitecture": "Orchestrator, Cadence, closest-feature classification, and reconciliation operate as one governed testing system while remaining independent checks-and-balances authorities; they must not be collapsed into one selector.",
+    "cadenceAuthority": "Cadence decides only when a category is due. It produces a due-category obligation and never selects files, classifies new tests, interprets natural-language scope, or executes tests.",
+    "classifierAuthority": "The independent closest-feature classifier is fallback-only for newly discovered tests absent from the explicit category map. It compares the new test with known feature/test evidence and may return only a unique closest category. It cannot choose run scope, set frequency, or execute tests; ties and zero-evidence matches fail closed.",
+    "explicitMappingRule": "Existing explicit category mappings are authoritative and are never overridden by the closest-feature classifier.",
+    "orchestratorAuthority": "The Orchestrator alone selects categories/subcategories/test files and execution scope from explicit requests, change impact, dependencies, cadence obligations, and validated classifications.",
+    "balanceRule": "For cadence-triggered work, Cadence declares categories due; the Orchestrator independently resolves them into concrete tests; reconciliation rejects the run before execution if any due category is omitted. Neither authority silently overrides the other.",
+    "explicitRequestRule": "A specific owner test request is interpreted and run immediately by the Orchestrator. Cadence and classification cannot delay, randomize, narrow, or replace an explicit request.",
     "categoryCadence": {
       "code": "every-push",
       "security": "daily",
@@ -53,32 +56,35 @@
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Make Orchestrator and Cadence one governed checks-and-balances system while keeping their authorities independent.",
-    "currentPrompt": "merge them into one system while keeping both Orchestrator and cadence but as a checks and balances system not unified",
+    "objective": "Add an independent closest-feature classification check for new unmapped tests while preserving Orchestrator selection authority, Cadence frequency authority, and fail-closed reconciliation.",
+    "currentPrompt": "if a new test cannot be safely categorized a independent part of this system looks up what the feature matches closer",
     "steps": [
-      "Extract cadence frequency policy into an independent module that produces due-category obligations only.",
-      "Keep Orchestrator test selection independent and make it resolve cadence obligations into concrete tests.",
-      "Add a balance check that fails closed when an Orchestrator cadence selection omits any due category.",
-      "Preserve explicit-request supremacy and the existing category frequencies.",
-      "Add regression coverage for independence and fail-closed reconciliation.",
-      "Push atomically to development with paired governance updates and verify Self-Test and CodeQL."
+      "Keep explicit test-category mappings authoritative.",
+      "Add an independent closest-feature classifier used only when a newly discovered test has no explicit mapping.",
+      "Require a unique evidence-backed closest category and fail closed on ties, no evidence, or unreadable candidates.",
+      "Make active Orchestrator selection include classifier-resolved tests without giving the classifier test-selection or cadence authority.",
+      "Correct the Self-Test #176 selection-object regression so cadence receives concrete test file paths.",
+      "Add regression coverage for unique matching, ambiguity failure, explicit-map precedence, and concrete cadence selections.",
+      "Push atomically to development and verify Self-Test and CodeQL until green."
     ],
     "status": "active",
-    "startedAt": "2026-08-28T01:15:00Z",
-    "lastUpdatedAt": "2026-08-28T01:18:00Z"
+    "startedAt": "2026-08-28T01:26:00Z",
+    "lastUpdatedAt": "2026-08-28T01:30:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Defined Cadence as an independent due-category authority rather than a test selector.",
-      "Defined Orchestrator as the independent test-selection authority that resolves cadence obligations.",
-      "Added fail-closed reconciliation so cadence can reject an under-selected scheduled run.",
-      "Preserved Code every-push, Security daily, Utility twice-weekly, Maintenance weekly, and immediate explicit requests."
+      "Designed the independent closest-feature classifier as fallback-only and non-executing.",
+      "Preserved explicit mappings as authoritative and ambiguity/no-evidence behavior as fail-closed.",
+      "Identified Self-Test #176 failure exactly: orchestratorTestsForCategories flattened legacy selection objects rather than each selection's .tests array, which produced the unclassified value [object Object].",
+      "Prepared active Orchestrator classification/selection overrides so new classifier-resolved tests participate in category, full-system, change-impact, and cadence runs."
     ],
     "verification": [
-      "Previous correction commit 5c4173f0 had CodeQL #136 green and the new Code baseline green on completed Self-Test #175 matrix jobs before this checks-and-balances change."
+      "Self-Test #176 on c2b935fda7a0a9bb4ff87ffee5ad405056b11cc0 failed at the every-push Code cadence with Unclassified test \"[object Object]\"; on-error diagnostics passed.",
+      "The classifier/fix commit has not yet been verified; Self-Test and CodeQL must both be green before this work is complete."
     ],
     "remaining": [
-      "Verify the checks-and-balances development push with Self-Test and CodeQL and correct any regression until green.",
+      "Create and push the atomic classifier/fix commit to development.",
+      "Verify the resulting Self-Test and CodeQL runs and correct any regression until green.",
       "When supported direct integration becomes available, replace the temporary synthetic request transport under standing owner authorization."
     ]
   }
