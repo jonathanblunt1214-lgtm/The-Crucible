@@ -11,7 +11,7 @@
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
     "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements.",
     "src/testCadence.js": "Governed Orchestrator entry point and run-governance wrapper.",
-    "src/testCadenceCore.js": "Orchestrator selection side of the checks-and-balances system. It receives cadence obligations, classifies new tests through the independent matcher when necessary, selects tests, preserves legacy cadence metadata contracts, and proves cadence coverage before execution.",
+    "src/testCadenceCore.js": "Orchestrator selection side of the checks-and-balances system. It isolates unresolved newly discovered tests, continues safely classified selections, and prevents incomplete classification coverage from being reported as a fully passing run.",
     "src/testCadencePolicy.js": "Independent cadence authority. It declares only when categories are due and never selects or executes tests.",
     "src/testFeatureClassifier.js": "Independent closest-feature classifier for newly discovered unmapped tests. Explicit mappings remain authoritative; a unique evidence-backed closest match supplies a category. Unresolved ambiguity is isolated to the affected test, safe classified tests continue, and incomplete requested coverage must be reported rather than faked.",
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
@@ -24,7 +24,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T09:33:00Z"
+    "lastActionAt": "2026-08-28T09:34:36Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -63,34 +63,33 @@
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Finish current governance work and make unresolved new-test classification a locally isolated condition: continue safe tests while preventing false complete-coverage claims.",
-    "currentPrompt": "make that a testing rule isolate ambiguity, continue safe tests, never fake complete coverage.",
+    "objective": "Enforce the owner rule that ambiguous new-test classification is isolated rather than globally aborting safe tests, and automatically reject stale testing standards when governed development rules drift.",
+    "currentPrompt": "do it and add a system to `test/testCadence.test.js` that makes sure tests and rules are updated to current development standards automatically I don't want to be running out dated tests because they are there",
     "steps": [
-      "Record the testing rule structurally in governance.",
-      "Implement isolated unresolved-classification handling so safe classified tests can continue.",
-      "Add standing Maintenance tests proving ambiguity is isolated and complete coverage cannot be falsely claimed.",
-      "Keep DEVLOG and AI-HANDOFF at the actual current step with the bounded 10-session / 180-day archive.",
-      "Verify fresh Self-Test and CodeQL and repair any current regression until both are green or a hard execution boundary prevents further work."
+      "Implement ambiguity isolation and incomplete-coverage reporting in the Orchestrator.",
+      "Update the stale strict-classification suite contract without weakening strict certification.",
+      "Add the test/testCadence.test.js current-development standards fingerprint and obsolete-contract audit.",
+      "Keep AI-HANDOFF.json and DEVLOG.md paired in the final corrective governance commit.",
+      "Verify fresh Self-Test, CodeQL, and AI handoff policy for the resulting development tip and repair regressions until green or a hard boundary prevents execution."
     ],
     "status": "active",
     "startedAt": "2026-08-28T09:19:00Z",
-    "lastUpdatedAt": "2026-08-28T09:33:00Z"
+    "lastUpdatedAt": "2026-08-28T09:34:36Z"
   },
   "handoffNotes": {
     "completed": [
-      "Issue #13 remains closed, locked, and retired as not planned.",
-      "Established the owner testing rule: isolate ambiguity, continue safe tests, never fake complete coverage.",
-      "Clarified that unresolved classification is local to the affected new test and must not globally abort unrelated safely classified testing.",
-      "Fallback CI monitoring (Claude) found and fixed a paired-commit compliance gap: commits e1b32ea through b913a0c each updated only one of DEVLOG.md/AI-HANDOFF.json per push, failing the required AI handoff policy check on every one of those commits. This commit restores compliance without changing GPT-5.6 Sol's in-progress objective or steps below."
+      "Implemented the testing rule: isolate ambiguity, continue safe tests, never fake complete coverage.",
+      "Orchestrator execution now isolates unresolved tests from guessed execution while allowing safely classified selections to run; incomplete classification coverage makes the overall run non-passing.",
+      "Updated the former future-test fail-closed assertion so strict certification still rejects unresolved tests while execution paths may isolate them.",
+      "Added a current-development standards gate to test/testCadence.test.js: it fingerprints governed testing-rule text and rejects known obsolete contracts across test JavaScript files."
     ],
     "verification": [
-      "Current classifier returns structured unresolved results for ties, no evidence, and unreadable candidates.",
-      "Current Orchestrator still globally validates classification before selection, so implementation must be changed to satisfy the new isolation rule rather than merely documenting it."
+      "Development tip before paired bookkeeping correction is 2fa96f436a407358b8535e643050161a3239d73e.",
+      "AI handoff policy run #127 failed because the preceding sequential code/test commit did not update both AI-HANDOFF.json and DEVLOG.md in the same project commit; this paired corrective commit is intended to satisfy that policy.",
+      "Self-Test #192 and CodeQL #153 were in progress for 2fa96f436a407358b8535e643050161a3239d73e when the handoff failure was diagnosed."
     ],
     "remaining": [
-      "Change Orchestrator classification handling and add regression tests for isolated ambiguity and incomplete-coverage reporting.",
-      "Update DEVLOG to the same actual step and preserve its 10-session / 180-day bound.",
-      "Verify fresh Self-Test and CodeQL for the completed development state.",
+      "Verify fresh AI handoff policy, Self-Test, and CodeQL on the paired corrective development tip and repair any current regression until green.",
       "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }

@@ -2,25 +2,26 @@
 
 ## Shared AI handoff
 
-- **Agent:** Claude (fallback CI monitoring pass; GPT-5.6 Sol's in-progress objective below is unchanged and still owned by that session).
+- **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, owner prompt, communication policy, verification, and remaining work.
-- **Actual current step:** Finish the governance bookkeeping/schedule work and verify the resulting development state; completed prior progress-policy work is no longer presented as the current implementation step.
-- **AI handoff policy compliance gap (found and fixed by this pass):** Commits `e1b32ea` through `b913a0c` each changed only one of `DEVLOG.md`/`AI-HANDOFF.json` per push (mostly `AI-HANDOFF.json` alone), so the required "AI handoff policy" check (`npm run audit:handoff`) failed on every one of those commits' own diff even though a paired update existed somewhere in the surrounding session. This commit restores compliance by updating both files together; it does not alter GPT-5.6 Sol's in-progress classification-ambiguity objective or steps.
-- **Issue #13:** Closed, locked, and retired as `not planned`; it is not used as test-request infrastructure.
+- **Actual current step:** Finish fresh verification of the ambiguity-isolation implementation and the automatic current-development testing-standards gate; the code/test changes are written, but completion is not claimed until the paired governance tip passes required CI.
+- **Testing rule:** `Isolate ambiguity, continue safe tests, never fake complete coverage.` An unresolved new test is excluded from guessed execution, safe classified tests still run, and any request/cadence obligation that may depend on the unresolved test remains explicitly incomplete.
+- **Standards gate:** `test/testCadence.test.js` fingerprints the current governed testing-rule text from `AI-HANDOFF.json` and scans test JavaScript for known obsolete contracts. Governed rule drift therefore fails Maintenance testing instead of silently certifying stale tests.
 - **Retention:** `src/handoffPolicy.js` mechanically rejects more than 10 Command log sessions and rejects retained sessions older than 180 days. This archive is pruned to the 10 newest sessions; all are from 2026-08-28.
-- **Schedule enforcement:** `.github/workflows/scheduled-diagnostics.yml` carries the exact documented daily, Tuesday/Friday, Monday, and first-of-month cron strings and now fails closed if GitHub reports an unrecognized scheduled trigger instead of silently substituting `daily`.
-- **Estimated completion:** `2026-08-28 05:20:00 EDT` is a best-effort estimate for completing fresh CI verification/correction, not a guarantee or mechanically fixed completion time.
-- **Verification state:** Fresh Self-Test and CodeQL for the finishing development state are still required before this work is marked complete. No promotion to `release` or `main` is authorized.
+- **Schedule enforcement:** `.github/workflows/scheduled-diagnostics.yml` carries the exact documented daily, Tuesday/Friday, Monday, and first-of-month cron strings and fails closed if GitHub reports an unrecognized scheduled trigger instead of silently substituting `daily`.
+- **Estimated completion:** `2026-08-28 05:40:00 EDT` is a best-effort estimate for completing fresh CI verification/correction, not a guarantee or mechanically fixed completion time.
+- **Verification state:** AI handoff policy run #127 failed on commit `2fa96f436a407358b8535e643050161a3239d73e` because that sequential project commit did not update both `AI-HANDOFF.json` and `DEVLOG.md`. This paired corrective commit addresses that bookkeeping requirement. Self-Test #192 and CodeQL #153 were still in progress for the pre-correction tip. Fresh CI on the paired corrective tip is required before this work is marked complete. No promotion to `release` or `main` is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
 
-### Session: paired-commit compliance fix — 2026-08-28T09:28:00Z — Claude
+### Session: isolate ambiguity and enforce current test standards — 2026-08-28T09:19:00Z — GPT-5.6 Sol
 
-- Hourly fallback CI check-in found `development`'s current tip (`b913a0c`) failing the required "AI handoff policy" check; confirmed via GitHub Actions that this was a real, current failure (not stale) and that the prior four pushes (`e1b32ea`, `3fa278f`, `75b2beb`, `b63cc21`) had failed the same check for the same reason — started 2026-08-28T09:28:00Z, finished 2026-08-28T09:30:00Z, exit 0 diagnostic.
-- Reproduced locally: `checkHandoffRange` between `b63cc21` and `b913a0c` returned "Project changes must update both DEVLOG.md and AI-HANDOFF.json" because that push's diff touched only `AI-HANDOFF.json` — started 2026-08-28T09:30:00Z, finished 2026-08-28T09:31:00Z, exit 1 reproduced.
-- Fast-forwarded local `development` to `b913a0c` and prepared this paired update to both files, restoring compliance without altering GPT-5.6 Sol's in-progress classification-ambiguity objective, steps, or any Orchestrator/Cadence/classifier logic — started 2026-08-28T09:31:00Z, finished 2026-08-28T09:33:00Z, exit 0.
+- Added the owner testing rule to governance and traced the execution path that still globally validated all discovered classifications before selection — started 2026-08-28T09:19:00Z, finished 2026-08-28T09:22:00Z, exit 0.
+- Changed Orchestrator selection/execution so unresolved tests are isolated from guessed execution, safely classified tests continue, and incomplete classification coverage makes the overall run non-passing — started 2026-08-28T09:22:00Z, finished 2026-08-28T09:31:00Z, exit 0.
+- Updated the stale strict-classification test contract and added the `test/testCadence.test.js` development-standard fingerprint plus obsolete-contract scan — started 2026-08-28T09:31:00Z, finished 2026-08-28T09:33:14Z, exit 0.
+- Inspected fresh Actions for `2fa96f436a407358b8535e643050161a3239d73e`; AI handoff policy #127 failed because the sequential project commit did not pair `AI-HANDOFF.json` and `DEVLOG.md`, while Self-Test #192 and CodeQL #153 were still in progress. Prepared a paired corrective Git-data commit instead of accepting the failure — started 2026-08-28T09:33:16Z, finished 2026-08-28T09:34:36Z, exit 0 diagnostic/correction preparation.
 
 ### Session: finish governance bookkeeping and schedules — 2026-08-28T09:05:13Z — GPT-5.6 Sol
 
@@ -34,7 +35,7 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 
 ### Session: dependency-derived Code coverage correction — 2026-08-28T08:37:00Z — GPT-5.6 Sol
 
-- Inspected Self-Test #181 and its Ubuntu Node 20 log; confirmed all matrix jobs failed at the same Code coverage test because the probe required nonexistent `./src/engine` — started 2026-08-28T08:37:00Z, finished 2026-08-28T08:38:00Z, exit 0 diagnostic.
+- Inspected Self-Test #181 and its Ubuntu Node 20 log; confirmed all matrix jobs failed at the same Code coverage test because the probe required nonexistent `./src/engine` — started 2026-08-28T08:37:00Z, finished 2026-08-28T08:38:00Z, exit 1 diagnostic.
 - Read the actual Code test imports and prepared a coverage probe that derives real source dependencies from the five standing Code test files instead of inventing one-to-one source filenames — started 2026-08-28T08:38:00Z, finished 2026-08-28T08:39:00Z, exit 0.
 
 ### Session: standing-test CI correction — 2026-08-28T08:31:00Z — GPT-5.6 Sol
