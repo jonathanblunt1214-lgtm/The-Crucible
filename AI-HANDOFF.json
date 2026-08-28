@@ -25,7 +25,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T11:12:27Z"
+    "lastActionAt": "2026-08-28T11:17:28Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -85,26 +85,28 @@
       "Enforce that flagged API identifier values never appear in repository-audit result objects.",
       "Enforce the same metadata-only contract for generated-artifact security findings.",
       "Govern the no-display/no-storage rule across logs, artifacts, known-bug records, DEVLOG, handoff metadata, and other persisted outputs.",
-      "Update DEVLOG chain of custody without recording any detected identifier value.",
+      "Repair sequential connector bookkeeping with one paired AI-HANDOFF.json plus DEVLOG.md commit.",
       "Verify fresh Self-Test, AI handoff policy, and CodeQL on the final development commit and correct any regression."
     ],
     "status": "active",
     "startedAt": "2026-08-28T11:11:01Z",
-    "lastUpdatedAt": "2026-08-28T11:12:27Z"
+    "lastUpdatedAt": "2026-08-28T11:17:28Z"
   },
   "handoffNotes": {
     "completed": [
       "Confirmed src/security.js already constructs security findings from metadata only and does not copy regex match text into result objects.",
       "Added a standing Security regression proving repository audit findings expose only type/path/line metadata and do not serialize the detected API identifier value.",
       "Added the same non-persistence assertion for generated-artifact security findings.",
-      "Governed that detected identifier values must never be persisted in logs, artifacts, known-bug records, DEVLOG, handoff metadata, or other Crucible outputs."
+      "Governed that detected identifier values must never be persisted in logs, artifacts, known-bug records, DEVLOG, handoff metadata, or other Crucible outputs.",
+      "Observed AI handoff policy #146 fail on the sequential connector bookkeeping shape while CodeQL #172 succeeded; preparing a paired corrective commit without weakening Security."
     ],
     "verification": [
-      "The regression uses only synthetic API-key-shaped fixtures and checks absence of the synthetic value from serialized audit results."
+      "The regression uses only synthetic API-key-shaped fixtures and checks absence of the synthetic value from serialized audit results.",
+      "CodeQL #172 succeeded on the sequential bookkeeping tip; fresh final-SHA verification is still required after the paired correction."
     ],
     "remaining": [
-      "Update DEVLOG for the current session and repair paired bookkeeping on the final development tip.",
-      "Verify fresh Self-Test, AI handoff policy, and CodeQL for the final commit and fix any failure until green or a genuine hard blocker is reached.",
+      "Create one paired bookkeeping commit that changes AI-HANDOFF.json and DEVLOG.md together.",
+      "Verify fresh Self-Test, AI handoff policy, and CodeQL for that final commit and fix any failure until green or a genuine hard blocker is reached.",
       "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }
