@@ -10,6 +10,20 @@
     "status": "<verified|blocked>",
     "checkedAt": "<America/New_York timestamp>"
   },
+  "injectionCredential": {
+    "defaultState": "disabled",
+    "enabled": false,
+    "authorizationId": "<active-injection-authorization-id-or-null>",
+    "targetRepository": "<owner/repository-or-null>",
+    "windowStartsAt": "<timestamp-or-null>",
+    "windowExpiresAt": "<timestamp-or-null>",
+    "minimumScope": ["<least-required-permission>"],
+    "allowedOperations": ["<injection-only-operation>"],
+    "nonInjectionUseForbidden": true,
+    "disableWhenNoActiveInjection": true,
+    "shutdownCondition": "assimilation-complete-or-blocked-or-cancelled-or-window-expired",
+    "credentialValueStored": false
+  },
   "prerequisites": [
     {
       "id": "<stable-id>",
