@@ -14,6 +14,7 @@ const {
   CATEGORY_CADENCE,
   scheduledCategoriesForTier,
   scheduledTestsForTier,
+  runScheduledTests,
   runScheduledTier,
   TEST_MAIN_CATEGORIES,
   emptyKnownBugLedger,
@@ -65,6 +66,19 @@ test('scheduled category cadence is selected by the Orchestrator and remains cum
   assert.deepEqual(scheduledTestsForTier('daily'), [...TEST_MAIN_CATEGORIES.code, ...TEST_MAIN_CATEGORIES.security].sort());
   assert.deepEqual(scheduledTestsForTier('twice-weekly'), [...TEST_MAIN_CATEGORIES.code, ...TEST_MAIN_CATEGORIES.security, ...TEST_MAIN_CATEGORIES.utility].sort());
   assert.deepEqual(scheduledTestsForTier('weekly'), Object.values(TEST_MAIN_CATEGORIES).flat().sort());
+});
+
+test('every-push Code baseline runs only the Orchestrator-selected Code tests, not the scheduled audit stack', () => {
+  const calls = [];
+  const result = runScheduledTests('every-push', (executable, args) => {
+    calls.push({ executable, args });
+    return { status: 0 };
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.categories, ['code']);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].args[0], '--test');
+  assert.deepEqual(calls[0].args.slice(1), [...TEST_MAIN_CATEGORIES.code].sort());
 });
 
 test('runScheduledTier executes one Orchestrator-owned test invocation for the categories due', () => {
