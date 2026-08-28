@@ -19,6 +19,12 @@ function validateHandoffPlan(plan) {
   const active = plan.activePlan;
   if (!active || typeof active !== 'object') return { ok:false, message:'AI-HANDOFF.json requires activePlan.' };
   for (const field of ['agent', 'objective', 'currentPrompt', 'startedAt', 'lastUpdatedAt']) if (typeof active[field] !== 'string' || !active[field].trim()) return { ok:false, message:`AI-HANDOFF.json activePlan.${field} is required.` };
+  const executionMode = active.executionMode;
+  if (!executionMode || typeof executionMode !== 'object' || Array.isArray(executionMode)) return { ok:false, message:'AI-HANDOFF.json activePlan.executionMode is required.' };
+  if (!['regular/default', 'work'].includes(executionMode.mode)) return { ok:false, message:'AI-HANDOFF.json activePlan.executionMode.mode must be regular/default or work.' };
+  for (const field of ['purpose', 'selectionReason']) if (typeof executionMode[field] !== 'string' || !executionMode[field].trim()) return { ok:false, message:`AI-HANDOFF.json activePlan.executionMode.${field} is required.` };
+  if (executionMode.agent !== active.agent) return { ok:false, message:'AI-HANDOFF.json activePlan.executionMode.agent must identify the agent that used the recorded mode.' };
+  if (typeof executionMode.distinction !== 'string' || !/agent/i.test(executionMode.distinction) || !/workflow/i.test(executionMode.distinction)) return { ok:false, message:'AI-HANDOFF.json activePlan.executionMode.distinction must explain that execution mode is separate from agent identity and workflow.' };
   if (!['active', 'handoff-ready', 'complete'].includes(active.status)) return { ok:false, message:'AI-HANDOFF.json activePlan.status must be active, handoff-ready, or complete.' };
   if (!Array.isArray(active.steps) || !active.steps.length || active.steps.some((step) => typeof step !== 'string' || !step.trim())) return { ok:false, message:'AI-HANDOFF.json activePlan.steps must contain the ordered development plan.' };
   const notes = plan.handoffNotes;

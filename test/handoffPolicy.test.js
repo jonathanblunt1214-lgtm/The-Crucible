@@ -5,7 +5,7 @@ const { evaluateHandoffChanges, validateHandoffPlan, validateDevlogChainOfCustod
 const SHA_A = 'a'.repeat(40);
 const SHA_B = 'b'.repeat(40);
 
-const PLAN = { schemaVersion:1, activePlan:{ agent:'Codex', objective:'Test handoff', currentPrompt:'The owner asked to test handoff', steps:['Run tests'], status:'active', startedAt:'2026-08-26T00:00:00Z', lastUpdatedAt:'2026-08-26T00:00:00Z' }, handoffNotes:{ completed:[], verification:[], remaining:['Finish'] } };
+const PLAN = { schemaVersion:1, activePlan:{ agent:'Codex', objective:'Test handoff', currentPrompt:'The owner asked to test handoff', executionMode:{ mode:'regular/default', agent:'Codex', purpose:'Handle a focused task without long-running Work-mode orchestration.', selectionReason:'The task is bounded and routine.', distinction:'Execution mode is independent from agent identity and workflow; another agent must preserve the required mode.' }, steps:['Run tests'], status:'active', startedAt:'2026-08-26T00:00:00Z', lastUpdatedAt:'2026-08-26T00:00:00Z' }, handoffNotes:{ completed:[], verification:[], remaining:['Finish'] } };
 
 function devlogWithSessions(count) {
   const sessions = Array.from({ length: count }, (_, i) => [
@@ -115,6 +115,9 @@ test('rejects an incomplete development plan that another AI could not take over
   assert.equal(validateHandoffPlan(PLAN).ok, true);
   assert.equal(validateHandoffPlan({ ...PLAN, activePlan:{ ...PLAN.activePlan, steps:[] } }).ok, false);
   assert.equal(validateHandoffPlan({ ...PLAN, activePlan:{ ...PLAN.activePlan, currentPrompt:'' } }).ok, false);
+  assert.equal(validateHandoffPlan({ ...PLAN, activePlan:{ ...PLAN.activePlan, executionMode:null } }).ok, false);
+  assert.equal(validateHandoffPlan({ ...PLAN, activePlan:{ ...PLAN.activePlan, executionMode:{ ...PLAN.activePlan.executionMode, agent:'Claude' } } }).ok, false);
+  assert.equal(validateHandoffPlan({ ...PLAN, activePlan:{ ...PLAN.activePlan, executionMode:{ ...PLAN.activePlan.executionMode, distinction:'Same thing.' } } }).ok, false);
   assert.equal(validateHandoffPlan({ ...PLAN, handoffNotes:{ completed:[], verification:[] } }).ok, false);
 });
 
