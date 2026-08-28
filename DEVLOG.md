@@ -2,20 +2,32 @@
 
 ## Shared AI handoff
 
-- **Agent:** GPT-5.6 Sol.
+- **Agent:** Claude.
 - **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, test cadence policy, transport rule, verification, and remaining work.
-- **Current development work:** Add a third independent check to the Orchestrator/Cadence system: an evidence-based closest-feature classifier for newly discovered tests that have no explicit category mapping.
+- **Current development work:** The owner directly asked whether the Orchestrator was actually running the suite, which prompted checking `development`'s real current tip rather than what I last knew. Found a separate, concurrent GPT-5.6 Sol session had pushed 26+ commits restructuring this same Orchestrator/Cadence system, and that its two most recent pushes (`c2b935f`, `8a8bb8d` - "Preserve classifier compatibility contracts") were **still failing Self-Test**, on the exact compatibility gap GPT-5.6 Sol's own handoff notes above describe trying to close. Root-caused the remaining gap: `validateTestClassification` used to aggregate every unclassified test into one `Unclassified tests: a, b, c` error, but the refactor now calls `mainCategoryForTest` per file inside its loop, which throws the singular per-file `Unclassified test "x". Independent closest-feature classifier...` message instead - `8a8bb8d`'s own regression test (`test/_testCadenceCore.js`, "future tests fail closed until they are assigned a main category") still asserted the old aggregate format. The underlying fail-closed behavior is correct and unchanged; only the test's expected message format was stale. Fixed the test assertion to match the real, correct message.
 - **Classifier boundary:** Existing explicit mappings remain authoritative. Only unmapped new tests reach the classifier; it compares them to known categorized feature/test evidence, accepts only a unique closest category, and fails closed on ties, no evidence, or unreadable candidates. It cannot select run scope, set cadence, or execute tests.
 - **Cadence authority:** Cadence decides only when categories are due: Code every push/PR, Security daily, Utility twice weekly, Maintenance weekly.
 - **Orchestrator authority:** The Orchestrator remains the sole test-selection/execution authority and consumes only validated classifications and cadence obligations.
 - **Checks-and-balances rule:** Reconciliation verifies the Orchestrator selection covers every category Cadence says is due before execution. Missing due coverage fails closed.
 - **Specific-request rule:** Explicit owner requests remain immediate and Orchestrator-selected; cadence and classification cannot randomize, delay, narrow, or replace them.
-- **Regression state:** Self-Test #176 exposed selection objects being passed instead of `.tests`; commit `6c712dc5…` fixed that and the every-push Code cadence now passes. Self-Test #177 then exposed three legacy compatibility contracts: the `Unclassified test` error prefix, the `categorizedTests.cadence` property, and exact `validateHandoffPlan`/`validateDevlogChainOfCustody` handoff metadata wording.
-- **Verification state:** CodeQL #138 passed on `6c712dc5…`; Self-Test #177 failed only on those compatibility assertions while the new independent classifier tests and Code cadence passed. A compatibility correction is being pushed to `development`; both Self-Test and CodeQL must be green before completion. No promotion to main/release is authorized.
+- **Open concern raised to the owner (not resolved by this fix):** No `AI-CONFLICTS.json` entry exists despite two AI agents (this session and GPT-5.6 Sol) concurrently restructuring the same subsystem across 28+ commits with no coordination. Separately, `self-test.yml`'s required job no longer runs a direct full-suite `npm test`; its test scope is now partly driven by parsing `github.event.head_commit.message` as a natural-language request, which changes the safety model of the required check (commit messages now influence what tests run). Both are flagged for the owner's awareness, not silently normalized or reverted.
+- **Verification state:** With this fix, `npm run test:all` passes 283/283 (Orchestrator full-system proof included), all five cadence tiers resolve real test files, and all six audits pass. No promotion to main/release is authorized by this work.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: pending (this commit) — 2026-08-28T01:42:48Z — Claude
+
+- Fetched `origin/development`; found 2 new commits (`6c712dc`, `8a8bb8d`) since the last confirmed state, both from a separate concurrent GPT-5.6 Sol session, both still failing Self-Test per the GitHub MCP tools — started 2026-08-28T01:39:00Z, finished 2026-08-28T01:39:30Z, exit (n/a, read-only).
+- Fast-forwarded local `development` to `8a8bb8d` and reproduced the exact CI step locally: `CRUCIBLE_TEST_REQUEST=... node src/testCadence.js request` — started 2026-08-28T01:40:10Z, finished 2026-08-28T01:40:11Z, exit 1 (70/71 - one failure in `test/_testCadenceCore.js`'s "future tests fail closed" regression test).
+- Root-caused: `validateTestClassification`'s per-file loop now throws `mainCategoryForTest`'s singular `Unclassified test "x"...` message, but the test still asserted the old aggregate `Unclassified tests: a, b, c` format. Fixed the test assertion to match the real, still-correct fail-closed behavior.
+- `CRUCIBLE_TEST_REQUEST=... node src/testCadence.js request` (after the fix) — started 2026-08-28T01:41:05Z, finished 2026-08-28T01:41:06Z, exit 0 (71/71).
+- `npm run test:all` — started 2026-08-28T01:41:28Z, finished 2026-08-28T01:41:31Z, exit 0 (283/283, Orchestrator full-system proof passed).
+- Verified all 5 cadence tiers (`every-push` through `monthly`) resolve real test-file arrays.
+- `npm run lint:workflows`, `docs:check`, `validate`, `audit:clutter`, `audit:privacy`, `audit:security` — started 2026-08-28T01:41:35Z, finished 2026-08-28T01:41:38Z, exit 0.
+- `node src/testCadence.js verify-bug KB-local-e27b0d5527` — started 2026-08-28T01:42:00Z, finished 2026-08-28T01:42:03Z, exit 0 (resolved the transient known-bug entry via the project's own governed re-test mechanism).
+- `git add`, `git commit`, `git push` — run after this entry and `AI-HANDOFF.json` are finalized.
 
 ### Session: classifier legacy-compatibility correction — 2026-08-28T01:34:00Z — GPT-5.6 Sol
 
@@ -58,7 +70,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 ### Session: random-category proof correction — 2026-08-27T23:52:00Z — GPT-5.6 Sol
 
 - Verified Orchestrator independently chose Security for an explicit random-category request and corrected related regression assertions — started 2026-08-27T23:52:00Z, finished 2026-08-27T23:58:30Z, exit 0.
-
-### Session: natural-language Orchestrator transport — 2026-08-27T23:47:00Z — GPT-5.6 Sol
-
-- Added temporary natural-language request transport while retaining Orchestrator-only test selection — started 2026-08-27T23:47:00Z, finished 2026-08-27T23:52:00Z, exit 0.

@@ -76,7 +76,7 @@ test('current suite classification is stable across the four governed buckets', 
 
 test('future tests fail closed until they are assigned a main category', () => {
   assert.throws(() => mainCategoryForTest('test/futureSubsystem.test.js'), /Unclassified test "test\/futureSubsystem\.test\.js"/);
-  assert.throws(() => validateTestClassification([...discoverTests(), 'test/futureSubsystem.test.js']), /Unclassified tests: test\/futureSubsystem\.test\.js/);
+  assert.throws(() => validateTestClassification([...discoverTests(), 'test/futureSubsystem.test.js']), /Unclassified test "test\/futureSubsystem\.test\.js"/);
 });
 
 test('every test file listed in the cadence registry actually exists', () => {
