@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { evaluateHandoffChanges, validateHandoffPlan, validateDevlogChainOfCustody, checkHandoffRange, MAX_ARCHIVE_SESSIONS, MAX_ARCHIVE_AGE_DAYS } = require('../src/handoffPolicy');
+const { evaluateHandoffChanges, validateHandoffPlan, validateDevlogChainOfCustody, checkHandoffRange, MAX_ARCHIVE_SESSIONS, MAX_ARCHIVE_AGE_DAYS, prunedDevlogEntries, appendToDevlogPrunedLedger, effectiveDevlogPrunedCapacity, DEVLOG_PRUNED_MAX_ENTRIES, DEVLOG_PRUNED_MAX_AGE_DAYS, DEVLOG_PRUNED_HEADER } = require('../src/handoffPolicy');
 
 const SHA_A = 'a'.repeat(40);
 const SHA_B = 'b'.repeat(40);
@@ -148,6 +148,68 @@ test('the 180-day backup limit prunes an old session even when the archive is we
   assert.match(aged.message, new RegExp(`${MAX_ARCHIVE_AGE_DAYS}-day backup limit`));
   const justUnderLimit = new Date(now.getTime() + (MAX_ARCHIVE_AGE_DAYS - 1) * 24 * 60 * 60 * 1000);
   assert.equal(validateDevlogChainOfCustody(oneSessionDevlog, justUnderLimit).ok, true);
+});
+
+test('prunedDevlogEntries reports exactly the sessions dropped between an old and a new DEVLOG.md snapshot', () => {
+  const before = devlogWithSessions(3);
+  const afterPruningOldest = devlogWithSessions(2);
+  const pruned = prunedDevlogEntries(before, afterPruningOldest);
+  assert.equal(pruned.length, 1);
+  assert.match(pruned[0].heading, /### Session: sha2 —/);
+  assert.ok(pruned[0].timestamp instanceof Date);
+  assert.equal(prunedDevlogEntries(before, before).length, 0, 'nothing pruned when the archive is unchanged');
+});
+
+test('appendToDevlogPrunedLedger writes the standing header even with no entries yet', () => {
+  const ledger = appendToDevlogPrunedLedger('', [], new Date('2026-08-28T00:00:00Z'));
+  assert.equal(ledger, DEVLOG_PRUNED_HEADER);
+});
+
+test('appendToDevlogPrunedLedger appends new pruned entries, newest first, and never duplicates a session already recorded', () => {
+  const now = new Date('2026-08-28T00:00:00Z');
+  const older = { heading: '### Session: older — 2026-08-27T00:00:00Z — Codex — mode:regular/default', text: '### Session: older — 2026-08-27T00:00:00Z — Codex — mode:regular/default\n- did work', timestamp: new Date('2026-08-27T00:00:00Z') };
+  const newer = { heading: '### Session: newer — 2026-08-27T12:00:00Z — Codex — mode:regular/default', text: '### Session: newer — 2026-08-27T12:00:00Z — Codex — mode:regular/default\n- did more work', timestamp: new Date('2026-08-27T12:00:00Z') };
+  const firstPass = appendToDevlogPrunedLedger('', [older], now);
+  assert.match(firstPass, /### Session: older —/);
+  const secondPass = appendToDevlogPrunedLedger(firstPass, [newer, older], now);
+  const occurrences = secondPass.split('### Session: older —').length - 1;
+  assert.equal(occurrences, 1, 'appending an already-recorded session again must not duplicate it');
+  assert.ok(secondPass.indexOf('### Session: newer —') < secondPass.indexOf('### Session: older —'), 'newer sessions must sort before older ones regardless of append order');
+});
+
+test('effectiveDevlogPrunedCapacity doubles from the base capacity rather than capping at it', () => {
+  assert.equal(effectiveDevlogPrunedCapacity(0, 50), 50);
+  assert.equal(effectiveDevlogPrunedCapacity(50, 50), 50);
+  assert.equal(effectiveDevlogPrunedCapacity(51, 50), 100, 'exceeding the base capacity must double it, not truncate at it');
+  assert.equal(effectiveDevlogPrunedCapacity(100, 50), 100);
+  assert.equal(effectiveDevlogPrunedCapacity(101, 50), 200, 'capacity keeps doubling as needed');
+  assert.equal(effectiveDevlogPrunedCapacity(450, 50), 800);
+});
+
+test('appendToDevlogPrunedLedger never trims a session within its retention floor, even well past the starting capacity', () => {
+  const now = new Date('2026-08-28T00:00:00Z');
+  const manyEntries = Array.from({ length: DEVLOG_PRUNED_MAX_ENTRIES + 5 }, (_, i) => {
+    const timestamp = new Date(now.getTime() - i * 60 * 60 * 1000);
+    const iso = timestamp.toISOString();
+    return { heading: `### Session: bulk${i} — ${iso} — Codex — mode:regular/default`, text: `### Session: bulk${i} — ${iso} — Codex — mode:regular/default\n- work`, timestamp };
+  });
+  const ledger = appendToDevlogPrunedLedger('', manyEntries, now);
+  const count = (ledger.match(/^### Session: /gm) || []).length;
+  assert.equal(count, manyEntries.length, 'exceeding the starting capacity within the retention floor must never trim a session, only grow capacity');
+  assert.match(ledger, /bulk0 —/, 'the newest sessions must be present');
+  assert.match(ledger, new RegExp(`bulk${DEVLOG_PRUNED_MAX_ENTRIES + 4} —`), 'even the oldest of these still-recent sessions must be kept because none of them are past the age floor');
+});
+
+test('appendToDevlogPrunedLedger trims a session only once it is older than the retention floor, regardless of count', () => {
+  const now = new Date('2026-08-28T00:00:00Z');
+  const tooOld = { heading: '### Session: ancient — 2020-01-01T00:00:00Z — Codex — mode:regular/default', text: '### Session: ancient — 2020-01-01T00:00:00Z — Codex — mode:regular/default\n- long ago', timestamp: new Date('2020-01-01T00:00:00Z') };
+  const withAncient = appendToDevlogPrunedLedger('', [tooOld], now);
+  assert.doesNotMatch(withAncient, /### Session: ancient —/, `a session older than the ${DEVLOG_PRUNED_MAX_AGE_DAYS}-day retention floor must be trimmed even when well under starting capacity`);
+
+  const justUnderFloor = new Date(now.getTime() - (DEVLOG_PRUNED_MAX_AGE_DAYS - 1) * 24 * 60 * 60 * 1000);
+  const recentEnough = { heading: '### Session: recent — ' + justUnderFloor.toISOString() + ' — Codex — mode:regular/default', text: '### Session: recent — ' + justUnderFloor.toISOString() + ' — Codex — mode:regular/default\n- still within a year', timestamp: justUnderFloor };
+  const withRecent = appendToDevlogPrunedLedger('', [recentEnough], now);
+  assert.match(withRecent, /### Session: recent —/, 'a session just under the retention floor must be kept, guaranteeing at least a year of history');
 });
 
 test('rejects untrusted commit range input before invoking git', () => {
