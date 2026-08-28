@@ -16,7 +16,7 @@ Every tracked repository mutation must pass through the receiving project's desi
 
 Required path:
 
-`task/change branch -> prerequisite verification -> designated development branch -> required security, CI, governance, and integrity gates -> required review and OWNER approval -> production branch`
+`task/change branch -> prerequisite verification -> designated development branch -> Crucible gates + receiving-project native validation -> automatic repair/retest until passing or genuinely blocked -> required review and OWNER approval -> production branch`
 
 This applies to all tracked changes, including application code, tests, documentation, governance, configuration, dependencies, lockfiles, workflows, generated artifacts, metadata, migrations, security changes, automation changes, AI handoff state, AI conflict records, and injection documents.
 
@@ -30,13 +30,19 @@ If the receiving project does not yet have a designated development integration 
 
 Before any injected Crucible capability is activated as a required gate, every non-code prerequisite required by that capability must be positively verified under `governingDocuments/templates/injection-prerequisites.md`.
 
+Preflight must also discover the receiving project's applicable native validation commands and duplicated policy validators under `governingDocuments/templates/injection-native-validation.md`. A native validator that would contradict assimilated governance because it ignores the governing exception/configuration source is an unresolved prerequisite and must be reconciled before assimilation can be completed.
+
 A missing or unverifiable prerequisite blocks assimilation or promotion at the prerequisite stage. It must not be converted into a downstream surprise required-check failure after activation.
 
-## Mandatory gates
+## Mandatory gates and native validation
 
-Required security, CI, governance, integrity, and review gates are part of the chain of command.
+Required security, CI, governance, integrity, receiving-project native validation, and review gates are part of the chain of command.
 
 Agents must not bypass, suppress, disable, weaken, rename around, relabel, skip, or route around a required gate. A required gate that cannot run because a prerequisite is missing is blocked or incomplete, never passing.
+
+A passing outer Crucible gate is not sufficient when the receiving project's applicable native full tests, stress suite, release audit, bounded workload, repository validator, or runtime wiring check fails. Likewise, a passing project-native validator cannot override a failing Crucible gate.
+
+If a post-assimilation validation failure is safe, technically resolvable, inside the active injection authority, and not blocked by a genuine unresolved governance conflict, the injector must continue directly through diagnosis, repair, and retest. It must not stop after diagnosis and wait for another OWNER prompt merely to perform the already-authorized repair. The loop continues until the required assimilation validation passes or a genuine blocker is reached.
 
 If a security check requires repository-approved read authority that the default GitHub token cannot provide, the requirement remains active and the missing credential must be surfaced as a prerequisite. Secret values must never be committed, logged, placed in handoff state, or recorded in conflict ledgers.
 
@@ -49,6 +55,12 @@ Agents must not create unnecessary procedural detours, repeated confirmation, in
 ## Multi-agent cooperation
 
 All authorized agents work together from shared project state. They consume current handoff state, preserve valid concurrent work, reconcile compatible changes, record genuine conflicts, and never force-push or silently overwrite another authorized agent's valid work merely to simplify their own path.
+
+## Injection completion
+
+Assimilation is not complete until all required prerequisites, Crucible gates, and applicable receiving-project native validation discovered during preflight pass on the assimilated development-branch state. Duplicated validators must be reconciled so intentional governed exceptions and native governance files receive the same governing decision rather than conflicting because one validator ignored the unified configuration source.
+
+A validation failure keeps assimilation in `repairing` or `blocked` state. It must never be reported as complete merely because the outer Crucible gate passed earlier in the run.
 
 ## Injection lifetime
 
