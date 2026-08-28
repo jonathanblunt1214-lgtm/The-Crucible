@@ -12,6 +12,8 @@ When no authorized injection is active, the monitoring link MUST be disabled and
 
 The link is not considered active merely because this document or a state file says `monitoring`. Activation requires an actual monitoring mechanism capable of checking the receiving project's applicable workflow/check results during the authorized window. The injection package MUST record the mechanism identity, activation proof, activation time, expiration time, and exact target. A declared link with no executable monitoring mechanism is invalid and blocks assimilation.
 
+Every injection MUST instantiate the executable behavior in `governingDocuments/templates/injection-monitor-task.md` for its exact receiving repository and development branch. The monitor task is part of injection execution, not optional documentation. If the task cannot actually be created, scheduled/connected, or granted the least scope required to retrieve failure evidence and deliver an authorized repair, `monitoringMechanismVerified` remains false and assimilation is blocked.
+
 ## Exact scope
 
 The link may observe only the target repository, development path, workflows, checks, jobs, artifacts, and logs required to validate or repair the authorized injection/assimilation.
@@ -77,6 +79,7 @@ If a safe deterministic patch cannot be produced without inventing business logi
 - `activatedAt` and `expiresAt`, with `expiresAt` no later than 24 hours after activation;
 - `mechanismType` and non-secret `mechanismIdentity`;
 - `activationProof` showing that the monitor is actually scheduled/connected and able to inspect the target;
+- `monitorTaskContract: governingDocuments/templates/injection-monitor-task.md` or the receiving project's assimilated equivalent;
 - allowed workflow/check scope;
 - permission scope required to read failure evidence and deliver authorized repairs;
 - `deduplicateByUnderlyingDefect: true`;
