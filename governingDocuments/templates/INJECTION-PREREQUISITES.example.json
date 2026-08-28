@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "<receiving-project-name>",
+    "repository": "<owner/repository>",
+    "crucibleRef": "<selected-crucible-commit-or-version>"
+  },
+  "preflight": {
+    "completedBeforePackageFinalization": true,
+    "status": "<verified|blocked>",
+    "checkedAt": "<America/New_York timestamp>"
+  },
+  "prerequisites": [
+    {
+      "id": "<stable-id>",
+      "type": "<branch|repository-setting|actions-permission|secret|credential|ruleset|external-service|other>",
+      "name": "<non-secret prerequisite name>",
+      "requiredBy": "<injected capability/check>",
+      "reason": "<why required>",
+      "minimumScope": "<least required permission or null>",
+      "verified": false,
+      "remediation": "<exact non-secret remediation or null>"
+    }
+  ],
+  "activation": {
+    "allRequiredPrerequisitesVerified": false,
+    "requiredGatesMayActivate": false,
+    "productionPromotionAllowed": false
+  },
+  "secretValueStorageForbidden": true
+}
