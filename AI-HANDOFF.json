@@ -24,7 +24,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T09:34:36Z"
+    "lastActionAt": "2026-08-28T09:39:14Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -69,27 +69,28 @@
       "Implement ambiguity isolation and incomplete-coverage reporting in the Orchestrator.",
       "Update the stale strict-classification suite contract without weakening strict certification.",
       "Add the test/testCadence.test.js current-development standards fingerprint and obsolete-contract audit.",
-      "Keep AI-HANDOFF.json and DEVLOG.md paired in the final corrective governance commit.",
+      "Repair the standards audit so its own deny-list literals cannot self-trigger while preserving exact detection.",
       "Verify fresh Self-Test, CodeQL, and AI handoff policy for the resulting development tip and repair regressions until green or a hard boundary prevents execution."
     ],
     "status": "active",
     "startedAt": "2026-08-28T09:19:00Z",
-    "lastUpdatedAt": "2026-08-28T09:34:36Z"
+    "lastUpdatedAt": "2026-08-28T09:39:14Z"
   },
   "handoffNotes": {
     "completed": [
       "Implemented the testing rule: isolate ambiguity, continue safe tests, never fake complete coverage.",
       "Orchestrator execution now isolates unresolved tests from guessed execution while allowing safely classified selections to run; incomplete classification coverage makes the overall run non-passing.",
       "Updated the former future-test fail-closed assertion so strict certification still rejects unresolved tests while execution paths may isolate them.",
-      "Added a current-development standards gate to test/testCadence.test.js: it fingerprints governed testing-rule text and rejects known obsolete contracts across test JavaScript files."
+      "Added a current-development standards gate to test/testCadence.test.js: it fingerprints governed testing-rule text and rejects known obsolete contracts across test JavaScript files.",
+      "Corrected the obsolete-contract audit to construct deny-list phrases from fragments, preventing the audit source from matching its own literals without weakening the scan."
     ],
     "verification": [
-      "Development tip before paired bookkeeping correction is 2fa96f436a407358b8535e643050161a3239d73e.",
-      "AI handoff policy run #127 failed because the preceding sequential code/test commit did not update both AI-HANDOFF.json and DEVLOG.md in the same project commit; this paired corrective commit is intended to satisfy that policy.",
-      "Self-Test #192 and CodeQL #153 were in progress for 2fa96f436a407358b8535e643050161a3239d73e when the handoff failure was diagnosed."
+      "AI handoff policy #128 succeeded on paired bookkeeping commit 465a0f56f0ebeac05ee786f40ea097f8a3777e71.",
+      "Self-Test #193 failed uniformly because test/testCadence.test.js found its own literal obsolete-contract phrase; the underlying ambiguity-isolation test itself passed and the critical Code baseline passed.",
+      "Commit 941f158675c6de2c7804a861b731b5dfda517647 contains the narrow self-scan correction."
     ],
     "remaining": [
-      "Verify fresh AI handoff policy, Self-Test, and CodeQL on the paired corrective development tip and repair any current regression until green.",
+      "Verify fresh AI handoff policy, Self-Test, and CodeQL on the final paired corrective development tip and repair any current regression until green.",
       "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }

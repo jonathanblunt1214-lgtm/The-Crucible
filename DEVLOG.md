@@ -4,13 +4,13 @@
 
 - **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, owner prompt, communication policy, verification, and remaining work.
-- **Actual current step:** Finish fresh verification of the ambiguity-isolation implementation and the automatic current-development testing-standards gate; the code/test changes are written, but completion is not claimed until the paired governance tip passes required CI.
+- **Actual current step:** Verify the self-safe current-development standards gate after correcting its first CI-exposed self-match; completion is not claimed until the final paired governance tip passes required CI.
 - **Testing rule:** `Isolate ambiguity, continue safe tests, never fake complete coverage.` An unresolved new test is excluded from guessed execution, safe classified tests still run, and any request/cadence obligation that may depend on the unresolved test remains explicitly incomplete.
-- **Standards gate:** `test/testCadence.test.js` fingerprints the current governed testing-rule text from `AI-HANDOFF.json` and scans test JavaScript for known obsolete contracts. Governed rule drift therefore fails Maintenance testing instead of silently certifying stale tests.
+- **Standards gate:** `test/testCadence.test.js` fingerprints the current governed testing-rule text from `AI-HANDOFF.json` and scans test JavaScript for known obsolete contracts. Governed rule drift therefore fails Maintenance testing instead of silently certifying stale tests. Its deny-list phrases are constructed from fragments so the scanner does not flag its own source literals.
 - **Retention:** `src/handoffPolicy.js` mechanically rejects more than 10 Command log sessions and rejects retained sessions older than 180 days. This archive is pruned to the 10 newest sessions; all are from 2026-08-28.
 - **Schedule enforcement:** `.github/workflows/scheduled-diagnostics.yml` carries the exact documented daily, Tuesday/Friday, Monday, and first-of-month cron strings and fails closed if GitHub reports an unrecognized scheduled trigger instead of silently substituting `daily`.
 - **Estimated completion:** `2026-08-28 05:40:00 EDT` is a best-effort estimate for completing fresh CI verification/correction, not a guarantee or mechanically fixed completion time.
-- **Verification state:** AI handoff policy run #127 failed on commit `2fa96f436a407358b8535e643050161a3239d73e` because that sequential project commit did not update both `AI-HANDOFF.json` and `DEVLOG.md`. This paired corrective commit addresses that bookkeeping requirement. Self-Test #192 and CodeQL #153 were still in progress for the pre-correction tip. Fresh CI on the paired corrective tip is required before this work is marked complete. No promotion to `release` or `main` is authorized.
+- **Verification state:** AI handoff policy #128 passed on `465a0f56f0ebeac05ee786f40ea097f8a3777e71`. Self-Test #193 failed uniformly because the new obsolete-contract scanner found its own literal deny-list phrase; the ambiguity-isolation proof and critical Code cadence both passed. Commit `941f158675c6de2c7804a861b731b5dfda517647` contains the narrow self-scan correction. Fresh CI on the paired corrective tip is required. No promotion to `release` or `main` is authorized.
 
 ## Command log archive
 
@@ -22,6 +22,7 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 - Changed Orchestrator selection/execution so unresolved tests are isolated from guessed execution, safely classified tests continue, and incomplete classification coverage makes the overall run non-passing — started 2026-08-28T09:22:00Z, finished 2026-08-28T09:31:00Z, exit 0.
 - Updated the stale strict-classification test contract and added the `test/testCadence.test.js` development-standard fingerprint plus obsolete-contract scan — started 2026-08-28T09:31:00Z, finished 2026-08-28T09:33:14Z, exit 0.
 - Inspected fresh Actions for `2fa96f436a407358b8535e643050161a3239d73e`; AI handoff policy #127 failed because the sequential project commit did not pair `AI-HANDOFF.json` and `DEVLOG.md`, while Self-Test #192 and CodeQL #153 were still in progress. Prepared a paired corrective Git-data commit instead of accepting the failure — started 2026-08-28T09:33:16Z, finished 2026-08-28T09:34:36Z, exit 0 diagnostic/correction preparation.
+- Verified AI handoff policy #128 passed, inspected Self-Test #193, identified a self-match in the obsolete-contract audit, and corrected the deny-list construction without weakening its exact scan — started 2026-08-28T09:37:23Z, finished 2026-08-28T09:39:14Z, exit 0 correction pending fresh CI.
 
 ### Session: finish governance bookkeeping and schedules — 2026-08-28T09:05:13Z — GPT-5.6 Sol
 
