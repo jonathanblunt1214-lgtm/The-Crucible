@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { ACTION_CLASSES, expandArgs, parseCandidate, selectChanged } = require('../src/code-check');
+const { ACTION_CLASSES, expandArgs, parseCandidate, selectChanged, runCheckCommand } = require('../src/code-check');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -18,6 +18,15 @@ test('language-aware parser checks changed JSON and JavaScript without executing
   assert.ok(parseCandidate('bad.json', '{'));
   assert.equal(parseCandidate('bad.json', '{').action, 'human code review required');
   assert.equal(parseCandidate('bad.json', '{').errorCode, 'CRUCIBLE_PARSE_JSON_SYNTAX');
+  assert.equal(parseCandidate('bad.json', '{').decision.action, 'block-known-unsafe');
+});
+
+test('unknown tool startup conditions retry a safe supported path before being treated as unresolved', async () => {
+  const results = [{ ok:false, reason:'start error', detail:'tool metadata changed' }, { ok:true }];
+  const result = await runCheckCommand('.', { run:'example', args:[], cwd:'.' }, ['src/a.js'], 1000, async () => results.shift());
+  assert.equal(result.ok, true);
+  assert.equal(result.recovered, true);
+  assert.equal(result.attempts, 2);
 });
 
 test('pre-check is appended to the latest GitHub report with its action labels', () => {
@@ -42,6 +51,15 @@ test('commit findings use the requested action classes in the unified report', (
   assert.equal(classifyCommit({ type:'merge-conflict-marker', fixable:false }).action, 'security concern');
   const report = formatReport({ paths:['a.js'], findings:[{ action:'test failure', errorCode:'CRUCIBLE_TEST_FAILURE_EXIT_1', check:'Affected tests', paths:['a.js'] }] });
   assert.match(report, /\[test failure\] CRUCIBLE_TEST_FAILURE_EXIT_1: Affected tests: a\.js/);
+});
+
+test('persisted pre-check reporting includes governing decision status and evidence attempts', () => {
+  const report = formatReport({ paths:['a.js'], findings:[{
+    action:'human code review required', errorCode:'CRUCIBLE_TEST_START_ERROR', check:'Affected tests', paths:['a.js'],
+    decision:{ status:'needs-review', principle:'persevere', attempts:[{ source:'configuration', outcome:'inspected' }, { source:'tool', outcome:'unavailable' }] },
+  }] });
+  assert.match(report, /Governing decision: needs-review via persevere/);
+  assert.match(report, /configuration:inspected, tool:unavailable/);
 });
 
 test('Code standing category produces executable V8 coverage for the real source modules its tests exercise', () => {

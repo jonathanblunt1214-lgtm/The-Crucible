@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const { auditCommit } = require('./commit');
 const { auditCode } = require('./code-check');
+const { formatDecision } = require('./governingDecision');
 
 function classifyCommit(item) {
   return {
@@ -16,6 +17,7 @@ function formatReport(result) {
   for (const finding of result.findings) {
     const targets = finding.path || (finding.paths || []).join(', ') || 'repository';
     lines.push(`- [${finding.action}] ${finding.errorCode}: ${finding.check}: ${targets}${finding.detail ? ` (${finding.detail})` : ''}`);
+    if (finding.decision) lines.push(`  Governing decision: ${formatDecision(finding.decision)}.`);
   }
   if (!result.findings.length) lines.push('- No action required.');
   return lines.join('\n');
@@ -31,7 +33,8 @@ async function runPrecheck(root, config, options = {}) {
   const ref = options.ref || '--cached';
   const commit = auditCommit(root, { ref });
   const code = await auditCode(root, config, { ref, paths:commit.paths });
-  return { ref, paths:commit.paths, findings:[...commit.findings.map(classifyCommit), ...code.findings] };
+  const findings = [...commit.findings.map(classifyCommit), ...code.findings];
+  return { ref, paths:commit.paths, findings, decisions:findings.filter((item) => item.decision).map((item) => item.decision) };
 }
 
 module.exports = { classifyCommit, formatReport, publishReport, runPrecheck };

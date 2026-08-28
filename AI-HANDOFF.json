@@ -16,6 +16,7 @@
     "src/testFeatureClassifier.js": "Independent closest-feature classifier for newly discovered unmapped tests. Explicit mappings remain authoritative; a unique evidence-backed closest match supplies a category. Unresolved ambiguity is isolated to the affected test, safe classified tests continue, and incomplete requested coverage must be reported rather than faked.",
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
+    "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
     ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport with exact documented slower-than-hourly cron schedules and fail-closed schedule-to-tier mapping; it never chooses test files.",
     "governingDocuments/known-bugs/README.md": "Known-bug governance policy.",
@@ -24,7 +25,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T09:47:00Z"
+    "lastActionAt": "2026-08-28T09:53:05Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -74,18 +75,29 @@
     ],
     "status": "active",
     "startedAt": "2026-08-28T09:47:00Z",
-    "lastUpdatedAt": "2026-08-28T09:47:00Z"
+    "lastUpdatedAt": "2026-08-28T09:53:05Z"
   },
   "handoffNotes": {
     "completed": [
       "Synchronized the clean literal development checkout to origin/development at 5ccad47 and read the shared handoff and governing document set.",
-      "Identified the brittle DEVELOPMENT_TEST_STANDARD_POLICY_SHA256 assertion and the existing independent classifier, pre-check, code-check, and persisted summary integration points."
+      "Identified and removed the brittle DEVELOPMENT_TEST_STANDARD_POLICY_SHA256 assertion.",
+      "Added src/governingDecision.js with explicit Adapt, Persevere, and Overcome outcomes, ordered repository/tool/configuration/upstream evidence, verified repair, known-unsafe blocking, and semantic/high-risk human escalation.",
+      "Integrated decision evidence into code-check failures and persisted pre-check reporting; tool startup failure receives one safe retry while timeout and real nonzero exits are not blindly repeated.",
+      "Replaced fingerprint certification with behavioral tests for evidence reconciliation, verified recovery, semantic ambiguity, startup recovery, and persisted report evidence.",
+      "Updated README with the executable behavior and safety boundary."
     ],
-    "verification": [],
+    "verification": [
+      "Focused test/testCadence.test.js and test/code-check.test.js suite passed 52/52.",
+      "Explicit full discovered suite passed 299/299.",
+      "npm test change-impact selection passed 78/78.",
+      "npm run validate, npm run docs:check, npm run audit:security, npm run audit:privacy, npm run audit:ai-conflict-governance, and git diff --check passed.",
+      "npm run lint:workflows passed across 13 workflow files and npm run audit:clutter passed across 124 tracked files.",
+      "One attempted node --test test directory invocation exited 1 because Node 26 treats test as a module path; the corrected explicit discovered-file invocation passed 299/299.",
+      "The Unix .githooks/pre-push launcher could not start because sh is unavailable in this Windows environment; every command it contains was run directly and passed."
+    ],
     "remaining": [
-      "Implement and test the executable Adapt/Persevere/Overcome reconciliation contract across core checks.",
-      "Replace fingerprint certification with behavioral verification and update reporting/docs/config as needed.",
-      "Verify, commit, push to development, and drive required CI green.",
+      "Run the repository pre-push hook, commit the implementation with paired handoff surfaces, fetch and fast-forward if origin/development moved, then push development.",
+      "Verify fresh AI handoff policy, Self-Test, and CodeQL for the pushed tip and repair current regressions until green.",
       "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }
