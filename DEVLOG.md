@@ -4,14 +4,20 @@
 
 - **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, and `handoffNotes` for the exact owner request, current plan, completed work, verification, and remaining work.
-- **Current development work:** Natural-language test requests are transported to `src/testCadence.js`; the Orchestrator alone interprets them and selects actual tests. The requested random-category proof selected Security and passed all 92 Security test cases.
-- **Latest verification:** Self-Test run 166's requested Orchestrator execution passed 92/92 Security tests. Run 167 then exposed only a regression-harness environment leak: direct `runRequested` assertions inherited the surrounding workflow step's transport source and took the push transport path.
-- **Current correction:** Isolate direct programmatic request assertions from `CRUCIBLE_TEST_REQUEST_SOURCE` while restoring that environment after the test. Production transport and Orchestrator selection behavior are unchanged.
-- **Remaining work:** Push this regression-harness correction to `development`, then confirm Self-Test and CodeQL are green. No `main`/`release` promotion is authorized.
+- **Current development work:** The Orchestrator now owns test-progress heartbeat behavior plus a governed known-bug lifecycle. Long-running test commands emit an update every 60 seconds; category failures are persisted under `governingDocuments/known-bugs` in criticality order; exact failing tests must pass a re-test before a bug can be checked off.
+- **Criticality defaults:** Security=`critical`, Code=`high`, Utility=`medium`, Maintenance=`low`; mixed-category failures use the highest severity present.
+- **Resolution rule:** `node src/testCadence.js verify-bug <bug-id>` re-runs the exact recorded tests. Failed re-tests leave the bug open; only a passing re-test can set `checked: true` / `status: resolved`.
+- **Remaining work:** Push the atomic implementation to `development`, then confirm Self-Test and CodeQL are green. No `main`/`release` promotion is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: Orchestrator progress and known-bug governance — 2026-08-28T00:04:30Z — GPT-5.6 Sol
+
+- Read current `DEVLOG.md`, `AI-HANDOFF.json`, `src/testCadence.js`, `test/testCadence.test.js`, Self-Test workflow, and development branch state — started 2026-08-28T00:04:30Z, finished 2026-08-28T00:06:00Z, exit 0.
+- Designed a 60-second companion-process heartbeat that preserves the synchronous Orchestrator API while guaranteeing updates within the owner-authorized 60–90 second window — started 2026-08-28T00:06:00Z, finished 2026-08-28T00:08:00Z, exit 0.
+- Prepared known-bug governance with severity ordering, category-derived default criticality, exact-test re-verification, fail-closed checked-state validation, Self-Test failure artifact preservation, regression coverage, and paired governance updates — started 2026-08-28T00:08:00Z, finished 2026-08-28T00:11:00Z, exit 0.
 
 ### Session: random-category proof correction — 2026-08-27T23:52:00Z — GPT-5.6 Sol
 
@@ -69,11 +75,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 - `npm test` — started 2026-08-27T21:46:02Z, finished 2026-08-27T21:46:05Z, exit 0 (260/260 on Linux).
 - `npm run lint:workflows`, `docs:check`, `validate`, `audit:clutter`, `audit:privacy`, `audit:security` — started 2026-08-27T21:47:14Z, finished 2026-08-27T21:47:17Z, exit 0.
 - Push to `development` produced commit `a5048deacbd79926c2652eddad13d5db98a0131b`; subsequent Self-Test, CodeQL, AI handoff policy, AI conflict governance, and locked-PR guard all passed.
-
-### Session: 9c16f36 — 2026-08-27T21:39:09Z — Claude
-
-- Added cadence/orchestrator unit tests and scheduled diagnostics; iterated the new topology/authenticity/integration tests individually until green.
-- `npm run cadence:every-push` — first run failed because `audit:handoff` lacked invocation context; registry corrected and rerun passed.
-- `npm run cadence:daily` and `npm run cadence:on-error -- self-test-failure` passed.
-- Final `npm test` — started 2026-08-27T21:37:22Z, finished 2026-08-27T21:37:25Z, exit 0 (260/260).
-- Workflow lint/docs/validate/clutter/privacy/security checks — finished 2026-08-27T21:39:09Z, exit 0.
