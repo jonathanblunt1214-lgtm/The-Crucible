@@ -40,7 +40,7 @@
     "automaticSelection": "Select execution mode automatically without asking the owner unless the owner explicitly selects a mode.",
     "regularDefaultPurpose": "Routine, simple, focused, and conversational tasks that do not materially benefit from long-running orchestration.",
     "workPurpose": "Genuinely complex, long-running, multi-source, file-heavy, or deliverable-oriented tasks that materially benefit from Work mode.",
-    "handoffRule": "Every active plan records the actual mode, agent, purpose, and selection reason. Mode is independent from agent identity and workflow: Codex and Claude may each use either mode, and an agent change must never silently change the mode.",
+    "handoffRule": "Every active plan records the actual mode, agent, purpose, and selection reason, and every new DEVLOG Command log archive Session heading records mode:regular/default or mode:work so mode remains in the chain of custody. Mode is independent from agent identity and workflow: Codex and Claude may each use either mode, and an agent change must never silently change the mode.",
     "continuationRule": "Preserve the recorded mode while the task needs remain the same. If evidence warrants a different mode, record the new mode and reason in AI-HANDOFF.json before continuing."
   },
   "temporaryInfrastructure": {
@@ -72,7 +72,7 @@
   "activePlan": {
     "agent": "Codex",
     "objective": "Make execution mode explicit and enforced in every AI handoff so agent changes never silently substitute regular/default mode for Work mode or vice versa.",
-    "currentPrompt": "also add in the handoff a distinction between this was done in this mode, and explain the purpose of the mode so if a task done in work mode here isn't done in in regular Claude instead of workflow or vice versa",
+    "currentPrompt": "also add in the handoff a distinction between this was done in this mode, and explain the purpose of the mode so if a task done in work mode here isn't done in in regular Claude instead of workflow or vice versa\n\nalso include this in the chain of custody",
     "executionMode": {
       "mode": "regular/default",
       "agent": "Codex",
@@ -88,7 +88,7 @@
     ],
     "status": "handoff-ready",
     "startedAt": "2026-08-28T10:13:26Z",
-    "lastUpdatedAt": "2026-08-28T10:16:32Z"
+    "lastUpdatedAt": "2026-08-28T10:20:24Z"
   },
   "handoffNotes": {
     "completed": [
@@ -97,11 +97,13 @@
       "Added account-level execution-mode policy and per-plan mode metadata to AI-HANDOFF.json.",
       "Documented that mode is independent from agent identity and workflow in AGENTS.md, README.md, and DEVLOG.md.",
       "Updated handoff validation and regression tests so missing, invalid, or agent-confused mode metadata fails closed."
+      ,"Added execution mode to each new DEVLOG command-session heading and made newest-session mode metadata mandatory in chain-of-custody validation."
     ],
     "verification": [
       "Focused handoffPolicy and workflow tests passed 36/36.",
       "npm test governed change-impact selection passed 78/78.",
-      "npm run validate, npm run docs:check, npm run audit:ai-conflict-governance, npm run lint:workflows, npm run audit:clutter, npm run audit:privacy, npm run audit:security, npm run audit:governance, and git diff --check passed."
+      "npm run validate, npm run docs:check, npm run audit:ai-conflict-governance, npm run lint:workflows, npm run audit:clutter, npm run audit:privacy, npm run audit:security, npm run audit:governance, and git diff --check passed.",
+      "Initial implementation commit 71a04f0a9134dc06b97423404ab26874c209e8b8 passed CodeQL run 33162843936 and AI handoff policy run 33162845427; Self-Test run 33162842284 was still in progress when the owner added the chain-of-custody requirement, so final-tip CI will supersede it."
     ],
     "remaining": [
       "Commit and push only to development, then verify required hosted CI.",

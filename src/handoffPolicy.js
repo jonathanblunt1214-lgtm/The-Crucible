@@ -37,6 +37,7 @@ const HANDOFF_SECTION_HEADING = '## Shared AI handoff';
 const ARCHIVE_SECTION_HEADING = '## Command log archive';
 const ARCHIVE_ENTRY_HEADING = /^### Session: /m;
 const ARCHIVE_ENTRY_TIMESTAMP = /^### Session: .+? — (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z) — .+$/gm;
+const ARCHIVE_ENTRY_MODE = /^### Session: .+? — \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z — .+? — mode:(regular\/default|work)$/m;
 const MAX_ARCHIVE_SESSIONS = 10;
 const MAX_ARCHIVE_AGE_DAYS = 180;
 
@@ -79,6 +80,10 @@ function validateDevlogChainOfCustody(content, now = new Date()) {
     }
   }
   const newestEntry = archiveSection.split(/^### Session: /m)[1] || '';
+  const newestHeading = `### Session: ${newestEntry.split(/\r?\n/, 1)[0] || ''}`;
+  if (!ARCHIVE_ENTRY_MODE.test(newestHeading)) {
+    return { ok:false, message:'DEVLOG.md\'s newest Command log archive entry must record mode:regular/default or mode:work in its Session heading so execution mode remains part of the chain of custody.' };
+  }
   if (!/\bstart(?:ed)?\b[\s\S]*?\bfinish(?:ed)?\b/i.test(newestEntry)) {
     return { ok:false, message:'DEVLOG.md\'s newest Command log archive entry must record both a start time and a finish time for each command.' };
   }
@@ -117,4 +122,4 @@ if (require.main === module) {
   if (!result.ok) process.exitCode = 1;
 }
 
-module.exports = { evaluateHandoffChanges, validateHandoffPlan, validateDevlogChainOfCustody, checkHandoffRange, MAX_ARCHIVE_SESSIONS, MAX_ARCHIVE_AGE_DAYS };
+module.exports = { evaluateHandoffChanges, validateHandoffPlan, validateDevlogChainOfCustody, checkHandoffRange, MAX_ARCHIVE_SESSIONS, MAX_ARCHIVE_AGE_DAYS, ARCHIVE_ENTRY_MODE };

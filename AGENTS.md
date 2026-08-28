@@ -57,11 +57,12 @@ same or different - can tell how long it has been idle.
   entry, newest first:
 
   ```
-  ### Session: <short label> — <ISO timestamp> — <agent>
+  ### Session: <short label> — <ISO timestamp> — <agent> — mode:<regular/default|work>
   - `command` — started TIMESTAMP, finished TIMESTAMP, exit CODE
   ```
 
-  List every command with a real effect for that session - tests,
+  The heading's mode field is mandatory and makes execution mode part of the
+  chain of custody, not just current-plan metadata. List every command with a real effect for that session - tests,
   audits, lint, git operations - each with a start time and a finish
   time. When adding a new session's entry pushes the archive past 10, or
   any entry's timestamp is more than 180 days old, prune the offending

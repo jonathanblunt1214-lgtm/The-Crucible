@@ -17,12 +17,15 @@
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
 
-### Session: mode-aware AI handoff — 2026-08-28T10:13:26Z — Codex
+### Session: mode-aware AI handoff — 2026-08-28T10:13:26Z — Codex — mode:regular/default
 
 - `git fetch origin development; git merge --ff-only origin/development` — synchronized the clean literal development checkout at `f74a7cb1387f9db9dd49ae17112ad1a9ea37b022`; started 2026-08-28T10:12:50Z, finished 2026-08-28T10:13:05Z, exit 0.
 - `rg -n "validateHandoffPlan|activePlan|currentPrompt" test src AGENTS.md AI-HANDOFF.json DEVLOG.md` — located the structured handoff validator and regression coverage; started 2026-08-28T10:13:05Z, finished 2026-08-28T10:13:06Z, exit 0.
 - `node --test test/handoffPolicy.test.js test/workflow.test.js; npm run validate; npm run docs:check; npm run audit:ai-conflict-governance; git diff --check` — verified the focused handoff contract and governance surfaces; started 2026-08-28T10:15:00Z, finished 2026-08-28T10:15:13Z, exit 1 only because `DEVLOG.md` had one trailing blank line; all tests and project checks passed, and the formatting issue was corrected immediately.
 - `npm test; npm run lint:workflows; npm run audit:clutter; npm run audit:privacy; npm run audit:security; npm run audit:governance; git diff --check` — verified governed change-impact tests 78/78 and the complete pre-push audit set after the formatting correction; started 2026-08-28T10:16:00Z, finished 2026-08-28T10:16:31Z, exit 0.
+- `git fetch origin development; git merge --ff-only origin/development; git commit; git push origin development` — confirmed origin had not moved, committed mode-aware handoff enforcement as `71a04f0a9134dc06b97423404ab26874c209e8b8`, and pushed only to literal `development`; started 2026-08-28T10:17:00Z, finished 2026-08-28T10:17:18Z, exit 0.
+- `gh workflow run self-test.yml; gh workflow run codeql.yml; gh workflow run handoff-policy.yml` — dispatched exact-tip manual CI fallbacks because the authenticated AI push emitted no automatic runs; started 2026-08-28T10:18:00Z, finished 2026-08-28T10:18:09Z, exit 0; runs `33162842284`, `33162843936`, and `33162845427`.
+- `node --test test/handoffPolicy.test.js test/workflow.test.js; npm run validate; npm run docs:check; git diff --check` — verified the added chain-of-custody mode requirement and documentation; started 2026-08-28T10:19:15Z, finished 2026-08-28T10:19:28Z, exit 0 (36/36).
 
 ### Session: executable Adapt Persevere Overcome governance — 2026-08-28T09:47:00Z — Codex
 
