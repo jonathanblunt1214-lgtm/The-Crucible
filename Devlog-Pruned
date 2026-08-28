@@ -1,1 +1,7 @@
+# Devlog-Pruned
 
+Append-only ledger, on the reference-only `Archive` branch, of every `### Session:` entry pruned from DEVLOG.md's Command log archive on `development` (see AGENTS.md). Newest first. Bounded to the 50 most recently pruned sessions and a 364-day backup limit, whichever forces a trim first - entries trimmed from here remain retrievable via `git log -p Devlog-Pruned` on `Archive`.
+
+### Session: expand standing category tests — 2026-08-28T08:16:00Z — GPT-5.6 Sol — mode:regular/default
+
+- Read governance, checked the pre-change Actions baseline, and pushed ten standing test cases across the existing Code, Security, Utility, and Maintenance files with paired governance updates — started 2026-08-28T08:16:00Z, finished 2026-08-28T08:31:00Z, exit 0.
