@@ -8,6 +8,14 @@ const { resolveSpawn } = require('./runner');
 
 const SCHEDULED_CADENCE_TIERS = cadence.CADENCE_TIERS;
 const CATEGORY_CADENCE = cadence.CATEGORY_CADENCE;
+const DEVELOPMENT_TEST_STANDARD_RULE_KEYS = Object.freeze([
+  'classificationAmbiguityRule',
+  'explicitMappingRule',
+  'orchestratorAuthority',
+  'balanceRule',
+  'explicitRequestRule',
+]);
+const DEVELOPMENT_TEST_STANDARD_POLICY_SHA256 = 'cbd16dd6531a1ce356fa224cace22d0aa7148d96b5ad6f9cd17d78ee415e156f';
 
 function knownMainCategoryForTest(file) {
   for (const category of legacy.MAIN_CATEGORIES) {
@@ -28,6 +36,7 @@ function classificationForTest(file, options = {}) {
 function mainCategoryForTest(file, options = {}) {
   const result = classificationForTest(file, options);
   if (result.category) return result.category;
+  if (options.allowUnresolved) return null;
   throw new Error(`Unclassified test "${file}". Independent closest-feature classifier could not safely categorize it: ${result.reason}.`);
 }
 
@@ -38,7 +47,12 @@ function validateTestClassification(files = legacy.discoverTests(), options = {}
   if (duplicates.length) throw new Error(`Tests mapped to more than one main category: ${[...new Set(duplicates)].join(', ')}.`);
   const stale = mapped.filter((file) => !discovered.includes(file));
   if (stale.length) throw new Error(`Main-category map references missing tests: ${stale.join(', ')}.`);
-  for (const file of discovered) mainCategoryForTest(file, options);
+  const unresolved = discovered.map((file) => classificationForTest(file, options)).filter((item) => !item.category);
+  if (unresolved.length && !options.allowUnresolved) {
+    const first = unresolved[0];
+    throw new Error(`Unclassified test "${first.file}". Independent closest-feature classifier could not safely categorize it: ${first.reason}.`);
+  }
+  if (options.allowUnresolved) return Object.freeze({ ok: unresolved.length === 0, unresolved: Object.freeze(unresolved) });
   return true;
 }
 
@@ -54,24 +68,36 @@ function categorizedTests(files = legacy.discoverTests()) {
   }));
 }
 
-function selectionResult(tests, all, reason) {
-  const sorted = [...new Set(tests)].sort();
+function selectionResult(tests, all, reason, options = {}) {
+  const requested = [...new Set(tests)].sort();
+  const classifications = requested.map((file) => classificationForTest(file, options));
+  const unresolved = classifications.filter((item) => !item.category);
+  const safe = classifications.filter((item) => item.category).map((item) => item.file);
   return {
-    tests: sorted,
-    mainCategories: [...new Set(sorted.map((file) => mainCategoryForTest(file)))].sort(),
-    categories: sorted.map((file) => legacy.categoryForTest(file)),
-    fullSuite: sorted.length === all.length,
+    tests: safe,
+    unresolved,
+    coverageComplete: unresolved.length === 0,
+    mainCategories: [...new Set(classifications.filter((item) => item.category).map((item) => item.category))].sort(),
+    categories: safe.map((file) => legacy.categoryForTest(file)),
+    fullSuite: safe.length === all.length && unresolved.length === 0,
     reason,
   };
 }
 
 function selectTestsForCategory(mainCategory, files = legacy.discoverTests()) {
   const all = [...files].sort();
-  validateTestClassification(all);
+  validateTestClassification(all, { allowUnresolved: true });
   if (!legacy.MAIN_CATEGORIES.includes(mainCategory)) {
     throw new Error(`Unknown main category "${mainCategory}". Valid categories: ${legacy.MAIN_CATEGORIES.join(', ')}.`);
   }
-  return selectionResult(all.filter((file) => mainCategoryForTest(file) === mainCategory), all, `explicit governed category request: ${mainCategory}`);
+  const candidates = all.filter((file) => mainCategoryForTest(file, { allowUnresolved: true }) === mainCategory);
+  const result = selectionResult(candidates, all, `explicit governed category request: ${mainCategory}`);
+  const unresolved = all.map((file) => classificationForTest(file)).filter((item) => !item.category);
+  if (unresolved.length) {
+    result.unresolved = unresolved;
+    result.coverageComplete = false;
+  }
+  return result;
 }
 
 function scheduledTierRank(tier) {
@@ -135,14 +161,18 @@ function addKnown(selected, candidates, all) {
 
 function selectTestsForChanges(changedPaths, files = legacy.discoverTests()) {
   const all = [...files].sort();
-  validateTestClassification(all);
+  validateTestClassification(all, { allowUnresolved: true });
   const changed = [...new Set((changedPaths || []).map(normalizeChangedPath).filter(Boolean))];
   if (!changed.length) return selectionResult(all, all, 'no change range available; fail-safe full suite');
 
   const selected = new Set();
   let uncertain = false;
   const root = path.join(__dirname, '..');
-  const testBodies = new Map(all.map((file) => [file, fs.readFileSync(path.join(root, file), 'utf8')]));
+  const testBodies = new Map();
+  for (const file of all) {
+    try { testBodies.set(file, fs.readFileSync(path.join(root, file), 'utf8')); }
+    catch (_) { testBodies.set(file, ''); }
+  }
 
   for (const changedFile of changed) {
     if (changedFile.startsWith('test/') && changedFile.endsWith('.test.js')) {
@@ -178,7 +208,13 @@ function selectTestsForChanges(changedPaths, files = legacy.discoverTests()) {
   if (uncertain || !selected.size) {
     return selectionResult(all, all, uncertain ? 'unmapped runtime impact; fail-safe full suite' : 'no impacted category found; fail-safe full suite');
   }
-  return selectionResult([...selected], all, 'impacted categories only');
+  const result = selectionResult([...selected], all, 'impacted categories only');
+  const unresolved = all.map((file) => classificationForTest(file)).filter((item) => !item.category);
+  if (unresolved.length) {
+    result.unresolved = unresolved;
+    result.coverageComplete = false;
+  }
+  return result;
 }
 
 function runOne(label, invocation, run = spawnSync) {
@@ -196,9 +232,13 @@ function npmRunInvocation(script) {
 function runTestSelection(selection, run = spawnSync) {
   console.log(`[The Crucible] Orchestrator: ${selection.reason}.`);
   console.log(`[The Crucible] Orchestrator: selected main categories: ${selection.mainCategories.join(', ') || '(none)'}.`);
-  console.log(`[The Crucible] Orchestrator: selected ${selection.tests.length}/${legacy.discoverTests().length} test subcategories: ${selection.categories.join(', ') || '(none)'}.`);
-  const ok = selection.tests.length === 0 || runOne('selected tests', { executable: process.execPath, args: ['--test', ...selection.tests] }, run);
-  return { selection, outcomes: [{ label: `selected tests (${selection.tests.length} file(s))`, ok }], ok };
+  console.log(`[The Crucible] Orchestrator: selected ${selection.tests.length}/${legacy.discoverTests().length} safe test subcategories: ${selection.categories.join(', ') || '(none)'}.`);
+  if (selection.unresolved?.length) console.error(`[The Crucible] Orchestrator: isolated ${selection.unresolved.length} unresolved test(s): ${selection.unresolved.map((item) => item.file).join(', ')}. Complete coverage cannot be claimed.`);
+  const executionOk = selection.tests.length === 0 || runOne('selected tests', { executable: process.execPath, args: ['--test', ...selection.tests] }, run);
+  const coverageComplete = selection.coverageComplete !== false && !(selection.unresolved?.length);
+  const outcomes = [{ label: `selected tests (${selection.tests.length} file(s))`, ok: executionOk }];
+  if (!coverageComplete) outcomes.push({ label: `classification coverage (${selection.unresolved.length} unresolved file(s))`, ok: false });
+  return { selection, unresolved: selection.unresolved || [], coverageComplete, outcomes, ok: executionOk && coverageComplete };
 }
 
 function runChanged(run = spawnSync, changedPaths = null) {
@@ -209,7 +249,7 @@ function runChanged(run = spawnSync, changedPaths = null) {
 
 function runAll(run = spawnSync) {
   const tests = legacy.discoverTests();
-  validateTestClassification(tests);
+  validateTestClassification(tests, { allowUnresolved: true });
   return runTestSelection(selectionResult(tests, tests, 'explicit full-system proof'), run);
 }
 
@@ -233,11 +273,14 @@ function runScheduledTests(tier, run = spawnSync) {
   const obligation = cadence.cadenceObligation(tier, legacy.MAIN_CATEGORIES);
   const tests = orchestratorTestsForCategories(obligation.dueCategories);
   const balance = verifyCadenceSelection(obligation, tests);
+  const unresolved = legacy.discoverTests().map((file) => classificationForTest(file)).filter((item) => !item.category);
   const outcomes = [];
   console.log(`[The Crucible] Cadence check: ${tier}; categories due: ${obligation.dueCategories.join(', ') || '(none)'}.`);
-  console.log(`[The Crucible] Orchestrator: independently selected ${tests.length} test file(s); cadence balance passed.`);
+  console.log(`[The Crucible] Orchestrator: independently selected ${tests.length} safe test file(s); cadence balance passed.`);
+  if (unresolved.length) console.error(`[The Crucible] Cadence check: ${unresolved.length} unresolved test(s) isolated; complete cadence coverage cannot be claimed.`);
   if (tests.length) outcomes.push({ label: `scheduled tests (${tests.length} file(s), ${obligation.dueCategories.join(', ')})`, ok: runOne('scheduled tests', { executable: process.execPath, args: ['--test', ...tests] }, run) });
-  return { tier, categories: obligation.dueCategories, tests, obligation, balance, outcomes, ok: outcomes.every((item) => item.ok) };
+  if (unresolved.length) outcomes.push({ label: `classification coverage (${unresolved.length} unresolved file(s))`, ok: false });
+  return { tier, categories: obligation.dueCategories, tests, unresolved, coverageComplete: unresolved.length === 0, obligation, balance, outcomes, ok: outcomes.every((item) => item.ok) };
 }
 
 function runScheduledTier(tier, run = spawnSync) {
@@ -245,13 +288,15 @@ function runScheduledTier(tier, run = spawnSync) {
   const audits = scheduledAuditsForTier(tier);
   const outcomes = [...testResult.outcomes];
   for (const script of audits) outcomes.push({ label: `npm run ${script}`, ok: runOne(`npm run ${script}`, npmRunInvocation(script), run) });
-  return { tier, categories: testResult.categories, tests: testResult.tests, obligation: testResult.obligation, balance: testResult.balance, audits, outcomes, ok: outcomes.every((item) => item.ok) };
+  return { tier, categories: testResult.categories, tests: testResult.tests, unresolved: testResult.unresolved, coverageComplete: testResult.coverageComplete, obligation: testResult.obligation, balance: testResult.balance, audits, outcomes, ok: outcomes.every((item) => item.ok) };
 }
 
 module.exports = {
   ...legacy,
   SCHEDULED_CADENCE_TIERS,
   CATEGORY_CADENCE,
+  DEVELOPMENT_TEST_STANDARD_RULE_KEYS,
+  DEVELOPMENT_TEST_STANDARD_POLICY_SHA256,
   knownMainCategoryForTest,
   classificationForTest,
   mainCategoryForTest,
