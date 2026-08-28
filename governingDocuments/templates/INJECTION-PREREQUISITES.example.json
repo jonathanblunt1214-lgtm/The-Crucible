@@ -27,7 +27,7 @@
   "prerequisites": [
     {
       "id": "<stable-id>",
-      "type": "<branch|repository-setting|actions-permission|secret|credential|ruleset|external-service|other>",
+      "type": "<branch|repository-setting|actions-permission|secret|credential|ruleset|external-service|native-validation|other>",
       "name": "<non-secret prerequisite name>",
       "requiredBy": "<injected capability/check>",
       "reason": "<why required>",
@@ -36,10 +36,34 @@
       "remediation": "<exact non-secret remediation or null>"
     }
   ],
+  "nativeValidation": {
+    "discoveredBeforePackageFinalization": true,
+    "fullTestCommands": ["<project-native-full-test-command>"],
+    "stressReleaseOrBoundedWorkloadCommands": ["<project-native-stress-or-release-command>"],
+    "validators": [
+      {
+        "path": "<project-owned-validator-path>",
+        "purpose": "<clutter|duplicate|inventory|governance|security|runtime-wiring|other>",
+        "duplicatesOrParallelsCrucibleRule": false,
+        "governedConfigSource": "<config-or-allow-list-path-or-null>",
+        "consistentWithAssimilatedGovernance": false,
+        "remediation": "<required reconciliation or null>"
+      }
+    ],
+    "postAssimilation": {
+      "status": "<pending|repairing|passed|blocked>",
+      "cruciblePassed": false,
+      "nativeValidationPassed": false,
+      "duplicatedValidatorsReconciled": false,
+      "automaticRepairLoopRequiredOnFailure": true,
+      "lastVerifiedDevelopmentCommit": "<sha-or-null>"
+    }
+  },
   "activation": {
     "allRequiredPrerequisitesVerified": false,
     "requiredGatesMayActivate": false,
-    "productionPromotionAllowed": false
+    "productionPromotionAllowed": false,
+    "assimilationMayComplete": false
   },
   "secretValueStorageForbidden": true
 }
