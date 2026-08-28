@@ -4,14 +4,18 @@
 
 - **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, and `handoffNotes` for the exact owner request, current plan, completed work, verification, and remaining work.
-- **Current development work:** The Orchestrator now owns test-progress heartbeat behavior plus a governed known-bug lifecycle. Long-running test commands emit an update every 60 seconds; category failures are persisted under `governingDocuments/known-bugs` in criticality order; exact failing tests must pass a re-test before a bug can be checked off.
-- **Criticality defaults:** Security=`critical`, Code=`high`, Utility=`medium`, Maintenance=`low`; mixed-category failures use the highest severity present.
-- **Resolution rule:** `node src/testCadence.js verify-bug <bug-id>` re-runs the exact recorded tests. Failed re-tests leave the bug open; only a passing re-test can set `checked: true` / `status: resolved`.
-- **Remaining work:** Push the atomic implementation to `development`, then confirm Self-Test and CodeQL are green. No `main`/`release` promotion is authorized.
+- **Current development work:** Transport the owner's exact request `run a system wide code test` to the governed Orchestrator. The assistant does not choose test files or subcategories; the Orchestrator alone interprets the request and selects the actual test scope.
+- **Run governance:** Long-running Orchestrator test commands emit progress every 60 seconds; failures are persisted under `governingDocuments/known-bugs` in criticality order and require a passing exact-test re-test before being checked off.
+- **Remaining work:** Push the governed request commit to `development`, inspect the Orchestrator-selected scope/result, and confirm Self-Test and CodeQL. No `main`/`release` promotion is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: system-wide code test request — 2026-08-28T00:12:00Z — GPT-5.6 Sol
+
+- Accepted owner request `run a system wide code test` and preserved the established boundary that only the Orchestrator decides actual tests — started 2026-08-28T00:11:44Z, finished 2026-08-28T00:12:00Z, exit 0.
+- Prepared paired `AI-HANDOFF.json`/`DEVLOG.md` governance updates for the request-triggering development commit — started 2026-08-28T00:12:00Z, finished 2026-08-28T00:12:30Z, exit 0.
 
 ### Session: Orchestrator progress and known-bug governance — 2026-08-28T00:04:30Z — GPT-5.6 Sol
 
@@ -68,10 +72,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 - GitHub connector read of current `development`, governing handoff, `src/testCadence.js`, `test/testCadence.test.js`, `package.json`, `.github/workflows/self-test.yml`, and current CI — started 2026-08-27T22:40:00Z, finished 2026-08-27T22:44:02Z, exit 0.
 - GitHub Git-data blob/tree/commit/ref creation for the Orchestrator implementation, package test entry point, Self-Test range wiring, proving tests, `AI-HANDOFF.json`, and `DEVLOG.md` — started 2026-08-27T22:44:02Z, finished 2026-08-27T22:48:04Z, exit 0.
 - Created and pushed development commit `c625edc982cc5de00abb8da40ca3f5c17e25a828` without force.
-
-### Session: a5048de — 2026-08-27T21:47:17Z — Claude
-
-- Diagnosed the real Windows-only Self-Test failures on `9c16f36`: CRLF-unsafe workflow-test regexes plus a Windows npm invocation assumption in `test/testCadence.test.js`.
-- `npm test` — started 2026-08-27T21:46:02Z, finished 2026-08-27T21:46:05Z, exit 0 (260/260 on Linux).
-- `npm run lint:workflows`, `docs:check`, `validate`, `audit:clutter`, `audit:privacy`, `audit:security` — started 2026-08-27T21:47:14Z, finished 2026-08-27T21:47:17Z, exit 0.
-- Push to `development` produced commit `a5048deacbd79926c2652eddad13d5db98a0131b`; subsequent Self-Test, CodeQL, AI handoff policy, AI conflict governance, and locked-PR guard all passed.
