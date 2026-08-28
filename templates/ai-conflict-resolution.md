@@ -1,17 +1,21 @@
 # Repository-independent AI conflict resolution
 
-Install or reference this policy in every repository where AI agents may act. It applies to conflicts between agents, instructions, plans, branch policies, concurrent changes, automation, and claimed prior decisions.
+Install or reference this policy in every repository where AI agents may act. It applies to conflicts between agents, instructions, plans, branch policies, concurrent changes, automation, claimed prior decisions, and injected governance.
+
+For every future Crucible injection, the injected governance and the receiving project's native governance are assimilated as one unified native governing body. `AI-HANDOFF` is that governing body's shared coordination state and `AI-CONFLICTS` is its internal conflict ledger. All authorized agents work together from that shared state going forward.
+
+No agent may invent a hierarchy among components of the unified governing body merely to avoid a real conflict. Injected governance is not subordinate solely because it arrived later, and pre-existing governance does not automatically override injected governance solely because it existed first. A genuine conflict that cannot be reconciled must be preserved and resolved through the procedure below.
 
 ## Required resolution sequence
 
 1. Detect: treat two directions as conflicting when both cannot be followed without changing, discarding, bypassing, or weakening either one.
 2. Freeze only the contested mutation. Continue safe read-only investigation and unrelated work when it cannot prejudice the decision.
-3. Preserve both sides verbatim where possible. Do not silently choose the newest, most convenient, or most permissive instruction.
-4. Record the sources, affected files/settings/branches, current state, evidence, and reversible options in the repository's shared handoff or development log.
-   Also add one structured record to `AI-CONFLICTS.json`; this mandatory ledger is what governance and the GitHub status check enforce. Disclose the exact sources and instructions, evidence, at least two alternatives, the contested action, and a concise rationale summary. A resolved record must also preserve the owner's decision and rationale summary.
-5. Apply standing repository rules and explicit scope boundaries. They can rule out an action, but an AI must not invent an exception or broaden its authority.
-6. If a real conflict remains, ask the repository owner for an explicit decision. Permission for adjacent work does not resolve it.
-7. After the decision, record the owner's exact resolution, make only the authorized change, and verify the result. Never rewrite the history to hide the conflict.
+3. Preserve both sides verbatim where possible. Do not silently choose the newest, oldest, most convenient, or most permissive instruction.
+4. Record the sources, affected files/settings/branches, current state, evidence, and reversible options in the repository's shared handoff or development log. Also add one structured record to `AI-CONFLICTS.json`; this mandatory ledger is what governance and the GitHub status check enforce. Disclose the exact sources and instructions, evidence, at least two alternatives, the contested action, and a concise rationale summary. A resolved record must also preserve the owner's decision and rationale summary.
+5. Apply the unified governing body's explicit scope and branch boundaries. They can rule out an action, but an AI must not invent an exception or broaden its authority.
+6. Preserve the universal development-first chain for all tracked mutations: `task/change branch -> designated development branch -> required security/CI/governance/integrity gates -> required review/OWNER approval -> production branch`. Conflict resolution never authorizes bypassing that chain.
+7. If a real conflict remains, ask the repository OWNER or designated native deciding authority for an explicit decision. Permission for adjacent work does not resolve it.
+8. After the decision, record the exact resolution, make only the authorized change, and verify the result. Never rewrite history to hide the conflict.
 
 Use `npm run audit:ai-conflict` as a structured stop/go check. An unresolved conflict may pass only in report-only mode; a contested mutation fails until the handoff is updated and an explicit owner resolution is supplied.
 
@@ -21,4 +25,4 @@ This is an auditable decision record, not private chain-of-thought. The Crucible
 
 ## Required-check example
 
-A request to make a workflow check required conflicts with a rule that the default branch cannot be modified implicitly when that workflow exists only on development. Preserve both goals: allow development reporting, block required-check activation, and use `required-check-rollout.md` after explicit owner promotion. Do not solve the conflict by weakening protection or silently touching the default branch.
+A request to make a workflow check required conflicts with a rule that the production branch cannot be modified implicitly when that workflow exists only on development. Preserve both goals: allow development reporting, block required-check activation, and use `required-check-rollout.md` after explicit OWNER promotion. Do not solve the conflict by weakening protection, skipping development, or silently touching production.
