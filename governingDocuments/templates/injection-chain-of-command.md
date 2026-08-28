@@ -16,7 +16,7 @@ Every tracked repository mutation must pass through the receiving project's desi
 
 Required path:
 
-`task/change branch -> designated development branch -> required security, CI, governance, and integrity gates -> required review and OWNER approval -> production branch`
+`task/change branch -> prerequisite verification -> designated development branch -> required security, CI, governance, and integrity gates -> required review and OWNER approval -> production branch`
 
 This applies to all tracked changes, including application code, tests, documentation, governance, configuration, dependencies, lockfiles, workflows, generated artifacts, metadata, migrations, security changes, automation changes, AI handoff state, AI conflict records, and injection documents.
 
@@ -25,6 +25,12 @@ A normal task or change branch must not target production directly. Production p
 There are no exceptions based on file type, urgency, simplicity, agent, automation, documentation, governance, security, or the fact that a change is itself an injection.
 
 If the receiving project does not yet have a designated development integration branch, the injection must stop before any production mutation and report that missing prerequisite. The absence of a development branch never authorizes a direct production write.
+
+## Prerequisite activation rule
+
+Before any injected Crucible capability is activated as a required gate, every non-code prerequisite required by that capability must be positively verified under `governingDocuments/templates/injection-prerequisites.md`.
+
+A missing or unverifiable prerequisite blocks assimilation or promotion at the prerequisite stage. It must not be converted into a downstream surprise required-check failure after activation.
 
 ## Mandatory gates
 
