@@ -6,5 +6,51 @@
     "medium",
     "low"
   ],
-  "bugs": []
+  "bugs": [
+    {
+      "id": "KB-local-e27b0d5527",
+      "foundAt": "2026-08-28T01:40:03.107Z",
+      "retests": [
+        {
+          "at": "2026-08-28T01:41:56.954Z",
+          "ok": true,
+          "exitStatus": 0,
+          "tests": [
+            "test/handoffPolicy.test.js",
+            "test/testCadence.test.js",
+            "test/workflow.test.js"
+          ]
+        }
+      ],
+      "severity": "low",
+      "status": "resolved",
+      "checked": true,
+      "sourceCommit": "local",
+      "categoryResults": [
+        {
+          "category": "maintenance",
+          "severity": "low",
+          "status": "failed",
+          "tests": [
+            "test/handoffPolicy.test.js",
+            "test/testCadence.test.js",
+            "test/workflow.test.js"
+          ]
+        }
+      ],
+      "mainCategories": [
+        "maintenance"
+      ],
+      "tests": [
+        "test/handoffPolicy.test.js",
+        "test/testCadence.test.js",
+        "test/workflow.test.js"
+      ],
+      "lastFailure": {
+        "at": "2026-08-28T01:40:12.209Z",
+        "exitStatus": 1
+      },
+      "checkedAt": "2026-08-28T01:41:56.954Z"
+    }
+  ]
 }
