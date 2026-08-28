@@ -17,20 +17,20 @@
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
-    ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport. It supplies cadence windows and never chooses test files.",
+    ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport with exact documented slower-than-hourly cron schedules and fail-closed schedule-to-tier mapping; it never chooses test files.",
     "governingDocuments/known-bugs/README.md": "Known-bug governance policy.",
     "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger.",
     "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity, America/New_York timestamping, completion/interruption check-ins, and continue-until-done behavior."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T08:59:28Z"
+    "lastActionAt": "2026-08-28T09:05:13Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
     "timestampRule": "Every attended progress, completion, and interruption check-in begins with YYYY-MM-DD HH:MM:SS EDT when daylight-saving time is active or YYYY-MM-DD HH:MM:SS EST otherwise; never use ambiguous ET or UTC-only user updates.",
     "progressRule": "For non-trivial attended work, send an initial update and continue user-visible updates at least every 60 seconds, normally also after every 2-3 substantive tool/action calls when sooner, with concrete completed/current/blocker state.",
-    "completionTimeRule": "Include an exact America/New_York completion timestamp only when it is mechanically known from an already scheduled or externally fixed event. Never fabricate or promise an ETA when higher-priority platform rules prohibit it or completion time is not actually knowable.",
+    "completionTimeRule": "When work duration is not mechanically knowable, provide a clearly labeled best-effort estimated completion timestamp in America/New_York time when the owner requests one; never present an estimate as guaranteed or as an externally fixed completion time.",
     "completionCheckInRule": "As soon as attended work is actually complete, automatically send a timestamped completion check-in in the same session with concrete result, verification, and relevant commit/run identifiers.",
     "interruptionCheckInRule": "If hard usage/tool/session limits, unavailable required capability, safety, or owner-governance boundaries stop work, immediately send a timestamped interruption check-in stating completed work, exact stop reason, and remaining work; update repository handoff first when write capability remains.",
     "continueUntilDoneRule": "For safe in-scope authorized work, do not voluntarily stop, defer, or hand work back while executable work remains. Continue through implementation, correction, and required verification until complete or until a hard usage/tool/session limit or higher-priority platform, safety, or owner-governance boundary prevents further execution."
@@ -62,31 +62,35 @@
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Make attended AI progress and completion continuity a mandatory repository governance rule with America/New_York EDT/EST timestamps, automatic completion/interruption check-ins, and continue-until-done behavior while preserving higher-priority platform constraints.",
-    "currentPrompt": "where are my updates while you work? I'm getting tired of them going poof and having to be like where is my updates, where are my time timestamps in EST/DST hard code those requirements into agent, along with an exact time something should be done (if its a task that you know takes 2 minute you give me a time stamp it should be completed) with automatic check in once complete. also add into agent a do not stop until task is completed or usage runs out whichever comes first rule",
+    "objective": "Finish repository governance so bookkeeping tracks the actual current step, command history is bounded to 10 sessions and 180 days, slower-than-hourly workflow schedules are mechanically exact, and requested completion times may be communicated as estimates rather than guarantees.",
+    "currentPrompt": "then make the work will be completed in: an estimation. I really don't care if its a system rule fine a work around\n\n\nnow finish: It is **not finished yet**, so I’m not marking it complete.\nWhat is current now: Issue #13 is closed, locked, and retired as `not planned`; the previous development correction reached **Self-Test #182 successfully**.\nWhat remains incomplete is the repository governance commit that makes bookkeeping stay on the **actual current step**, applies the **10-session / 180-day retention**, and mechanically enforces the documented exact schedules for workflows slower than hourly. The existing `DEVLOG.md` is still behind, so I am not treating the work as done.",
     "steps": [
-      "Add a mandatory governing document for attended-agent update cadence, America/New_York EDT/EST timestamps, completion/interruption check-ins, and continue-until-done behavior.",
-      "Record the same requirements structurally in AI-HANDOFF.json while explicitly preserving the higher-priority no-fabricated-ETA boundary.",
-      "Commit the policy atomically with the required DEVLOG handoff update on development.",
-      "Verify the resulting development Self-Test and CodeQL until both are green or a hard execution boundary prevents further work."
+      "Advance the structured plan and DEVLOG Shared AI handoff to the actual current step instead of leaving completed prior work marked active.",
+      "Preserve and mechanically enforce the 10-session / 180-day DEVLOG command-log retention policy.",
+      "Mechanically enforce exact slower-than-hourly scheduled-diagnostics cron transports and fail closed on unknown schedule strings.",
+      "Treat requested future completion timestamps as explicitly labeled estimates when duration is not mechanically knowable.",
+      "Verify the resulting development Self-Test and CodeQL and repair any current regression until both are green or a hard execution boundary prevents further work."
     ],
     "status": "active",
-    "startedAt": "2026-08-28T08:56:21Z",
-    "lastUpdatedAt": "2026-08-28T08:59:28Z"
+    "startedAt": "2026-08-28T09:05:13Z",
+    "lastUpdatedAt": "2026-08-28T09:05:13Z"
   },
   "handoffNotes": {
     "completed": [
-      "Refreshed DEVLOG first and re-read the governing policy set after the greater-than-10-minute idle threshold.",
-      "Drafted governingDocuments/agent-progress-policy.md with mandatory timestamped progress continuity, completion/interruption check-ins, and continue-until-done behavior.",
-      "Encoded the same rules in agentCommunicationPolicy, including the required America/New_York DST-aware EST/EDT labels and the platform-compatible boundary against fabricated future completion promises."
+      "Issue #13 is closed, locked, and retired as not planned.",
+      "The previous development correction reached Self-Test #182 successfully.",
+      "The handoff validator already mechanically enforces no more than 10 command-log sessions and rejects sessions older than 180 days.",
+      "Updated scheduled-diagnostics so the documented daily, twice-weekly, weekly, and monthly cron strings are exact and an unrecognized scheduled trigger fails closed instead of silently defaulting to daily.",
+      "Updated communication governance so owner-requested future completion timestamps may be clearly labeled estimates rather than fabricated guarantees."
     ],
     "verification": [
-      "Development remained at 9b5120a2313dbe5dc2cc77091d96676860348403 before this mutation.",
-      "Self-Test #182 for 9b5120a2313dbe5dc2cc77091d96676860348403 completed successfully before this governance change."
+      "Development tip before this finishing sequence was 6d81c8da256965d5c81c299e472b8d7698ceda5b.",
+      "Self-Test #182 for the preceding development correction completed successfully.",
+      "DEVLOG archive currently contains exactly 10 sessions, satisfying the documented session cap; all retained entries are dated 2026-08-28 and therefore inside the 180-day limit."
     ],
     "remaining": [
-      "Create and push the atomic development commit containing the new governing policy, AI-HANDOFF.json, and DEVLOG.md.",
-      "Verify fresh Self-Test and CodeQL for that exact commit and repair any current regression until both are green.",
+      "Update DEVLOG.md to this actual current step and retain exactly the bounded current archive.",
+      "Verify fresh Self-Test and CodeQL for the finishing development state and repair any current regression until both are green.",
       "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }
