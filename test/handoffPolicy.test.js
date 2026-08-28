@@ -9,7 +9,7 @@ const PLAN = { schemaVersion:1, activePlan:{ agent:'Codex', objective:'Test hand
 
 function devlogWithSessions(count) {
   const sessions = Array.from({ length: count }, (_, i) => [
-    `### Session: sha${i} — 2026-08-27T00:0${i}:00Z — Codex`,
+    `### Session: sha${i} — 2026-08-27T00:0${i}:00Z — Codex — mode:regular/default`,
     '',
     `- \`npm test\` — started 2026-08-27T00:0${i}:00Z, finished 2026-08-27T00:0${i}:05Z, exit 0`,
     ''
@@ -83,7 +83,7 @@ test('rejects a git range whose DEVLOG.md archive has a session older than the 1
     '# Development log', '', '## Shared AI handoff', '',
     '- Dev plan: see AI-HANDOFF.json activePlan.currentPrompt and handoffNotes.', '',
     '## Command log archive (last 10 sessions, newest first)', '',
-    '### Session: shaOld — 2020-01-01T00:00:00Z — Codex', '',
+    '### Session: shaOld — 2020-01-01T00:00:00Z — Codex — mode:regular/default', '',
     '- `npm test` — started 2020-01-01T00:00:00Z, finished 2020-01-01T00:00:05Z, exit 0', '',
     '## 2026-08-27', ''
   ].join('\n');
@@ -103,7 +103,7 @@ test('section extraction is not fooled by the heading text appearing earlier in 
     '- Dev plan: see AI-HANDOFF.json activePlan.currentPrompt and handoffNotes. Mentions the literal heading "## Command log archive" right here in prose, which an earlier version of the parser split on by plain string search and got the wrong slice.',
     '',
     '## Command log archive (last 10 sessions, newest first)', '',
-    '### Session: sha0 — 2026-08-27T00:00:00Z — Codex', '',
+    '### Session: sha0 — 2026-08-27T00:00:00Z — Codex — mode:regular/default', '',
     '- `npm test` — started 2026-08-27T00:00:00Z, finished 2026-08-27T00:00:05Z, exit 0', '',
     '## 2026-08-27', ''
   ].join('\n');
@@ -134,6 +134,8 @@ test('DEVLOG chain-of-custody validation requires a dev-plan reference and a bou
   assert.equal(tooManyResult.ok, false);
   assert.match(tooManyResult.message, /prune the oldest/);
   assert.equal(validateDevlogChainOfCustody(devlogWithSessions(MAX_ARCHIVE_SESSIONS)).ok, true);
+  const missingMode = DEVLOG_OK.replace(' — mode:regular/default', '');
+  assert.match(validateDevlogChainOfCustody(missingMode).message, /execution mode remains part of the chain of custody/);
 });
 
 test('the 180-day backup limit prunes an old session even when the archive is well within the 10-session cap', () => {
