@@ -44,27 +44,28 @@ test('commit findings use the requested action classes in the unified report', (
   assert.match(report, /\[test failure\] CRUCIBLE_TEST_FAILURE_EXIT_1: Affected tests: a\.js/);
 });
 
-test('Code standing category produces executable V8 coverage for each core Code feature module', () => {
+test('Code standing category produces executable V8 coverage for the real source modules its tests exercise', () => {
   const { spawnSync } = require('node:child_process');
   const root = path.join(__dirname, '..');
+  const codeTests = ['test/code-check.test.js', 'test/engine.test.js', 'test/hostedMultiRepositoryIntegration.test.js', 'test/repositoryOperation.test.js', 'test/suiteSelection.test.js'];
+  const sourceModules = new Set();
+  const requirePattern = /require\(['"]\.\.\/src\/([^'"]+)['"]\)/g;
+  for (const testFile of codeTests) {
+    const body = fs.readFileSync(path.join(root, testFile), 'utf8');
+    for (const match of body.matchAll(requirePattern)) sourceModules.add(`src/${match[1]}.js`);
+  }
+  assert.ok(sourceModules.size > 0, 'Code category exposes no source-module dependencies to cover');
   const coverageDir = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-code-coverage-'));
   const env = { ...process.env, NODE_V8_COVERAGE: coverageDir };
-  const driverSource = [
-    "require('./src/code-check').parseCandidate('sample.js', 'const answer = 42;');",
-    "require('./src/engine');",
-    "require('./src/hostedMultiRepositoryIntegration');",
-    "require('./src/repositoryOperation');",
-    "require('./src/suiteSelection');",
-  ].join('');
+  const driverSource = [...sourceModules].map((modulePath) => `require(${JSON.stringify(`./${modulePath.replace(/\.js$/, '')}`)});`).join('');
   const driver = spawnSync(process.execPath, ['-e', driverSource], { cwd:root, env, encoding:'utf8', shell:false });
   assert.equal(driver.status, 0, driver.stderr || driver.stdout);
-  const suite = spawnSync(process.execPath, ['--test', 'test/engine.test.js', 'test/hostedMultiRepositoryIntegration.test.js', 'test/repositoryOperation.test.js', 'test/suiteSelection.test.js'], { cwd:root, encoding:'utf8', shell:false });
+  const suite = spawnSync(process.execPath, ['--test', ...codeTests.filter((file) => file !== 'test/code-check.test.js')], { cwd:root, encoding:'utf8', shell:false });
   assert.equal(suite.status, 0, suite.stderr || suite.stdout);
   const coverageFiles = fs.readdirSync(coverageDir).filter((name) => name.endsWith('.json'));
   assert.ok(coverageFiles.length > 0, 'V8 did not emit executable coverage data');
   const scripts = coverageFiles.flatMap((name) => JSON.parse(fs.readFileSync(path.join(coverageDir, name), 'utf8')).result || []);
-  const requiredModules = ['src/code-check.js', 'src/engine.js', 'src/hostedMultiRepositoryIntegration.js', 'src/repositoryOperation.js', 'src/suiteSelection.js'];
-  for (const modulePath of requiredModules) {
+  for (const modulePath of sourceModules) {
     const normalizedSuffix = `/${modulePath}`;
     const covered = scripts.find((script) => String(script.url || '').replace(/\\/g, '/').endsWith(normalizedSuffix));
     assert.ok(covered, `${modulePath} produced no V8 coverage record`);

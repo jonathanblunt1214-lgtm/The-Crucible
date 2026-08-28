@@ -23,7 +23,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T08:35:00Z"
+    "lastActionAt": "2026-08-28T08:39:00Z"
   },
   "temporaryInfrastructure": {
     "syntheticTestRequestCommitTransport": {
@@ -55,30 +55,28 @@
     "objective": "Add every identified missing test type into the appropriate existing standing category without creating new top-level categories or weakening the Orchestrator/Cadence checks-and-balances architecture.",
     "currentPrompt": "add them all into the appropriate standing category  ",
     "steps": [
-      "Preserve the current four standing categories and their cadence.",
-      "Keep all ten substantive additions inside already-classified standing test files.",
-      "Correct Self-Test #180's cross-process V8 coverage assumption by explicitly loading all five Code modules in the coverage-enabled probe while retaining their existing test execution.",
+      "Preserve all ten standing test additions in the existing four categories.",
+      "Make Code coverage derive actual ../src dependencies from the standing Code test files rather than assuming same-named source files.",
       "Push the paired correction to development and verify Self-Test and CodeQL until both are green."
     ],
     "status": "active",
     "startedAt": "2026-08-28T08:16:00Z",
-    "lastUpdatedAt": "2026-08-28T08:35:00Z"
+    "lastUpdatedAt": "2026-08-28T08:39:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Preserved Claude's prior compatibility repair and confirmed pre-change Self-Test #179 and CodeQL #140 were green.",
       "Pushed ten substantive standing test cases in commit be46b479e3c69d009b03da383c85780be11a9234: three Code, two Security, two Utility, and three Maintenance.",
-      "Self-Test #180 exercised the new every-push Code cases across the matrix and exposed one narrow failure: the V8 coverage test assumed child node --test workers would place module records in the parent coverage corpus.",
-      "CLI end-to-end and ordinary dependency-policy Code additions passed in the inspected failing job; the coverage probe is being corrected without removing any standing test type."
+      "Self-Test #180 exposed the original cross-process V8 coverage assumption; commit b15da15c11e59599cdd5e452913b037cf25ebcd3 corrected that boundary but Self-Test #181 exposed a second assumption: Code test filenames do not always map to same-named source modules.",
+      "Prepared a durable coverage probe that reads the five standing Code test files, extracts their real ../src module dependencies, loads those actual modules under NODE_V8_COVERAGE, and separately executes the existing Code tests."
     ],
     "verification": [
-      "Self-Test #180 on be46b479e3c69d009b03da383c85780be11a9234 completed failure because src/engine.js had no record in the coverage corpus; every matrix job failed at the same critical Code cadence step.",
-      "AI handoff policy #115, AI conflict governance #111, Block locked monitoring PRs #99, and Sync CI monitoring branch #39 succeeded on be46b479e3c69d009b03da383c85780be11a9234.",
-      "CodeQL #141 was still in progress when the Self-Test correction was prepared."
+      "Self-Test #181 on b15da15c11e59599cdd5e452913b037cf25ebcd3 failed consistently across the matrix at the Code coverage test because ./src/engine does not exist; CLI and dependency-behavior additions passed in the inspected job.",
+      "AI handoff policy #116, AI conflict governance #112, Block locked monitoring PRs #100, and Sync CI monitoring branch #40 succeeded on b15da15c11e59599cdd5e452913b037cf25ebcd3.",
+      "CodeQL #142 was still in progress when this correction was assembled."
     ],
     "remaining": [
-      "Commit the V8 coverage-probe correction with paired DEVLOG update and fast-forward development.",
-      "Verify fresh Self-Test and CodeQL; repair any remaining regression until both are green.",
+      "Commit the dependency-derived coverage probe with paired DEVLOG update and fast-forward development.",
+      "Verify fresh Self-Test and CodeQL and repair any remaining regression until both are green.",
       "Preserve for owner review the prior AI-CONFLICTS and temporary commit-message transport concerns.",
       "Do not promote to release or main without a fresh explicit owner instruction."
     ]
