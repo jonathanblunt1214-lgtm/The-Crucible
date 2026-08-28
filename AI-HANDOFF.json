@@ -18,40 +18,35 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T00:04:30Z"
+    "lastActionAt": "2026-08-28T00:12:00Z"
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Add bounded Orchestrator progress updates and governed known-bug tracking with severity ordering and mandatory verified re-tests before resolution.",
-    "currentPrompt": "have the Orchestrator give updates no less than every minute maximizing at 1 minute 30 seconds while tests run, results of the different test categories should an error be found should be saved in `governingDocuments` under a known bugs folder by order of Criticality and once they are fixed they are to be checked again before being checked off",
+    "objective": "Run the owner's requested system-wide code test by transporting the request unchanged to the governed Orchestrator and reporting only the Orchestrator-selected scope and result.",
+    "currentPrompt": "run a system wide code test",
     "steps": [
-      "Emit Orchestrator-owned progress heartbeats every 60 seconds while a test process is still running, with a governed maximum interval of 90 seconds.",
-      "Persist failed test-category results in governingDocuments/known-bugs/KNOWN-BUGS.json using critical, high, medium, low ordering.",
-      "Use Security=critical, Code=high, Utility=medium, Maintenance=low as deterministic default criticality, with mixed failures taking the highest severity present.",
-      "Require the exact recorded failing tests to pass a verify-bug re-test before status can become resolved/checked.",
-      "Preserve known-bug evidence from failing Self-Test jobs as artifacts without granting workflow write permission.",
-      "Push atomically to development and confirm Self-Test and CodeQL are green."
+      "Create one governed development push whose commit message transports the exact test request: run a system wide code test.",
+      "Let src/testCadence.js alone interpret the request and choose the test scope.",
+      "Inspect Self-Test output for the Orchestrator decision, selected tests, progress updates if the run exceeds one minute, and pass/fail result.",
+      "If a failure is found, preserve the governed known-bug evidence and report its criticality and required re-test lifecycle.",
+      "Confirm the required Self-Test and CodeQL state for the request commit; do not promote to main or release."
     ],
     "status": "active",
-    "startedAt": "2026-08-28T00:04:30Z",
-    "lastUpdatedAt": "2026-08-28T00:04:30Z"
+    "startedAt": "2026-08-28T00:12:00Z",
+    "lastUpdatedAt": "2026-08-28T00:12:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Designed a synchronous-compatible progress heartbeat using a lightweight companion Node process so the existing Orchestrator selection API remains unchanged while long test commands report every 60 seconds.",
-      "Designed a governed known-bug ledger under governingDocuments/known-bugs with deterministic category-derived criticality and severity sorting.",
-      "Added fail-closed ledger validation so an entry cannot be checked/resolved without a recorded passing re-test.",
-      "Added a verify-bug Orchestrator command that re-runs the exact recorded failing test files and only checks the bug off on success.",
-      "Added Self-Test failure artifact preservation for the governed known-bug ledger while retaining read-only contents permission."
+      "Accepted the owner's exact request without selecting test files outside the Orchestrator.",
+      "Prepared the governed request transport on development using the CRUCIBLE TEST REQUEST commit-message path."
     ],
     "verification": [
-      "Regression coverage asserts the configured progress interval is 60 seconds and does not exceed the 90-second governed maximum.",
-      "Regression coverage asserts criticality ordering and mixed-category highest-severity behavior.",
-      "Regression coverage creates low and critical failures, confirms critical-first ordering, confirms a failed re-test remains open, and confirms only a passing re-test checks the bug off."
+      "The Orchestrator remains the sole authority for interpreting the phrase 'run a system wide code test' and selecting actual tests.",
+      "Known-bug governance and 60-second heartbeat controls remain in force for this run."
     ],
     "remaining": [
-      "Create the atomic development commit containing Orchestrator wrapper/core split, run governance, regression wrapper, known-bug governing documents, Self-Test artifact preservation, AI-HANDOFF.json, and DEVLOG.md.",
-      "Confirm Self-Test and CodeQL are green; correct development-only regressions if required.",
+      "Push the governed request commit to development.",
+      "Inspect the resulting Self-Test decision and result, then confirm CodeQL state.",
       "Do not promote to main or release unless separately and explicitly instructed."
     ]
   }
