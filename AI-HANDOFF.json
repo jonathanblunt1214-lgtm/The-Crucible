@@ -25,7 +25,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T10:54:20Z"
+    "lastActionAt": "2026-08-28T11:12:27Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -59,7 +59,7 @@
     "cadenceAuthority": "Cadence decides only when a category is due. It produces a due-category obligation and never selects files, classifies new tests, interprets natural-language scope, or executes tests.",
     "classifierAuthority": "The independent closest-feature classifier is fallback-only for newly discovered tests absent from the explicit category map. It compares the new test with known feature/test evidence and returns a category only for a unique closest match. It cannot choose run scope, set frequency, or execute tests.",
     "classificationAmbiguityRule": "Isolate ambiguity, continue safe tests, never fake complete coverage. If a newly discovered test remains unresolved after independent closest-feature classification, quarantine that test from guessed execution and report its unresolved classification while continuing all other safely classified tests selected by the Orchestrator. Do not globally abort unrelated safe tests solely because one new test is unresolved. If the unresolved test is required to satisfy an explicit owner request or cadence obligation, mark that requested coverage incomplete and do not report the obligation or suite as fully passing until the ambiguity is resolved and the required test is executed.",
-    "securityPublicIdentifierRule": "The Security category must detect Google/Firebase API-key-shaped public application identifiers and require explicit security review instead of assuming public means safe. A retained public Firebase Web API key may be allowed only through an explicit file-and-rule allowance after the relevant application/API restrictions and Firebase deployment posture are verified. Static Crucible findings must never echo the key value.",
+    "securityPublicIdentifierRule": "The Security category must detect public API-key-shaped application identifiers it recognizes and require explicit security review instead of assuming public means safe. A retained public identifier may be allowed only through an explicit file-and-rule allowance after the relevant restrictions and deployment posture are verified. Crucible must never display or store the detected identifier value: findings, serialized audit results, logs, artifacts, known-bug records, DEVLOG, handoff metadata, and other persisted outputs may record only the fact/type of the finding and non-secret remediation metadata such as path and line. Detection values may exist transiently only in the source bytes being scanned and regex matching needed to classify the finding, and must be discarded immediately rather than copied into result objects.",
     "explicitMappingRule": "Existing explicit category mappings are authoritative and are never overridden by the closest-feature classifier.",
     "orchestratorAuthority": "The Orchestrator alone selects categories/subcategories/test files and execution scope from explicit requests, change impact, dependencies, cadence obligations, and validated classifications.",
     "balanceRule": "For cadence-triggered work, Cadence declares categories due; the Orchestrator independently resolves them into concrete tests; reconciliation rejects a claim of complete cadence coverage if any due category is omitted. Neither authority silently overrides the other.",
@@ -72,35 +72,35 @@
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Close the Security-category gap exposed by Nexus so public Firebase/Google API keys cannot silently pass Crucible without an explicit security review decision.",
-    "currentPrompt": "this is something the security category in the suit should of caught",
+    "objective": "Make non-persistence of detected public API-key-shaped identifiers a mechanically tested Security invariant.",
+    "currentPrompt": "Crucible must **never Store the detected value** either just the fact it was flagged",
     "executionMode": {
       "mode": "regular/default",
       "agent": "GPT-5.6 Sol",
-      "purpose": "Apply a focused Security scanner and regression-test correction directly in the repository without Work-mode orchestration.",
-      "selectionReason": "The owner explicitly said Work mode is not needed here and this correction is bounded to the Crucible security scanner, standing Security tests, governance bookkeeping, and CI verification.",
+      "purpose": "Apply a focused Security persistence invariant and regression-test correction directly in the repository without Work-mode orchestration.",
+      "selectionReason": "The owner explicitly said Work mode is not needed here and this correction is bounded to standing Security tests, governance bookkeeping, and CI verification.",
       "distinction": "Execution mode is independent from agent identity and workflow; this task is continuing in regular/default mode by owner direction."
     },
     "steps": [
-      "Add a Security finding for Google/Firebase API-key-shaped public identifiers without printing the value.",
-      "Require intentional retention to use an explicit scoped file-and-rule allowance after security review.",
-      "Add standing Security regression coverage reproducing the Nexus class of miss.",
-      "Update DEVLOG and AI-HANDOFF chain of custody without recording the exposed key value.",
+      "Enforce that flagged API identifier values never appear in repository-audit result objects.",
+      "Enforce the same metadata-only contract for generated-artifact security findings.",
+      "Govern the no-display/no-storage rule across logs, artifacts, known-bug records, DEVLOG, handoff metadata, and other persisted outputs.",
+      "Update DEVLOG chain of custody without recording any detected identifier value.",
       "Verify fresh Self-Test, AI handoff policy, and CodeQL on the final development commit and correct any regression."
     ],
     "status": "active",
-    "startedAt": "2026-08-28T10:48:00Z",
-    "lastUpdatedAt": "2026-08-28T10:54:20Z"
+    "startedAt": "2026-08-28T11:11:01Z",
+    "lastUpdatedAt": "2026-08-28T11:12:27Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed src/security.js previously had no Google/Firebase Web API-key detector, so a Nexus-style embedded Firebase Web API key could pass the Security category without review.",
-      "Added a non-secret-labeled Security finding named Google/Firebase API key requires restriction review.",
-      "Added Security regression tests proving detection does not echo the key value and that retention requires an explicit file-and-rule allowance.",
-      "Extended generated-artifact security scanning to surface the same review requirement."
+      "Confirmed src/security.js already constructs security findings from metadata only and does not copy regex match text into result objects.",
+      "Added a standing Security regression proving repository audit findings expose only type/path/line metadata and do not serialize the detected API identifier value.",
+      "Added the same non-persistence assertion for generated-artifact security findings.",
+      "Governed that detected identifier values must never be persisted in logs, artifacts, known-bug records, DEVLOG, handoff metadata, or other Crucible outputs."
     ],
     "verification": [
-      "The new tests use only synthetic API-key-shaped fixtures; the Nexus key value is not stored in Crucible governance, tests, or user-visible progress output."
+      "The regression uses only synthetic API-key-shaped fixtures and checks absence of the synthetic value from serialized audit results."
     ],
     "remaining": [
       "Update DEVLOG for the current session and repair paired bookkeeping on the final development tip.",
