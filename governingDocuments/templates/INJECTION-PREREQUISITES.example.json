@@ -5,6 +5,14 @@
     "repository": "<owner/repository>",
     "crucibleRef": "<selected-crucible-commit-or-version>"
   },
+  "injectionLifecycle": {
+    "status": "<active|completed|cancelled|blocked|expired>",
+    "authorizationId": "<active-injection-authorization-id>",
+    "startedAt": "<activation-timestamp>",
+    "expiresAt": "<timestamp-no-more-than-24-hours-after-activation>",
+    "monitorRequiredWhileActive": true,
+    "autonomousRepairRequiredWhileActive": true
+  },
   "preflight": {
     "completedBeforePackageFinalization": true,
     "status": "<verified|blocked>",

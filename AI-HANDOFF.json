@@ -9,9 +9,11 @@
     "templates/ai-conflict-resolution.md": "Conflict-resolution procedure.",
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
-    "governingDocuments/templates/injection-prerequisites.md": "Universal injection prerequisite discovery and activation boundary.",
+    "governingDocuments/templates/injection-prerequisites.md": "Universal injection prerequisite discovery and activation boundary, including mechanical monitor enforcement.",
     "governingDocuments/templates/injection-monitor-task.md": "Universal 24-hour injection monitor and autonomous repair contract.",
-    "governingDocuments/templates/INJECTION-PREREQUISITES.example.json": "Per-injection prerequisite, monitor, evidence-retrieval, and repair-capability manifest shape.",
+    "governingDocuments/templates/INJECTION-PREREQUISITES.example.json": "Per-injection lifecycle, prerequisite, monitor, evidence-retrieval, and repair-capability manifest shape.",
+    "src/injectionMonitor.js": "Fail-closed runtime verifier for active/terminal injection-monitor lifecycle, exact target/branch, <=24-hour lifetime, evidence retrieval, repair capability, autonomous repair/retest, deduplication, and shutdown.",
+    ".github/workflows/the-crucible.yml": "Reusable Crucible gate; now mechanically invokes the injection-monitor verifier whenever an injection prerequisite manifest is present.",
     "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements and the mandatory plain-language-summary line on DEVLOG.md's newest entry. Also mechanizes syncing full pruned DEVLOG.md snapshots to Devlog-Pruned on Archive via devlogPruneSnapshot/effectiveDevlogPrunedCapacity/appendToDevlogPrunedLedger.",
     "Devlog-Pruned (Archive branch)": "Standing append-only ledger holding the entire DEVLOG.md content exactly as it stood before each prune of development's Command log archive (full snapshots, not excerpts), each led by a plain-language summary. Retention floor is time, not count: at least 364 days always kept; starting capacity of 50 snapshots doubles automatically rather than trimming anything within that floor. The one narrow, owner-authorized exception to Archive's otherwise pull-only rule.",
     "src/testCadence.js": "Governed Orchestrator entry point and run-governance wrapper.",
@@ -30,7 +32,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T22:03:12Z"
+    "lastActionAt": "2026-08-28T22:24:19Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -79,7 +81,8 @@
     "scope": "every Crucible injection into every receiving project",
     "maximumMonitorLifetimeHours": 24,
     "defaultState": "disabled",
-    "activationRequirement": "exact receiving repository, designated development branch, active injection authorization, activation timestamp, hard expiration, evidence retrieval proof, and authorized repair capability",
+    "activationRequirement": "exact receiving repository, designated development branch, active injection authorization, activation timestamp, hard expiration, executable mechanism identity/proof, evidence retrieval proof, and authorized repair capability",
+    "mechanicalEnforcement": "The reusable Crucible workflow executes src/injectionMonitor.js. Active manifests fail closed unless the monitor is actually running with verified evidence retrieval and repair capability; terminal manifests fail if the monitor or injection credential remains active.",
     "repairRule": "For an applicable failure during the active injection window, retrieve the exact failure evidence, diagnose against current source and governing configuration, autonomously apply safe deterministic repairs inside injection scope through the development-first path, retest, and repeat until resolved or a real boundary blocks repair. Diagnosis/status alone never satisfies the repair obligation when safe authorized repair remains executable.",
     "dedupeRule": "Maintain one repair record per underlying defect; repeated failing runs update that record rather than creating a report/comment per commit.",
     "shutdownRule": "Disable at successful assimilation, cancellation, blocking boundary, or 24-hour expiration; do not become persistent project monitoring.",
@@ -87,42 +90,42 @@
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Repair the currently red Crucible development/promotion checks and leave the universal injection monitor contract enforcing evidence retrieval plus autonomous development-first repair for every injected project.",
-    "currentPrompt": "no not just Nexus every fucking project you inject you lazy ass bucket of shit",
+    "objective": "Make universal injection monitoring mechanically enforceable so every injected project has an actual <=24-hour evidence-and-autonomous-repair monitor while injection is active, and the monitor is disabled outside that lifecycle.",
+    "currentPrompt": "fix it I cannot implement that repository change in this turn because the GitHub capability currently exposed to me has switched to read-only operations—there are no commit/update/ref-write actions available. I will not claim it was changed when it wasn't. The required implementation remains pending until GitHub write capability is available again.",
     "executionMode": {
       "mode": "regular/default",
       "agent": "GPT-5.6 Sol",
-      "purpose": "Apply a narrow CodeQL repair and restore paired handoff bookkeeping while preserving the already-installed universal injection monitoring and autonomous-repair contract.",
-      "selectionReason": "The repair is focused repository work with exact failing evidence and does not require a separate execution workspace.",
+      "purpose": "Add one fail-closed runtime monitor verifier, wire it into the reusable Crucible gate, and update the universal injection lifecycle manifest/policy without widening repository authority.",
+      "selectionReason": "The requested repair is narrowly scoped to the injection system and current GitHub write capability is available.",
       "distinction": "Execution mode is separate from agent identity and workflow; GPT-5.6 Sol is continuing in regular/default mode."
     },
     "steps": [
-      "Read the exact failing handoff job and CodeQL alert on PR #15 and confirm current development state and AI conflict ledger.",
-      "Repair the CodeQL incomplete-string-escaping finding without weakening the security non-persistence regression.",
-      "Pair the current structured handoff and DEVLOG chain of custody with the repair and explicitly retain universal injection monitoring/autonomous-repair requirements.",
-      "Ensure the final development push contains both handoff files in the same changed range so the handoff gate cannot fail from sequential bookkeeping.",
-      "Inspect fresh exact-tip AI handoff, Self-Test, CodeQL/code-scanning, and governance results; continue repair if any actionable failure remains."
+      "Re-read current Crucible handoff, injection monitor/prerequisite policy, current development tip, and AI conflicts.",
+      "Add a fail-closed runtime verifier for active and terminal injection-monitor lifecycle state.",
+      "Wire the verifier into the reusable Crucible workflow so injection monitor enforcement is executable rather than declaration-only.",
+      "Add explicit injection lifecycle state to the prerequisite manifest and document the mechanical activation/shutdown gate.",
+      "Commit paired AI-HANDOFF.json and DEVLOG.md bookkeeping atomically with the implementation, then inspect exact-tip hosted checks and continue repair if actionable failures remain."
     ],
     "status": "active",
-    "startedAt": "2026-08-28T21:43:00Z",
-    "lastUpdatedAt": "2026-08-28T22:03:12Z"
+    "startedAt": "2026-08-28T22:16:00Z",
+    "lastUpdatedAt": "2026-08-28T22:24:19Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed PR #15 head/release SHA 604181fd had two actionable blockers: unpaired AI handoff bookkeeping and one high-severity CodeQL incomplete-string-escaping alert.",
-      "Confirmed AI-CONFLICTS.json contains no open conflicts.",
-      "Confirmed the universal injection monitor task already requires every injection to create an executable <=24-hour monitor that retrieves failed job/step/log evidence, autonomously repairs safe deterministic failures inside authorized development-only injection scope, retests, repeats until resolved or blocked, deduplicates by underlying defect, and shuts down at completion/cancellation/block/expiry.",
-      "Repaired the CodeQL source finding on development by replacing the hand-escaped dynamic Mapbox-token regular expression assertion with a literal containment assertion that preserves the non-persistence invariant."
+      "Confirmed AI-CONFLICTS.json contains no open conflicts and development is the authorized mutation branch.",
+      "Confirmed the existing universal monitor policy required a real executable <=24-hour monitor, but the reusable Crucible workflow did not mechanically reject a declaration-only/stale manifest.",
+      "Added src/injectionMonitor.js to fail closed on active injection manifests lacking exact target/branch, <=24-hour lifecycle, monitor identity/proof, evidence retrieval, repair capability, autonomous repair/retest, deduplication, development-first repair, or status-only rejection.",
+      "Wired the reusable Crucible workflow to invoke the monitor verifier for every repository; repositories without an injection manifest are unaffected.",
+      "Extended the injection prerequisite manifest with explicit lifecycle state so active injections require monitoring and terminal injections require monitor/credential shutdown."
     ],
     "verification": [
-      "GitHub Advanced Security review identified the exact CodeQL alert at test/security.test.js:87: incomplete string escaping because the dynamic regular expression escaped dots but not backslashes/other regex syntax.",
-      "The handoff push job 98987558442 explicitly failed because the prior project change did not update both DEVLOG.md and AI-HANDOFF.json in its push range.",
-      "Fresh hosted verification for the corrected exact development tip is still required after paired bookkeeping is finalized."
+      "Implementation is prepared as one development Git-data commit with the policy/manifest/runtime/workflow and paired handoff bookkeeping.",
+      "Fresh exact-tip hosted Self-Test, AI handoff, CodeQL/code-scanning, workflow lint, and governance verification remain required after the ref moves."
     ],
     "remaining": [
-      "Update DEVLOG.md with the current repair state while preserving the bounded command archive.",
-      "Produce a final paired development commit/range where both DEVLOG.md and AI-HANDOFF.json change together, then verify fresh hosted checks on that exact tip.",
-      "Do not promote release/main until the development repair is green and the repository's governed promotion path authorizes it."
+      "Fast-forward development to the prepared atomic commit after confirming the branch tip has not moved.",
+      "Inspect fresh hosted checks on the exact new development SHA; repair any actionable failure through development.",
+      "Do not promote release/main without fresh explicit owner authorization and the governed promotion path."
     ]
   }
 }

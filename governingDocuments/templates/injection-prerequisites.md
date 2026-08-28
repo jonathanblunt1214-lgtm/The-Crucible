@@ -48,6 +48,14 @@ The monitoring link is disabled by default and can be enabled only for the activ
 
 The monitor MUST be an actual executable mechanism: supported condition-watch, webhook, GitHub App/listener, or other supported repair-capable monitor. Merely writing monitoring state into a repository file, opening an issue, or sending a progress/status message does not satisfy this prerequisite. Preflight MUST record non-secret activation proof and positively verify both evidence retrieval and repair capability.
 
+## Mechanical monitor enforcement
+
+The selected Crucible runtime MUST execute `src/injectionMonitor.js` as part of the reusable Crucible workflow whenever a receiving repository carries `governingDocuments/INJECTION-PREREQUISITES.json`.
+
+That verifier is fail-closed. An active injection is rejected unless the manifest proves the exact target repository, designated development branch, active authorization identity, activation and expiration timestamps, a lifetime of no more than 24 hours, an actual monitor mechanism identity and activation proof, verified failed-run/job/step evidence retrieval, verified repair capability, defect deduplication, automatic repair and retest, development-first mutation, and explicit rejection of diagnosis/status-only completion.
+
+A completed, cancelled, blocked, or expired injection is rejected if its monitor remains active or its injection credential remains enabled. A project with no injection manifest is unaffected. This makes monitor activation/shutdown part of the executable Crucible gate rather than a documentation-only promise.
+
 ## Injection-file requirement
 
 The exact preflight result MUST be included inside the injection package as `governingDocuments/INJECTION-PREREQUISITES.json` before assimilation starts.
