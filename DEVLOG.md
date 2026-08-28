@@ -5,18 +5,24 @@
 - **Agent:** GPT-5.6 Sol.
 - **Execution mode:** `regular/default`, explicitly continued here because the owner said Work mode is not needed for this task.
 - **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, owner prompt, communication policy, verification, and remaining work.
-- **Actual current step:** Nexus exposed a Crucible Security-category blind spot for public Firebase/Google API keys. The scanner and standing Security tests are corrected; paired bookkeeping and fresh hosted CI verification remain.
-- **Security rule:** Public Firebase Web API keys are not automatically treated as administrative secrets, but Crucible must surface them for restriction/deployment-security review. Intentional retention requires an explicit file-and-rule allowance after review, and findings must never echo the key value.
+- **Actual current step:** Crucible now has a standing Security regression requiring detected public API-key-shaped identifier values to be discarded from findings and persisted outputs; paired bookkeeping and fresh hosted CI verification remain.
+- **Security rule:** Recognized public API-key-shaped identifiers trigger Security review, but Crucible never displays or stores the detected value. Findings and persisted outputs may record only the fact/type plus non-secret remediation metadata such as path and line; intentional retention still requires an explicit file-and-rule allowance after review.
 - **Governing behavior:** Adapt reconciles drift against current repository, tool, configuration, and available upstream evidence; Persevere tries safe supported evidence and recovery paths; Overcome accepts only verified repair/re-check or explicitly escalates genuinely ambiguous, semantic, or high-risk decisions for human review.
 - **Safety boundary:** Unknown, stale, or unrecognized is not itself a failure. Known unsafe findings still block, and the engine never invents business logic or silently resolves ambiguous semantic intent.
 - **Retention:** `src/handoffPolicy.js` mechanically rejects more than 10 Command log sessions and rejects retained sessions older than 180 days. This archive is pruned to the 10 newest sessions; all are from 2026-08-28.
 - **Schedule enforcement:** `.github/workflows/scheduled-diagnostics.yml` carries the exact documented daily, Tuesday/Friday, Monday, and first-of-month cron strings and fails closed if GitHub reports an unrecognized scheduled trigger instead of silently substituting `daily`.
-- **Estimated completion:** `2026-08-28 06:56:00 EDT` is a best-effort estimate for fresh CI verification/correction, not a guarantee or mechanically fixed completion time.
-- **Verification state:** Implementation is committed on `development`; fresh Self-Test, AI handoff policy, and CodeQL on the final paired bookkeeping commit are still required. No promotion to `release` or `main` is authorized.
+- **Estimated completion:** `2026-08-28 07:12:00 EDT` was a best-effort estimate for this focused invariant and verification work, not a guarantee or mechanically fixed completion time.
+- **Verification state:** Regression and governance changes are committed on `development`; fresh Self-Test, AI handoff policy, and CodeQL on the final bookkeeping state are still required. No promotion to `release` or `main` is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: prohibit API identifier persistence — 2026-08-28T11:11:01Z — GPT-5.6 Sol — mode:regular/default
+
+- `GitHub.fetch_file DEVLOG.md; GitHub.fetch_file AI-HANDOFF.json; GitHub.fetch_file src/security.js; GitHub.fetch_file test/security.test.js` — refreshed current Security implementation and handoff state, confirming findings already omit matched values and identifying the need for a mechanically enforced persistence invariant; started 2026-08-28T11:11:01Z, finished 2026-08-28T11:12:27Z, exit 0.
+- `GitHub.update_file test/security.test.js` — added repository-audit and generated-artifact regressions proving findings expose only type/path/line metadata and serialized audit results never contain the synthetic detected identifier value; started 2026-08-28T11:12:27Z, finished 2026-08-28T11:13:05Z, exit 0.
+- `GitHub.update_file AI-HANDOFF.json; GitHub.update_file DEVLOG.md` — governed the no-display/no-storage requirement across findings, logs, artifacts, known-bug records, DEVLOG, handoff metadata, and other persisted outputs, without recording any detected identifier value; started 2026-08-28T11:13:05Z, finished 2026-08-28T11:14:00Z, exit 0.
 
 ### Session: catch Firebase public-key security posture — 2026-08-28T10:48:00Z — GPT-5.6 Sol — mode:regular/default
 
@@ -80,7 +86,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 ### Session: expand standing category tests — 2026-08-28T08:16:00Z — GPT-5.6 Sol — mode:regular/default
 
 - Read governance, checked the pre-change Actions baseline, and pushed ten standing test cases across the existing Code, Security, Utility, and Maintenance files with paired governance updates — started 2026-08-28T08:16:00Z, finished 2026-08-28T08:31:00Z, exit 0.
-
-### Session: stale classifier assertion repair — 2026-08-28T01:42:48Z — Claude — mode:regular/default
-
-- Fetched current development, reproduced the classifier-regression failure, corrected the stale assertion, ran the governed request and full suite successfully, resolved the transient known-bug record, and pushed the repair — started 2026-08-28T01:39:00Z, finished 2026-08-28T01:46:36Z, exit 0.
