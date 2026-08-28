@@ -10,43 +10,48 @@
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
     "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements.",
-    "src/testCadence.js": "The governed test Orchestrator. It owns every current test through explicit Code, Security, Utility, and Maintenance main-category sorting, preserves filename-derived subcategories, receives natural-language test requests unchanged from transport, is the sole authority that interprets those requests and selects actual tests, selects impacted tests for ordinary runs, and fails closed when a discovered future test is not classified."
+    "src/testCadence.js": "The governed Orchestrator entry point. It preserves all existing test selection authority while applying progress-heartbeat, known-bug persistence, and verified-resolution controls to production test invocations.",
+    "src/testCadenceCore.js": "The preserved Orchestrator selection core containing cadence, explicit Code/Security/Utility/Maintenance classification, natural-language request interpretation, change-impact selection, and fail-closed classification behavior.",
+    "src/testRunGovernance.js": "Orchestrator run governance for 60-second test progress updates, category-derived criticality, known-bug persistence, severity ordering, and mandatory passing re-tests before resolution.",
+    "governingDocuments/known-bugs/README.md": "Known-bug governance policy, criticality order, persistence behavior, progress-update cadence, and mandatory re-test lifecycle.",
+    "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger. Resolved or checked entries are invalid unless their latest recorded re-test passed."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-27T23:58:30Z"
+    "lastActionAt": "2026-08-28T00:04:30Z"
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Keep natural-language test requests governed exclusively by the Orchestrator and leave the implementation green after proving a random-category request.",
-    "currentPrompt": "good now implement it then run a random test category",
+    "objective": "Add bounded Orchestrator progress updates and governed known-bug tracking with severity ordering and mandatory verified re-tests before resolution.",
+    "currentPrompt": "have the Orchestrator give updates no less than every minute maximizing at 1 minute 30 seconds while tests run, results of the different test categories should an error be found should be saved in `governingDocuments` under a known bugs folder by order of Criticality and once they are fixed they are to be checked again before being checked off",
     "steps": [
-      "Forward the user's natural-language request through Self-Test without workflow-side test selection.",
-      "Let src/testCadence.js alone interpret the request and select actual tests.",
-      "Prove 'run a random test category' through a development push and capture the Orchestrator decision and result.",
-      "Align regression tests with authorized random-category behavior while isolating programmatic request assertions from transport-only CI environment variables.",
-      "Confirm Self-Test and CodeQL are green on the final correction commit."
+      "Emit Orchestrator-owned progress heartbeats every 60 seconds while a test process is still running, with a governed maximum interval of 90 seconds.",
+      "Persist failed test-category results in governingDocuments/known-bugs/KNOWN-BUGS.json using critical, high, medium, low ordering.",
+      "Use Security=critical, Code=high, Utility=medium, Maintenance=low as deterministic default criticality, with mixed failures taking the highest severity present.",
+      "Require the exact recorded failing tests to pass a verify-bug re-test before status can become resolved/checked.",
+      "Preserve known-bug evidence from failing Self-Test jobs as artifacts without granting workflow write permission.",
+      "Push atomically to development and confirm Self-Test and CodeQL are green."
     ],
     "status": "active",
-    "startedAt": "2026-08-27T23:47:00Z",
-    "lastUpdatedAt": "2026-08-27T23:58:30Z"
+    "startedAt": "2026-08-28T00:04:30Z",
+    "lastUpdatedAt": "2026-08-28T00:04:30Z"
   },
   "handoffNotes": {
     "completed": [
-      "Implemented natural-language request transport in commit 4f3dab59e9c206ac36f57e6341d4d19ddfb5cce8 with exact request 'run a random test category'.",
-      "Self-Test run 166 proves the Orchestrator independently chose Security, selected all 10 Security test files, and ran 92 individual tests with 92 passing and 0 failing.",
-      "First regression correction removed the obsolete expectation that random-category behavior must throw.",
-      "Self-Test run 167 exposed a test-harness environment leak: programmatic runRequested assertions inherited CRUCIBLE_TEST_REQUEST_SOURCE=push from the surrounding workflow step and were therefore treated as push transport payloads.",
-      "Prepared a second regression correction that temporarily clears the transport-only environment variable around direct programmatic all/random request assertions and restores it afterward; production Orchestrator behavior is unchanged."
+      "Designed a synchronous-compatible progress heartbeat using a lightweight companion Node process so the existing Orchestrator selection API remains unchanged while long test commands report every 60 seconds.",
+      "Designed a governed known-bug ledger under governingDocuments/known-bugs with deterministic category-derived criticality and severity sorting.",
+      "Added fail-closed ledger validation so an entry cannot be checked/resolved without a recorded passing re-test.",
+      "Added a verify-bug Orchestrator command that re-runs the exact recorded failing test files and only checks the bug off on success.",
+      "Added Self-Test failure artifact preservation for the governed known-bug ledger while retaining read-only contents permission."
     ],
     "verification": [
-      "Run 166 Ubuntu/Node 24 log: Orchestrator decision category security; selected apiGuard, authenticity, coreRefIntegrity, githubRepoSecurity, hardening, malwareScan, privacy, quarantine, requiredCheckBoundary, security; 92/92 passed.",
-      "Run 167 failure is isolated to the regression harness reporting 2 calls where 1 was expected because ambient source=push forced a change-impact path; the production transport correctly converted a normal non-prefixed push message to 'orchestrator'.",
-      "No workflow-side category or test-file selection has been introduced."
+      "Regression coverage asserts the configured progress interval is 60 seconds and does not exceed the 90-second governed maximum.",
+      "Regression coverage asserts criticality ordering and mixed-category highest-severity behavior.",
+      "Regression coverage creates low and critical failures, confirms critical-first ordering, confirms a failed re-test remains open, and confirms only a passing re-test checks the bug off."
     ],
     "remaining": [
-      "Push the environment-isolated regression correction to development with paired governance updates.",
-      "Confirm Self-Test and CodeQL are green; correct further development-only failures if required.",
+      "Create the atomic development commit containing Orchestrator wrapper/core split, run governance, regression wrapper, known-bug governing documents, Self-Test artifact preservation, AI-HANDOFF.json, and DEVLOG.md.",
+      "Confirm Self-Test and CodeQL are green; correct development-only regressions if required.",
       "Do not promote to main or release unless separately and explicitly instructed."
     ]
   }

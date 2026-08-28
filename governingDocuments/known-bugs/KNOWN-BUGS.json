@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "severityOrder": [
+    "critical",
+    "high",
+    "medium",
+    "low"
+  ],
+  "bugs": []
+}
