@@ -124,6 +124,12 @@ jobs:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
           CRUCIBLE_CONFIG: ${{ inputs.config_path }}
         run: node .the-crucible-runtime/src/cli.js validate
+      - name: Enforce active injection monitor lifecycle
+        env:
+          CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
+          CRUCIBLE_INJECTION_TARGET_REPOSITORY: ${{ github.repository }}
+          CRUCIBLE_INJECTION_DEVELOPMENT_BRANCH: ${{ github.ref_name }}
+        run: node .the-crucible-runtime/src/injectionMonitor.js
       - name: Enforce configuration and exception governance
         env:
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
