@@ -3,18 +3,24 @@
 ## Shared AI handoff
 
 - **Agent:** GPT-5.6 Sol.
-- **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, owner prompt, test-cadence policy, verification, and remaining work.
-- **Current development work:** Add all previously identified missing test types into the existing standing categories and complete the Code coverage test so it tracks the actual source dependencies of the Code category.
-- **Standing-category placement:** Code contains executable V8 coverage, CLI end-to-end, and ordinary dependency-policy behavior. Security contains adversarial input fuzzing and supply-chain dependency-policy coverage. Utility contains clutter and interactive suite-configuration coverage. Maintenance contains classifier robustness, cadence-drift, and CI-bypass coverage.
-- **Category implementation:** The ten additions are test cases inside already explicitly categorized test files, so they inherit the existing standing category and cadence. No new `.test.js` filename or category-map entry is needed.
-- **Coverage correction:** Self-Test #180 showed child test-worker coverage could not be assumed. Self-Test #181 then showed Code test filenames cannot be assumed to have same-named source modules (`engine.test.js` exercises `clutter`, `runner`, and `maintenance`). The current correction derives actual `../src/...` dependencies directly from all five standing Code test files, loads those real modules under V8 coverage, and still runs the Code tests separately.
-- **Architecture preserved:** Cadence decides only when categories are due; the Orchestrator selects/runs tests; the independent classifier remains fallback-only for standalone unmapped test files; reconciliation checks due coverage.
-- **Verification state:** The dependency-derived coverage correction is being committed to `development`. Fresh Self-Test and CodeQL must both be green before this work is complete. No promotion to `release` or `main` is authorized.
-- **Preserved prior concerns:** The prior concurrent-agent handoff noted no `AI-CONFLICTS.json` record for earlier overlapping restructuring and the temporary push commit-message request transport. These remain preserved for owner review.
+- **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, owner prompt, mandatory agent-communication policy, verification, and remaining work.
+- **Current development work:** Make attended AI progress continuity a standing governed requirement so owner-visible updates cannot silently disappear during multi-step work.
+- **Timestamp rule:** Every attended progress, completion, and interruption check-in must begin with an America/New_York timestamp and the correct DST-aware `EDT` or `EST` label; ambiguous `ET` and UTC-only user updates are not sufficient.
+- **Progress rule:** Non-trivial attended work gets an initial update and further concrete updates at least every 60 seconds, normally also after every 2–3 substantive tool/action calls when sooner.
+- **Completion rule:** Completion automatically gets a timestamped check-in in the same attended session with concrete result, verification, and relevant commit/run identifiers. A hard usage/tool/session or policy boundary gets an immediate timestamped interruption check-in with exact completed and remaining work.
+- **Continue-until-done rule:** Safe in-scope authorized work is not voluntarily stopped or handed back while executable work remains; continue through correction and required verification until complete or a hard limit/higher-priority boundary stops execution.
+- **Completion-time boundary:** Exact future completion timestamps are included only when mechanically known from a fixed scheduled event. The policy explicitly forbids fabricating or promising an ETA where higher-priority platform rules prohibit it or the finish time is not actually knowable.
+- **Verification state:** The policy and paired governance records are being committed to `development`. Fresh Self-Test and CodeQL must both be green before this task is complete. No promotion to `release` or `main` is authorized.
+- **Preserved architecture:** Test-request authority, Orchestrator/Cadence checks-and-balances, classifier behavior, PR #11, and temporary test-request transport governance are unchanged.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: attended-agent progress continuity governance — 2026-08-28T08:56:21Z — GPT-5.6 Sol
+
+- Read `DEVLOG.md` first, refreshed the governing-document set after the greater-than-10-minute idle threshold, and confirmed `development` remained at `9b5120a2313dbe5dc2cc77091d96676860348403` — started 2026-08-28T08:56:21Z, finished 2026-08-28T08:59:28Z, exit 0.
+- Prepared `governingDocuments/agent-progress-policy.md` and paired `AI-HANDOFF.json`/`DEVLOG.md` governance blobs encoding America/New_York EDT/EST timestamps, maximum 60-second attended update gaps, automatic completion/interruption check-ins, and continue-until-done behavior while preserving the higher-priority no-fabricated-ETA boundary — started 2026-08-28T08:59:28Z, finished 2026-08-28T09:01:20Z, exit 0.
 
 ### Session: dependency-derived Code coverage correction — 2026-08-28T08:37:00Z — GPT-5.6 Sol
 
@@ -56,7 +62,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 ### Session: owner-defined Orchestrator category cadence — 2026-08-28T00:42:00Z — GPT-5.6 Sol
 
 - Defined Code every push/PR, Security daily, Utility twice weekly, and Maintenance weekly while preserving immediate specific-request behavior — started 2026-08-28T00:42:00Z, finished 2026-08-28T00:58:42Z, exit 0.
-
-### Session: temporary test-transport governance — 2026-08-28T00:30:00Z — GPT-5.6 Sol
-
-- Recorded that synthetic commit-message request transport is temporary workaround infrastructure and must be replaced as soon as supported direct integration exists — started 2026-08-28T00:29:30Z, finished 2026-08-28T00:31:00Z, exit 0.
