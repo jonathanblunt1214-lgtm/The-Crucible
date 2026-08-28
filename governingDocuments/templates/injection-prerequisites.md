@@ -15,6 +15,7 @@ The preflight must check, as applicable:
 - required external-service availability;
 - required branch protection or ruleset state;
 - required repository-read credentials and minimum permission scope;
+- temporary 24-hour injection monitoring/repair link capability;
 - any other non-code prerequisite required by an injected check.
 
 ## Native validation discovery prerequisite
@@ -37,6 +38,14 @@ If no injection is actively authorized, or if the requested operation is unrelat
 
 A general-purpose or durable project `SECURITY_READ_TOKEN` MUST NOT be created merely to satisfy injection. When repository Administration read access is required solely by injection preflight or assimilation verification, use an injection-only ephemeral credential mechanism with the least required scope. Its authority ends when assimilation completes, is blocked/cancelled, or the injection window expires.
 
+## Temporary monitoring prerequisite
+
+Every injection MUST satisfy `governingDocuments/templates/injection-monitoring.md` before assimilation validation begins.
+
+Preflight MUST prove that the receiving project can expose the applicable Crucible and project-native workflow/check results needed for repair, including failed job/step/log evidence when available. It MUST record the exact target repository and development branch, the allowed workflow/check scope, and the least permission required to read that evidence and deliver authorized repairs.
+
+The monitoring link is disabled by default and can be enabled only for the active injection. `expiresAt` MUST be no later than 24 hours after activation. If the monitoring capability cannot retrieve available failure evidence or cannot deliver a repair payload, assimilation is blocked before the link is treated as operational.
+
 ## Injection-file requirement
 
 The exact preflight result MUST be included inside the injection package as `governingDocuments/INJECTION-PREREQUISITES.json` before assimilation starts.
@@ -47,16 +56,18 @@ For any injection-only credential prerequisite, the file MUST also record non-se
 
 The file MUST also include native-validation metadata required by `injection-native-validation.md`, including the discovered project-owned commands/checks, duplicated-policy validators, their governed configuration sources, and post-assimilation status.
 
+The file MUST include monitoring state required by `injection-monitoring.md`, including activation/expiration, exact monitored scope, defect-deduplication state, repair-payload requirement, and disabled/monitoring/repairing/retest/resolved/blocked/expired state. No credential or secret value may appear in it.
+
 An injection package is incomplete if this file is absent, generic, stale, or does not reflect the actual receiving repository and selected Crucible version.
 
 ## Activation rule
 
-A required gate may become active only after every prerequisite listed for that gate in `INJECTION-PREREQUISITES.json` is positively verified.
+A required gate or monitoring link may become active only after every prerequisite listed for it in `INJECTION-PREREQUISITES.json` is positively verified.
 
 If any prerequisite is missing, unavailable, or unverifiable:
 
 - assimilation is blocked at the prerequisite stage;
-- the gate is not reported as satisfied;
+- the gate/link is not reported as satisfied;
 - the project must not promote to production;
 - the gate must not be bypassed, weakened, suppressed, renamed, relabeled, or treated as optional;
 - the missing prerequisite must be reported explicitly for OWNER resolution.
@@ -67,7 +78,9 @@ Missing prerequisites are an injection/bootstrap failure, not a downstream surpr
 
 A verified prerequisite state does not by itself complete assimilation. After injection lands on the designated development branch, the injector MUST run Crucible and all applicable receiving-project native validation discovered during preflight.
 
-If an applicable native validation fails, assimilation remains incomplete. When the failure is safely repairable inside the active injection authority, the injector MUST continue through diagnosis, repair, and retest automatically under `injection-native-validation.md` instead of stopping after diagnosis and waiting for another owner prompt.
+If an applicable validation fails during the active monitoring window, the injector MUST retrieve the exact available failure evidence and follow the repair loop in `injection-monitoring.md` and `injection-native-validation.md`. Repeated occurrences of the same underlying unresolved defect update one repair record rather than creating a separate report for every run.
+
+When the failure is safely repairable inside the active injection authority, the injector MUST continue through diagnosis, concrete repair delivery/application, and retest automatically instead of stopping after diagnosis and waiting for another owner prompt.
 
 Assimilation may be marked complete only when both Crucible and applicable native project validation pass on the assimilated development-branch state.
 
