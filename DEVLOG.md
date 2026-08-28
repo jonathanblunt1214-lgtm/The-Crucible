@@ -2,9 +2,10 @@
 
 ## Shared AI handoff
 
-- **Agent:** GPT-5.6 Sol.
+- **Agent:** Claude (fallback CI monitoring pass; GPT-5.6 Sol's in-progress objective below is unchanged and still owned by that session).
 - **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, owner prompt, communication policy, verification, and remaining work.
 - **Actual current step:** Finish the governance bookkeeping/schedule work and verify the resulting development state; completed prior progress-policy work is no longer presented as the current implementation step.
+- **AI handoff policy compliance gap (found and fixed by this pass):** Commits `e1b32ea` through `b913a0c` each changed only one of `DEVLOG.md`/`AI-HANDOFF.json` per push (mostly `AI-HANDOFF.json` alone), so the required "AI handoff policy" check (`npm run audit:handoff`) failed on every one of those commits' own diff even though a paired update existed somewhere in the surrounding session. This commit restores compliance by updating both files together; it does not alter GPT-5.6 Sol's in-progress classification-ambiguity objective or steps.
 - **Issue #13:** Closed, locked, and retired as `not planned`; it is not used as test-request infrastructure.
 - **Retention:** `src/handoffPolicy.js` mechanically rejects more than 10 Command log sessions and rejects retained sessions older than 180 days. This archive is pruned to the 10 newest sessions; all are from 2026-08-28.
 - **Schedule enforcement:** `.github/workflows/scheduled-diagnostics.yml` carries the exact documented daily, Tuesday/Friday, Monday, and first-of-month cron strings and now fails closed if GitHub reports an unrecognized scheduled trigger instead of silently substituting `daily`.
@@ -14,6 +15,12 @@
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: paired-commit compliance fix — 2026-08-28T09:28:00Z — Claude
+
+- Hourly fallback CI check-in found `development`'s current tip (`b913a0c`) failing the required "AI handoff policy" check; confirmed via GitHub Actions that this was a real, current failure (not stale) and that the prior four pushes (`e1b32ea`, `3fa278f`, `75b2beb`, `b63cc21`) had failed the same check for the same reason — started 2026-08-28T09:28:00Z, finished 2026-08-28T09:30:00Z, exit 0 diagnostic.
+- Reproduced locally: `checkHandoffRange` between `b63cc21` and `b913a0c` returned "Project changes must update both DEVLOG.md and AI-HANDOFF.json" because that push's diff touched only `AI-HANDOFF.json` — started 2026-08-28T09:30:00Z, finished 2026-08-28T09:31:00Z, exit 1 reproduced.
+- Fast-forwarded local `development` to `b913a0c` and prepared this paired update to both files, restoring compliance without altering GPT-5.6 Sol's in-progress classification-ambiguity objective, steps, or any Orchestrator/Cadence/classifier logic — started 2026-08-28T09:31:00Z, finished 2026-08-28T09:33:00Z, exit 0.
 
 ### Session: finish governance bookkeeping and schedules — 2026-08-28T09:05:13Z — GPT-5.6 Sol
 
@@ -54,7 +61,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 ### Session: Orchestrator/Cadence checks and balances — 2026-08-28T01:15:00Z — GPT-5.6 Sol
 
 - Separated cadence frequency authority from Orchestrator selection and added fail-closed reconciliation that proves the Orchestrator selection covers every category Cadence says is due — started 2026-08-28T01:15:00Z, finished 2026-08-28T01:18:00Z, exit 0.
-
-### Session: Orchestrator cadence baseline correction — 2026-08-28T01:00:00Z — GPT-5.6 Sol
-
-- Corrected the every-push Code baseline so it runs tests only instead of duplicating the scheduled audit stack, and preserved existing request/change-impact behavior — started 2026-08-28T01:00:00Z, finished 2026-08-28T01:05:47Z, exit 0.
