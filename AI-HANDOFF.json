@@ -9,9 +9,6 @@
     "templates/ai-conflict-resolution.md": "Conflict-resolution procedure.",
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
-    "governingDocuments/templates/injection-prerequisites.md": "Universal injection prerequisite discovery and activation boundary.",
-    "governingDocuments/templates/injection-monitor-task.md": "Universal 24-hour injection monitor and autonomous repair contract.",
-    "governingDocuments/templates/INJECTION-PREREQUISITES.example.json": "Per-injection prerequisite, monitor, evidence-retrieval, and repair-capability manifest shape.",
     "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements and the mandatory plain-language-summary line on DEVLOG.md's newest entry. Also mechanizes syncing full pruned DEVLOG.md snapshots to Devlog-Pruned on Archive via devlogPruneSnapshot/effectiveDevlogPrunedCapacity/appendToDevlogPrunedLedger.",
     "Devlog-Pruned (Archive branch)": "Standing append-only ledger holding the entire DEVLOG.md content exactly as it stood before each prune of development's Command log archive (full snapshots, not excerpts), each led by a plain-language summary. Retention floor is time, not count: at least 364 days always kept; starting capacity of 50 snapshots doubles automatically rather than trimming anything within that floor. The one narrow, owner-authorized exception to Archive's otherwise pull-only rule.",
     "src/testCadence.js": "Governed Orchestrator entry point and run-governance wrapper.",
@@ -21,108 +18,103 @@
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
     "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
-    "src/security.js": "Security Gate. Detects secrets, unsafe behavior, and public API-key-shaped identifiers and forces review without persisting detected values.",
+    "src/security.js": "Security Gate. Detects secrets, unsafe behavior, and public API-key-shaped identifiers (known-provider catalog plus a name-context generic fallback for unrecognized providers) and forces a review finding; never displays or persists a detected value, only fact/type/path/line metadata.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
-    ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport; it never chooses test files.",
+    ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport with exact documented slower-than-hourly cron schedules and fail-closed schedule-to-tier mapping; it never chooses test files.",
     "governingDocuments/known-bugs/README.md": "Known-bug governance policy.",
     "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger.",
     "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity, America/New_York timestamping, completion/interruption check-ins, and continue-until-done behavior."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T22:03:12Z"
+    "lastActionAt": "2026-08-28T12:52:40Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
     "timestampRule": "Every attended progress, completion, and interruption check-in begins with YYYY-MM-DD HH:MM:SS EDT when daylight-saving time is active or YYYY-MM-DD HH:MM:SS EST otherwise; never use ambiguous ET or UTC-only user updates.",
     "progressRule": "For non-trivial attended work, send an initial update and continue user-visible updates at least every 60 seconds, normally also after every 2-3 substantive tool/action calls when sooner, with concrete completed/current/blocker state.",
-    "completionTimeRule": "When work duration is not mechanically knowable, provide a clearly labeled best-effort estimated completion timestamp in America/New_York time when the owner requests one; never present an estimate as guaranteed or externally fixed.",
+    "completionTimeRule": "When work duration is not mechanically knowable, provide a clearly labeled best-effort estimated completion timestamp in America/New_York time when the owner requests one; never present an estimate as guaranteed or as an externally fixed completion time.",
     "completionCheckInRule": "As soon as attended work is actually complete, automatically send a timestamped completion check-in in the same session with concrete result, verification, and relevant commit/run identifiers.",
     "interruptionCheckInRule": "If hard usage/tool/session limits, unavailable required capability, safety, or owner-governance boundaries stop work, immediately send a timestamped interruption check-in stating completed work, exact stop reason, and remaining work; update repository handoff first when write capability remains.",
-    "continueUntilDoneRule": "For safe in-scope authorized work, do not voluntarily stop, defer, or hand work back while executable work remains. Continue through implementation, correction, and required verification until complete or a real boundary prevents further execution."
+    "continueUntilDoneRule": "For safe in-scope authorized work, do not voluntarily stop, defer, or hand work back while executable work remains. Continue through implementation, correction, and required verification until complete or until a hard usage/tool/session limit or higher-priority platform, safety, or owner-governance boundary prevents further execution."
   },
   "executionModePolicy": {
     "automaticSelection": "Select execution mode automatically without asking the owner unless the owner explicitly selects a mode.",
     "regularDefaultPurpose": "Routine, simple, focused, and conversational tasks that do not materially benefit from long-running orchestration.",
     "workPurpose": "Genuinely complex, long-running, multi-source, file-heavy, or deliverable-oriented tasks that materially benefit from Work mode.",
-    "handoffRule": "Every active plan records the actual mode, agent, purpose, and selection reason, and every new DEVLOG Command log archive Session heading records mode:regular/default or mode:work so mode remains in the chain of custody. Mode is independent from agent identity and workflow.",
-    "continuationRule": "Preserve the recorded mode while task needs remain the same. If evidence warrants a different mode, record the new mode and reason before continuing."
+    "handoffRule": "Every active plan records the actual mode, agent, purpose, and selection reason, and every new DEVLOG Command log archive Session heading records mode:regular/default or mode:work so mode remains in the chain of custody. Mode is independent from agent identity and workflow: Codex and Claude may each use either mode, and an agent change must never silently change the mode.",
+    "continuationRule": "Preserve the recorded mode while the task needs remain the same. If evidence warrants a different mode, record the new mode and reason in AI-HANDOFF.json before continuing."
   },
   "temporaryInfrastructure": {
     "syntheticTestRequestCommitTransport": {
       "status": "temporary-workaround",
       "notTargetArchitecture": true,
-      "description": "The CRUCIBLE TEST REQUEST synthetic commit-message transport exists only because the current ChatGPT/GitHub integration cannot directly create the required Orchestrator invocation.",
-      "replacementRequirement": "Replace and remove this workaround as soon as a supported direct integration can pass the user's natural-language test request to the Orchestrator without manufacturing a repository commit.",
+      "description": "The CRUCIBLE TEST REQUEST synthetic commit-message transport exists only because the current ChatGPT/GitHub integration cannot directly create the required Orchestrator invocation. It is a workaround, not the intended architecture.",
+      "replacementRequirement": "Replace and remove this workaround as soon as a supported direct integration or direct connection exists that can pass the user's natural-language test request to the Orchestrator without manufacturing a repository commit.",
       "targetArchitecture": "User test request -> supported direct integration/connection -> Orchestrator -> Orchestrator alone selects and runs tests -> results.",
       "standingOwnerAuthorization": "The owner explicitly authorizes this specific replacement as soon as the supported direct integration/connection capability exists; no additional approval is required solely for that replacement.",
       "scopeBoundary": "This authorization does not authorize unrelated repository changes or promotion to main/release."
     }
   },
   "testCadencePolicy": {
-    "systemArchitecture": "Orchestrator, Cadence, closest-feature classification, and reconciliation operate as one governed testing system while remaining independent checks-and-balances authorities.",
-    "cadenceAuthority": "Cadence decides only when a category is due and never selects files, interprets natural-language scope, or executes tests.",
-    "classifierAuthority": "The independent closest-feature classifier is fallback-only for newly discovered tests absent from the explicit category map.",
-    "classificationAmbiguityRule": "Isolate ambiguity, continue safe tests, never fake complete coverage.",
-    "securityPublicIdentifierRule": "Security must review recognized public API-key-shaped identifiers and must never display or persist detected identifier values; persisted outputs may record only fact/type and non-secret remediation metadata.",
-    "explicitMappingRule": "Existing explicit category mappings are authoritative.",
+    "systemArchitecture": "Orchestrator, Cadence, closest-feature classification, and reconciliation operate as one governed testing system while remaining independent checks-and-balances authorities; they must not be collapsed into one selector.",
+    "cadenceAuthority": "Cadence decides only when a category is due. It produces a due-category obligation and never selects files, classifies new tests, interprets natural-language scope, or executes tests.",
+    "classifierAuthority": "The independent closest-feature classifier is fallback-only for newly discovered tests absent from the explicit category map. It compares the new test with known feature/test evidence and returns a category only for a unique closest match. It cannot choose run scope, set frequency, or execute tests.",
+    "classificationAmbiguityRule": "Isolate ambiguity, continue safe tests, never fake complete coverage. If a newly discovered test remains unresolved after independent closest-feature classification, quarantine that test from guessed execution and report its unresolved classification while continuing all other safely classified tests selected by the Orchestrator. Do not globally abort unrelated safe tests solely because one new test is unresolved. If the unresolved test is required to satisfy an explicit owner request or cadence obligation, mark that requested coverage incomplete and do not report the obligation or suite as fully passing until the ambiguity is resolved and the required test is executed.",
+    "securityPublicIdentifierRule": "The Security category must detect public API-key-shaped application identifiers it recognizes and require explicit security review instead of assuming public means safe. A retained public identifier may be allowed only through an explicit file-and-rule allowance after the relevant restrictions and deployment posture are verified. Crucible must never display or store the detected identifier value: findings, serialized audit results, logs, artifacts, known-bug records, DEVLOG, handoff metadata, and other persisted outputs may record only the fact/type of the finding and non-secret remediation metadata such as path and line. Detection values may exist transiently only in the source bytes being scanned and regex matching needed to classify the finding, and must be discarded immediately rather than copied into result objects.",
+    "explicitMappingRule": "Existing explicit category mappings are authoritative and are never overridden by the closest-feature classifier.",
     "orchestratorAuthority": "The Orchestrator alone selects categories/subcategories/test files and execution scope from explicit requests, change impact, dependencies, cadence obligations, and validated classifications.",
-    "balanceRule": "Cadence declares due categories; the Orchestrator resolves them into concrete tests; reconciliation rejects incomplete coverage.",
-    "explicitRequestRule": "A specific owner test request is interpreted and run immediately by the Orchestrator; cadence cannot narrow or replace it.",
+    "balanceRule": "For cadence-triggered work, Cadence declares categories due; the Orchestrator independently resolves them into concrete tests; reconciliation rejects a claim of complete cadence coverage if any due category is omitted. Neither authority silently overrides the other.",
+    "explicitRequestRule": "A specific owner test request is interpreted and run immediately by the Orchestrator. Cadence and classification cannot delay, randomize, narrow, or replace an explicit request; unresolved classification may make coverage incomplete but must not suppress unrelated safe testing.",
     "categoryCadence": { "code": "every-push", "security": "daily", "utility": "twice-weekly", "maintenance": "weekly" },
-    "standingTestExpansionRule": "New standing test cases may be added inside an already explicitly categorized test file when they belong to that same category.",
-    "codeCriticalityRule": "Code is due on every push and pull request.",
-    "scheduledCumulativeRule": "Cadence obligations are cumulative.",
-    "twiceWeeklySchedule": "Utility is due Tuesdays and Fridays."
-  },
-  "injectionMonitoringPolicy": {
-    "scope": "every Crucible injection into every receiving project",
-    "maximumMonitorLifetimeHours": 24,
-    "defaultState": "disabled",
-    "activationRequirement": "exact receiving repository, designated development branch, active injection authorization, activation timestamp, hard expiration, evidence retrieval proof, and authorized repair capability",
-    "repairRule": "For an applicable failure during the active injection window, retrieve the exact failure evidence, diagnose against current source and governing configuration, autonomously apply safe deterministic repairs inside injection scope through the development-first path, retest, and repeat until resolved or a real boundary blocks repair. Diagnosis/status alone never satisfies the repair obligation when safe authorized repair remains executable.",
-    "dedupeRule": "Maintain one repair record per underlying defect; repeated failing runs update that record rather than creating a report/comment per commit.",
-    "shutdownRule": "Disable at successful assimilation, cancellation, blocking boundary, or 24-hour expiration; do not become persistent project monitoring.",
-    "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
+    "standingTestExpansionRule": "New standing test cases may be added inside an already explicitly categorized test file when they belong to that same category. They inherit that file's governed category and the category's cadence without creating a redundant test-file mapping. New standalone .test.js files still require explicit classification or independent closest-feature fallback.",
+    "codeCriticalityRule": "Code is due on every push and pull request. The Orchestrator independently selects the complete Code category required to satisfy that cadence obligation.",
+    "scheduledCumulativeRule": "Cadence obligations are cumulative: daily requires Code and Security; twice-weekly requires Code, Security, and Utility; weekly/monthly require all four categories.",
+    "twiceWeeklySchedule": "Utility is due Tuesdays and Fridays; scheduled-diagnostics transports only the cadence window."
   },
   "activePlan": {
-    "agent": "GPT-5.6 Sol",
-    "objective": "Repair the currently red Crucible development/promotion checks and leave the universal injection monitor contract enforcing evidence retrieval plus autonomous development-first repair for every injected project.",
-    "currentPrompt": "no not just Nexus every fucking project you inject you lazy ass bucket of shit",
+    "agent": "Claude",
+    "objective": "On connection to a project, make the one-time write also install the governingDocuments an adopter's AI-HANDOFF.json actually names, if they don't already exist there, and nothing else.",
+    "currentPrompt": "on connection to a project in the one time write access add the governingDocuments and its contents if they don't exist / only finish the governingDocuments nothing else",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "GPT-5.6 Sol",
-      "purpose": "Apply a narrow CodeQL repair and restore paired handoff bookkeeping while preserving the already-installed universal injection monitoring and autonomous-repair contract.",
-      "selectionReason": "The repair is focused repository work with exact failing evidence and does not require a separate execution workspace.",
-      "distinction": "Execution mode is separate from agent identity and workflow; GPT-5.6 Sol is continuing in regular/default mode."
+      "agent": "Claude",
+      "purpose": "Add a governingDocuments map to one adopter template, conditionally install two existing template files, and add regression coverage; bounded and does not need Work-mode orchestration.",
+      "selectionReason": "Narrowly scoped, explicitly bounded by the owner to governingDocuments only.",
+      "distinction": "Execution mode is independent from agent identity and workflow; continuing in regular/default mode."
     },
     "steps": [
-      "Read the exact failing handoff job and CodeQL alert on PR #15 and confirm current development state and AI conflict ledger.",
-      "Repair the CodeQL incomplete-string-escaping finding without weakening the security non-persistence regression.",
-      "Pair the current structured handoff and DEVLOG chain of custody with the repair and explicitly retain universal injection monitoring/autonomous-repair requirements.",
-      "Ensure the final development push contains both handoff files in the same changed range so the handoff gate cannot fail from sequential bookkeeping.",
-      "Inspect fresh exact-tip AI handoff, Self-Test, CodeQL/code-scanning, and governance results; continue repair if any actionable failure remains."
+      "Confirm the gap is real: check whether templates/ai-handoff.example.json declares governingDocuments, and whether every file it would need to reference is actually installed by templates/connect-workflow.yml.",
+      "Add governingDocuments (and sessionPolicy.recheckGoverningDocuments) to templates/ai-handoff.example.json, naming only files the install step installs or that already exist in every adopter repository.",
+      "Update the install step to also copy templates/ai-conflict-resolution.md and templates/required-check-rollout.md into the adopter repository, each guarded so an adopter's own pre-existing file at that path is never overwritten.",
+      "Widen the install step's exact-diff verification to accept those two files only when actually changed, alongside the five already-mandatory files, without weakening the fail-closed check for anything else.",
+      "Dry-run the exact bash from the install step against a disposable scratch repository across fresh-install, no-op-resume, already-present-template, and unrelated-stray-file scenarios before trusting it.",
+      "Add regression coverage in test/workflow.test.js and update README.md's step-10 description.",
+      "Explicitly leave everything else alone, per the owner's scope instruction, including the separately-discovered but unrelated missing currentPrompt/executionMode fields in the same adopter template."
     ],
-    "status": "active",
-    "startedAt": "2026-08-28T21:43:00Z",
-    "lastUpdatedAt": "2026-08-28T22:03:12Z"
+    "status": "complete",
+    "startedAt": "2026-08-28T12:20:00Z",
+    "lastUpdatedAt": "2026-08-28T12:52:40Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed PR #15 head/release SHA 604181fd had two actionable blockers: unpaired AI handoff bookkeeping and one high-severity CodeQL incomplete-string-escaping alert.",
-      "Confirmed AI-CONFLICTS.json contains no open conflicts.",
-      "Confirmed the universal injection monitor task already requires every injection to create an executable <=24-hour monitor that retrieves failed job/step/log evidence, autonomously repairs safe deterministic failures inside authorized development-only injection scope, retests, repeats until resolved or blocked, deduplicates by underlying defect, and shuts down at completion/cancellation/block/expiry.",
-      "Repaired the CodeQL source finding on development by replacing the hand-escaped dynamic Mapbox-token regular expression assertion with a literal containment assertion that preserves the non-persistence invariant."
+      "Confirmed the gap was real: templates/ai-handoff.example.json had no governingDocuments field at all, and validateHandoffPlan also separately rejects it for missing currentPrompt/executionMode (left unfixed per explicit owner scope).",
+      "Added governingDocuments to templates/ai-handoff.example.json naming AI-HANDOFF.json, AI-CONFLICTS.json, THE-CRUCIBLE-DESIGN-BRIEF.md, templates/ai-conflict-resolution.md, templates/required-check-rollout.md, and both AI governance workflow files.",
+      "Updated templates/connect-workflow.yml's install step: `[ -f templates/ai-conflict-resolution.md ] || cp ...` and the same for required-check-rollout.md, so an adopter's own pre-existing file is never overwritten.",
+      "Widened the install step's verification from an exact 5-file match to: all 5 mandatory files present, plus 0-2 files strictly from the allowed optional set, anything else still fails closed.",
+      "Found and fixed a real bug while dry-testing: `git status --porcelain` collapses a wholly-new untracked directory (templates/ does not exist in any fresh adopter repo) into one `?? templates/` line instead of listing files, which would have silently broken the new verification for every real fresh install. Fixed with `git status --porcelain -uall`; re-verified all 4 dry-run scenarios pass, and confirmed scenario 1 genuinely failed before the fix (not a vacuously-passing test).",
+      "Added a regression to test/workflow.test.js asserting the conditional copies, the -uall flag, and that every governingDocuments entry in the adopter template names a file the install step actually installs or that always exists.",
+      "Updated README.md's step-10 description to mention the two governing-document templates and the not-already-present guard."
     ],
     "verification": [
-      "GitHub Advanced Security review identified the exact CodeQL alert at test/security.test.js:87: incomplete string escaping because the dynamic regular expression escaped dots but not backslashes/other regex syntax.",
-      "The handoff push job 98987558442 explicitly failed because the prior project change did not update both DEVLOG.md and AI-HANDOFF.json in its push range.",
-      "Fresh hosted verification for the corrected exact development tip is still required after paired bookkeeping is finalized."
+      "test/workflow.test.js: 26/26 passing including the new regression.",
+      "npm run test:all: 318/318; all pre-push audits pass.",
+      "4 manual dry-run scenarios against a disposable scratch git repository (fresh install, no-op resume, adopter already has both conditional templates, unrelated stray file present) all produced the correct outcome after the -uall fix."
     ],
     "remaining": [
-      "Update DEVLOG.md with the current repair state while preserving the bounded command archive.",
-      "Produce a final paired development commit/range where both DEVLOG.md and AI-HANDOFF.json change together, then verify fresh hosted checks on that exact tip.",
-      "Do not promote release/main until the development repair is green and the repository's governed promotion path authorizes it."
+      "Push this commit to development and verify fresh Self-Test, AI handoff policy, and CodeQL go green on the exact pushed SHA.",
+      "The pre-existing, separately-discovered gap in templates/ai-handoff.example.json (missing currentPrompt/executionMode, required by the current validateHandoffPlan) was deliberately left unfixed per explicit owner scope and remains open for a future, explicitly-scoped task.",
+      "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }
 }
