@@ -46,23 +46,39 @@ function npmRunInvocation(script) {
   return resolveSpawn({ run: 'npm', args: ['run', script] });
 }
 
-function runScheduledTier(tier, run = spawnSync) {
+function runScheduledTests(tier, run = spawnSync) {
   const categories = scheduledCategoriesForTier(tier);
   const tests = scheduledTestsForTier(tier);
-  const audits = scheduledAuditsForTier(tier);
   const outcomes = [];
 
-  console.log(`[The Crucible] Orchestrator: scheduled cadence ${tier}; categories due: ${categories.join(', ') || '(none)'}.`);
+  console.log(`[The Crucible] Orchestrator: scheduled test cadence ${tier}; categories due: ${categories.join(', ') || '(none)'}.`);
   if (tests.length) {
     outcomes.push({
       label: `scheduled tests (${tests.length} file(s), ${categories.join(', ')})`,
       ok: runOne('scheduled tests', { executable: process.execPath, args: ['--test', ...tests] }, run),
     });
   }
+
+  return { tier, categories, tests, outcomes, ok: outcomes.every((item) => item.ok) };
+}
+
+function runScheduledTier(tier, run = spawnSync) {
+  const testResult = runScheduledTests(tier, run);
+  const audits = scheduledAuditsForTier(tier);
+  const outcomes = [...testResult.outcomes];
+
   for (const script of audits) {
     outcomes.push({ label: `npm run ${script}`, ok: runOne(`npm run ${script}`, npmRunInvocation(script), run) });
   }
-  return { tier, categories, tests, outcomes, ok: outcomes.every((item) => item.ok) };
+
+  return {
+    tier,
+    categories: testResult.categories,
+    tests: testResult.tests,
+    audits,
+    outcomes,
+    ok: outcomes.every((item) => item.ok),
+  };
 }
 
 module.exports = {
@@ -73,5 +89,6 @@ module.exports = {
   scheduledCategoriesForTier,
   scheduledTestsForTier,
   scheduledAuditsForTier,
+  runScheduledTests,
   runScheduledTier,
 };

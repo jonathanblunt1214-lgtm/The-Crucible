@@ -14,8 +14,8 @@ on:
   schedule:
     - cron: '0 7 * * *'    # daily
     - cron: '0 8 * * 2,5'  # twice weekly (Tuesdays and Fridays)
-    - cron: '0 9 * * 1'    # weekly (Mondays)
-    - cron: '0 10 1 * *'   # monthly (1st of the month)
+    - cron: '0 8 * * 1'    # weekly (Mondays)
+    - cron: '0 9 1 * *'    # monthly (1st of the month)
 
 permissions:
   contents: read
@@ -45,12 +45,12 @@ jobs:
             case "${{ github.event.schedule }}" in
               '0 7 * * *') tier=daily ;;
               '0 8 * * 2,5') tier=twice-weekly ;;
-              '0 9 * * 1') tier=weekly ;;
-              '0 10 1 * *') tier=monthly ;;
+              '0 8 * * 1') tier=weekly ;;
+              '0 9 1 * *') tier=monthly ;;
               *) tier=daily ;;
             esac
           fi
           echo "tier=$tier" >> "$GITHUB_OUTPUT"
           echo "[The Crucible] Scheduled diagnostics: passing cadence window $tier to the Orchestrator."
       - name: Run Orchestrator-owned scheduled category cadence
-        run: node src/testCadence.js scheduled "${{ steps.tier.outputs.tier }}"
+        run: node src/testCadence.js "${{ steps.tier.outputs.tier }}"

@@ -45,7 +45,7 @@ jobs:
       - run: npm run audit:core-ref
       - name: Run critical Code cadence on every push and PR
         if: github.event_name != 'workflow_dispatch'
-        run: node src/testCadence.js scheduled every-push
+        run: node src/testCadence.js scheduled-tests every-push
       # Direct test execution is retired; this historical marker keeps old workflow-contract assertions readable until they are migrated.
       # - run: npm test
       - name: Run governed Orchestrator test request
