@@ -58,30 +58,47 @@ jobs:
         # loss). Re-running install must be able to finish the job, not get
         # stuck re-refusing a state it already produced correctly - so an
         # exact-match "nothing changed" result is treated as already done,
-        # not as an error. Anything else that isn't exactly these five
-        # files still fails closed, unchanged from before.
+        # not as an error. Anything else outside the known governance file
+        # set still fails closed, unchanged from before.
+        #
+        # AI-HANDOFF.json's governingDocuments names templates/ai-conflict-resolution.md
+        # and templates/required-check-rollout.md as governing documents, so this
+        # installs those files' actual contents too - a governingDocuments entry must
+        # never point at a file that does not exist in this repository. They are
+        # copied only if not already present, so a repository that already has its
+        # own file at that exact path is never clobbered.
         run: |
           set -euo pipefail
+          mkdir -p templates
           cp .the-crucible-runtime/templates/the-crucible-design-brief.md THE-CRUCIBLE-DESIGN-BRIEF.md
           cp .the-crucible-runtime/templates/ai-conflicts.example.json AI-CONFLICTS.json
           cp .the-crucible-runtime/templates/ai-handoff.example.json AI-HANDOFF.json
           cp .the-crucible-runtime/templates/ai-conflict-monitor-workflow.yml .github/workflows/ai-conflict-governance.yml
           cp .the-crucible-runtime/templates/ai-handoff-policy-workflow.yml .github/workflows/ai-handoff-policy.yml
+          [ -f templates/ai-conflict-resolution.md ] || cp .the-crucible-runtime/templates/ai-conflict-resolution.md templates/ai-conflict-resolution.md
+          [ -f templates/required-check-rollout.md ] || cp .the-crucible-runtime/templates/required-check-rollout.md templates/required-check-rollout.md
           rm -rf .the-crucible-runtime
-          changed="$(git status --porcelain)"
+          changed="$(git status --porcelain -uall)"
           count="$(printf '%s\n' "$changed" | grep -c . || true)"
           if [ "$count" -eq 0 ]; then
             echo "Governance files already installed and unchanged - resuming a previous run. Nothing to commit."
-          elif [ "$count" -ne 5 ] || ! printf '%s\n' "$changed" | grep -q 'AI-CONFLICTS.json' || ! printf '%s\n' "$changed" | grep -q 'AI-HANDOFF.json' || ! printf '%s\n' "$changed" | grep -q 'THE-CRUCIBLE-DESIGN-BRIEF.md' || ! printf '%s\n' "$changed" | grep -q '.github/workflows/ai-conflict-governance.yml' || ! printf '%s\n' "$changed" | grep -q '.github/workflows/ai-handoff-policy.yml'; then
-            echo "Refusing to commit: expected exactly the design brief, both AI ledgers, and both AI governance workflows (or no changes, if already installed). Found:" >&2
-            printf '%s\n' "$changed" >&2
-            exit 1
           else
-            git config user.name "github-actions[bot]"
-            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add AI-CONFLICTS.json AI-HANDOFF.json THE-CRUCIBLE-DESIGN-BRIEF.md .github/workflows/ai-conflict-governance.yml .github/workflows/ai-handoff-policy.yml
-            git commit -m "Install Crucible AI governance"
-            git push origin HEAD:refs/heads/main
+            mandatory_missing=0
+            for f in AI-CONFLICTS.json AI-HANDOFF.json THE-CRUCIBLE-DESIGN-BRIEF.md .github/workflows/ai-conflict-governance.yml .github/workflows/ai-handoff-policy.yml; do
+              printf '%s\n' "$changed" | grep -qF "$f" || mandatory_missing=1
+            done
+            unexpected="$(printf '%s\n' "$changed" | sed -E 's/^.{2} //' | grep -vFx -e 'AI-CONFLICTS.json' -e 'AI-HANDOFF.json' -e 'THE-CRUCIBLE-DESIGN-BRIEF.md' -e '.github/workflows/ai-conflict-governance.yml' -e '.github/workflows/ai-handoff-policy.yml' -e 'templates/ai-conflict-resolution.md' -e 'templates/required-check-rollout.md' || true)"
+            if [ "$mandatory_missing" -eq 1 ] || [ -n "$unexpected" ]; then
+              echo "Refusing to commit: expected exactly the design brief, both AI ledgers, both AI governance workflows, and (only when not already present) the governing-document templates they reference (or no changes, if already installed). Found:" >&2
+              printf '%s\n' "$changed" >&2
+              exit 1
+            else
+              git config user.name "github-actions[bot]"
+              git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+              git add -A
+              git commit -m "Install Crucible AI governance"
+              git push origin HEAD:refs/heads/main
+            fi
           fi
       - name: Create required Development-branch at the governance commit
         # Distinguishes "branch genuinely doesn't exist yet" (ls-remote
