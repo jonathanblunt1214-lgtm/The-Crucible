@@ -4,19 +4,24 @@
 
 - **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, test cadence policy, transport rule, verification, and remaining work.
-- **Current development work:** Orchestrator and Cadence now form one governed testing system while remaining independent checks on each other rather than one unified selector.
-- **Cadence authority:** Cadence decides only when categories are due: Code every push/PR, Security daily, Utility twice weekly, Maintenance weekly. It emits a due-category obligation; it does not select files or execute tests.
-- **Orchestrator authority:** The Orchestrator independently decides the concrete tests and execution scope. For cadence work it resolves the due-category obligation through its category/test knowledge.
-- **Checks-and-balances rule:** Before a cadence-triggered test invocation executes, reconciliation verifies that the Orchestrator selection covers every category Cadence says is due. Missing a due category fails closed. Cadence cannot choose files, and the Orchestrator cannot silently ignore a due cadence obligation.
-- **Specific-request rule:** Explicit owner requests remain immediate and Orchestrator-selected. Cadence cannot delay, randomize, narrow, or replace them.
-- **Workflow boundary:** Workflows transport a request or cadence window only; neither workflow chooses tests.
-- **Transport replacement rule:** The `CRUCIBLE TEST REQUEST` synthetic commit transport remains temporary workaround infrastructure and must be replaced as soon as a supported direct integration/connection exists, under the owner's standing authorization.
-- **Run governance:** Long-running Orchestrator test commands emit progress every 60 seconds; failures persist under `governingDocuments/known-bugs` and require passing exact-test re-test before resolution.
-- **Verification state:** Checks-and-balances implementation is being verified on `development`; no promotion to main/release is authorized by this work.
+- **Current development work:** Add a third independent check to the Orchestrator/Cadence system: an evidence-based closest-feature classifier for newly discovered tests that have no explicit category mapping.
+- **Classifier boundary:** Existing explicit mappings remain authoritative. Only unmapped new tests reach the classifier; it compares them to known categorized feature/test evidence, accepts only a unique closest category, and fails closed on ties, no evidence, or unreadable candidates. It cannot select run scope, set cadence, or execute tests.
+- **Cadence authority:** Cadence decides only when categories are due: Code every push/PR, Security daily, Utility twice weekly, Maintenance weekly.
+- **Orchestrator authority:** The Orchestrator remains the sole test-selection/execution authority and consumes only validated classifications and cadence obligations.
+- **Checks-and-balances rule:** Reconciliation verifies the Orchestrator selection covers every category Cadence says is due before execution. Missing due coverage fails closed.
+- **Specific-request rule:** Explicit owner requests remain immediate and Orchestrator-selected; cadence and classification cannot randomize, delay, narrow, or replace them.
+- **Regression correction:** Self-Test #176 exposed that `orchestratorTestsForCategories` returned legacy selection objects instead of concrete `.tests`, producing `Unclassified test "[object Object]"`. The current correction unwraps concrete test paths and protects the boundary with regression coverage.
+- **Verification state:** The classifier/fix commit is being prepared on `development`; Self-Test and CodeQL must both be green before this work is complete. No promotion to main/release is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: independent closest-feature classifier — 2026-08-28T01:26:00Z — GPT-5.6 Sol
+
+- Read current handoff/governance and inspected Self-Test #176 failure logs; confirmed the cadence selection-object regression — started 2026-08-28T01:26:00Z, finished 2026-08-28T01:28:00Z, exit 0.
+- Re-read the complete governing-document set after the 10-minute policy threshold elapsed — started 2026-08-28T01:28:00Z, finished 2026-08-28T01:30:00Z, exit 0.
+- Prepared independent closest-feature classifier, active Orchestrator classification integration, selection-object fix, regression tests, and paired governance updates — started 2026-08-28T01:30:00Z, finished 2026-08-28T01:31:00Z, exit 0.
 
 ### Session: Orchestrator/Cadence checks and balances — 2026-08-28T01:15:00Z — GPT-5.6 Sol
 
@@ -55,7 +60,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 ### Session: governed manual test requests — 2026-08-27T23:28:00Z — GPT-5.6 Sol
 
 - Established governed request gateway and corrected connector mutation through an atomic clean-tree commit — started 2026-08-27T23:28:00Z, finished 2026-08-27T23:45:00Z, exit 0.
-
-### Session: category-order regression fix — 2026-08-27T23:22:00Z — GPT-5.6 Sol
-
-- Corrected category ordering after all 34 classified test files were selected successfully — started 2026-08-27T23:22:00Z, finished 2026-08-27T23:23:30Z, exit 0.

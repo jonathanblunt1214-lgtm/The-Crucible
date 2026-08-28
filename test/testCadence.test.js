@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { classifyTestByClosestFeature } = require('../src/testFeatureClassifier');
 const {
   TEST_PROGRESS_INTERVAL_MS,
   TEST_PROGRESS_MAX_INTERVAL_MS,
@@ -19,6 +20,8 @@ const {
   runScheduledTests,
   runScheduledTier,
   TEST_MAIN_CATEGORIES,
+  knownMainCategoryForTest,
+  classificationForTest,
   emptyKnownBugLedger,
   severityForMainCategories,
   writeKnownBugLedger,
@@ -52,9 +55,10 @@ test('cadence independently declares when categories are due without choosing te
   assert.deepEqual(scheduledCategoriesForTier('weekly'), ['code', 'security', 'utility', 'maintenance']);
 });
 
-test('Orchestrator independently resolves due categories to tests and cadence checks the result', () => {
+test('Orchestrator resolves due categories to concrete test paths and cadence checks the result', () => {
   const due = scheduledCategoriesForTier('twice-weekly');
   const selected = orchestratorTestsForCategories(due);
+  assert.ok(selected.every((item) => typeof item === 'string' && item.endsWith('.test.js')));
   assert.deepEqual(selected, [...TEST_MAIN_CATEGORIES.code, ...TEST_MAIN_CATEGORIES.security, ...TEST_MAIN_CATEGORIES.utility].sort());
   const balance = verifyCadenceSelection({ tier: 'twice-weekly', dueCategories: due }, selected);
   assert.equal(balance.ok, true);
@@ -65,6 +69,42 @@ test('cadence rejects an Orchestrator selection that omits a category that is du
   const obligation = { tier: 'daily', dueCategories: ['code', 'security'] };
   const codeOnly = orchestratorTestsForCategories(['code']);
   assert.throws(() => verifyCadenceSelection(obligation, codeOnly), /missing due category security/);
+});
+
+test('independent closest-feature classifier proposes a unique category for an unmapped new test', () => {
+  const bodies = {
+    'test/newCredentialBoundary.test.js': "credential token authentication permission boundary",
+    'test/security.test.js': "credential token authentication permission security",
+    'test/engine.test.js': "engine parser execution workload",
+  };
+  const result = classifyTestByClosestFeature('test/newCredentialBoundary.test.js', {
+    knownCategoryMap: { security: ['test/security.test.js'], code: ['test/engine.test.js'], utility: [], maintenance: [] },
+    readFile: (file) => bodies[file],
+  });
+  assert.equal(result.category, 'security');
+  assert.equal(result.source, 'closest-feature');
+});
+
+test('independent closest-feature classifier fails closed when closest feature evidence is tied', () => {
+  const bodies = {
+    'test/newShared.test.js': 'shared boundary behavior',
+    'test/security.test.js': 'shared boundary security',
+    'test/engine.test.js': 'shared boundary engine',
+  };
+  const result = classifyTestByClosestFeature('test/newShared.test.js', {
+    knownCategoryMap: { security: ['test/security.test.js'], code: ['test/engine.test.js'], utility: [], maintenance: [] },
+    readFile: (file) => bodies[file],
+  });
+  assert.equal(result.category, null);
+  assert.equal(result.source, 'unresolved');
+  assert.match(result.reason, /tied|ambiguous/);
+});
+
+test('explicit mappings stay authoritative and do not get reclassified by the independent matcher', () => {
+  assert.equal(knownMainCategoryForTest('test/security.test.js'), 'security');
+  const result = classificationForTest('test/security.test.js', { readFile: () => 'engine parser code' });
+  assert.equal(result.category, 'security');
+  assert.equal(result.source, 'explicit-map');
 });
 
 test('scheduled category cadence remains cumulative after independent Orchestrator selection', () => {
