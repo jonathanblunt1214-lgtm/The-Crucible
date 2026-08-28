@@ -2,6 +2,7 @@ require('./_testCadenceCore');
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -13,12 +14,15 @@ const {
   CATEGORY_CRITICALITY,
   SCHEDULED_CADENCE_TIERS,
   CATEGORY_CADENCE,
+  DEVELOPMENT_TEST_STANDARD_RULE_KEYS,
+  DEVELOPMENT_TEST_STANDARD_POLICY_SHA256,
   scheduledCategoriesForTier,
   orchestratorTestsForCategories,
   verifyCadenceSelection,
   scheduledTestsForTier,
   runScheduledTests,
   runScheduledTier,
+  runTestSelection,
   TEST_MAIN_CATEGORIES,
   knownMainCategoryForTest,
   classificationForTest,
@@ -85,7 +89,7 @@ test('independent closest-feature classifier proposes a unique category for an u
   assert.equal(result.source, 'closest-feature');
 });
 
-test('independent closest-feature classifier fails closed when closest feature evidence is tied', () => {
+test('independent closest-feature classifier isolates tied evidence instead of guessing a category', () => {
   const bodies = {
     'test/newShared.test.js': 'shared boundary behavior',
     'test/security.test.js': 'shared boundary security',
@@ -98,6 +102,60 @@ test('independent closest-feature classifier fails closed when closest feature e
   assert.equal(result.category, null);
   assert.equal(result.source, 'unresolved');
   assert.match(result.reason, /tied|ambiguous/);
+});
+
+test('isolate ambiguity, continue safe tests, never fake complete coverage', () => {
+  const calls = [];
+  const selection = {
+    tests: ['test/security.test.js'],
+    unresolved: [{ file: 'test/newShared.test.js', category: null, source: 'unresolved', reason: 'closest-feature match is tied or ambiguous' }],
+    coverageComplete: false,
+    mainCategories: ['security'],
+    categories: ['security'],
+    fullSuite: false,
+    reason: 'development-standard ambiguity isolation proof',
+  };
+  const result = runTestSelection(selection, (executable, args) => {
+    calls.push({ executable, args });
+    return { status: 0 };
+  });
+  assert.equal(calls.length, 1, 'safe tests must continue even when another test is unresolved');
+  assert.deepEqual(calls[0].args.slice(1), ['test/security.test.js']);
+  assert.equal(result.outcomes[0].ok, true, 'safe selected test may pass');
+  assert.equal(result.coverageComplete, false, 'overall coverage must remain incomplete');
+  assert.equal(result.ok, false, 'incomplete coverage must never be reported as a fully passing run');
+  assert.equal(result.unresolved[0].file, 'test/newShared.test.js');
+});
+
+test('development testing standards gate rejects stale governed rules or obsolete test contracts automatically', () => {
+  const root = path.join(__dirname, '..');
+  const handoff = JSON.parse(fs.readFileSync(path.join(root, 'AI-HANDOFF.json'), 'utf8'));
+  const policy = handoff.testCadencePolicy || {};
+  const currentRules = {};
+  for (const key of DEVELOPMENT_TEST_STANDARD_RULE_KEYS) {
+    assert.equal(typeof policy[key], 'string', `current development testing rule ${key} is missing`);
+    assert.ok(policy[key].trim().length > 0, `current development testing rule ${key} is empty`);
+    currentRules[key] = policy[key];
+  }
+  const fingerprint = crypto.createHash('sha256').update(JSON.stringify(currentRules)).digest('hex');
+  assert.equal(
+    fingerprint,
+    DEVELOPMENT_TEST_STANDARD_POLICY_SHA256,
+    'governed testing rules changed without updating the implementation/maintenance standard; update the behavior and standing tests before accepting development',
+  );
+
+  const deprecatedContracts = [
+    'future tests fail closed until they are assigned a main category',
+    'unresolved classification aborts the whole suite',
+    'unknown classification stops all tests',
+  ];
+  const testDir = path.join(root, 'test');
+  for (const name of fs.readdirSync(testDir).filter((entry) => entry.endsWith('.js'))) {
+    const body = fs.readFileSync(path.join(testDir, name), 'utf8');
+    for (const obsolete of deprecatedContracts) {
+      assert.equal(body.includes(obsolete), false, `${name} still contains obsolete development testing contract: ${obsolete}`);
+    }
+  }
 });
 
 test('explicit mappings stay authoritative and do not get reclassified by the independent matcher', () => {
