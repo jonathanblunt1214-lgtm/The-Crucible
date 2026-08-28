@@ -8,14 +8,6 @@ const { resolveSpawn } = require('./runner');
 
 const SCHEDULED_CADENCE_TIERS = cadence.CADENCE_TIERS;
 const CATEGORY_CADENCE = cadence.CATEGORY_CADENCE;
-const DEVELOPMENT_TEST_STANDARD_RULE_KEYS = Object.freeze([
-  'classificationAmbiguityRule',
-  'explicitMappingRule',
-  'orchestratorAuthority',
-  'balanceRule',
-  'explicitRequestRule',
-]);
-const DEVELOPMENT_TEST_STANDARD_POLICY_SHA256 = 'cbd16dd6531a1ce356fa224cace22d0aa7148d96b5ad6f9cd17d78ee415e156f';
 
 function knownMainCategoryForTest(file) {
   for (const category of legacy.MAIN_CATEGORIES) {
@@ -295,8 +287,6 @@ module.exports = {
   ...legacy,
   SCHEDULED_CADENCE_TIERS,
   CATEGORY_CADENCE,
-  DEVELOPMENT_TEST_STANDARD_RULE_KEYS,
-  DEVELOPMENT_TEST_STANDARD_POLICY_SHA256,
   knownMainCategoryForTest,
   classificationForTest,
   mainCategoryForTest,

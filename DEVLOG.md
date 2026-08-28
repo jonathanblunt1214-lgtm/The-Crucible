@@ -2,19 +2,30 @@
 
 ## Shared AI handoff
 
-- **Agent:** GPT-5.6 Sol.
+- **Agent:** Codex.
 - **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, owner prompt, communication policy, verification, and remaining work.
-- **Actual current step:** Verify the self-safe current-development standards gate after correcting its first CI-exposed self-match; completion is not claimed until the final paired governance tip passes required CI.
-- **Testing rule:** `Isolate ambiguity, continue safe tests, never fake complete coverage.` An unresolved new test is excluded from guessed execution, safe classified tests still run, and any request/cadence obligation that may depend on the unresolved test remains explicitly incomplete.
-- **Standards gate:** `test/testCadence.test.js` fingerprints the current governed testing-rule text from `AI-HANDOFF.json` and scans test JavaScript for known obsolete contracts. Governed rule drift therefore fails Maintenance testing instead of silently certifying stale tests. Its deny-list phrases are constructed from fragments so the scanner does not flag its own source literals.
+- **Actual current step:** Implementation and local verification are complete; run the pre-push gate, commit/push the paired change to `development`, and verify required hosted CI.
+- **Governing behavior:** Adapt reconciles drift against current repository, tool, configuration, and available upstream evidence; Persevere tries safe supported evidence and recovery paths; Overcome accepts only verified repair/re-check or explicitly escalates genuinely ambiguous, semantic, or high-risk decisions for human review.
+- **Safety boundary:** Unknown, stale, or unrecognized is not itself a failure. Known unsafe findings still block, and the engine never invents business logic or silently resolves ambiguous semantic intent.
 - **Retention:** `src/handoffPolicy.js` mechanically rejects more than 10 Command log sessions and rejects retained sessions older than 180 days. This archive is pruned to the 10 newest sessions; all are from 2026-08-28.
 - **Schedule enforcement:** `.github/workflows/scheduled-diagnostics.yml` carries the exact documented daily, Tuesday/Friday, Monday, and first-of-month cron strings and fails closed if GitHub reports an unrecognized scheduled trigger instead of silently substituting `daily`.
 - **Estimated completion:** `2026-08-28 05:40:00 EDT` is a best-effort estimate for completing fresh CI verification/correction, not a guarantee or mechanically fixed completion time.
-- **Verification state:** AI handoff policy #128 passed on `465a0f56f0ebeac05ee786f40ea097f8a3777e71`. Self-Test #193 failed uniformly because the new obsolete-contract scanner found its own literal deny-list phrase; the ambiguity-isolation proof and critical Code cadence both passed. Commit `941f158675c6de2c7804a861b731b5dfda517647` contains the narrow self-scan correction. Fresh CI on the paired corrective tip is required. No promotion to `release` or `main` is authorized.
+- **Verification state:** Focused tests pass 52/52, the explicit full suite passes 299/299, change-impact testing passes 78/78, and validation/docs/workflow-lint/clutter/security/privacy/conflict-governance/diff checks pass. The Unix hook launcher is unavailable on this Windows host, so its exact commands were run directly and passed. One invalid Node directory-form test invocation exited 1 and was corrected to explicit file discovery. No promotion to `release` or `main` is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: executable Adapt Persevere Overcome governance — 2026-08-28T09:47:00Z — Codex
+
+- `git fetch origin development; git merge --ff-only origin/development` — synchronized the clean literal development checkout from `7e6ba23` to `5ccad47`; started 2026-08-28T09:44:00Z, finished 2026-08-28T09:46:00Z, exit 0.
+- `node --test test/testCadence.test.js test/code-check.test.js` — verified reconciliation, recovery, ambiguity, retry, and persisted-report behavior; started 2026-08-28T09:49:00Z, finished 2026-08-28T09:49:01Z, exit 0 (52/52).
+- `npm test` — verified governed change-impact selection; started 2026-08-28T09:50:05Z, finished 2026-08-28T09:50:18Z, exit 0 (78/78 selected tests).
+- `node --test test` — attempted unsupported directory-form discovery under installed Node 26; started 2026-08-28T09:50:30Z, finished 2026-08-28T09:50:30Z, exit 1 invocation error.
+- `npm run validate; npm run docs:check; npm run audit:security; npm run audit:privacy; npm run audit:ai-conflict-governance; git diff --check` — verified configuration, docs, security, privacy, conflict governance, and whitespace; started 2026-08-28T09:50:30Z, finished 2026-08-28T09:50:45Z, exit 0 for every listed project check.
+- `node --test <explicit discovered test/*.test.js list>` — corrected discovery invocation and verified the complete suite; started 2026-08-28T09:50:56Z, finished 2026-08-28T09:51:09Z, exit 0 (299/299).
+- `sh .githooks/pre-push` — attempted the tracked Unix hook launcher; started 2026-08-28T09:52:20Z, finished 2026-08-28T09:52:21Z, exit 1 because `sh` is unavailable on this Windows host.
+- `npm run lint:workflows; npm run audit:clutter` — completed the hook commands not already run directly; started 2026-08-28T09:52:35Z, finished 2026-08-28T09:52:48Z, exit 0.
 
 ### Session: isolate ambiguity and enforce current test standards — 2026-08-28T09:19:00Z — GPT-5.6 Sol
 
@@ -59,7 +70,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 ### Session: independent closest-feature classifier — 2026-08-28T01:26:00Z — GPT-5.6 Sol
 
 - Re-read governance, traced the #176 cadence selection-object regression, added the fallback-only closest-feature classifier and active Orchestrator integration, and preserved explicit mapping precedence plus fail-closed ambiguity behavior — started 2026-08-28T01:26:00Z, finished 2026-08-28T01:31:00Z, exit 0.
-
-### Session: Orchestrator/Cadence checks and balances — 2026-08-28T01:15:00Z — GPT-5.6 Sol
-
-- Separated cadence frequency authority from Orchestrator selection and added fail-closed reconciliation that proves the Orchestrator selection covers every category Cadence says is due — started 2026-08-28T01:15:00Z, finished 2026-08-28T01:18:00Z, exit 0.

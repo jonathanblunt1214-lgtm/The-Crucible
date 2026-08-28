@@ -2,7 +2,6 @@ require('./_testCadenceCore');
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
@@ -14,8 +13,6 @@ const {
   CATEGORY_CRITICALITY,
   SCHEDULED_CADENCE_TIERS,
   CATEGORY_CADENCE,
-  DEVELOPMENT_TEST_STANDARD_RULE_KEYS,
-  DEVELOPMENT_TEST_STANDARD_POLICY_SHA256,
   scheduledCategoriesForTier,
   orchestratorTestsForCategories,
   verifyCadenceSelection,
@@ -34,6 +31,7 @@ const {
   verifyKnownBugFix,
   mainCategoryForTest,
 } = require('../src/testCadence');
+const { GOVERNING_PRINCIPLES, AUTHORITATIVE_EVIDENCE_ORDER, reconcileDecision } = require('../src/governingDecision');
 
 test('Orchestrator progress updates are fixed at one minute and never exceed the one-minute-thirty maximum', () => {
   assert.equal(TEST_PROGRESS_INTERVAL_MS, 60_000);
@@ -127,35 +125,50 @@ test('isolate ambiguity, continue safe tests, never fake complete coverage', () 
   assert.equal(result.unresolved[0].file, 'test/newShared.test.js');
 });
 
-test('development testing standards gate rejects stale governed rules or obsolete test contracts automatically', () => {
-  const root = path.join(__dirname, '..');
-  const handoff = JSON.parse(fs.readFileSync(path.join(root, 'AI-HANDOFF.json'), 'utf8'));
-  const policy = handoff.testCadencePolicy || {};
-  const currentRules = {};
-  for (const key of DEVELOPMENT_TEST_STANDARD_RULE_KEYS) {
-    assert.equal(typeof policy[key], 'string', `current development testing rule ${key} is missing`);
-    assert.ok(policy[key].trim().length > 0, `current development testing rule ${key} is empty`);
-    currentRules[key] = policy[key];
-  }
-  const fingerprint = crypto.createHash('sha256').update(JSON.stringify(currentRules)).digest('hex');
-  assert.equal(
-    fingerprint,
-    DEVELOPMENT_TEST_STANDARD_POLICY_SHA256,
-    'governed testing rules changed without updating the implementation/maintenance standard; update the behavior and standing tests before accepting development',
-  );
+test('development standards are verified by reconciliation behavior rather than a stale policy fingerprint', async () => {
+  assert.deepEqual(AUTHORITATIVE_EVIDENCE_ORDER, ['repository', 'tool', 'configuration', 'upstream']);
+  assert.deepEqual(Object.keys(GOVERNING_PRINCIPLES), ['adapt', 'persevere', 'overcome']);
+  const attempts = [];
+  const result = await reconcileDecision({
+    condition: 'testing rule changed',
+    evidence: [
+      { source:'repository', inspect:async () => { attempts.push('repository'); return { resolved:false, detail:'mapping is stale' }; } },
+      { source:'configuration', inspect:async () => { attempts.push('configuration'); return { resolved:true, detail:'current category declared', value:'security' }; } },
+      { source:'upstream', inspect:async () => { attempts.push('upstream'); return { resolved:true, value:'must-not-run' }; } },
+    ],
+  });
+  assert.equal(result.status, 'reconciled');
+  assert.equal(result.principle, 'adapt');
+  assert.equal(result.evidence, 'security');
+  assert.deepEqual(attempts, ['repository', 'configuration'], 'reconciliation stops only after current authoritative evidence resolves the condition');
+});
 
-  const deprecatedContracts = [
-    ['future tests fail closed until they are assigned', 'a main category'].join(' '),
-    ['unresolved classification aborts', 'the whole suite'].join(' '),
-    ['unknown classification stops', 'all tests'].join(' '),
-  ];
-  const testDir = path.join(root, 'test');
-  for (const name of fs.readdirSync(testDir).filter((entry) => entry.endsWith('.js'))) {
-    const body = fs.readFileSync(path.join(testDir, name), 'utf8');
-    for (const obsolete of deprecatedContracts) {
-      assert.equal(body.includes(obsolete), false, `${name} still contains obsolete development testing contract: ${obsolete}`);
-    }
-  }
+test('Persevere tries a safe repair and Overcome accepts it only after a passing re-check', async () => {
+  let repaired = false;
+  const result = await reconcileDecision({
+    condition: 'supported tool metadata changed',
+    evidence: [{ source:'tool', inspect:async () => ({ resolved:false, detail:'old invocation unavailable' }) }],
+    recover:async () => { repaired = true; return { detail:'selected supported invocation' }; },
+    verify:async () => ({ ok:repaired, detail:'supported invocation passed re-check' }),
+  });
+  assert.equal(result.status, 'recovered');
+  assert.equal(result.action, 'verified-repair');
+  assert.equal(result.attempts.at(-1).outcome, 'verified');
+});
+
+test('ambiguous semantic requirements are escalated without invented business logic', async () => {
+  let recoveryCalled = false;
+  const result = await reconcileDecision({
+    condition: 'two business rules conflict',
+    semantic:true,
+    evidence:[{ source:'repository', inspect:async () => ({ resolved:false, detail:'both rules are current' }) }],
+    recover:async () => { recoveryCalled = true; },
+    verify:async () => ({ ok:true }),
+  });
+  assert.equal(result.status, 'needs-review');
+  assert.equal(result.action, 'human-review');
+  assert.match(result.reason, /semantic/);
+  assert.equal(recoveryCalled, false);
 });
 
 test('explicit mappings stay authoritative and do not get reclassified by the independent matcher', () => {

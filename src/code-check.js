@@ -2,6 +2,7 @@ const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { changedPaths, readCandidate } = require('./commit');
 const { resolveSpawn } = require('./runner');
+const { reconcileDecision } = require('./governingDecision');
 
 const ACTION_CLASSES = Object.freeze([
   'safe auto-fix',
@@ -36,6 +37,7 @@ function parseCandidate(relative, content) {
       errorCode:`CRUCIBLE_PARSE_${extension === '.json' ? 'JSON' : 'JAVASCRIPT'}_SYNTAX`,
       path:relative,
       detail:error.message.split(/\r?\n/)[0],
+      decision:{ status:'blocked', action:'block-known-unsafe', principle:'overcome', evidenceSource:'repository' },
     };
   }
 }
@@ -49,7 +51,7 @@ function expandArgs(args, files) {
   return expanded;
 }
 
-function runCheckCommand(root, command, files, timeoutMs) {
+function runCheckCommandOnce(root, command, files, timeoutMs) {
   return new Promise((resolve) => {
     const invocation = resolveSpawn({ ...command, args:expandArgs(command.args, files) });
     const cwd = path.resolve(root, command.cwd);
@@ -66,6 +68,13 @@ function runCheckCommand(root, command, files, timeoutMs) {
       else finish({ ok:false, reason:`exit ${code}`, exitCode:code, detail:`exit ${code}: ${output.trim().split(/\r?\n/).slice(-1)[0] || 'no output'}` });
     });
   });
+}
+
+async function runCheckCommand(root, command, files, timeoutMs, runOnce = runCheckCommandOnce) {
+  const first = await runOnce(root, command, files, timeoutMs);
+  if (first.ok || first.exitCode !== undefined || first.reason !== 'start error') return { ...first, attempts: 1 };
+  const second = await runOnce(root, command, files, timeoutMs);
+  return { ...second, attempts: 2, recovered: second.ok };
 }
 
 async function auditCode(root, config, options = {}) {
@@ -87,10 +96,20 @@ async function auditCode(root, config, options = {}) {
       const reasonCode = result.exitCode === null || result.exitCode === undefined
         ? result.reason.replace(/[^A-Za-z0-9]+/g, '_').toUpperCase()
         : `EXIT_${result.exitCode}`;
-      findings.push({ action:command.failureAction, errorCode:`CRUCIBLE_${actionCode}_${reasonCode}`, check:command.name, paths:files, detail:result.detail });
+      const decision = await reconcileDecision({
+        condition: `${command.name}: ${result.reason}`,
+        knownUnsafe: result.exitCode !== null && result.exitCode !== undefined,
+        evidence: [
+          { source:'configuration', inspect:async () => ({ resolved:false, detail:`configured command ${command.run} with ${files.length} matching changed file(s)` }) },
+          { source:'tool', inspect:async () => ({ resolved:false, detail:`command attempted ${result.attempts || 1} time(s): ${result.detail}` }) },
+        ],
+        semantic: command.failureAction === 'human code review required',
+        highRisk: command.failureAction === 'security concern',
+      });
+      findings.push({ action:decision.status === 'needs-review' ? 'human code review required' : command.failureAction, errorCode:`CRUCIBLE_${actionCode}_${reasonCode}`, check:command.name, paths:files, detail:result.detail, decision });
     }
   }
   return { ref, paths, findings, commands:commands.length };
 }
 
-module.exports = { ACTION_CLASSES, auditCode, expandArgs, matches, parseCandidate, selectChanged };
+module.exports = { ACTION_CLASSES, auditCode, expandArgs, matches, parseCandidate, selectChanged, runCheckCommand, runCheckCommandOnce };
