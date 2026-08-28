@@ -10,12 +10,18 @@
 - **Orchestrator authority:** The Orchestrator remains the sole test-selection/execution authority and consumes only validated classifications and cadence obligations.
 - **Checks-and-balances rule:** Reconciliation verifies the Orchestrator selection covers every category Cadence says is due before execution. Missing due coverage fails closed.
 - **Specific-request rule:** Explicit owner requests remain immediate and Orchestrator-selected; cadence and classification cannot randomize, delay, narrow, or replace them.
-- **Regression correction:** Self-Test #176 exposed that `orchestratorTestsForCategories` returned legacy selection objects instead of concrete `.tests`, producing `Unclassified test "[object Object]"`. The current correction unwraps concrete test paths and protects the boundary with regression coverage.
-- **Verification state:** The classifier/fix commit is being prepared on `development`; Self-Test and CodeQL must both be green before this work is complete. No promotion to main/release is authorized.
+- **Regression state:** Self-Test #176 exposed selection objects being passed instead of `.tests`; commit `6c712dc5…` fixed that and the every-push Code cadence now passes. Self-Test #177 then exposed three legacy compatibility contracts: the `Unclassified test` error prefix, the `categorizedTests.cadence` property, and exact `validateHandoffPlan`/`validateDevlogChainOfCustody` handoff metadata wording.
+- **Verification state:** CodeQL #138 passed on `6c712dc5…`; Self-Test #177 failed only on those compatibility assertions while the new independent classifier tests and Code cadence passed. A compatibility correction is being pushed to `development`; both Self-Test and CodeQL must be green before completion. No promotion to main/release is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: classifier legacy-compatibility correction — 2026-08-28T01:34:00Z — GPT-5.6 Sol
+
+- Inspected Self-Test #177 across the matrix and fetched a failed Ubuntu job log; isolated three compatibility assertions while confirming Code cadence and new classifier tests passed — started 2026-08-28T01:34:00Z, finished 2026-08-28T01:35:00Z, exit 0.
+- Verified CodeQL #138 passed on classifier commit `6c712dc5e4c99e5d66be34ea25b6e8cff6fa7feb` — started 2026-08-28T01:35:00Z, finished 2026-08-28T01:35:15Z, exit 0.
+- Prepared atomic correction preserving legacy error/cadence metadata contracts and exact handoff-policy metadata without changing the independent classifier architecture — started 2026-08-28T01:35:15Z, finished 2026-08-28T01:36:00Z, exit 0.
 
 ### Session: independent closest-feature classifier — 2026-08-28T01:26:00Z — GPT-5.6 Sol
 
@@ -56,7 +62,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 ### Session: natural-language Orchestrator transport — 2026-08-27T23:47:00Z — GPT-5.6 Sol
 
 - Added temporary natural-language request transport while retaining Orchestrator-only test selection — started 2026-08-27T23:47:00Z, finished 2026-08-27T23:52:00Z, exit 0.
-
-### Session: governed manual test requests — 2026-08-27T23:28:00Z — GPT-5.6 Sol
-
-- Established governed request gateway and corrected connector mutation through an atomic clean-tree commit — started 2026-08-27T23:28:00Z, finished 2026-08-27T23:45:00Z, exit 0.

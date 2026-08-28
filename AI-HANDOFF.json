@@ -9,9 +9,9 @@
     "templates/ai-conflict-resolution.md": "Conflict-resolution procedure.",
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
-    "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody.",
+    "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements.",
     "src/testCadence.js": "Governed Orchestrator entry point and run-governance wrapper.",
-    "src/testCadenceCore.js": "Orchestrator selection side of the checks-and-balances system. It receives cadence obligations, classifies new tests through the independent matcher when necessary, selects tests, and proves cadence coverage before execution.",
+    "src/testCadenceCore.js": "Orchestrator selection side of the checks-and-balances system. It receives cadence obligations, classifies new tests through the independent matcher when necessary, selects tests, preserves legacy cadence metadata contracts, and proves cadence coverage before execution.",
     "src/testCadencePolicy.js": "Independent cadence authority. It declares only when categories are due and never selects or executes tests.",
     "src/testFeatureClassifier.js": "Independent closest-feature classifier for newly discovered unmapped tests. Explicit mappings remain authoritative; a unique evidence-backed closest match may supply a category, while ties or no evidence fail closed. It cannot set cadence or execute tests.",
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
@@ -23,7 +23,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T01:30:00Z"
+    "lastActionAt": "2026-08-28T01:36:00Z"
   },
   "temporaryInfrastructure": {
     "syntheticTestRequestCommitTransport": {
@@ -56,35 +56,34 @@
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Add an independent closest-feature classification check for new unmapped tests while preserving Orchestrator selection authority, Cadence frequency authority, and fail-closed reconciliation.",
+    "objective": "Add an independent closest-feature classification check for new unmapped tests while preserving Orchestrator selection authority, Cadence frequency authority, fail-closed reconciliation, and legacy public contracts.",
     "currentPrompt": "if a new test cannot be safely categorized a independent part of this system looks up what the feature matches closer",
     "steps": [
       "Keep explicit test-category mappings authoritative.",
-      "Add an independent closest-feature classifier used only when a newly discovered test has no explicit mapping.",
+      "Use an independent closest-feature classifier only when a newly discovered test has no explicit mapping.",
       "Require a unique evidence-backed closest category and fail closed on ties, no evidence, or unreadable candidates.",
-      "Make active Orchestrator selection include classifier-resolved tests without giving the classifier test-selection or cadence authority.",
-      "Correct the Self-Test #176 selection-object regression so cadence receives concrete test file paths.",
-      "Add regression coverage for unique matching, ambiguity failure, explicit-map precedence, and concrete cadence selections.",
-      "Push atomically to development and verify Self-Test and CodeQL until green."
+      "Keep classifier-resolved tests inside Orchestrator selection without granting the classifier test-selection or cadence authority.",
+      "Preserve legacy error and categorized-test metadata contracts while adding classifier details.",
+      "Verify Self-Test and CodeQL until green on development."
     ],
     "status": "active",
     "startedAt": "2026-08-28T01:26:00Z",
-    "lastUpdatedAt": "2026-08-28T01:30:00Z"
+    "lastUpdatedAt": "2026-08-28T01:36:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Designed the independent closest-feature classifier as fallback-only and non-executing.",
-      "Preserved explicit mappings as authoritative and ambiguity/no-evidence behavior as fail-closed.",
-      "Identified Self-Test #176 failure exactly: orchestratorTestsForCategories flattened legacy selection objects rather than each selection's .tests array, which produced the unclassified value [object Object].",
-      "Prepared active Orchestrator classification/selection overrides so new classifier-resolved tests participate in category, full-system, change-impact, and cadence runs."
+      "Added independent fallback-only closest-feature classifier and preserved explicit mappings as authoritative.",
+      "Corrected Self-Test #176 selection-object regression by resolving category selections to concrete .tests paths.",
+      "Self-Test #177 proved the Code cadence path and new classifier-specific regression tests pass, then exposed three legacy compatibility contracts in the change-impact test set.",
+      "Prepared compatibility correction: preserve the legacy Unclassified test error prefix, restore categorizedTests.cadence, and restore the exact handoff governance function names required by workflow regression coverage."
     ],
     "verification": [
-      "Self-Test #176 on c2b935fda7a0a9bb4ff87ffee5ad405056b11cc0 failed at the every-push Code cadence with Unclassified test \"[object Object]\"; on-error diagnostics passed.",
-      "The classifier/fix commit has not yet been verified; Self-Test and CodeQL must both be green before this work is complete."
+      "CodeQL #138 on 6c712dc5e4c99e5d66be34ea25b6e8cff6fa7feb passed.",
+      "Self-Test #177 on the same commit failed only in the governed request/change-impact tests: two legacy testCadence compatibility assertions and one AI-HANDOFF metadata assertion. The every-push Code cadence and independent classifier tests passed."
     ],
     "remaining": [
-      "Create and push the atomic classifier/fix commit to development.",
-      "Verify the resulting Self-Test and CodeQL runs and correct any regression until green.",
+      "Push the atomic legacy-compatibility correction to development.",
+      "Verify the resulting Self-Test and CodeQL runs and correct any further regression until green.",
       "When supported direct integration becomes available, replace the temporary synthetic request transport under standing owner authorization."
     ]
   }
