@@ -23,7 +23,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T01:42:48Z"
+    "lastActionAt": "2026-08-28T08:28:00Z"
   },
   "temporaryInfrastructure": {
     "syntheticTestRequestCommitTransport": {
@@ -50,46 +50,50 @@
       "utility": "twice-weekly",
       "maintenance": "weekly"
     },
+    "standingTestExpansionRule": "New standing test cases may be added inside an already explicitly categorized test file when they belong to that same category. They inherit that file's governed category and the category's cadence without creating a redundant test-file mapping. New standalone .test.js files still require explicit classification or independent closest-feature fallback.",
     "codeCriticalityRule": "Code is due on every push and pull request. The Orchestrator independently selects the complete Code category required to satisfy that cadence obligation.",
     "scheduledCumulativeRule": "Cadence obligations are cumulative: daily requires Code and Security; twice-weekly requires Code, Security, and Utility; weekly/monthly require all four categories.",
     "twiceWeeklySchedule": "Utility is due Tuesdays and Fridays; scheduled-diagnostics transports only the cadence window."
   },
   "activePlan": {
-    "agent": "Claude",
-    "objective": "Diagnose and fix the Self-Test failure remaining on the concurrently-modified Orchestrator/classifier system after a separate GPT-5.6 Sol session's 28+ commit restructuring, without reverting or second-guessing its checks-and-balances design.",
-    "currentPrompt": "[~/.claude/stop-hook-git-check.sh]: There are uncommitted changes in the repository. Please commit and push these changes to the remote branch.",
+    "agent": "GPT-5.6 Sol",
+    "objective": "Add every identified missing test type into the appropriate existing standing category without creating new top-level categories or weakening the Orchestrator/Cadence checks-and-balances architecture.",
+    "currentPrompt": "add them all into the appropriate standing category  ",
     "steps": [
-      "Fetch origin/development and confirm the real current tip rather than relying on prior local knowledge.",
-      "Reproduce the exact failing Self-Test step locally against that tip.",
-      "Root-cause the failure: a stale test assertion in the other agent's own regression test still expected the old aggregate unclassified-test error format.",
-      "Fix only the stale assertion to match the real, correct fail-closed behavior; do not alter classifier/cadence/orchestrator authority boundaries.",
-      "Verify with the full governed suite, all cadence tiers, all audits, and the known-bug ledger.",
-      "Record the concurrent-agent conflict and the self-test.yml commit-message-parsing safety-model change as open concerns for the owner.",
-      "Update DEVLOG.md and AI-HANDOFF.json together, then commit and push."
+      "Re-read the current DEVLOG and governing-document set after the idle threshold, and preserve the concurrent Claude repair at the real development tip.",
+      "Confirm the current development baseline is green before mutation.",
+      "Add Code coverage execution, CLI end-to-end, and dependency-behavior tests to the standing Code test file.",
+      "Add adversarial input fuzzing and supply-chain dependency-policy tests to the standing Security test file.",
+      "Add clutter behavior and interactive suite-configuration tests to the standing Utility test file.",
+      "Add classifier robustness, cadence-drift, and CI-bypass guard tests to the standing Maintenance test file.",
+      "Keep the existing four category mappings unchanged because the new cases live inside already-classified files and inherit their category cadence.",
+      "Push one atomic development commit with AI-HANDOFF.json and DEVLOG.md, then verify Self-Test and CodeQL and repair any regression until green."
     ],
-    "status": "complete",
-    "startedAt": "2026-08-28T01:39:00Z",
-    "lastUpdatedAt": "2026-08-28T01:42:48Z"
+    "status": "handoff-ready",
+    "startedAt": "2026-08-28T08:16:00Z",
+    "lastUpdatedAt": "2026-08-28T08:28:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Fetched origin/development and found 2 new commits (6c712dc, 8a8bb8d) from a separate concurrent GPT-5.6 Sol session, both still failing Self-Test.",
-      "Reproduced the failure locally: CRUCIBLE_TEST_REQUEST=... node src/testCadence.js request exited 1 (70/71).",
-      "Root-caused it to test/_testCadenceCore.js's \"future tests fail closed until they are assigned a main category\" regression test, which still asserted the old aggregate `Unclassified tests: a, b, c` error format even though validateTestClassification's refactor now throws the singular per-file `Unclassified test \"x\"...` message from mainCategoryForTest inside its loop.",
-      "Fixed only the stale assertion to match the real, correct fail-closed behavior; the underlying behavior itself was already correct and unchanged.",
-      "Resolved the transient KB-local-e27b0d5527 known-bug ledger entry via the project's own governed `node src/testCadence.js verify-bug` re-test mechanism."
+      "Read the current DEVLOG first, refreshed current governance after the idle threshold, and preserved Claude's concurrent compatibility repair at development commit 66ecf3ce6ee4d77035d2d982b7e787c3c14e63b8.",
+      "Confirmed the pre-change baseline: Self-Test #179 and CodeQL #140 both completed successfully.",
+      "Prepared ten substantive standing test cases inside existing explicitly categorized test files: three Code, two Security, two Utility, and three Maintenance.",
+      "Code additions exercise actual V8 execution coverage for core Code modules, CLI end-to-end behavior, and ordinary dependency-policy behavior.",
+      "Security additions provide a deterministic malformed-input fuzz corpus and supply-chain checks for git/URL/local dependencies, unapproved registries, and denied licenses.",
+      "Utility additions exercise clutter detection and persisted interactive suite configuration.",
+      "Maintenance additions stress classifier robustness, prove category cadence cannot drift, and assert CI/promotion paths cannot bypass the Orchestrator and release gate."
     ],
     "verification": [
-      "CRUCIBLE_TEST_REQUEST=... node src/testCadence.js request (after the fix) exited 0 (71/71).",
-      "npm run test:all exited 0 (283/283, Orchestrator full-system proof included).",
-      "All 5 cadence tiers (every-push through monthly) independently resolved to real test-file arrays.",
-      "npm run lint:workflows, docs:check, validate, audit:clutter, audit:privacy, audit:security all exited 0."
+      "Pre-change development baseline 66ecf3ce6ee4d77035d2d982b7e787c3c14e63b8: Self-Test #179 success and CodeQL #140 success.",
+      "Post-change CI has not yet completed at the time this handoff commit is assembled; Self-Test and CodeQL must both be checked on the resulting development commit."
     ],
     "remaining": [
-      "Push this fix to development and confirm all Self-Test matrix jobs, CodeQL, AI handoff policy, AI conflict governance, and other required checks go green on the new commit.",
-      "Owner should be made aware that no AI-CONFLICTS.json entry exists for two AI agents having concurrently restructured the same Orchestrator/Cadence subsystem across 28+ uncoordinated commits; no such entry has been created yet, only flagged in DEVLOG.md.",
-      "Owner should be made aware that self-test.yml's required job no longer runs a direct full-suite `npm test`; part of its scope is now driven by parsing github.event.head_commit.message as a natural-language test request, which changes the required check's safety model. Not reverted or altered by this fix pending owner direction.",
-      "When supported direct integration becomes available, replace the temporary synthetic commit-message request transport under standing owner authorization."
+      "Create the atomic tree/commit from the prepared test and handoff blobs and fast-forward development.",
+      "Verify the resulting Self-Test and CodeQL runs; if either is red, inspect the exact failure and repair on development until both are green.",
+      "Preserve for owner review the earlier concern that AI-CONFLICTS.json has no record for the prior overlapping GPT-5.6 Sol/Claude restructuring; this test-expansion work does not infer an owner resolution.",
+      "Preserve for owner review the earlier safety-model concern that self-test.yml currently uses push commit-message content as temporary natural-language request transport; do not silently normalize or broaden that workaround.",
+      "Do not promote to release or main without a fresh explicit owner instruction.",
+      "When supported direct integration becomes available, replace the temporary synthetic request transport under standing owner authorization."
     ]
   }
 }
