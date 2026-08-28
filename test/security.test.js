@@ -41,6 +41,28 @@ test('flags public Google/Firebase API keys for restriction and deployment-secur
   assert.doesNotMatch(JSON.stringify(findings), new RegExp(syntheticKey), 'security findings must not echo API-key values');
 });
 
+test('flagged API identifiers are never persisted in security result objects', () => {
+  const root = repository();
+  const syntheticKey = `AIza${'N'.repeat(35)}`;
+  fs.writeFileSync(path.join(root, 'publicConfig.js'), `module.exports = { apiKey: '${syntheticKey}' };\n`);
+  git(root, ['add', 'publicConfig.js']);
+  const result = auditSecurity(root, config());
+  const finding = result.findings.find((item) => item.type === 'Google/Firebase API key requires restriction review');
+  assert.ok(finding);
+  assert.deepEqual(Object.keys(finding).sort(), ['line', 'path', 'type']);
+  assert.equal('value' in finding, false);
+  assert.equal('match' in finding, false);
+  assert.equal('snippet' in finding, false);
+  assert.doesNotMatch(JSON.stringify(result), new RegExp(syntheticKey), 'audit results must never store the detected API identifier value');
+
+  const artifactRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-security-persistence-'));
+  fs.mkdirSync(path.join(artifactRoot, 'dist'));
+  fs.writeFileSync(path.join(artifactRoot, 'dist', 'bundle.js'), `const apiKey='${syntheticKey}';\n`);
+  const artifactResult = auditArtifactSecurity(artifactRoot, { artifacts:['dist'], security:{ enabled:true, maxTextBytes:1_048_576 } });
+  assert.deepEqual(Object.keys(artifactResult.findings[0]).sort(), ['line', 'path', 'type']);
+  assert.doesNotMatch(JSON.stringify(artifactResult), new RegExp(syntheticKey), 'artifact findings must never store the detected API identifier value');
+});
+
 test('Firebase API-key review findings can only be suppressed by an explicit scoped security allowance', () => {
   const root = repository();
   const syntheticKey = `AIza${'B'.repeat(35)}`;
