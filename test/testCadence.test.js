@@ -158,3 +158,53 @@ test('failed category results are saved by criticality and cannot be checked off
   assert.equal(resolved.status, 'resolved');
   assert.equal(resolved.retests.at(-1).ok, true);
 });
+
+test('closest-feature classifier resists misleading filenames and remains unresolved when evidence disappears', () => {
+  const bodies = {
+    'test/securityLookingName.test.js': 'workflow governance cadence policy reconciliation handoff branch release audit',
+    'test/maintenanceReference.test.js': 'workflow governance cadence policy reconciliation handoff branch release audit maintenance',
+    'test/securityReference.test.js': 'security credential token authentication malware secret',
+  };
+  const result = classifyTestByClosestFeature('test/securityLookingName.test.js', {
+    knownCategoryMap: { maintenance:['test/maintenanceReference.test.js'], security:['test/securityReference.test.js'], code:[], utility:[] },
+    readFile: (file) => bodies[file],
+  });
+  assert.equal(result.category, 'maintenance');
+  assert.equal(result.source, 'closest-feature');
+  const unresolved = classifyTestByClosestFeature('test/unknown.test.js', {
+    knownCategoryMap: { maintenance:['test/maintenanceReference.test.js'], security:['test/securityReference.test.js'], code:[], utility:[] },
+    readFile: (file) => file === 'test/unknown.test.js' ? 'quantum unrelated zephyr' : bodies[file],
+  });
+  assert.equal(unresolved.category, null);
+  assert.equal(unresolved.source, 'unresolved');
+  assert.match(unresolved.reason, /no matching feature evidence/);
+});
+
+test('standing category cadence cannot drift from the owner-defined frequency thresholds', () => {
+  const expected = { code:'every-push', security:'daily', utility:'twice-weekly', maintenance:'weekly' };
+  assert.deepEqual(CATEGORY_CADENCE, expected);
+  const tierIndex = new Map(SCHEDULED_CADENCE_TIERS.map((tier, index) => [tier, index]));
+  for (const [category, frequency] of Object.entries(expected)) {
+    for (const tier of SCHEDULED_CADENCE_TIERS) {
+      const due = scheduledCategoriesForTier(tier).includes(category);
+      assert.equal(due, tierIndex.get(tier) >= tierIndex.get(frequency), `${category} cadence drifted at ${tier}`);
+    }
+    for (const file of TEST_MAIN_CATEGORIES[category]) assert.equal(mainCategoryForTest(file), category, `${file} drifted out of ${category}`);
+  }
+});
+
+test('CI bypass guard keeps required testing on the Orchestrator path and promotion behind release checks', () => {
+  const root = path.join(__dirname, '..');
+  const selfTest = fs.readFileSync(path.join(root, '.github/workflows/self-test.yml'), 'utf8');
+  const promote = fs.readFileSync(path.join(root, '.github/workflows/promote-release.yml'), 'utf8');
+  const block = fs.readFileSync(path.join(root, '.github/workflows/block-pr-7.yml'), 'utf8');
+  assert.match(selfTest, /node src\/testCadence\.js scheduled-tests every-push/);
+  assert.match(selfTest, /node src\/testCadence\.js request/);
+  assert.doesNotMatch(selfTest, /^\s*-\s*run:\s*node\s+--test\b/m, 'workflow must not bypass the Orchestrator with direct node --test');
+  assert.match(promote, /branches:\s*\[release\]/);
+  assert.match(promote, /--head release --base main/);
+  assert.match(promote, /gh pr checks .*--watch/);
+  assert.match(promote, /gh pr merge/);
+  assert.match(block, /LOCKED_PR_NUMBERS:\s*"7 9 11"/);
+  assert.match(block, /pull_request:/);
+});

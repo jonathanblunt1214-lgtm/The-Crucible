@@ -48,3 +48,36 @@ test('rejects anything that is not a plain hex SHA', () => {
     assert.throws(() => assertSafeCommitSha(bad), `expected rejection for ${JSON.stringify(bad)}`);
   }
 });
+
+test('security input fuzz corpus rejects malformed repository, SHA, and URL shapes without throwing the wrong way', () => {
+  const repositoryCorpus = ['', '.', '..', 'owner', '/repo', 'owner/', 'owner//repo', 'owner/repo/extra', 'owner/../repo', 'owner/repo?x=1', 'owner/repo#frag', ' owner/repo', 'owner/repo ', 'owner\n/repo', 'owner\t/repo', 'https://host/owner/repo', 'owner\\repo', 'øwner/repo'];
+  for (const value of repositoryCorpus) assert.throws(() => assertSafeRepository(value), /unsafe repository identifier/, `repository fuzz value should be rejected: ${JSON.stringify(value)}`);
+  const shaCorpus = ['', '123456', 'g123456', 'abcdef!', '../abcdef0', 'abcdef0/extra', 'refs/heads/main', 'A'.repeat(41), ' deadbee', 'deadbee\n'];
+  for (const value of shaCorpus) assert.throws(() => assertSafeCommitSha(value), /plain commit SHA/, `SHA fuzz value should be rejected: ${JSON.stringify(value)}`);
+  for (const value of ['ftp://api.github.com/x', 'file:///etc/passwd', 'javascript:alert(1)', '://missing', '\u0000']) {
+    assert.throws(() => assertWellFormedApiUrl(value), /malformed API URL|non-HTTPS/, `URL fuzz value should be rejected: ${JSON.stringify(value)}`);
+  }
+});
+
+test('supply-chain dependency policy blocks git, URL, local, unapproved registry, and denied-license inputs', () => {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const { execFileSync } = require('node:child_process');
+  const { auditDependencyPolicy } = require('../src/dependencies');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-supply-chain-'));
+  execFileSync('git', ['init'], { cwd:root, stdio:'ignore', windowsHide:true });
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify({ dependencies:{ gitdep:'github:owner/repo', urldep:'https://evil.example/pkg.tgz', localdep:'file:../outside' } }), 'utf8');
+  fs.writeFileSync(path.join(root, 'package-lock.json'), JSON.stringify({ packages:{
+    'node_modules/gitdep':{ resolved:'https://evil.example/gitdep.tgz', license:'MIT' },
+    'node_modules/urldep':{ resolved:'https://registry.npmjs.org/urldep/-/urldep.tgz', license:'GPL-3.0' },
+  } }), 'utf8');
+  execFileSync('git', ['add', 'package.json', 'package-lock.json'], { cwd:root, stdio:'ignore', windowsHide:true });
+  const result = auditDependencyPolicy(root, { security:{ dependencyPolicy:{ enabled:true, denyGit:true, denyHttp:true, denyLocal:true, allowedRegistryHosts:['registry.npmjs.org'], denyLicenses:['GPL-3.0'] } } });
+  const types = result.findings.map((item) => item.type);
+  assert.ok(types.includes('Git dependency is forbidden'));
+  assert.ok(types.includes('URL dependency is forbidden'));
+  assert.ok(types.includes('local dependency is forbidden'));
+  assert.ok(types.includes('unapproved dependency registry'));
+  assert.ok(types.includes('prohibited license GPL-3.0'));
+});
