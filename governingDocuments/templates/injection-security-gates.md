@@ -20,11 +20,21 @@ If a required check cannot run, the change is not validated. Missing repository 
 
 Security and governance gates must remain at least as strong as the currently authorized repository policy. Agents may not weaken a gate merely to make a change pass.
 
-## Credential handling
+## Injection-only credential handling
 
-When a security check needs repository-read authority unavailable to the default GitHub token, use only a repository-approved secret with the minimum required read scope. Never commit, print, persist, or copy the secret value into AI-HANDOFF, AI-CONFLICTS, logs, findings, artifacts, or governance records.
+Any credential used for injection or assimilation MUST follow `governingDocuments/templates/injection-credential-scope.md`.
 
-The absence of such a credential means the required check is blocked; it does not mean the check may be skipped.
+The credential path is disabled by default and MUST remain disabled whenever an authorized injection is not actively running. Activation requires positive verification of the injection authorization, expected receiving project, exact target repository, active injection window, and an operation explicitly required for injection/assimilation.
+
+When a security check needs repository-read authority unavailable to the default GitHub token, use only an injection-only, least-privilege, short-lived credential mechanism. Repository Administration read access, when required, is authorized only for the exact injection security-settings verification that requires it.
+
+The credential MUST NOT be usable for general repository work, project maintenance, release activity, production operations, issue administration, unrelated workflow execution, organization administration, or any other non-injection purpose. Any such attempt MUST fail closed even if the underlying credential technically allows it.
+
+No durable project `SECURITY_READ_TOKEN` is to be created solely for injection when an ephemeral injection credential can satisfy the requirement.
+
+Never commit, print, persist, or copy a credential value into AI-HANDOFF, AI-CONFLICTS, logs, findings, artifacts, governance records, or receiving-project state.
+
+When assimilation completes, is cancelled/blocked, or the authorized injection window expires, the injection credential path MUST be disabled immediately and any temporary credential revoked when supported or otherwise allowed to expire without reuse.
 
 ## Promotion
 
