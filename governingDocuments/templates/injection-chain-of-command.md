@@ -1,47 +1,51 @@
-# Injection Chain of Command Template
+# Universal Injection Chain of Command
 
-This template MUST accompany governing-document injections into internal projects unless an explicitly authorized receiving-project variant is stronger.
+This policy applies to every future Crucible governing-document injection into every receiving project. It is not specific to any one project. Each future injection package must carry this policy or a stricter receiving-project equivalent that preserves every requirement below.
 
 ## Unified native governing body
 
-Injected `governingDocuments/` assimilate at the receiving project's native governance level. They do not remain a subordinate sidecar merely because they were injected later.
+Injected governing documents assimilate at the receiving project's native governance level. They are not a temporary or subordinate sidecar after successful assimilation.
 
-The receiving project's native governance and the injected governance are interpreted as one integrated governing body at the authorized native level. `AI-HANDOFF` is the governing body's shared coordination state. `AI-CONFLICTS` is the governing body's internal conflict ledger. Agents must not manufacture a hierarchy among these components to evade a real conflict.
+The receiving project's existing native governance and the injected governance are enforced together as one unified native governing body. AI-HANDOFF is the shared coordination state of that body. AI-CONFLICTS is its internal conflict ledger. All authorized agents work from that shared governing body and shared project state going forward.
 
-Genuine unresolved internal conflicts are preserved, recorded, and routed to the OWNER or explicitly designated native deciding authority. Safe non-conflicting work may continue where governance permits.
+No agent may invent a hierarchy among components of the unified governing body to avoid a genuine conflict. Unresolved internal conflicts must be preserved, recorded in AI-CONFLICTS, and routed to the OWNER or designated native deciding authority.
 
-## Development-first invariant
+## Mandatory development-first path
 
-Every tracked mutation MUST traverse the receiving project's designated development integration branch before production promotion.
+Every tracked repository mutation must pass through the receiving project's designated development integration branch before production promotion.
 
-Canonical chain:
+Required path:
 
-`task branch -> designated development branch -> required security/CI/governance gates -> required OWNER review/approval -> production branch`
+`task/change branch -> designated development branch -> required security, CI, governance, and integrity gates -> required review and OWNER approval -> production branch`
 
-No normal task branch may target the production branch directly. This applies to every tracked 1 or 0: application code, tests, documentation, governance, configuration, dependencies, workflows, generated artifacts, metadata, migrations, security changes, and automation changes.
+This applies to all tracked changes, including application code, tests, documentation, governance, configuration, dependencies, lockfiles, workflows, generated artifacts, metadata, migrations, security changes, automation changes, AI handoff state, AI conflict records, and injection documents.
 
-There are no file-type, urgency, simplicity, automation, governance, security, or documentation exceptions.
+A normal task or change branch must not target production directly. Production promotion is valid only from the designated development integration branch after all required gates and approvals are satisfied.
 
-The production promotion is valid only when its head is the designated development branch and all required gates have passed.
+There are no exceptions based on file type, urgency, simplicity, agent, automation, documentation, governance, security, or the fact that a change is itself an injection.
 
-## Security-gate invariant
+If the receiving project does not yet have a designated development integration branch, the injection must stop before any production mutation and report that missing prerequisite. The absence of a development branch never authorizes a direct production write.
 
-Required security, CI, governance, integrity, and review gates are mandatory chain-of-command controls.
+## Mandatory gates
 
-Agents MUST NOT bypass, suppress, disable, weaken, rename around, or route around a required gate to achieve a passing result. A required gate that cannot execute because a prerequisite is missing is blocked/incomplete, never passing.
+Required security, CI, governance, integrity, and review gates are part of the chain of command.
 
-If a security check requires a repository-approved read credential that the default GitHub token cannot supply, the requirement remains active. The missing credential is surfaced as a prerequisite; the check is not bypassed. Secret values must never be committed, logged, placed in handoff state, or recorded in conflict ledgers.
+Agents must not bypass, suppress, disable, weaken, rename around, relabel, skip, or route around a required gate. A required gate that cannot run because a prerequisite is missing is blocked or incomplete, never passing.
+
+If a security check requires repository-approved read authority that the default GitHub token cannot provide, the requirement remains active and the missing credential must be surfaced as a prerequisite. Secret values must never be committed, logged, placed in handoff state, or recorded in conflict ledgers.
 
 ## OWNER execution directive
 
-When the OWNER gives a clear instruction that is lawful, technically possible, within current authorized scope, and not in genuine conflict with higher-priority platform safety or repository constraints, agents execute it directly.
+When the OWNER gives a clear instruction that is lawful, technically possible, within current authorized scope, and not blocked by higher-priority platform safety or a genuine unresolved governance conflict, agents execute it directly and efficiently.
 
-Agents must not create unnecessary procedural runaround, repeated confirmation, invented ambiguity, or discretionary reinterpretation. Clarification is reserved for real ambiguity, actual impossibility, safety/prohibition, or a genuine unresolved governance conflict.
+Agents must not create unnecessary procedural detours, repeated confirmation, invented ambiguity, or discretionary reinterpretation. Clarification is reserved for material ambiguity, actual impossibility, safety or prohibition, missing required authority, or a genuine unresolved governance conflict.
 
 ## Multi-agent cooperation
 
-All authorized agents work together from shared project state going forward. They consume current handoff state, preserve valid concurrent work, reconcile compatible changes, record genuine conflicts, and never force-push or silently overwrite another authorized agent's valid work merely to simplify their own path.
+All authorized agents work together from shared project state. They consume current handoff state, preserve valid concurrent work, reconcile compatible changes, record genuine conflicts, and never force-push or silently overwrite another authorized agent's valid work merely to simplify their own path.
 
 ## Injection lifetime
 
-The temporary injection/assimilation authority remains one-time and self-expiring under the authorized injection window. Expiry severs only the temporary injection authority. Governance already assimilated into the receiving project's native governing body remains in force until changed through the receiving project's normal authorized governance process.
+Temporary injection and assimilation authority remains one-time and self-expiring under the authorized injection window. Expiration severs only the temporary injection authority. Governance already assimilated into the receiving project's unified native governing body remains in force until changed through the receiving project's normal authorized governance process.
+
+Any later injection, replacement, or expansion of injection authority requires fresh authorization.
