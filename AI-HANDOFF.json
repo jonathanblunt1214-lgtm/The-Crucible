@@ -9,8 +9,8 @@
     "templates/ai-conflict-resolution.md": "Conflict-resolution procedure.",
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
-    "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements. Also mechanizes syncing pruned DEVLOG.md sessions to Devlog-Pruned on Archive via prunedDevlogEntries/effectiveDevlogPrunedCapacity/appendToDevlogPrunedLedger.",
-    "Devlog-Pruned (Archive branch)": "Standing append-only ledger of DEVLOG.md sessions pruned from development's Command log archive. Retention floor is time, not count: at least 364 days always kept; starting capacity of 50 sessions doubles automatically rather than trimming anything within that floor. The one narrow, owner-authorized exception to Archive's otherwise pull-only rule.",
+    "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements and the mandatory plain-language-summary line on DEVLOG.md's newest entry. Also mechanizes syncing full pruned DEVLOG.md snapshots to Devlog-Pruned on Archive via devlogPruneSnapshot/effectiveDevlogPrunedCapacity/appendToDevlogPrunedLedger.",
+    "Devlog-Pruned (Archive branch)": "Standing append-only ledger holding the entire DEVLOG.md content exactly as it stood before each prune of development's Command log archive (full snapshots, not excerpts), each led by a plain-language summary. Retention floor is time, not count: at least 364 days always kept; starting capacity of 50 snapshots doubles automatically rather than trimming anything within that floor. The one narrow, owner-authorized exception to Archive's otherwise pull-only rule.",
     "src/testCadence.js": "Governed Orchestrator entry point and run-governance wrapper.",
     "src/testCadenceCore.js": "Orchestrator selection side of the checks-and-balances system. It isolates unresolved newly discovered tests, continues safely classified selections, and prevents incomplete classification coverage from being reported as a fully passing run.",
     "src/testCadencePolicy.js": "Independent cadence authority. It declares only when categories are due and never selects or executes tests.",
@@ -27,7 +27,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T12:06:00Z"
+    "lastActionAt": "2026-08-28T12:48:40Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -74,47 +74,47 @@
   },
   "activePlan": {
     "agent": "Claude",
-    "objective": "Build the standing mechanism to preserve every DEVLOG.md session pruned from development's Command log archive by appending it to Devlog-Pruned on the reference-only Archive branch, with its own owner-specified time-floor retention rule.",
-    "currentPrompt": "if something is pruned from the devlog add it to Devlog-Pruned in the archived repo / keep Devlog-Pruned constrained to 50 pruned entries or 364 days whichever comes first / if Devlog-Pruned hits 50 pruned entries before 364 days increase it exponentially I want at least a year of archived devlog to reference from",
+    "objective": "Correct Devlog-Pruned, per direct owner feedback, to store the entire DEVLOG.md content from immediately before each prune rather than only the excerpted session, and to require a plain-language summary on both DEVLOG.md's own newest entry and every Devlog-Pruned snapshot.",
+    "currentPrompt": "I want whatever value that is pruned from the Devlog to be preserved for the Archive not this shit standing-test CI correction ... I want whatever was on the Devlog or its useless to archive / [clarified via AskUserQuestion: 'The full DEVLOG.md snapshot'] / the entries on the DEVLOG.md should in plain language should also describe all this ... Like a summery so if it has to be searched for something its not all computer talk / both Devlog and Devlog-Pruned should have this",
     "executionMode": {
       "mode": "regular/default",
       "agent": "Claude",
-      "purpose": "Add one mechanical helper module plus its regression tests, two documentation updates, and two small Archive-branch commits via a disposable local worktree; bounded and does not need Work-mode orchestration.",
-      "selectionReason": "Well-scoped governance addition following an existing convention (DEVLOG.md's own bounded archive) with a clear owner spec.",
+      "purpose": "Redesign one module's output contract plus its regression tests, rebuild a small already-pushed Archive file, and update two documentation files; bounded and does not need Work-mode orchestration.",
+      "selectionReason": "A direct, scoped correction to work completed earlier this same session, following the owner's explicit clarification.",
       "distinction": "Execution mode is independent from agent identity and workflow; continuing in regular/default mode."
     },
     "steps": [
-      "Confirm the owner's Devlog-Pruned file already exists on Archive and that appending to it is explicitly authorized in this exact conversation, per AGENTS.md's Archive pull-only rule.",
-      "Add prunedDevlogEntries (diff old/new DEVLOG.md to find what a prune removed) to src/handoffPolicy.js.",
-      "Add effectiveDevlogPrunedCapacity and appendToDevlogPrunedLedger implementing the owner's retention rule: at least 364 days of pruned history always kept; starting capacity of 50 sessions doubles automatically rather than trimming anything within that floor.",
-      "Add regression coverage for all three functions in test/handoffPolicy.test.js.",
-      "Use the real, most recent development prune (commit 8e3985f) to prove the mechanism end-to-end: compute the pruned entry, append it to Devlog-Pruned via a disposable local worktree, and push only that one file to Archive.",
-      "Update Devlog-Pruned's header text after the exponential-retention follow-up instruction, again touching only that one file.",
-      "Document the standing rule and the narrow Archive exception in AGENTS.md and AI-HANDOFF.json's governingDocuments.",
-      "Run the full governed suite and all audits, then prune this session's own oldest DEVLOG.md entry using the new tooling as part of the same commit, and verify fresh Self-Test, AI handoff policy, and CodeQL on the pushed development commit."
+      "Verify the owner's complaint by diffing the real DEVLOG.md history against what was archived, to rule out a copy/accuracy bug before assuming a design gap.",
+      "Ask the owner to disambiguate 'whatever was on the Devlog' via AskUserQuestion rather than guessing between per-session and full-file scope.",
+      "Replace prunedDevlogEntries-as-payload with devlogPruneSnapshot: embed the entire old DEVLOG.md content in a self-lengthening fenced code block (immune to the content's own backtick runs), labeled with what was removed and a plain-language summary.",
+      "Rename the ledger's own parser/heading to '## Snapshot: ...' and keep the same doubling-capacity/364-day-floor retention rule, now applied to snapshots instead of sessions.",
+      "Add the plain-language-summary requirement to validateDevlogChainOfCustody itself so DEVLOG.md's own newest entry is mechanically required to carry one too, not only the archived copies.",
+      "Update test/handoffPolicy.test.js's fixtures and add new regressions for devlogPruneSnapshot, the fence-lengthening behavior, and the summary requirement.",
+      "Rebuild Devlog-Pruned on Archive from scratch with the corrected format and real plain-language summaries, replacing the two excerpt-only entries pushed earlier this session.",
+      "Update AGENTS.md's documented entry format and DEVLOG.md's own newest entry to include the required summary line, run the full suite/audits, and push."
     ],
     "status": "complete",
-    "startedAt": "2026-08-28T11:37:00Z",
-    "lastUpdatedAt": "2026-08-28T12:06:00Z"
+    "startedAt": "2026-08-28T12:15:00Z",
+    "lastUpdatedAt": "2026-08-28T12:48:40Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed the owner had already created an empty Devlog-Pruned file directly on Archive, which is the explicit in-conversation authorization AGENTS.md's Archive pull-only rule requires for this one narrow action.",
-      "Added prunedDevlogEntries, effectiveDevlogPrunedCapacity, and appendToDevlogPrunedLedger to src/handoffPolicy.js, plus 6 regressions in test/handoffPolicy.test.js.",
-      "Proved the mechanism against real history: prunedDevlogEntries(1b7b310, 8e3985f) correctly identified the one session that commit pruned; pushed it to Devlog-Pruned on Archive as commit f1ca163 via a disposable local worktree touching only that file.",
-      "Implemented the owner's exponential-retention follow-up (at least 364 days always kept; starting capacity of 50 doubles rather than trimming within that floor) and pushed the corrected header text to Devlog-Pruned as commit 7cd07d0, again touching only that file.",
-      "Documented the standing rule, the narrow Archive exception, and the retention/capacity behavior in AGENTS.md's Command log archive and Branch policy sections, and in AI-HANDOFF.json's governingDocuments.",
-      "Used the new tooling for real in this same commit: pruned this session's own oldest DEVLOG.md entry ('standing-test CI correction') and appended it to Devlog-Pruned on Archive as part of the same unit of work.",
-      "Deliberately did not attempt to backfill every prior DEVLOG.md prune from git history by heuristic reconstruction: this repository's history includes concurrent, overlapping edits from multiple AI agents, and a heuristic risked fabricating an inaccurate record in what is meant to be an authoritative ledger. Those older prunes remain retrievable via git log -p DEVLOG.md on development, per AGENTS.md's existing note."
+      "Verified the owner's complaint was not a copy bug: `git show 1b7b310:DEVLOG.md` vs `git show origin/Archive:Devlog-Pruned` showed the archived session text was byte-identical to the original. Asked via AskUserQuestion to disambiguate scope; the owner chose 'the full DEVLOG.md snapshot'.",
+      "Replaced the ledger's payload: devlogPruneSnapshot(oldDevlogContent, newDevlogContent, now, meta) now embeds the entire old DEVLOG.md content verbatim in a fenced code block whose fence length is computed from the content's own longest backtick run (fenceFor), so it can never be broken out of.",
+      "Added the meta.summary field: every snapshot leads with 'Plain-language summary: ...', with a safe fallback string when none is supplied so a missing summary never fails silently.",
+      "Renamed the ledger's own entry heading/parser to '## Snapshot: <ISO> — pruned by <label>' (parseSnapshotEntries), keeping effectiveDevlogPrunedCapacity and its 364-day-floor/doubling-capacity rule unchanged, now applied per prune event instead of per removed session.",
+      "Added the same plain-language-summary requirement to validateDevlogChainOfCustody's newest-entry checks (mechanically enforced, same pattern as the existing mode-field check), and confirmed via test/workflow.test.js that the real DEVLOG.md still validates.",
+      "Rebuilt Devlog-Pruned on Archive from scratch (commit a7b5696) with real, hand-written plain-language summaries for both real prunes so far, replacing the excerpt-only entries from commits f1ca163/7cd07d0/2799545 - still touching only that one file.",
+      "Updated AGENTS.md's documented Command log archive entry format and DEVLOG.md's own current newest entry to include the required Plain-language summary line."
     ],
     "verification": [
-      "npm run test:all: 313/313 passing (17/17 in test/handoffPolicy.test.js), Orchestrator full-system proof included.",
-      "All pre-push audits (lint:workflows, docs:check, validate, audit:clutter, audit:privacy, audit:security, audit:ai-conflict-governance, audit:governance, audit:design-brief, audit:core-ref, audit:authenticity) pass.",
-      "Devlog-Pruned on Archive was inspected directly via git show after each push to confirm it contains exactly the intended content and nothing else changed on that branch."
+      "test/handoffPolicy.test.js: 21/21 passing, including devlogPruneSnapshot's full-content capture, its fence-lengthening guard, the renamed ledger functions, and the plain-language-summary enforcement (missing/empty/present cases).",
+      "npm run test:all and all pre-push audits pass against the corrected DEVLOG.md.",
+      "Devlog-Pruned on Archive was re-fetched and inspected directly after the rebuild to confirm it holds exactly two full-DEVLOG.md snapshots with real summaries and nothing else changed on that branch."
     ],
     "remaining": [
       "Push this commit to development and verify fresh Self-Test, AI handoff policy, and CodeQL go green on the exact pushed SHA.",
-      "Continue appending to Devlog-Pruned on Archive, using this session's tooling, every time a future DEVLOG.md prune happens.",
+      "Continue using devlogPruneSnapshot/appendToDevlogPrunedLedger for every future DEVLOG.md prune, always supplying a real plain-language summary.",
       "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }

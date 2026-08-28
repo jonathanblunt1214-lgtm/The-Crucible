@@ -58,11 +58,23 @@ same or different - can tell how long it has been idle.
 
   ```
   ### Session: <short label> — <ISO timestamp> — <agent> — mode:<regular/default|work>
+
+  Plain-language summary: <one or two plain-English sentences>
   - `command` — started TIMESTAMP, finished TIMESTAMP, exit CODE
   ```
 
   The heading's mode field is mandatory and makes execution mode part of the
-  chain of custody, not just current-plan metadata. List every command with a real effect for that session - tests,
+  chain of custody, not just current-plan metadata. The newest entry's
+  `Plain-language summary:` line is mandatory too (mechanically enforced by
+  `validateDevlogChainOfCustody`, the same as the mode field): a short,
+  non-technical recap of what the session was actually about and what
+  changed, so the log stays searchable and readable by a human skimming it
+  without having to parse raw commands, diffs, or commit SHAs. It sits
+  alongside the technical command list, not instead of it - the command
+  list remains the mechanical record; the summary is what makes that record
+  findable in plain language. The same requirement applies to every
+  `Devlog-Pruned` snapshot on `Archive` (see below): both logs carry a
+  plain-language summary, not just the archived one. List every command with a real effect for that session - tests,
   audits, lint, git operations - each with a start time and a finish
   time. When adding a new session's entry pushes the archive past 10, or
   any entry's timestamp is more than 180 days old, prune the offending
