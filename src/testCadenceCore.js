@@ -1,31 +1,42 @@
 const { spawnSync } = require('node:child_process');
 const legacy = require('./testCadenceCoreLegacy');
+const cadence = require('./testCadencePolicy');
 const { resolveSpawn } = require('./runner');
 
-const SCHEDULED_CADENCE_TIERS = ['every-push', 'daily', 'twice-weekly', 'weekly', 'monthly'];
-const CATEGORY_CADENCE = Object.freeze({
-  code: 'every-push',
-  security: 'daily',
-  utility: 'twice-weekly',
-  maintenance: 'weekly',
-});
+const SCHEDULED_CADENCE_TIERS = cadence.CADENCE_TIERS;
+const CATEGORY_CADENCE = cadence.CATEGORY_CADENCE;
 
 function scheduledTierRank(tier) {
-  const index = SCHEDULED_CADENCE_TIERS.indexOf(tier);
-  if (index === -1) {
-    throw new Error(`Unknown scheduled cadence tier "${tier}". Valid tiers: ${SCHEDULED_CADENCE_TIERS.join(', ')}.`);
-  }
-  return index;
+  return cadence.tierRank(tier);
 }
 
 function scheduledCategoriesForTier(tier) {
-  const maxRank = scheduledTierRank(tier);
-  return legacy.MAIN_CATEGORIES.filter((category) => scheduledTierRank(CATEGORY_CADENCE[category]) <= maxRank);
+  return cadence.cadenceObligation(tier, legacy.MAIN_CATEGORIES).dueCategories;
+}
+
+function orchestratorTestsForCategories(categories) {
+  return categories.flatMap((category) => legacy.selectTestsForCategory(category)).sort();
+}
+
+function verifyCadenceSelection(obligation, tests) {
+  const selectedCategories = new Set(tests.map((testFile) => legacy.mainCategoryForTest(testFile)));
+  const missingCategories = obligation.dueCategories.filter((category) => !selectedCategories.has(category));
+  if (missingCategories.length) {
+    throw new Error(`Cadence check rejected Orchestrator selection: missing due categor${missingCategories.length === 1 ? 'y' : 'ies'} ${missingCategories.join(', ')} for ${obligation.tier}.`);
+  }
+  return Object.freeze({
+    tier: obligation.tier,
+    dueCategories: obligation.dueCategories,
+    selectedCategories: Object.freeze([...selectedCategories].sort()),
+    ok: true,
+  });
 }
 
 function scheduledTestsForTier(tier) {
-  const categories = scheduledCategoriesForTier(tier);
-  return categories.flatMap((category) => legacy.TEST_MAIN_CATEGORIES[category]).sort();
+  const obligation = cadence.cadenceObligation(tier, legacy.MAIN_CATEGORIES);
+  const tests = orchestratorTestsForCategories(obligation.dueCategories);
+  verifyCadenceSelection(obligation, tests);
+  return tests;
 }
 
 function scheduledAuditsForTier(tier) {
@@ -47,19 +58,21 @@ function npmRunInvocation(script) {
 }
 
 function runScheduledTests(tier, run = spawnSync) {
-  const categories = scheduledCategoriesForTier(tier);
-  const tests = scheduledTestsForTier(tier);
+  const obligation = cadence.cadenceObligation(tier, legacy.MAIN_CATEGORIES);
+  const tests = orchestratorTestsForCategories(obligation.dueCategories);
+  const balance = verifyCadenceSelection(obligation, tests);
   const outcomes = [];
 
-  console.log(`[The Crucible] Orchestrator: scheduled test cadence ${tier}; categories due: ${categories.join(', ') || '(none)'}.`);
+  console.log(`[The Crucible] Cadence check: ${tier}; categories due: ${obligation.dueCategories.join(', ') || '(none)'}.`);
+  console.log(`[The Crucible] Orchestrator: independently selected ${tests.length} test file(s); cadence balance passed.`);
   if (tests.length) {
     outcomes.push({
-      label: `scheduled tests (${tests.length} file(s), ${categories.join(', ')})`,
+      label: `scheduled tests (${tests.length} file(s), ${obligation.dueCategories.join(', ')})`,
       ok: runOne('scheduled tests', { executable: process.execPath, args: ['--test', ...tests] }, run),
     });
   }
 
-  return { tier, categories, tests, outcomes, ok: outcomes.every((item) => item.ok) };
+  return { tier, categories: obligation.dueCategories, tests, obligation, balance, outcomes, ok: outcomes.every((item) => item.ok) };
 }
 
 function runScheduledTier(tier, run = spawnSync) {
@@ -75,6 +88,8 @@ function runScheduledTier(tier, run = spawnSync) {
     tier,
     categories: testResult.categories,
     tests: testResult.tests,
+    obligation: testResult.obligation,
+    balance: testResult.balance,
     audits,
     outcomes,
     ok: outcomes.every((item) => item.ok),
@@ -87,6 +102,8 @@ module.exports = {
   CATEGORY_CADENCE,
   scheduledTierRank,
   scheduledCategoriesForTier,
+  orchestratorTestsForCategories,
+  verifyCadenceSelection,
   scheduledTestsForTier,
   scheduledAuditsForTier,
   runScheduledTests,
