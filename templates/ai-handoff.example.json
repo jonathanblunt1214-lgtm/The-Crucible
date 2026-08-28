@@ -1,5 +1,17 @@
 {
   "schemaVersion": 1,
+  "governingDocuments": {
+    "AI-HANDOFF.json": "This file: the permanent takeover-ready development plan and shared handoff.",
+    "AI-CONFLICTS.json": "Auditable AI conflict ledger; never bypass, disable, or delete it.",
+    "THE-CRUCIBLE-DESIGN-BRIEF.md": "Explains the one-time, now-spent connection to The Crucible and the boundary rules for investigating its CI failures.",
+    "templates/ai-conflict-resolution.md": "Repository-independent AI conflict-resolution procedure.",
+    "templates/required-check-rollout.md": "Required-check rollout boundary: report on the development branch before activating a check as required.",
+    ".github/workflows/ai-conflict-governance.yml": "Publishes the required AI conflict governance status check.",
+    ".github/workflows/ai-handoff-policy.yml": "Publishes the required AI handoff policy status check."
+  },
+  "sessionPolicy": {
+    "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since the plan's lastUpdatedAt, even if it is the same agent continuing the same conversation."
+  },
   "activePlan": {
     "agent": "unassigned",
     "objective": "Adopt The Crucible and publish the first repository development plan.",
