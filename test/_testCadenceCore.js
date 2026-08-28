@@ -74,9 +74,13 @@ test('current suite classification is stable across the four governed buckets', 
   ]);
 });
 
-test('future tests fail closed until they are assigned a main category', () => {
+test('strict classification certification rejects unresolved future tests while execution may isolate them', () => {
   assert.throws(() => mainCategoryForTest('test/futureSubsystem.test.js'), /Unclassified test "test\/futureSubsystem\.test\.js"/);
   assert.throws(() => validateTestClassification([...discoverTests(), 'test/futureSubsystem.test.js']), /Unclassified test "test\/futureSubsystem\.test\.js"/);
+  const report = validateTestClassification([...discoverTests(), 'test/futureSubsystem.test.js'], { allowUnresolved: true });
+  assert.equal(report.ok, false);
+  assert.equal(report.unresolved.length, 1);
+  assert.equal(report.unresolved[0].file, 'test/futureSubsystem.test.js');
 });
 
 test('every test file listed in the cadence registry actually exists', () => {
