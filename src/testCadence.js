@@ -28,6 +28,10 @@ function runTier(tier, run) {
   return core.runTier(tier, withDefaultRunner(run));
 }
 
+function runScheduledTier(tier, run) {
+  return core.runScheduledTier(tier, withDefaultRunner(run));
+}
+
 function runError(trigger, run) {
   return core.runError(trigger, withDefaultRunner(run));
 }
@@ -65,6 +69,7 @@ if (require.main === module) {
       result = runRequested(request, category);
       label = `governed test request "${core.extractTransportedRequest(request)}"`;
     }
+    else if (mode === 'scheduled') { result = runScheduledTier(arg); label = `scheduled category cadence "${result.tier}"`; }
     else if (mode === 'category') { result = runCategory(arg); label = `main category "${arg}"`; }
     else if (mode === 'all') { result = runAll(); label = 'full-system proof'; }
     else if (mode === 'changed' || !mode) { result = runChanged(); label = 'change-impact test selection'; }
@@ -93,6 +98,7 @@ module.exports = {
   recordKnownBug,
   verifyKnownBugFix,
   runTier,
+  runScheduledTier,
   runError,
   runChanged,
   runAll,

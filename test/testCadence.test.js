@@ -10,6 +10,12 @@ const {
   TEST_PROGRESS_MAX_INTERVAL_MS,
   KNOWN_BUG_SEVERITY_ORDER,
   CATEGORY_CRITICALITY,
+  SCHEDULED_CADENCE_TIERS,
+  CATEGORY_CADENCE,
+  scheduledCategoriesForTier,
+  scheduledTestsForTier,
+  runScheduledTier,
+  TEST_MAIN_CATEGORIES,
   emptyKnownBugLedger,
   severityForMainCategories,
   writeKnownBugLedger,
@@ -37,6 +43,41 @@ test('known-bug criticality is deterministic and ordered from critical through l
   assert.equal(severityForMainCategories(['maintenance']), 'low');
   assert.equal(severityForMainCategories(['utility', 'security']), 'critical');
   assert.equal(severityForMainCategories(['code', 'utility']), 'high');
+});
+
+test('owner-defined category cadence keeps Code fastest and adds Security, Utility, and Maintenance only when due', () => {
+  assert.deepEqual(SCHEDULED_CADENCE_TIERS, ['every-push', 'daily', 'twice-weekly', 'weekly', 'monthly']);
+  assert.deepEqual(CATEGORY_CADENCE, {
+    code: 'every-push',
+    security: 'daily',
+    utility: 'twice-weekly',
+    maintenance: 'weekly',
+  });
+  assert.deepEqual(scheduledCategoriesForTier('every-push'), ['code']);
+  assert.deepEqual(scheduledCategoriesForTier('daily'), ['code', 'security']);
+  assert.deepEqual(scheduledCategoriesForTier('twice-weekly'), ['code', 'security', 'utility']);
+  assert.deepEqual(scheduledCategoriesForTier('weekly'), ['code', 'security', 'utility', 'maintenance']);
+  assert.deepEqual(scheduledCategoriesForTier('monthly'), ['code', 'security', 'utility', 'maintenance']);
+});
+
+test('scheduled category cadence is selected by the Orchestrator and remains cumulative', () => {
+  assert.deepEqual(scheduledTestsForTier('every-push'), [...TEST_MAIN_CATEGORIES.code].sort());
+  assert.deepEqual(scheduledTestsForTier('daily'), [...TEST_MAIN_CATEGORIES.code, ...TEST_MAIN_CATEGORIES.security].sort());
+  assert.deepEqual(scheduledTestsForTier('twice-weekly'), [...TEST_MAIN_CATEGORIES.code, ...TEST_MAIN_CATEGORIES.security, ...TEST_MAIN_CATEGORIES.utility].sort());
+  assert.deepEqual(scheduledTestsForTier('weekly'), Object.values(TEST_MAIN_CATEGORIES).flat().sort());
+});
+
+test('runScheduledTier executes one Orchestrator-owned test invocation for the categories due', () => {
+  const calls = [];
+  const result = runScheduledTier('twice-weekly', (executable, args) => {
+    calls.push({ executable, args });
+    return { status: 0 };
+  });
+  assert.equal(result.ok, true);
+  assert.deepEqual(result.categories, ['code', 'security', 'utility']);
+  const testCalls = calls.filter((call) => call.args[0] === '--test');
+  assert.equal(testCalls.length, 1);
+  assert.deepEqual(testCalls[0].args.slice(1), scheduledTestsForTier('twice-weekly'));
 });
 
 test('failed category results are saved by criticality and cannot be checked off before a passing re-test', () => {
