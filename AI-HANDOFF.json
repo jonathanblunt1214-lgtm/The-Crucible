@@ -25,7 +25,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T10:54:20Z"
+    "lastActionAt": "2026-08-28T09:56:39Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -59,7 +59,6 @@
     "cadenceAuthority": "Cadence decides only when a category is due. It produces a due-category obligation and never selects files, classifies new tests, interprets natural-language scope, or executes tests.",
     "classifierAuthority": "The independent closest-feature classifier is fallback-only for newly discovered tests absent from the explicit category map. It compares the new test with known feature/test evidence and returns a category only for a unique closest match. It cannot choose run scope, set frequency, or execute tests.",
     "classificationAmbiguityRule": "Isolate ambiguity, continue safe tests, never fake complete coverage. If a newly discovered test remains unresolved after independent closest-feature classification, quarantine that test from guessed execution and report its unresolved classification while continuing all other safely classified tests selected by the Orchestrator. Do not globally abort unrelated safe tests solely because one new test is unresolved. If the unresolved test is required to satisfy an explicit owner request or cadence obligation, mark that requested coverage incomplete and do not report the obligation or suite as fully passing until the ambiguity is resolved and the required test is executed.",
-    "securityPublicIdentifierRule": "The Security category must detect Google/Firebase API-key-shaped public application identifiers and require explicit security review instead of assuming public means safe. A retained public Firebase Web API key may be allowed only through an explicit file-and-rule allowance after the relevant application/API restrictions and Firebase deployment posture are verified. Static Crucible findings must never echo the key value.",
     "explicitMappingRule": "Existing explicit category mappings are authoritative and are never overridden by the closest-feature classifier.",
     "orchestratorAuthority": "The Orchestrator alone selects categories/subcategories/test files and execution scope from explicit requests, change impact, dependencies, cadence obligations, and validated classifications.",
     "balanceRule": "For cadence-triggered work, Cadence declares categories due; the Orchestrator independently resolves them into concrete tests; reconciliation rejects a claim of complete cadence coverage if any due category is omitted. Neither authority silently overrides the other.",
@@ -71,40 +70,43 @@
     "twiceWeeklySchedule": "Utility is due Tuesdays and Fridays; scheduled-diagnostics transports only the cadence window."
   },
   "activePlan": {
-    "agent": "GPT-5.6 Sol",
-    "objective": "Close the Security-category gap exposed by Nexus so public Firebase/Google API keys cannot silently pass Crucible without an explicit security review decision.",
-    "currentPrompt": "this is something the security category in the suit should of caught",
+    "agent": "Codex",
+    "objective": "Make execution mode explicit and enforced in every AI handoff so agent changes never silently substitute regular/default mode for Work mode or vice versa.",
+    "currentPrompt": "also add in the handoff a distinction between this was done in this mode, and explain the purpose of the mode so if a task done in work mode here isn't done in in regular Claude instead of workflow or vice versa\n\nalso include this in the chain of custody",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "GPT-5.6 Sol",
-      "purpose": "Apply a focused Security scanner and regression-test correction directly in the repository without Work-mode orchestration.",
-      "selectionReason": "The owner explicitly said Work mode is not needed here and this correction is bounded to the Crucible security scanner, standing Security tests, governance bookkeeping, and CI verification.",
-      "distinction": "Execution mode is independent from agent identity and workflow; this task is continuing in regular/default mode by owner direction."
+      "agent": "Codex",
+      "purpose": "Handle this focused governance and validation change without long-running Work-mode orchestration.",
+      "selectionReason": "The requested change is bounded to handoff metadata, policy validation, tests, and documentation in one repository.",
+      "distinction": "Execution mode is independent from agent identity and workflow; Codex and Claude may each use regular/default or work mode, and an agent handoff must not silently change the required mode."
     },
     "steps": [
-      "Add a Security finding for Google/Firebase API-key-shaped public identifiers without printing the value.",
-      "Require intentional retention to use an explicit scoped file-and-rule allowance after security review.",
-      "Add standing Security regression coverage reproducing the Nexus class of miss.",
-      "Update DEVLOG and AI-HANDOFF chain of custody without recording the exposed key value.",
-      "Verify fresh Self-Test, AI handoff policy, and CodeQL on the final development commit and correct any regression."
+      "Add an execution-mode policy and current-mode record to AI-HANDOFF.json.",
+      "Document that mode is independent from agent identity and workflow in AGENTS.md and DEVLOG.md.",
+      "Require and test execution-mode metadata in handoff validation.",
+      "Run governed verification, commit and push only to development, then verify required hosted CI."
     ],
-    "status": "active",
-    "startedAt": "2026-08-28T10:48:00Z",
-    "lastUpdatedAt": "2026-08-28T10:54:20Z"
+    "status": "handoff-ready",
+    "startedAt": "2026-08-28T10:13:26Z",
+    "lastUpdatedAt": "2026-08-28T10:20:24Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed src/security.js previously had no Google/Firebase Web API-key detector, so a Nexus-style embedded Firebase Web API key could pass the Security category without review.",
-      "Added a non-secret-labeled Security finding named Google/Firebase API key requires restriction review.",
-      "Added Security regression tests proving detection does not echo the key value and that retention requires an explicit file-and-rule allowance.",
-      "Extended generated-artifact security scanning to surface the same review requirement."
+      "Synchronized the clean literal development checkout to origin/development at f74a7cb1387f9db9dd49ae17112ad1a9ea37b022 and read the shared handoff and governing document set.",
+      "Published the takeover-ready plan for execution-mode-aware handoffs.",
+      "Added account-level execution-mode policy and per-plan mode metadata to AI-HANDOFF.json.",
+      "Documented that mode is independent from agent identity and workflow in AGENTS.md, README.md, and DEVLOG.md.",
+      "Updated handoff validation and regression tests so missing, invalid, or agent-confused mode metadata fails closed."
+      ,"Added execution mode to each new DEVLOG command-session heading and made newest-session mode metadata mandatory in chain-of-custody validation."
     ],
     "verification": [
-      "The new tests use only synthetic API-key-shaped fixtures; the Nexus key value is not stored in Crucible governance, tests, or user-visible progress output."
+      "Focused handoffPolicy and workflow tests passed 36/36.",
+      "npm test governed change-impact selection passed 78/78.",
+      "npm run validate, npm run docs:check, npm run audit:ai-conflict-governance, npm run lint:workflows, npm run audit:clutter, npm run audit:privacy, npm run audit:security, npm run audit:governance, and git diff --check passed.",
+      "Initial implementation commit 71a04f0a9134dc06b97423404ab26874c209e8b8 passed CodeQL run 33162843936 and AI handoff policy run 33162845427; Self-Test run 33162842284 was still in progress when the owner added the chain-of-custody requirement, so final-tip CI will supersede it."
     ],
     "remaining": [
-      "Update DEVLOG for the current session and repair paired bookkeeping on the final development tip.",
-      "Verify fresh Self-Test, AI handoff policy, and CodeQL for the final commit and fix any failure until green or a genuine hard blocker is reached.",
+      "Commit and push only to development, then verify required hosted CI.",
       "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }
