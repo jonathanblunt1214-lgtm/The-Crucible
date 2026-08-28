@@ -3,6 +3,29 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { languageFindings } = require('./syntax');
 
+// Known, structurally distinctive API-key/credential formats. Each is safe to match
+// context-free because its prefix/shape is unique enough that false positives are rare.
+// A "requires restriction review" type is an intentionally client-visible application
+// identifier whose scope/restrictions still need review; other types are outright secrets.
+const KNOWN_API_KEY_PATTERNS = [
+  ['AWS access key', /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/],
+  ['Google/Firebase API key requires restriction review', /\bAIza[0-9A-Za-z_-]{35}\b/],
+  ['Slack credential', /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/],
+  ['npm credential', /\bnpm_[A-Za-z0-9]{30,}\b/],
+  ['Stripe live secret', /\bsk_live_[A-Za-z0-9]{16,}\b/],
+  ['Stripe publishable key requires restriction review', /\bpk_(?:live|test)_[A-Za-z0-9]{16,}\b/],
+  ['Mapbox public token requires restriction review', /\bpk\.eyJ[A-Za-z0-9_-]{20,}(?:\.[A-Za-z0-9_-]{10,})?\b/],
+];
+
+const GENERIC_API_KEY_TYPE = 'unrecognized public API-key-shaped identifier requires security review';
+
+// Fallback for providers Crucible does not specifically recognize: any value assigned to a
+// name that reads as an API/application key and is long/mixed enough to be key-shaped.
+// Deliberately anchored to key-like names (not raw entropy scanning) to avoid flagging
+// ordinary long strings; findingsForText skips this when a KNOWN_API_KEY_PATTERNS entry
+// already matched the same value so one identifier is never double-reported.
+const GENERIC_API_KEY_RULE = [GENERIC_API_KEY_TYPE, /\b(?:api|app|client|publishable|public)[_-]?key\b\s*[:=]\s*['"`]((?=[^'"`]*[0-9])(?=[^'"`]*[A-Za-z])[A-Za-z0-9_-]{20,})['"`]/i];
+
 const TEXT_RULES = [
   ['encoded PowerShell execution', /powershell(?:\.exe)?[^\r\n]{0,160}(?:-[Ee](?:ncodedCommand)?\s+|frombase64string\s*\()/i],
   ['download-and-execute payload', /(?:invoke-expression|\biex\b)\s*\([^\r\n]{0,200}(?:downloadstring|webclient)|(?:curl|wget)\b[^\r\n|]{0,240}\|\s*(?:sh|bash|zsh|powershell)\b/i],
@@ -12,18 +35,15 @@ const TEXT_RULES = [
   ['keylogging or covert capture behavior', /(?:SetWindowsHookEx|GetAsyncKeyState|RegisterRawInputDevices|CGEventTapCreate|pynput\.keyboard|iohook)[^\r\n]{0,240}(?:fetch\s*\(|requests\.post|https?\.request|socket\.send|webhook)|(?:pyautogui\.screenshot|ImageGrab\.grab|CopyFromScreen)[^\r\n]{0,240}(?:fetch\s*\(|requests\.post|https?\.request|socket\.send|webhook)/i],
   ['clipboard exfiltration behavior', /(?:navigator\.clipboard\.readText|pyperclip\.paste|Clipboard\.GetText)\s*\([^\r\n]{0,240}(?:fetch\s*\(|requests\.post|https?\.request|socket\.send|webhook)/i],
   ['unauthorized microphone or camera capture', /(?:getUserMedia|sounddevice\.rec|pyaudio\.PyAudio|cv2\.VideoCapture)\s*\([^\r\n]{0,240}(?:fetch\s*\(|requests\.post|https?\.request|socket\.send|webhook)/i],
-  ['AWS access key', /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/],
-  ['Google/Firebase API key requires restriction review', /\bAIza[0-9A-Za-z_-]{35}\b/],
-  ['Slack credential', /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/],
-  ['npm credential', /\bnpm_[A-Za-z0-9]{30,}\b/],
-  ['Stripe live secret', /\bsk_live_[A-Za-z0-9]{16,}\b/],
+  ...KNOWN_API_KEY_PATTERNS,
+  GENERIC_API_KEY_RULE,
   ['client-visible credential storage', /(?:localStorage|sessionStorage)\s*\.\s*setItem\s*\(\s*['"][^'"]*(?:access[_-]?token|refresh[_-]?token|provider[_-]?credential|private[_-]?key|client[_-]?secret)[^'"]*['"]/i],
   ['client-visible secret environment variable', /\b(?:VITE|NEXT_PUBLIC|REACT_APP)_[A-Z0-9_]*(?:SECRET|PRIVATE_KEY|REFRESH_TOKEN|ACCESS_TOKEN)\b/],
   ['service-account private key material', /["']private_key["']\s*:\s*["']-----BEGIN PRIVATE KEY-----/i],
   ['fabricated integration success', /catch\s*(?:\([^)]*\))?\s*\{[^}]{0,300}(?:return\s+\{[^}]{0,120}(?:success|ok)\s*:\s*true|status\s*\(\s*2\d\d\s*\))/i],
 ];
 
-const ARTIFACT_RULE_TYPES = new Set(['AWS access key', 'Google/Firebase API key requires restriction review', 'Slack credential', 'npm credential', 'Stripe live secret', 'client-visible credential storage', 'client-visible secret environment variable', 'service-account private key material']);
+const ARTIFACT_RULE_TYPES = new Set([...KNOWN_API_KEY_PATTERNS.map(([type]) => type), GENERIC_API_KEY_TYPE, 'client-visible credential storage', 'client-visible secret environment variable', 'service-account private key material']);
 
 const SUSPICIOUS_BINARY_EXTENSION = /\.(?:exe|dll|scr|com|msi|msp|cpl|sys|dylib|so(?:\.\d+)*|node|class|jar|wasm)$/i;
 
@@ -50,6 +70,10 @@ function executableMagic(buffer) {
   return null;
 }
 
+function matchesKnownApiKeyShape(candidate) {
+  return KNOWN_API_KEY_PATTERNS.some(([, rule]) => rule.test(candidate));
+}
+
 function findingsForText(value, allowedTypes = null) {
   const content = String(value);
   const findings = [];
@@ -58,6 +82,7 @@ function findingsForText(value, allowedTypes = null) {
     rule.lastIndex = 0;
     const match = rule.exec(content);
     if (match) {
+      if (type === GENERIC_API_KEY_TYPE && matchesKnownApiKeyShape(match[1])) continue;
       const line = content.slice(0, match.index).split(/\r?\n/).length;
       const sourceLine = content.split(/\r?\n/)[line - 1] || '';
       if (/\bpattern\s*:\s*\/.+\/[dgimsuvy]*\s*[,}]/.test(sourceLine)) continue;

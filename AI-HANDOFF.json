@@ -17,6 +17,7 @@
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
     "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
+    "src/security.js": "Security Gate. Detects secrets, unsafe behavior, and public API-key-shaped identifiers (known-provider catalog plus a name-context generic fallback for unrecognized providers) and forces a review finding; never displays or persists a detected value, only fact/type/path/line metadata.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
     ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport with exact documented slower-than-hourly cron schedules and fail-closed schedule-to-tier mapping; it never chooses test files.",
     "governingDocuments/known-bugs/README.md": "Known-bug governance policy.",
@@ -25,7 +26,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T11:17:28Z"
+    "lastActionAt": "2026-08-28T11:34:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -71,42 +72,44 @@
     "twiceWeeklySchedule": "Utility is due Tuesdays and Fridays; scheduled-diagnostics transports only the cadence window."
   },
   "activePlan": {
-    "agent": "GPT-5.6 Sol",
-    "objective": "Make non-persistence of detected public API-key-shaped identifiers a mechanically tested Security invariant.",
-    "currentPrompt": "Crucible must **never Store the detected value** either just the fact it was flagged",
+    "agent": "Claude",
+    "objective": "Broaden Crucible Security's public API-key detection from Google/Firebase only to a wider known-provider catalog plus a generic review finding for unrecognized providers, per the owner's explicit follow-up request after the Nexus incident, while preserving the existing non-persistence invariant.",
+    "currentPrompt": "add all detected public displayed API-key-shaped public identifiers and forces a security review",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "GPT-5.6 Sol",
-      "purpose": "Apply a focused Security persistence invariant and regression-test correction directly in the repository without Work-mode orchestration.",
-      "selectionReason": "The owner explicitly said Work mode is not needed here and this correction is bounded to standing Security tests, governance bookkeeping, and CI verification.",
-      "distinction": "Execution mode is independent from agent identity and workflow; this task is continuing in regular/default mode by owner direction."
+      "agent": "Claude",
+      "purpose": "Extend one detector catalog in src/security.js plus its regression tests; bounded and does not need Work-mode orchestration.",
+      "selectionReason": "Single-file, well-scoped detector extension with existing test conventions to follow.",
+      "distinction": "Execution mode is independent from agent identity and workflow; continuing in regular/default mode."
     },
     "steps": [
-      "Enforce that flagged API identifier values never appear in repository-audit result objects.",
-      "Enforce the same metadata-only contract for generated-artifact security findings.",
-      "Govern the no-display/no-storage rule across logs, artifacts, known-bug records, DEVLOG, handoff metadata, and other persisted outputs.",
-      "Repair sequential connector bookkeeping with one paired AI-HANDOFF.json plus DEVLOG.md commit.",
-      "Verify fresh Self-Test, AI handoff policy, and CodeQL on the final development commit and correct any regression."
+      "Confirm the prior non-persistence-invariant commit (1b7b310) is green on development before building on it.",
+      "Add known-provider public API-key patterns beyond Google/Firebase (Stripe publishable key, Mapbox public token), each forcing its own restriction-review finding.",
+      "Add a name-context-anchored generic fallback rule so a key-shaped identifier from an unrecognized provider still forces a review finding instead of silently passing, avoiding a raw high-entropy scan.",
+      "Ensure the generic fallback never double-reports a value a specific provider rule already caught.",
+      "Preserve non-persistence: no new finding type may display or store the detected value, only type/path/line metadata.",
+      "Add regression coverage for the new specific patterns, the generic fallback (including false-positive guards), the dedupe behavior, and the explicit-allowance suppression path.",
+      "Run the full governed suite and all audits, then verify fresh Self-Test, AI handoff policy, and CodeQL on the pushed commit."
     ],
-    "status": "active",
-    "startedAt": "2026-08-28T11:11:01Z",
-    "lastUpdatedAt": "2026-08-28T11:17:28Z"
+    "status": "complete",
+    "startedAt": "2026-08-28T11:19:00Z",
+    "lastUpdatedAt": "2026-08-28T11:34:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed src/security.js already constructs security findings from metadata only and does not copy regex match text into result objects.",
-      "Added a standing Security regression proving repository audit findings expose only type/path/line metadata and do not serialize the detected API identifier value.",
-      "Added the same non-persistence assertion for generated-artifact security findings.",
-      "Governed that detected identifier values must never be persisted in logs, artifacts, known-bug records, DEVLOG, handoff metadata, or other Crucible outputs.",
-      "Observed AI handoff policy #146 fail on the sequential connector bookkeeping shape while CodeQL #172 succeeded; preparing a paired corrective commit without weakening Security."
+      "Added KNOWN_API_KEY_PATTERNS entries for Stripe publishable key (pk_live_/pk_test_) and Mapbox public token (pk.eyJ...), each labeled '...requires restriction review' like the existing Google/Firebase entry.",
+      "Added GENERIC_API_KEY_RULE: a name-context-anchored fallback (apiKey/api_key/appKey/clientKey/publishableKey/publicKey assigned to a 20+ char mixed alnum string) labeled 'unrecognized public API-key-shaped identifier requires security review', deliberately not a raw entropy scan.",
+      "Added a dedupe guard in findingsForText so the generic fallback is skipped when its captured value already matches a known-provider pattern, so one identifier is never reported twice.",
+      "Confirmed via manual exercise and 5 new regressions in test/security.test.js that: known providers still fire their specific type; unrecognized-but-key-shaped values fire the generic type under camelCase and SNAKE_CASE names; short placeholders and all-digit/all-letter values are correctly ignored; the generic finding can only be suppressed via the same explicit file-and-rule allow-list mechanism Firebase already uses.",
+      "Added src/security.js to governingDocuments to reflect its now-broader owner-mandated Security role."
     ],
     "verification": [
-      "The regression uses only synthetic API-key-shaped fixtures and checks absence of the synthetic value from serialized audit results.",
-      "CodeQL #172 succeeded on the sequential bookkeeping tip; fresh final-SHA verification is still required after the paired correction."
+      "npm run test:all: 307/307 passing (16/16 in test/security.test.js), Orchestrator full-system proof included.",
+      "npm run audit:security passes against the real repository with zero self-flags from the new rules.",
+      "All other pre-push audits (lint:workflows, docs:check, validate, audit:clutter, audit:privacy, audit:ai-conflict-governance, audit:governance, audit:design-brief, audit:core-ref, audit:authenticity) pass."
     ],
     "remaining": [
-      "Create one paired bookkeeping commit that changes AI-HANDOFF.json and DEVLOG.md together.",
-      "Verify fresh Self-Test, AI handoff policy, and CodeQL for that final commit and fix any failure until green or a genuine hard blocker is reached.",
+      "Push this commit to development and verify fresh Self-Test, AI handoff policy, and CodeQL go green on the exact pushed SHA.",
       "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }

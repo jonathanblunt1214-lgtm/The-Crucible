@@ -2,21 +2,32 @@
 
 ## Shared AI handoff
 
-- **Agent:** GPT-5.6 Sol.
-- **Execution mode:** `regular/default`, explicitly continued here because the owner said Work mode is not needed for this task.
+- **Agent:** Claude.
+- **Execution mode:** `regular/default`; this is a bounded, single-file detector-catalog extension that does not need Work-mode orchestration.
 - **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, owner prompt, communication policy, verification, and remaining work.
-- **Actual current step:** The API-identifier non-persistence invariant is implemented and governed; AI handoff policy #146 exposed only the sequential connector bookkeeping shape, so the current step is a paired corrective commit followed by exact-SHA hosted verification.
-- **Security rule:** Recognized public API-key-shaped identifiers trigger Security review, but Crucible never displays or stores the detected value. Findings and persisted outputs may record only the fact/type plus non-secret remediation metadata such as path and line; intentional retention still requires an explicit file-and-rule allowance after review.
+- **Actual current step:** Broadened Security's public API-key detection from Google/Firebase only to a small catalog of other known-provider public identifiers (Stripe publishable key, Mapbox public token) plus a name-context generic fallback that forces a review finding for key-shaped identifiers from providers Crucible does not specifically recognize, exactly as the owner requested after the Nexus incident. Non-persistence (never display or store the detected value) is preserved for every one of these new finding types, matching the existing invariant.
+- **Security rule:** Recognized public API-key-shaped identifiers trigger Security review, but Crucible never displays or stores the detected value. Findings and persisted outputs may record only the fact/type plus non-secret remediation metadata such as path and line; intentional retention still requires an explicit file-and-rule allowance after review. This now applies across the whole known-provider catalog plus the generic unrecognized-provider fallback, not only Google/Firebase.
+- **Detector design note:** The unrecognized-provider fallback is name-context-anchored (`apiKey`/`api_key`/`appKey`/`clientKey`/`publishableKey`/`publicKey` assigned to a mixed alnum string of 20+ characters), not a raw high-entropy scan, to avoid excessive false positives; it also skips a value already matched by a known-provider pattern so one identifier is never double-reported.
 - **Governing behavior:** Adapt reconciles drift against current repository, tool, configuration, and available upstream evidence; Persevere tries safe supported evidence and recovery paths; Overcome accepts only verified repair/re-check or explicitly escalates genuinely ambiguous, semantic, or high-risk decisions for human review.
 - **Safety boundary:** Unknown, stale, or unrecognized is not itself a failure. Known unsafe findings still block, and the engine never invents business logic or silently resolves ambiguous semantic intent.
 - **Retention:** `src/handoffPolicy.js` mechanically rejects more than 10 Command log sessions and rejects retained sessions older than 180 days. This archive is pruned to the 10 newest sessions; all are from 2026-08-28.
 - **Schedule enforcement:** `.github/workflows/scheduled-diagnostics.yml` carries the exact documented daily, Tuesday/Friday, Monday, and first-of-month cron strings and fails closed if GitHub reports an unrecognized scheduled trigger instead of silently substituting `daily`.
-- **Estimated completion:** `2026-08-28 07:21:00 EDT` is a revised best-effort estimate for paired bookkeeping and exact-SHA CI verification, not a guarantee or mechanically fixed completion time.
-- **Verification state:** The regression and Security governance are committed; CodeQL #172 succeeded on the sequential tip, AI handoff #146 rejected its bookkeeping shape, and fresh Self-Test, AI handoff policy, and CodeQL are required on the paired final commit. No promotion to `release` or `main` is authorized.
+- **Verification state:** `npm run test:all` passes 307/307 including 5 new Security regressions for the broadened catalog and its false-positive guards; all pre-push audits pass; fresh Self-Test, AI handoff policy, and CodeQL are required on this commit. No promotion to `release` or `main` is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: broaden public API-key detection beyond Google/Firebase — 2026-08-28T11:19:00Z — Claude — mode:regular/default
+
+- Fetched `origin/development` and fast-forwarded to `1b7b310` (the paired non-persistence-invariant commit); confirmed all required checks were green on that exact SHA via the GitHub MCP tools — started 2026-08-28T11:19:00Z, finished 2026-08-28T11:22:00Z, exit 0.
+- Read `src/security.js` and `test/security.test.js` in full; confirmed only the Google/Firebase `AIza` pattern existed under the "requires restriction review" category, so the owner's "add all detected public displayed API-key-shaped public identifiers" request was not yet implemented — started 2026-08-28T11:22:00Z, finished 2026-08-28T11:24:00Z, exit 0 diagnostic.
+- Added `KNOWN_API_KEY_PATTERNS` (Stripe publishable key, Mapbox public token, alongside the existing Google/Firebase, AWS, Slack, npm, and Stripe-secret entries) plus one name-context-anchored `GENERIC_API_KEY_RULE` fallback that forces a review finding for key-shaped identifiers from providers Crucible does not specifically recognize, with a dedupe guard so a value a specific rule already caught is never also reported generically — started 2026-08-28T11:24:00Z, finished 2026-08-28T11:29:00Z, exit 0.
+- `node -e ...` manual exercises confirmed: known providers still fire their specific type; an unrecognized-but-key-shaped value fires the generic type under both camelCase and SNAKE_CASE key names; short placeholders and all-digit/all-letter values are correctly ignored; a Firebase-shaped value under a generic `apiKey` name fires only the Firebase-specific type, never both — started 2026-08-28T11:29:00Z, finished 2026-08-28T11:31:00Z, exit 0.
+- Added 5 new regressions to `test/security.test.js` covering the new specific patterns, the generic fallback (positive and false-positive-guard cases), the dedupe behavior, and that the generic finding can only be suppressed by the same explicit file-and-rule allow-list mechanism Firebase already uses — `node --test test/security.test.js` — started 2026-08-28T11:31:00Z, finished 2026-08-28T11:33:00Z, exit 0 (16/16).
+- `npm run test:all` — started 2026-08-28T11:33:30Z, finished 2026-08-28T11:33:35Z, exit 0 (307/307, Orchestrator full-system proof passed).
+- `npm run lint:workflows`, `docs:check`, `validate`, `audit:clutter`, `audit:privacy`, `audit:security`, `audit:ai-conflict-governance`, `audit:governance`, `audit:design-brief`, `audit:core-ref`, `audit:authenticity` — started 2026-08-28T11:33:40Z, finished 2026-08-28T11:34:00Z, exit 0 for every listed check; `audit:security` confirms the new rules do not self-flag the repository.
+- `git add`, `git commit`, `git push` — run after this entry and `AI-HANDOFF.json` are finalized.
 
 ### Session: prohibit API identifier persistence — 2026-08-28T11:11:01Z — GPT-5.6 Sol — mode:regular/default
 
@@ -83,7 +94,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 
 - Checked post-push Actions for `be46b479e3c69d009b03da383c85780be11a9234`; Self-Test #180 failed while policy/conflict/monitoring gates passed and CodeQL #141 remained in progress — started 2026-08-28T08:31:00Z, finished 2026-08-28T08:33:00Z, exit 1 for Self-Test.
 - Inspected Self-Test #180 jobs and corrected only the V8 probe boundary exposed by the failure — started 2026-08-28T08:33:00Z, finished 2026-08-28T08:35:00Z, exit 0 diagnostic/correction.
-
-### Session: expand standing category tests — 2026-08-28T08:16:00Z — GPT-5.6 Sol — mode:regular/default
-
-- Read governance, checked the pre-change Actions baseline, and pushed ten standing test cases across the existing Code, Security, Utility, and Maintenance files with paired governance updates — started 2026-08-28T08:16:00Z, finished 2026-08-28T08:31:00Z, exit 0.
