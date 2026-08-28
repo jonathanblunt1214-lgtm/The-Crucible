@@ -13,6 +13,7 @@ const TEXT_RULES = [
   ['clipboard exfiltration behavior', /(?:navigator\.clipboard\.readText|pyperclip\.paste|Clipboard\.GetText)\s*\([^\r\n]{0,240}(?:fetch\s*\(|requests\.post|https?\.request|socket\.send|webhook)/i],
   ['unauthorized microphone or camera capture', /(?:getUserMedia|sounddevice\.rec|pyaudio\.PyAudio|cv2\.VideoCapture)\s*\([^\r\n]{0,240}(?:fetch\s*\(|requests\.post|https?\.request|socket\.send|webhook)/i],
   ['AWS access key', /\b(?:AKIA|ASIA)[A-Z0-9]{16}\b/],
+  ['Google/Firebase API key requires restriction review', /\bAIza[0-9A-Za-z_-]{35}\b/],
   ['Slack credential', /\bxox[baprs]-[A-Za-z0-9-]{10,}\b/],
   ['npm credential', /\bnpm_[A-Za-z0-9]{30,}\b/],
   ['Stripe live secret', /\bsk_live_[A-Za-z0-9]{16,}\b/],
@@ -22,7 +23,7 @@ const TEXT_RULES = [
   ['fabricated integration success', /catch\s*(?:\([^)]*\))?\s*\{[^}]{0,300}(?:return\s+\{[^}]{0,120}(?:success|ok)\s*:\s*true|status\s*\(\s*2\d\d\s*\))/i],
 ];
 
-const ARTIFACT_RULE_TYPES = new Set(['AWS access key', 'Slack credential', 'npm credential', 'Stripe live secret', 'client-visible credential storage', 'client-visible secret environment variable', 'service-account private key material']);
+const ARTIFACT_RULE_TYPES = new Set(['AWS access key', 'Google/Firebase API key requires restriction review', 'Slack credential', 'npm credential', 'Stripe live secret', 'client-visible credential storage', 'client-visible secret environment variable', 'service-account private key material']);
 
 const SUSPICIOUS_BINARY_EXTENSION = /\.(?:exe|dll|scr|com|msi|msp|cpl|sys|dylib|so(?:\.\d+)*|node|class|jar|wasm)$/i;
 
