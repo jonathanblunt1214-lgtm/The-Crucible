@@ -19,11 +19,21 @@
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
     ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport. It supplies cadence windows and never chooses test files.",
     "governingDocuments/known-bugs/README.md": "Known-bug governance policy.",
-    "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger."
+    "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger.",
+    "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity, America/New_York timestamping, completion/interruption check-ins, and continue-until-done behavior."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T08:39:00Z"
+    "lastActionAt": "2026-08-28T08:59:28Z"
+  },
+  "agentCommunicationPolicy": {
+    "timezone": "America/New_York",
+    "timestampRule": "Every attended progress, completion, and interruption check-in begins with YYYY-MM-DD HH:MM:SS EDT when daylight-saving time is active or YYYY-MM-DD HH:MM:SS EST otherwise; never use ambiguous ET or UTC-only user updates.",
+    "progressRule": "For non-trivial attended work, send an initial update and continue user-visible updates at least every 60 seconds, normally also after every 2-3 substantive tool/action calls when sooner, with concrete completed/current/blocker state.",
+    "completionTimeRule": "Include an exact America/New_York completion timestamp only when it is mechanically known from an already scheduled or externally fixed event. Never fabricate or promise an ETA when higher-priority platform rules prohibit it or completion time is not actually knowable.",
+    "completionCheckInRule": "As soon as attended work is actually complete, automatically send a timestamped completion check-in in the same session with concrete result, verification, and relevant commit/run identifiers.",
+    "interruptionCheckInRule": "If hard usage/tool/session limits, unavailable required capability, safety, or owner-governance boundaries stop work, immediately send a timestamped interruption check-in stating completed work, exact stop reason, and remaining work; update repository handoff first when write capability remains.",
+    "continueUntilDoneRule": "For safe in-scope authorized work, do not voluntarily stop, defer, or hand work back while executable work remains. Continue through implementation, correction, and required verification until complete or until a hard usage/tool/session limit or higher-priority platform, safety, or owner-governance boundary prevents further execution."
   },
   "temporaryInfrastructure": {
     "syntheticTestRequestCommitTransport": {
@@ -52,32 +62,31 @@
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Add every identified missing test type into the appropriate existing standing category without creating new top-level categories or weakening the Orchestrator/Cadence checks-and-balances architecture.",
-    "currentPrompt": "add them all into the appropriate standing category  ",
+    "objective": "Make attended AI progress and completion continuity a mandatory repository governance rule with America/New_York EDT/EST timestamps, automatic completion/interruption check-ins, and continue-until-done behavior while preserving higher-priority platform constraints.",
+    "currentPrompt": "where are my updates while you work? I'm getting tired of them going poof and having to be like where is my updates, where are my time timestamps in EST/DST hard code those requirements into agent, along with an exact time something should be done (if its a task that you know takes 2 minute you give me a time stamp it should be completed) with automatic check in once complete. also add into agent a do not stop until task is completed or usage runs out whichever comes first rule",
     "steps": [
-      "Preserve all ten standing test additions in the existing four categories.",
-      "Make Code coverage derive actual ../src dependencies from the standing Code test files rather than assuming same-named source files.",
-      "Push the paired correction to development and verify Self-Test and CodeQL until both are green."
+      "Add a mandatory governing document for attended-agent update cadence, America/New_York EDT/EST timestamps, completion/interruption check-ins, and continue-until-done behavior.",
+      "Record the same requirements structurally in AI-HANDOFF.json while explicitly preserving the higher-priority no-fabricated-ETA boundary.",
+      "Commit the policy atomically with the required DEVLOG handoff update on development.",
+      "Verify the resulting development Self-Test and CodeQL until both are green or a hard execution boundary prevents further work."
     ],
     "status": "active",
-    "startedAt": "2026-08-28T08:16:00Z",
-    "lastUpdatedAt": "2026-08-28T08:39:00Z"
+    "startedAt": "2026-08-28T08:56:21Z",
+    "lastUpdatedAt": "2026-08-28T08:59:28Z"
   },
   "handoffNotes": {
     "completed": [
-      "Pushed ten substantive standing test cases in commit be46b479e3c69d009b03da383c85780be11a9234: three Code, two Security, two Utility, and three Maintenance.",
-      "Self-Test #180 exposed the original cross-process V8 coverage assumption; commit b15da15c11e59599cdd5e452913b037cf25ebcd3 corrected that boundary but Self-Test #181 exposed a second assumption: Code test filenames do not always map to same-named source modules.",
-      "Prepared a durable coverage probe that reads the five standing Code test files, extracts their real ../src module dependencies, loads those actual modules under NODE_V8_COVERAGE, and separately executes the existing Code tests."
+      "Refreshed DEVLOG first and re-read the governing policy set after the greater-than-10-minute idle threshold.",
+      "Drafted governingDocuments/agent-progress-policy.md with mandatory timestamped progress continuity, completion/interruption check-ins, and continue-until-done behavior.",
+      "Encoded the same rules in agentCommunicationPolicy, including the required America/New_York DST-aware EST/EDT labels and the platform-compatible boundary against fabricated future completion promises."
     ],
     "verification": [
-      "Self-Test #181 on b15da15c11e59599cdd5e452913b037cf25ebcd3 failed consistently across the matrix at the Code coverage test because ./src/engine does not exist; CLI and dependency-behavior additions passed in the inspected job.",
-      "AI handoff policy #116, AI conflict governance #112, Block locked monitoring PRs #100, and Sync CI monitoring branch #40 succeeded on b15da15c11e59599cdd5e452913b037cf25ebcd3.",
-      "CodeQL #142 was still in progress when this correction was assembled."
+      "Development remained at 9b5120a2313dbe5dc2cc77091d96676860348403 before this mutation.",
+      "Self-Test #182 for 9b5120a2313dbe5dc2cc77091d96676860348403 completed successfully before this governance change."
     ],
     "remaining": [
-      "Commit the dependency-derived coverage probe with paired DEVLOG update and fast-forward development.",
-      "Verify fresh Self-Test and CodeQL and repair any remaining regression until both are green.",
-      "Preserve for owner review the prior AI-CONFLICTS and temporary commit-message transport concerns.",
+      "Create and push the atomic development commit containing the new governing policy, AI-HANDOFF.json, and DEVLOG.md.",
+      "Verify fresh Self-Test and CodeQL for that exact commit and repair any current regression until both are green.",
       "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }
