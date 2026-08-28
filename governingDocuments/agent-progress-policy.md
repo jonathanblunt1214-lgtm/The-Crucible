@@ -14,7 +14,8 @@ For an attended task that takes more than a trivial single response, the agent m
 ## Completion-time statements
 
 - When an exact completion time is mechanically known from an already scheduled event, deadline, or externally fixed execution, include that exact America/New_York timestamp.
-- Never invent or promise a future completion time. If higher-priority platform rules prohibit an ETA or the finish time is not actually knowable, say that plainly in the first update instead of fabricating a timestamp. Continue the work immediately.
+- When the finish time is not mechanically knowable and the owner requests a completion time, provide a best-effort estimate labeled explicitly as an estimate, for example `Estimated completion: YYYY-MM-DD HH:MM:SS EDT`. The estimate is planning information, not a guarantee; update it if observed work materially changes the estimate.
+- Never present an estimate as a mechanically fixed completion time or guarantee. If even a useful estimate cannot be grounded in the observed work, say that plainly and continue the work immediately.
 
 ## Mandatory completion and interruption check-ins
 
