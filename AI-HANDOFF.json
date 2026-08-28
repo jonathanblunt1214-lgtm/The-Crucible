@@ -13,7 +13,7 @@
     "src/testCadence.js": "Governed Orchestrator entry point and run-governance wrapper.",
     "src/testCadenceCore.js": "Orchestrator selection side of the checks-and-balances system. It receives cadence obligations, classifies new tests through the independent matcher when necessary, selects tests, preserves legacy cadence metadata contracts, and proves cadence coverage before execution.",
     "src/testCadencePolicy.js": "Independent cadence authority. It declares only when categories are due and never selects or executes tests.",
-    "src/testFeatureClassifier.js": "Independent closest-feature classifier for newly discovered unmapped tests. Explicit mappings remain authoritative; a unique evidence-backed closest match may supply a category, while ties or no evidence fail closed. It cannot set cadence or execute tests.",
+    "src/testFeatureClassifier.js": "Independent closest-feature classifier for newly discovered unmapped tests. Explicit mappings remain authoritative; a unique evidence-backed closest match supplies a category. Unresolved ambiguity is isolated to the affected test, safe classified tests continue, and incomplete requested coverage must be reported rather than faked.",
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
@@ -24,7 +24,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T09:05:13Z"
+    "lastActionAt": "2026-08-28T09:19:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -49,11 +49,12 @@
   "testCadencePolicy": {
     "systemArchitecture": "Orchestrator, Cadence, closest-feature classification, and reconciliation operate as one governed testing system while remaining independent checks-and-balances authorities; they must not be collapsed into one selector.",
     "cadenceAuthority": "Cadence decides only when a category is due. It produces a due-category obligation and never selects files, classifies new tests, interprets natural-language scope, or executes tests.",
-    "classifierAuthority": "The independent closest-feature classifier is fallback-only for newly discovered tests absent from the explicit category map. It compares the new test with known feature/test evidence and may return only a unique closest category. It cannot choose run scope, set frequency, or execute tests; ties and zero-evidence matches fail closed.",
+    "classifierAuthority": "The independent closest-feature classifier is fallback-only for newly discovered tests absent from the explicit category map. It compares the new test with known feature/test evidence and returns a category only for a unique closest match. It cannot choose run scope, set frequency, or execute tests.",
+    "classificationAmbiguityRule": "Isolate ambiguity, continue safe tests, never fake complete coverage. If a newly discovered test remains unresolved after independent closest-feature classification, quarantine that test from guessed execution and report its unresolved classification while continuing all other safely classified tests selected by the Orchestrator. Do not globally abort unrelated safe tests solely because one new test is unresolved. If the unresolved test is required to satisfy an explicit owner request or cadence obligation, mark that requested coverage incomplete and do not report the obligation or suite as fully passing until the ambiguity is resolved and the required test is executed.",
     "explicitMappingRule": "Existing explicit category mappings are authoritative and are never overridden by the closest-feature classifier.",
     "orchestratorAuthority": "The Orchestrator alone selects categories/subcategories/test files and execution scope from explicit requests, change impact, dependencies, cadence obligations, and validated classifications.",
-    "balanceRule": "For cadence-triggered work, Cadence declares categories due; the Orchestrator independently resolves them into concrete tests; reconciliation rejects the run before execution if any due category is omitted. Neither authority silently overrides the other.",
-    "explicitRequestRule": "A specific owner test request is interpreted and run immediately by the Orchestrator. Cadence and classification cannot delay, randomize, narrow, or replace an explicit request.",
+    "balanceRule": "For cadence-triggered work, Cadence declares categories due; the Orchestrator independently resolves them into concrete tests; reconciliation rejects a claim of complete cadence coverage if any due category is omitted. Neither authority silently overrides the other.",
+    "explicitRequestRule": "A specific owner test request is interpreted and run immediately by the Orchestrator. Cadence and classification cannot delay, randomize, narrow, or replace an explicit request; unresolved classification may make coverage incomplete but must not suppress unrelated safe testing.",
     "categoryCadence": { "code": "every-push", "security": "daily", "utility": "twice-weekly", "maintenance": "weekly" },
     "standingTestExpansionRule": "New standing test cases may be added inside an already explicitly categorized test file when they belong to that same category. They inherit that file's governed category and the category's cadence without creating a redundant test-file mapping. New standalone .test.js files still require explicit classification or independent closest-feature fallback.",
     "codeCriticalityRule": "Code is due on every push and pull request. The Orchestrator independently selects the complete Code category required to satisfy that cadence obligation.",
@@ -62,35 +63,33 @@
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Finish repository governance so bookkeeping tracks the actual current step, command history is bounded to 10 sessions and 180 days, slower-than-hourly workflow schedules are mechanically exact, and requested completion times may be communicated as estimates rather than guarantees.",
-    "currentPrompt": "then make the work will be completed in: an estimation. I really don't care if its a system rule fine a work around\n\n\nnow finish: It is **not finished yet**, so I’m not marking it complete.\nWhat is current now: Issue #13 is closed, locked, and retired as `not planned`; the previous development correction reached **Self-Test #182 successfully**.\nWhat remains incomplete is the repository governance commit that makes bookkeeping stay on the **actual current step**, applies the **10-session / 180-day retention**, and mechanically enforces the documented exact schedules for workflows slower than hourly. The existing `DEVLOG.md` is still behind, so I am not treating the work as done.",
+    "objective": "Finish current governance work and make unresolved new-test classification a locally isolated condition: continue safe tests while preventing false complete-coverage claims.",
+    "currentPrompt": "make that a testing rule isolate ambiguity, continue safe tests, never fake complete coverage.",
     "steps": [
-      "Advance the structured plan and DEVLOG Shared AI handoff to the actual current step instead of leaving completed prior work marked active.",
-      "Preserve and mechanically enforce the 10-session / 180-day DEVLOG command-log retention policy.",
-      "Mechanically enforce exact slower-than-hourly scheduled-diagnostics cron transports and fail closed on unknown schedule strings.",
-      "Treat requested future completion timestamps as explicitly labeled estimates when duration is not mechanically knowable.",
-      "Verify the resulting development Self-Test and CodeQL and repair any current regression until both are green or a hard execution boundary prevents further work."
+      "Record the testing rule structurally in governance.",
+      "Implement isolated unresolved-classification handling so safe classified tests can continue.",
+      "Add standing Maintenance tests proving ambiguity is isolated and complete coverage cannot be falsely claimed.",
+      "Keep DEVLOG and AI-HANDOFF at the actual current step with the bounded 10-session / 180-day archive.",
+      "Verify fresh Self-Test and CodeQL and repair any current regression until both are green or a hard execution boundary prevents further work."
     ],
     "status": "active",
-    "startedAt": "2026-08-28T09:05:13Z",
-    "lastUpdatedAt": "2026-08-28T09:05:13Z"
+    "startedAt": "2026-08-28T09:19:00Z",
+    "lastUpdatedAt": "2026-08-28T09:19:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Issue #13 is closed, locked, and retired as not planned.",
-      "The previous development correction reached Self-Test #182 successfully.",
-      "The handoff validator already mechanically enforces no more than 10 command-log sessions and rejects sessions older than 180 days.",
-      "Updated scheduled-diagnostics so the documented daily, twice-weekly, weekly, and monthly cron strings are exact and an unrecognized scheduled trigger fails closed instead of silently defaulting to daily.",
-      "Updated communication governance so owner-requested future completion timestamps may be clearly labeled estimates rather than fabricated guarantees."
+      "Issue #13 remains closed, locked, and retired as not planned.",
+      "Established the owner testing rule: isolate ambiguity, continue safe tests, never fake complete coverage.",
+      "Clarified that unresolved classification is local to the affected new test and must not globally abort unrelated safely classified testing."
     ],
     "verification": [
-      "Development tip before this finishing sequence was 6d81c8da256965d5c81c299e472b8d7698ceda5b.",
-      "Self-Test #182 for the preceding development correction completed successfully.",
-      "DEVLOG archive currently contains exactly 10 sessions, satisfying the documented session cap; all retained entries are dated 2026-08-28 and therefore inside the 180-day limit."
+      "Current classifier returns structured unresolved results for ties, no evidence, and unreadable candidates.",
+      "Current Orchestrator still globally validates classification before selection, so implementation must be changed to satisfy the new isolation rule rather than merely documenting it."
     ],
     "remaining": [
-      "Update DEVLOG.md to this actual current step and retain exactly the bounded current archive.",
-      "Verify fresh Self-Test and CodeQL for the finishing development state and repair any current regression until both are green.",
+      "Change Orchestrator classification handling and add regression tests for isolated ambiguity and incomplete-coverage reporting.",
+      "Update DEVLOG to the same actual step and preserve its 10-session / 180-day bound.",
+      "Verify fresh Self-Test and CodeQL for the completed development state.",
       "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }
