@@ -18,36 +18,47 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T00:12:00Z"
+    "lastActionAt": "2026-08-28T00:30:00Z"
+  },
+  "temporaryInfrastructure": {
+    "syntheticTestRequestCommitTransport": {
+      "status": "temporary-workaround",
+      "notTargetArchitecture": true,
+      "description": "The CRUCIBLE TEST REQUEST synthetic commit-message transport exists only because the current ChatGPT/GitHub integration cannot directly create the required Orchestrator invocation. It is a workaround, not the intended architecture.",
+      "replacementRequirement": "Replace and remove this workaround as soon as a supported direct integration or direct connection exists that can pass the user's natural-language test request to the Orchestrator without manufacturing a repository commit.",
+      "targetArchitecture": "User test request -> supported direct integration/connection -> Orchestrator -> Orchestrator alone selects and runs tests -> results.",
+      "standingOwnerAuthorization": "The owner explicitly authorizes the governed agent to perform this specific replacement as soon as the supported direct integration/connection capability exists. No additional owner approval is required solely to replace and remove the synthetic test-request transport.",
+      "scopeBoundary": "This standing authorization applies only to replacing the temporary test-request transport with a genuine direct integration/connection. It does not authorize unrelated repository changes or promotion to main/release."
+    }
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Run the owner's requested system-wide code test by transporting the request unchanged to the governed Orchestrator and reporting only the Orchestrator-selected scope and result.",
-    "currentPrompt": "run a system wide code test",
+    "objective": "Record the synthetic CRUCIBLE TEST REQUEST commit transport as temporary workaround infrastructure and preserve standing owner authorization to replace it immediately when a supported direct integration or connection exists.",
+    "currentPrompt": "make sure that in the governing document this is a work around to be fixed as soon as possible as long as integration or direct connection exists",
     "steps": [
-      "Create one governed development push whose commit message transports the exact test request: run a system wide code test.",
-      "Let src/testCadence.js alone interpret the request and choose the test scope.",
-      "Inspect Self-Test output for the Orchestrator decision, selected tests, progress updates if the run exceeds one minute, and pass/fail result.",
-      "If a failure is found, preserve the governed known-bug evidence and report its criticality and required re-test lifecycle.",
-      "Confirm the required Self-Test and CodeQL state for the request commit; do not promote to main or release."
+      "Mark the synthetic test-request commit transport explicitly as a temporary workaround and not the target architecture.",
+      "Define the target architecture as direct request transport to the Orchestrator with no synthetic repository commit.",
+      "Record the owner's standing authorization to replace and remove the workaround as soon as a supported direct integration or connection exists.",
+      "Keep the authorization narrowly scoped; no unrelated main/release promotion is authorized.",
+      "Update DEVLOG.md in the same atomic development commit and verify required CI."
     ],
     "status": "active",
-    "startedAt": "2026-08-28T00:12:00Z",
-    "lastUpdatedAt": "2026-08-28T00:12:00Z"
+    "startedAt": "2026-08-28T00:30:00Z",
+    "lastUpdatedAt": "2026-08-28T00:30:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Accepted the owner's exact request without selecting test files outside the Orchestrator.",
-      "Prepared the governed request transport on development using the CRUCIBLE TEST REQUEST commit-message path."
+      "Owner clarified that the synthetic CRUCIBLE TEST REQUEST commit transport must be governed as a temporary workaround, not target architecture.",
+      "Owner granted standing authority to replace and remove that workaround as soon as a supported direct integration or connection exists."
     ],
     "verification": [
-      "The Orchestrator remains the sole authority for interpreting the phrase 'run a system wide code test' and selecting actual tests.",
-      "Known-bug governance and 60-second heartbeat controls remain in force for this run."
+      "The Orchestrator remains the sole authority for interpreting natural-language test requests and selecting tests.",
+      "No mailbox, comment bus, carrier issue, or other substitute workaround is authorized as the target architecture."
     ],
     "remaining": [
-      "Push the governed request commit to development.",
-      "Inspect the resulting Self-Test decision and result, then confirm CodeQL state.",
-      "Do not promote to main or release unless separately and explicitly instructed."
+      "Commit the governance clarification atomically with DEVLOG.md on development.",
+      "Check Self-Test and CodeQL after the push.",
+      "When a supported direct integration/connection becomes available, replace and remove the synthetic transport under the recorded standing authorization."
     ]
   }
 }
