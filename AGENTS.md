@@ -74,6 +74,33 @@ same or different - can tell how long it has been idle.
   keeps is not lost - it is still retrievable via `git log -p
   DEVLOG.md` - it is just not kept inline, so the file a new session
   reads first stays bounded instead of growing forever.
+- **Every pruned entry is also recorded in `Devlog-Pruned` on `Archive`.**
+  Per explicit owner instruction, whenever a `### Session:` entry is
+  pruned from DEVLOG.md's Command log archive, its exact text must also
+  be appended to the `Devlog-Pruned` file on the `Archive` branch, in the
+  same unit of work, as a normal, visible, distinct commit to that one
+  file only - never a force-push, rebase, or edit to anything else on
+  `Archive`. This is a narrow, standing exception the owner has already
+  granted to `Archive`'s otherwise pull-only rule below, scoped
+  specifically to appending pruned DEVLOG.md sessions to that one file;
+  it does not extend to any other change on `Archive`. `Devlog-Pruned`'s
+  retention floor is time, not count, per explicit owner instruction: at
+  least 364 days of pruned history is always kept - an entry is trimmed
+  only once it is older than that. Its capacity starts at 50 sessions and
+  doubles automatically (100, 200, ...) whenever more than that many
+  sessions fall within the 364-day floor, so the count alone can never
+  force a trim on its own; only age does. `src/handoffPolicy.js` exports
+  `prunedDevlogEntries` (diffs an old/new DEVLOG.md snapshot to find what
+  was pruned), `effectiveDevlogPrunedCapacity` (the doubling-capacity
+  rule), and `appendToDevlogPrunedLedger` (applies both) to do this
+  mechanically rather than by hand; `test/handoffPolicy.test.js` covers
+  all three. Sessions pruned from DEVLOG.md before this ledger existed
+  were deliberately not backfilled by guessing from git history - this
+  repository's history includes concurrent, overlapping edits from
+  multiple AI agents, and a heuristic reconstruction risked fabricating
+  an inaccurate record in what is meant to be an authoritative ledger -
+  they remain retrievable via `git log -p DEVLOG.md` on `development`,
+  same as any entry pruned before the 10-session/180-day bound existed.
 
 The **AI handoff policy** check enforces this automatically via
 `src/handoffPolicy.js`'s `validateDevlogChainOfCustody`: a `Shared AI
@@ -147,7 +174,10 @@ anything that already runs:
   material kept around in case it's useful for a future feature. Never
   push, commit, merge into, force-push, or delete anything on `Archive`
   unless the owner explicitly says so in that exact conversation. Treat it
-  as pull-only.
+  as pull-only. The one standing exception is appending pruned DEVLOG.md
+  sessions to `Devlog-Pruned` on `Archive` - see the "Command log archive"
+  section above; that exception is scoped to that one file only and does
+  not extend to anything else on `Archive`.
 - **`main` is not touched** except by the owner's own explicit, direct
   instruction to promote or release something onto it. Do not merge,
   rebase, or push to `main` on your own initiative.

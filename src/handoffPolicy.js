@@ -41,6 +41,30 @@ const ARCHIVE_ENTRY_MODE = /^### Session: .+? — \d{4}-\d{2}-\d{2}T\d{2}:\d{2}:
 const MAX_ARCHIVE_SESSIONS = 10;
 const MAX_ARCHIVE_AGE_DAYS = 180;
 
+// Devlog-Pruned lives on the reference-only `Archive` branch (a narrow, explicit owner
+// exception to that branch's normal pull-only rule, scoped to this one file): a longer-lived
+// append-only ledger of every "### Session:" entry pruned out of DEVLOG.md's own bounded
+// Command log archive, so pruned chain-of-custody history is not solely dependent on Git
+// history. Its retention floor is time, not count: at least DEVLOG_PRUNED_MAX_AGE_DAYS days of
+// history is always kept. DEVLOG_PRUNED_MAX_ENTRIES is only a starting capacity - if more
+// sessions than that are pruned within the age floor, the effective capacity doubles (and
+// keeps doubling) rather than dropping anything still younger than the age floor. Only entries
+// older than the age floor are ever trimmed.
+const DEVLOG_PRUNED_MAX_ENTRIES = 50;
+const DEVLOG_PRUNED_MAX_AGE_DAYS = 364;
+const DEVLOG_PRUNED_HEADER = `# Devlog-Pruned
+
+Append-only ledger, on the reference-only \`Archive\` branch, of every \`### Session:\` entry pruned from DEVLOG.md's Command log archive on \`development\` (see AGENTS.md). Newest first. Retention floor: at least ${DEVLOG_PRUNED_MAX_AGE_DAYS} days of pruned history is always kept - an entry is trimmed only once it is older than that. Capacity starts at ${DEVLOG_PRUNED_MAX_ENTRIES} sessions and doubles automatically (100, 200, ...) whenever more than that many sessions fall within the ${DEVLOG_PRUNED_MAX_AGE_DAYS}-day floor, so the count never forces a trim on its own. Anything trimmed remains retrievable via \`git log -p Devlog-Pruned\` on \`Archive\`.
+`;
+
+// The starting capacity doubles until it can hold every entry still within the age floor, so the
+// entry count alone never trims a session that is younger than DEVLOG_PRUNED_MAX_AGE_DAYS days.
+function effectiveDevlogPrunedCapacity(entryCount, baseCapacity = DEVLOG_PRUNED_MAX_ENTRIES) {
+  let capacity = baseCapacity;
+  while (capacity < entryCount) capacity *= 2;
+  return capacity;
+}
+
 function extractSection(content, headingText) {
   const escaped = headingText.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   const match = new RegExp(`^${escaped}.*$`, 'm').exec(content);
@@ -90,6 +114,51 @@ function validateDevlogChainOfCustody(content, now = new Date()) {
   return { ok:true, message:`DEVLOG.md references the dev plan and maintains a command chain-of-custody archive (${entries.length}/${MAX_ARCHIVE_SESSIONS} sessions, none older than ${MAX_ARCHIVE_AGE_DAYS} days).` };
 }
 
+function parseSessionEntries(text) {
+  const parts = String(text || '').split(/^### Session: /m).slice(1);
+  return parts.map((part) => {
+    const body = `### Session: ${part}`.replace(/\s+$/, '');
+    const heading = body.split(/\r?\n/, 1)[0];
+    const timestampMatch = /^### Session: .+? — (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z) — /.exec(heading);
+    const timestamp = timestampMatch ? new Date(timestampMatch[1]) : null;
+    return { heading, text: body, timestamp: timestamp && !Number.isNaN(timestamp.getTime()) ? timestamp : null };
+  });
+}
+
+function devlogArchiveEntries(devlogContent) {
+  const archiveSection = extractSection(String(devlogContent || ''), ARCHIVE_SECTION_HEADING);
+  return archiveSection === null ? [] : parseSessionEntries(archiveSection);
+}
+
+// Diffs two DEVLOG.md snapshots (the version before a prune and the version after it) and
+// returns every "### Session:" entry that existed in the old archive but not the new one, in
+// their original newest-first order - the entries an agent must append to Devlog-Pruned.
+function prunedDevlogEntries(oldDevlogContent, newDevlogContent) {
+  const oldEntries = devlogArchiveEntries(oldDevlogContent);
+  const newHeadings = new Set(devlogArchiveEntries(newDevlogContent).map((entry) => entry.heading));
+  return oldEntries.filter((entry) => !newHeadings.has(entry.heading));
+}
+
+// Appends newly pruned entries to the current Devlog-Pruned ledger content and re-applies its
+// retention rule (at least DEVLOG_PRUNED_MAX_AGE_DAYS days always kept; capacity for that window
+// doubles from DEVLOG_PRUNED_MAX_ENTRIES rather than trimming anything still within it), returning
+// the full new ledger content to write back.
+function appendToDevlogPrunedLedger(ledgerContent, newEntries, now = new Date()) {
+  const existing = parseSessionEntries(ledgerContent);
+  const existingHeadings = new Set(existing.map((entry) => entry.heading));
+  const additions = (newEntries || []).filter((entry) => entry && entry.heading && !existingHeadings.has(entry.heading));
+  const dated = [];
+  const undated = [];
+  for (const entry of [...additions, ...existing]) (entry.timestamp ? dated : undated).push(entry);
+  dated.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  const maxAgeMs = DEVLOG_PRUNED_MAX_AGE_DAYS * 24 * 60 * 60 * 1000;
+  const withinAgeFloor = dated.filter((entry) => now.getTime() - entry.timestamp.getTime() <= maxAgeMs);
+  const capacity = effectiveDevlogPrunedCapacity(withinAgeFloor.length + undated.length);
+  const ordered = [...withinAgeFloor, ...undated].slice(0, capacity);
+  const body = ordered.map((entry) => entry.text).join('\n\n');
+  return `${DEVLOG_PRUNED_HEADER}${body ? `\n${body}\n` : ''}`;
+}
+
 function checkHandoffRange(baseSha, headSha, run = spawnSync) {
   if (!SHA_PATTERN.test(baseSha) || !SHA_PATTERN.test(headSha)) {
     return { ok: false, message: 'The AI handoff policy requires exact 40-character base and head commit SHAs.' };
@@ -122,4 +191,18 @@ if (require.main === module) {
   if (!result.ok) process.exitCode = 1;
 }
 
-module.exports = { evaluateHandoffChanges, validateHandoffPlan, validateDevlogChainOfCustody, checkHandoffRange, MAX_ARCHIVE_SESSIONS, MAX_ARCHIVE_AGE_DAYS, ARCHIVE_ENTRY_MODE };
+module.exports = {
+  evaluateHandoffChanges,
+  validateHandoffPlan,
+  validateDevlogChainOfCustody,
+  checkHandoffRange,
+  MAX_ARCHIVE_SESSIONS,
+  MAX_ARCHIVE_AGE_DAYS,
+  ARCHIVE_ENTRY_MODE,
+  prunedDevlogEntries,
+  appendToDevlogPrunedLedger,
+  effectiveDevlogPrunedCapacity,
+  DEVLOG_PRUNED_MAX_ENTRIES,
+  DEVLOG_PRUNED_MAX_AGE_DAYS,
+  DEVLOG_PRUNED_HEADER,
+};
