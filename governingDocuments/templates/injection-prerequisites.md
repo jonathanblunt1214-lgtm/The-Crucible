@@ -2,17 +2,32 @@
 
 This policy applies to every future Crucible injection.
 
-Before any injected Crucible check is activated as a required gate, the injection must verify every non-code prerequisite required by that check, including:
+## Mandatory preflight before package creation
 
-- required development branch existence;
+Before an injection package is finalized or written to a receiving project, the injector MUST inspect the selected Crucible version and the receiving repository to determine every external prerequisite the injected capabilities require.
+
+The preflight must check, as applicable:
+
+- designated development branch existence;
 - required GitHub repository settings;
 - required Actions permissions;
-- required repository or organization secrets;
+- required repository or organization secrets by NAME only, never value;
 - required external-service availability;
-- required branch/ruleset state;
-- any repository-read credential needed by the check.
+- required branch protection or ruleset state;
+- required repository-read credentials and minimum permission scope;
+- any other non-code prerequisite required by an injected check.
 
-A required gate may become active only after all of its prerequisites are positively verified.
+## Injection-file requirement
+
+The exact preflight result MUST be included inside the injection package as `governingDocuments/INJECTION-PREREQUISITES.json` before assimilation starts.
+
+The file must identify each prerequisite, why it is required, whether it was verified, and the remediation needed when it is not verified. Secret values must never be recorded.
+
+An injection package is incomplete if this file is absent, generic, stale, or does not reflect the actual receiving repository and selected Crucible version.
+
+## Activation rule
+
+A required gate may become active only after every prerequisite listed for that gate in `INJECTION-PREREQUISITES.json` is positively verified.
 
 If any prerequisite is missing, unavailable, or unverifiable:
 
