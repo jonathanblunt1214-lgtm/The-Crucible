@@ -31,6 +31,28 @@ test('detects high-confidence exploit, obfuscation, spyware, and secret indicato
   assert.equal(findingsForText('const encoded = Buffer.from(data).toString("base64");').length, 0);
 });
 
+test('flags public Google/Firebase API keys for restriction and deployment-security review without treating the value as output', () => {
+  const syntheticKey = `AIza${'A'.repeat(35)}`;
+  const source = `firebaseWebApiKey: '${syntheticKey}',\nfirebaseProjectId: 'example-project'`;
+  const findings = findingsForText(source);
+  const finding = findings.find((item) => item.type === 'Google/Firebase API key requires restriction review');
+  assert.ok(finding, 'Firebase Web API keys must trigger Security review even when they are intentionally public identifiers');
+  assert.equal(finding.line, 1);
+  assert.doesNotMatch(JSON.stringify(findings), new RegExp(syntheticKey), 'security findings must not echo API-key values');
+});
+
+test('Firebase API-key review findings can only be suppressed by an explicit scoped security allowance', () => {
+  const root = repository();
+  const syntheticKey = `AIza${'B'.repeat(35)}`;
+  fs.writeFileSync(path.join(root, 'publisherConfig.js'), `module.exports = { firebaseWebApiKey: '${syntheticKey}' };\n`);
+  git(root, ['add', 'publisherConfig.js']);
+  const blocked = auditSecurity(root, config());
+  assert.equal(blocked.findings[0].type, 'Google/Firebase API key requires restriction review');
+  assert.equal(blocked.findings[0].path, 'publisherConfig.js');
+  const reviewed = auditSecurity(root, config({ allow:[{ path:'publisherConfig.js', rules:['Google/Firebase API key requires restriction review'] }] }));
+  assert.equal(reviewed.findings.length, 0, 'retaining a public Firebase key requires an explicit file-and-rule security decision');
+});
+
 test('detects expanded keylogging APIs and clipboard/microphone/camera exfiltration', () => {
   const samples = [
     'RegisterRawInputDevices(devices); fetch(exfilUrl, { body: captured })',
@@ -79,10 +101,11 @@ test('blocks suspicious binaries unless explicitly allowed', () => {
   assert.equal(auditSecurity(root, config({ allowBinaries:['tool.exe'] })).findings.length, 0);
 });
 
-test('scans generated text artifacts for credentials', () => {
+test('scans generated text artifacts for credentials and public API keys requiring review', () => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-artifact-'));
   fs.mkdirSync(path.join(root, 'dist'));
-  fs.writeFileSync(path.join(root, 'dist', 'bundle.js'), `const key='${'AKIA'}${'A'.repeat(16)}'`);
+  fs.writeFileSync(path.join(root, 'dist', 'bundle.js'), `const key='${'AKIA'}${'A'.repeat(16)}'; const firebase='AIza${'C'.repeat(35)}'`);
   const result = auditArtifactSecurity(root, { artifacts:['dist'], security:{ enabled:true, maxTextBytes:1_048_576 } });
-  assert.deepEqual(result.findings[0], { type:'AWS access key', path:'dist/bundle.js', line:1 });
+  assert.deepEqual(result.findings.map((finding) => finding.type).sort(), ['AWS access key', 'Google/Firebase API key requires restriction review'].sort());
+  assert.ok(result.findings.every((finding) => finding.path === 'dist/bundle.js' && finding.line === 1));
 });
