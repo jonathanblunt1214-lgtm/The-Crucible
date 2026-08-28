@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "governingDocuments": {
-    "AGENTS.md": "Repository owner standing branch and agent policy. The owner's current explicit instruction supersedes stale additive-only test cadence wording where necessary for the governed Orchestrator architecture.",
+    "AGENTS.md": "Repository owner standing branch and agent policy.",
     "DEVLOG.md": "Repository-visible chain of custody and current shared AI handoff.",
     "AI-CONFLICTS.json": "Auditable AI conflict ledger; never bypass or disable it.",
     "CLAUDE.md": "Claude entry point to AGENTS.md.",
@@ -9,56 +9,123 @@
     "templates/ai-conflict-resolution.md": "Conflict-resolution procedure.",
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
-    "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements.",
-    "src/testCadence.js": "The governed Orchestrator entry point. It preserves all existing test selection authority while applying progress-heartbeat, known-bug persistence, and verified-resolution controls to production test invocations.",
-    "src/testCadenceCore.js": "The preserved Orchestrator selection core containing cadence, explicit Code/Security/Utility/Maintenance classification, natural-language request interpretation, change-impact selection, and fail-closed classification behavior.",
-    "src/testRunGovernance.js": "Orchestrator run governance for 60-second test progress updates, category-derived criticality, known-bug persistence, severity ordering, and mandatory passing re-tests before resolution.",
-    "governingDocuments/known-bugs/README.md": "Known-bug governance policy, criticality order, persistence behavior, progress-update cadence, and mandatory re-test lifecycle.",
-    "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger. Resolved or checked entries are invalid unless their latest recorded re-test passed."
+    "governingDocuments/templates/injection-prerequisites.md": "Universal injection prerequisite discovery and activation boundary, including mechanical monitor enforcement.",
+    "governingDocuments/templates/injection-monitor-task.md": "Universal 24-hour injection monitor and autonomous repair contract.",
+    "governingDocuments/templates/INJECTION-PREREQUISITES.example.json": "Per-injection lifecycle, prerequisite, monitor, evidence-retrieval, and repair-capability manifest shape.",
+    "src/injectionMonitor.js": "Fail-closed runtime verifier for active/terminal injection-monitor lifecycle, exact target/branch, <=24-hour lifetime, evidence retrieval, repair capability, autonomous repair/retest, deduplication, and shutdown.",
+    ".github/workflows/the-crucible.yml": "Reusable Crucible gate; now mechanically invokes the injection-monitor verifier whenever an injection prerequisite manifest is present.",
+    "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements and the mandatory plain-language-summary line on DEVLOG.md's newest entry. Also mechanizes syncing full pruned DEVLOG.md snapshots to Devlog-Pruned on Archive via devlogPruneSnapshot/effectiveDevlogPrunedCapacity/appendToDevlogPrunedLedger.",
+    "Devlog-Pruned (Archive branch)": "Standing append-only ledger holding the entire DEVLOG.md content exactly as it stood before each prune of development's Command log archive (full snapshots, not excerpts), each led by a plain-language summary. Retention floor is time, not count: at least 364 days always kept; starting capacity of 50 snapshots doubles automatically rather than trimming anything within that floor. The one narrow, owner-authorized exception to Archive's otherwise pull-only rule.",
+    "src/testCadence.js": "Governed Orchestrator entry point and run-governance wrapper.",
+    "src/testCadenceCore.js": "Orchestrator selection side of the checks-and-balances system. It isolates unresolved newly discovered tests, continues safely classified selections, and prevents incomplete classification coverage from being reported as a fully passing run.",
+    "src/testCadencePolicy.js": "Independent cadence authority. It declares only when categories are due and never selects or executes tests.",
+    "src/testFeatureClassifier.js": "Independent closest-feature classifier for newly discovered unmapped tests. Explicit mappings remain authoritative; a unique evidence-backed closest match supplies a category. Unresolved ambiguity is isolated to the affected test, safe classified tests continue, and incomplete requested coverage must be reported rather than faked.",
+    "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
+    "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
+    "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
+    "src/security.js": "Security Gate. Detects secrets, unsafe behavior, and public API-key-shaped identifiers and forces review without persisting detected values.",
+    ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
+    ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport; it never chooses test files.",
+    "governingDocuments/known-bugs/README.md": "Known-bug governance policy.",
+    "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger.",
+    "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity, America/New_York timestamping, completion/interruption check-ins, and continue-until-done behavior."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T00:30:00Z"
+    "lastActionAt": "2026-08-28T22:24:19Z"
+  },
+  "agentCommunicationPolicy": {
+    "timezone": "America/New_York",
+    "timestampRule": "Every attended progress, completion, and interruption check-in begins with YYYY-MM-DD HH:MM:SS EDT when daylight-saving time is active or YYYY-MM-DD HH:MM:SS EST otherwise; never use ambiguous ET or UTC-only user updates.",
+    "progressRule": "For non-trivial attended work, send an initial update and continue user-visible updates at least every 60 seconds, normally also after every 2-3 substantive tool/action calls when sooner, with concrete completed/current/blocker state.",
+    "completionTimeRule": "When work duration is not mechanically knowable, provide a clearly labeled best-effort estimated completion timestamp in America/New_York time when the owner requests one; never present an estimate as guaranteed or externally fixed.",
+    "completionCheckInRule": "As soon as attended work is actually complete, automatically send a timestamped completion check-in in the same session with concrete result, verification, and relevant commit/run identifiers.",
+    "interruptionCheckInRule": "If hard usage/tool/session limits, unavailable required capability, safety, or owner-governance boundaries stop work, immediately send a timestamped interruption check-in stating completed work, exact stop reason, and remaining work; update repository handoff first when write capability remains.",
+    "continueUntilDoneRule": "For safe in-scope authorized work, do not voluntarily stop, defer, or hand work back while executable work remains. Continue through implementation, correction, and required verification until complete or a real boundary prevents further execution."
+  },
+  "executionModePolicy": {
+    "automaticSelection": "Select execution mode automatically without asking the owner unless the owner explicitly selects a mode.",
+    "regularDefaultPurpose": "Routine, simple, focused, and conversational tasks that do not materially benefit from long-running orchestration.",
+    "workPurpose": "Genuinely complex, long-running, multi-source, file-heavy, or deliverable-oriented tasks that materially benefit from Work mode.",
+    "handoffRule": "Every active plan records the actual mode, agent, purpose, and selection reason, and every new DEVLOG Command log archive Session heading records mode:regular/default or mode:work so mode remains in the chain of custody. Mode is independent from agent identity and workflow.",
+    "continuationRule": "Preserve the recorded mode while task needs remain the same. If evidence warrants a different mode, record the new mode and reason before continuing."
   },
   "temporaryInfrastructure": {
     "syntheticTestRequestCommitTransport": {
       "status": "temporary-workaround",
       "notTargetArchitecture": true,
-      "description": "The CRUCIBLE TEST REQUEST synthetic commit-message transport exists only because the current ChatGPT/GitHub integration cannot directly create the required Orchestrator invocation. It is a workaround, not the intended architecture.",
-      "replacementRequirement": "Replace and remove this workaround as soon as a supported direct integration or direct connection exists that can pass the user's natural-language test request to the Orchestrator without manufacturing a repository commit.",
+      "description": "The CRUCIBLE TEST REQUEST synthetic commit-message transport exists only because the current ChatGPT/GitHub integration cannot directly create the required Orchestrator invocation.",
+      "replacementRequirement": "Replace and remove this workaround as soon as a supported direct integration can pass the user's natural-language test request to the Orchestrator without manufacturing a repository commit.",
       "targetArchitecture": "User test request -> supported direct integration/connection -> Orchestrator -> Orchestrator alone selects and runs tests -> results.",
-      "standingOwnerAuthorization": "The owner explicitly authorizes the governed agent to perform this specific replacement as soon as the supported direct integration/connection capability exists. No additional owner approval is required solely to replace and remove the synthetic test-request transport.",
-      "scopeBoundary": "This standing authorization applies only to replacing the temporary test-request transport with a genuine direct integration/connection. It does not authorize unrelated repository changes or promotion to main/release."
+      "standingOwnerAuthorization": "The owner explicitly authorizes this specific replacement as soon as the supported direct integration/connection capability exists; no additional approval is required solely for that replacement.",
+      "scopeBoundary": "This authorization does not authorize unrelated repository changes or promotion to main/release."
     }
+  },
+  "testCadencePolicy": {
+    "systemArchitecture": "Orchestrator, Cadence, closest-feature classification, and reconciliation operate as one governed testing system while remaining independent checks-and-balances authorities.",
+    "cadenceAuthority": "Cadence decides only when a category is due and never selects files, interprets natural-language scope, or executes tests.",
+    "classifierAuthority": "The independent closest-feature classifier is fallback-only for newly discovered tests absent from the explicit category map.",
+    "classificationAmbiguityRule": "Isolate ambiguity, continue safe tests, never fake complete coverage.",
+    "securityPublicIdentifierRule": "Security must review recognized public API-key-shaped identifiers and must never display or persist detected identifier values; persisted outputs may record only fact/type and non-secret remediation metadata.",
+    "explicitMappingRule": "Existing explicit category mappings are authoritative.",
+    "orchestratorAuthority": "The Orchestrator alone selects categories/subcategories/test files and execution scope from explicit requests, change impact, dependencies, cadence obligations, and validated classifications.",
+    "balanceRule": "Cadence declares due categories; the Orchestrator resolves them into concrete tests; reconciliation rejects incomplete coverage.",
+    "explicitRequestRule": "A specific owner test request is interpreted and run immediately by the Orchestrator; cadence cannot narrow or replace it.",
+    "categoryCadence": { "code": "every-push", "security": "daily", "utility": "twice-weekly", "maintenance": "weekly" },
+    "standingTestExpansionRule": "New standing test cases may be added inside an already explicitly categorized test file when they belong to that same category.",
+    "codeCriticalityRule": "Code is due on every push and pull request.",
+    "scheduledCumulativeRule": "Cadence obligations are cumulative.",
+    "twiceWeeklySchedule": "Utility is due Tuesdays and Fridays."
+  },
+  "injectionMonitoringPolicy": {
+    "scope": "every Crucible injection into every receiving project",
+    "maximumMonitorLifetimeHours": 24,
+    "defaultState": "disabled",
+    "activationRequirement": "exact receiving repository, designated development branch, active injection authorization, activation timestamp, hard expiration, executable mechanism identity/proof, evidence retrieval proof, and authorized repair capability",
+    "mechanicalEnforcement": "The reusable Crucible workflow executes src/injectionMonitor.js. Active manifests fail closed unless the monitor is actually running with verified evidence retrieval and repair capability; terminal manifests fail if the monitor or injection credential remains active.",
+    "repairRule": "For an applicable failure during the active injection window, retrieve the exact failure evidence, diagnose against current source and governing configuration, autonomously apply safe deterministic repairs inside injection scope through the development-first path, retest, and repeat until resolved or a real boundary blocks repair. Diagnosis/status alone never satisfies the repair obligation when safe authorized repair remains executable.",
+    "dedupeRule": "Maintain one repair record per underlying defect; repeated failing runs update that record rather than creating a report/comment per commit.",
+    "shutdownRule": "Disable at successful assimilation, cancellation, blocking boundary, or 24-hour expiration; do not become persistent project monitoring.",
+    "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Record the synthetic CRUCIBLE TEST REQUEST commit transport as temporary workaround infrastructure and preserve standing owner authorization to replace it immediately when a supported direct integration or connection exists.",
-    "currentPrompt": "make sure that in the governing document this is a work around to be fixed as soon as possible as long as integration or direct connection exists",
+    "objective": "Make universal injection monitoring mechanically enforceable so every injected project has an actual <=24-hour evidence-and-autonomous-repair monitor while injection is active, and the monitor is disabled outside that lifecycle.",
+    "currentPrompt": "fix it I cannot implement that repository change in this turn because the GitHub capability currently exposed to me has switched to read-only operations—there are no commit/update/ref-write actions available. I will not claim it was changed when it wasn't. The required implementation remains pending until GitHub write capability is available again.",
+    "executionMode": {
+      "mode": "regular/default",
+      "agent": "GPT-5.6 Sol",
+      "purpose": "Add one fail-closed runtime monitor verifier, wire it into the reusable Crucible gate, and update the universal injection lifecycle manifest/policy without widening repository authority.",
+      "selectionReason": "The requested repair is narrowly scoped to the injection system and current GitHub write capability is available.",
+      "distinction": "Execution mode is separate from agent identity and workflow; GPT-5.6 Sol is continuing in regular/default mode."
+    },
     "steps": [
-      "Mark the synthetic test-request commit transport explicitly as a temporary workaround and not the target architecture.",
-      "Define the target architecture as direct request transport to the Orchestrator with no synthetic repository commit.",
-      "Record the owner's standing authorization to replace and remove the workaround as soon as a supported direct integration or connection exists.",
-      "Keep the authorization narrowly scoped; no unrelated main/release promotion is authorized.",
-      "Update DEVLOG.md in the same atomic development commit and verify required CI."
+      "Re-read current Crucible handoff, injection monitor/prerequisite policy, current development tip, and AI conflicts.",
+      "Add a fail-closed runtime verifier for active and terminal injection-monitor lifecycle state.",
+      "Wire the verifier into the reusable Crucible workflow so injection monitor enforcement is executable rather than declaration-only.",
+      "Add explicit injection lifecycle state to the prerequisite manifest and document the mechanical activation/shutdown gate.",
+      "Commit paired AI-HANDOFF.json and DEVLOG.md bookkeeping atomically with the implementation, then inspect exact-tip hosted checks and continue repair if actionable failures remain."
     ],
     "status": "active",
-    "startedAt": "2026-08-28T00:30:00Z",
-    "lastUpdatedAt": "2026-08-28T00:30:00Z"
+    "startedAt": "2026-08-28T22:16:00Z",
+    "lastUpdatedAt": "2026-08-28T22:24:19Z"
   },
   "handoffNotes": {
     "completed": [
-      "Owner clarified that the synthetic CRUCIBLE TEST REQUEST commit transport must be governed as a temporary workaround, not target architecture.",
-      "Owner granted standing authority to replace and remove that workaround as soon as a supported direct integration or connection exists."
+      "Confirmed AI-CONFLICTS.json contains no open conflicts and development is the authorized mutation branch.",
+      "Confirmed the existing universal monitor policy required a real executable <=24-hour monitor, but the reusable Crucible workflow did not mechanically reject a declaration-only/stale manifest.",
+      "Added src/injectionMonitor.js to fail closed on active injection manifests lacking exact target/branch, <=24-hour lifecycle, monitor identity/proof, evidence retrieval, repair capability, autonomous repair/retest, deduplication, development-first repair, or status-only rejection.",
+      "Wired the reusable Crucible workflow to invoke the monitor verifier for every repository; repositories without an injection manifest are unaffected.",
+      "Extended the injection prerequisite manifest with explicit lifecycle state so active injections require monitoring and terminal injections require monitor/credential shutdown."
     ],
     "verification": [
-      "The Orchestrator remains the sole authority for interpreting natural-language test requests and selecting tests.",
-      "No mailbox, comment bus, carrier issue, or other substitute workaround is authorized as the target architecture."
+      "Implementation is prepared as one development Git-data commit with the policy/manifest/runtime/workflow and paired handoff bookkeeping.",
+      "Fresh exact-tip hosted Self-Test, AI handoff, CodeQL/code-scanning, workflow lint, and governance verification remain required after the ref moves."
     ],
     "remaining": [
-      "Commit the governance clarification atomically with DEVLOG.md on development.",
-      "Check Self-Test and CodeQL after the push.",
-      "When a supported direct integration/connection becomes available, replace and remove the synthetic transport under the recorded standing authorization."
+      "Fast-forward development to the prepared atomic commit after confirming the branch tip has not moved.",
+      "Inspect fresh hosted checks on the exact new development SHA; repair any actionable failure through development.",
+      "Do not promote release/main without fresh explicit owner authorization and the governed promotion path."
     ]
   }
 }

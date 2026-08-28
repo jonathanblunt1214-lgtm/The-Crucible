@@ -12,13 +12,14 @@ const environment = {
   GITHUB_TOKEN:'token-for-test',
 };
 
-test('builds a bounded failure notice with the run and redacted report summary', () => {
+test('builds a bounded failure notice with the run and repair summary', () => {
   const notice = buildFailureNotice({ results:[{ action:'security', status:'failed', error:'unsafe content', suggestedFix:'remove it' }] }, environment);
   assert.match(notice, new RegExp(ISSUE_MARKER));
   assert.match(notice, /actions\/runs\/123/);
   assert.match(notice, /the-crucible-report-123-2/);
   assert.match(notice, /\*\*security\*\*: unsafe content/);
-  assert.match(notice, /\*\*Suggested repair:\*\* remove it/);
+  assert.match(notice, /\*\*Repair:\*\* remove it/);
+  assert.match(notice, /updated in place/);
 });
 
 test('creates one issue when no open Crucible failure issue exists', async () => {
@@ -35,17 +36,19 @@ test('creates one issue when no open Crucible failure issue exists', async () =>
   assert.equal(JSON.parse(calls[1].options.body).title, '[The Crucible] Gate failure');
 });
 
-test('comments on the existing open failure issue instead of creating duplicates', async () => {
+test('updates the existing open failure issue instead of adding per-run comments', async () => {
   const calls = [];
   const fetchImpl = async (url, options) => {
     calls.push({ url, options });
     if (options.method === 'GET') return { ok:true, json:async () => [{ number:9, title:'[The Crucible] Gate failure', body:ISSUE_MARKER }] };
-    return { ok:true, json:async () => ({ id:1 }) };
+    return { ok:true, json:async () => ({ number:9 }) };
   };
   const result = await publishFailureIssue(environment, fetchImpl);
-  assert.deepEqual(result, { action:'commented', number:9 });
+  assert.deepEqual(result, { action:'updated', number:9 });
   assert.equal(calls.length, 2);
-  assert.match(calls[1].url, /\/issues\/9\/comments$/);
+  assert.match(calls[1].url, /\/issues\/9$/);
+  assert.equal(calls[1].options.method, 'PATCH');
+  assert.doesNotMatch(calls[1].url, /\/comments$/);
 });
 
 test('refuses unsafe repository identifiers before any API call', async () => {

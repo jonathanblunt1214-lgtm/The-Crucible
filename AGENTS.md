@@ -57,11 +57,24 @@ same or different - can tell how long it has been idle.
   entry, newest first:
 
   ```
-  ### Session: <short label> — <ISO timestamp> — <agent>
+  ### Session: <short label> — <ISO timestamp> — <agent> — mode:<regular/default|work>
+
+  Plain-language summary: <one or two plain-English sentences>
   - `command` — started TIMESTAMP, finished TIMESTAMP, exit CODE
   ```
 
-  List every command with a real effect for that session - tests,
+  The heading's mode field is mandatory and makes execution mode part of the
+  chain of custody, not just current-plan metadata. The newest entry's
+  `Plain-language summary:` line is mandatory too (mechanically enforced by
+  `validateDevlogChainOfCustody`, the same as the mode field): a short,
+  non-technical recap of what the session was actually about and what
+  changed, so the log stays searchable and readable by a human skimming it
+  without having to parse raw commands, diffs, or commit SHAs. It sits
+  alongside the technical command list, not instead of it - the command
+  list remains the mechanical record; the summary is what makes that record
+  findable in plain language. The same requirement applies to every
+  `Devlog-Pruned` snapshot on `Archive` (see below): both logs carry a
+  plain-language summary, not just the archived one. List every command with a real effect for that session - tests,
   audits, lint, git operations - each with a start time and a finish
   time. When adding a new session's entry pushes the archive past 10, or
   any entry's timestamp is more than 180 days old, prune the offending
@@ -73,6 +86,33 @@ same or different - can tell how long it has been idle.
   keeps is not lost - it is still retrievable via `git log -p
   DEVLOG.md` - it is just not kept inline, so the file a new session
   reads first stays bounded instead of growing forever.
+- **Every pruned entry is also recorded in `Devlog-Pruned` on `Archive`.**
+  Per explicit owner instruction, whenever a `### Session:` entry is
+  pruned from DEVLOG.md's Command log archive, its exact text must also
+  be appended to the `Devlog-Pruned` file on the `Archive` branch, in the
+  same unit of work, as a normal, visible, distinct commit to that one
+  file only - never a force-push, rebase, or edit to anything else on
+  `Archive`. This is a narrow, standing exception the owner has already
+  granted to `Archive`'s otherwise pull-only rule below, scoped
+  specifically to appending pruned DEVLOG.md sessions to that one file;
+  it does not extend to any other change on `Archive`. `Devlog-Pruned`'s
+  retention floor is time, not count, per explicit owner instruction: at
+  least 364 days of pruned history is always kept - an entry is trimmed
+  only once it is older than that. Its capacity starts at 50 sessions and
+  doubles automatically (100, 200, ...) whenever more than that many
+  sessions fall within the 364-day floor, so the count alone can never
+  force a trim on its own; only age does. `src/handoffPolicy.js` exports
+  `prunedDevlogEntries` (diffs an old/new DEVLOG.md snapshot to find what
+  was pruned), `effectiveDevlogPrunedCapacity` (the doubling-capacity
+  rule), and `appendToDevlogPrunedLedger` (applies both) to do this
+  mechanically rather than by hand; `test/handoffPolicy.test.js` covers
+  all three. Sessions pruned from DEVLOG.md before this ledger existed
+  were deliberately not backfilled by guessing from git history - this
+  repository's history includes concurrent, overlapping edits from
+  multiple AI agents, and a heuristic reconstruction risked fabricating
+  an inaccurate record in what is meant to be an authoritative ledger -
+  they remain retrievable via `git log -p DEVLOG.md` on `development`,
+  same as any entry pruned before the 10-session/180-day bound existed.
 
 The **AI handoff policy** check enforces this automatically via
 `src/handoffPolicy.js`'s `validateDevlogChainOfCustody`: a `Shared AI
@@ -146,7 +186,10 @@ anything that already runs:
   material kept around in case it's useful for a future feature. Never
   push, commit, merge into, force-push, or delete anything on `Archive`
   unless the owner explicitly says so in that exact conversation. Treat it
-  as pull-only.
+  as pull-only. The one standing exception is appending pruned DEVLOG.md
+  sessions to `Devlog-Pruned` on `Archive` - see the "Command log archive"
+  section above; that exception is scoped to that one file only and does
+  not extend to anything else on `Archive`.
 - **`main` is not touched** except by the owner's own explicit, direct
   instruction to promote or release something onto it. Do not merge,
   rebase, or push to `main` on your own initiative.
@@ -288,6 +331,23 @@ hook to get past a failing check; fix the actual failure instead.
 Codex, Claude, Perplexity, Gemini, and any later AI agent working here share
 `development`; they must treat one another's work as active project state, not
 as unrelated changes.
+
+### Execution mode is separate from agent and workflow
+
+Every `AI-HANDOFF.json` active plan must record `executionMode.mode`, the agent
+that used it, its purpose, and why it was selected. `regular/default` mode is
+for routine, focused, conversational work. `work` mode is for genuinely
+complex, long-running, multi-source, file-heavy, or deliverable-oriented work.
+Mode selection is automatic unless the owner explicitly selects a mode.
+
+Execution mode is not an agent identity and is not a workflow name. A task
+performed by Codex in Work mode must not be continued by Claude in regular mode
+merely because the agent changed; the inverse is equally invalid. A receiving
+agent must preserve the recorded mode when the remaining task still has the
+same needs, or record a new evidence-based mode selection and reason in the
+handoff before continuing. Never translate `work` into “Codex workflow” or
+`regular/default` into “Claude”; either agent can operate in either mode when
+the task warrants it.
 
 - Before editing, fetch `origin/development`, fast-forward only, and read this
   file plus the **Shared AI handoff** section at the top of `DEVLOG.md`.

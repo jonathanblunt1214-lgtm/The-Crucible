@@ -113,3 +113,38 @@ test('bounds workload.heartbeatSeconds and lets it be tuned down toward the requ
   unbounded.workload = { heartbeatSeconds:1 };
   assert.throws(() => validateConfig(unbounded), /5 through 300/);
 });
+
+test('clutter utility audit detects generated, empty, and duplicate tracked content from a snapshot', () => {
+  const { auditClutter } = require('../src/clutter');
+  const snapshot = {
+    files:['src/empty.js', 'dist/bundle.js', 'src/a.js', 'src/b.js'],
+    entries:new Map([
+      ['src/empty.js', { size:0, sha256:'empty' }],
+      ['dist/bundle.js', { size:12, sha256:'bundle' }],
+      ['src/a.js', { size:10, sha256:'same' }],
+      ['src/b.js', { size:10, sha256:'same' }],
+    ]),
+  };
+  const result = auditClutter('/unused', { clutter:{ allow:[], blockTrackedIgnored:false, allowDuplicateContent:false } }, snapshot);
+  assert.equal(result.files, 4);
+  assert.ok(result.findings.some((item) => item.type === 'empty tracked file' && item.path === 'src/empty.js'));
+  assert.ok(result.findings.some((item) => item.type === 'generated or temporary path' && item.path === 'dist/bundle.js'));
+  assert.ok(result.findings.some((item) => item.type === 'duplicate tracked content' && /src\/a\.js == src\/b\.js/.test(item.path)));
+});
+
+test('interactive suite configuration persists selected categories without re-asking configured topology', async () => {
+  const fs = require('node:fs');
+  const os = require('node:os');
+  const path = require('node:path');
+  const { configureSuite } = require('../src/configureSuite');
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-configure-suite-'));
+  const target = path.join(dir, '.thecrucible.json');
+  fs.writeFileSync(target, JSON.stringify({ project:{ folderTopology:{ mode:'explicit', folders:[{ path:'src', roles:['influences-main'], links:[] }] } }, suite:{ mode:'all' } }), 'utf8');
+  const answers = ['selected', 'security, privacy'];
+  const prompt = { question: async () => answers.shift() };
+  const suite = await configureSuite(target, { prompt });
+  assert.deepEqual(suite, { mode:'selected', categories:['security', 'privacy'] });
+  const persisted = JSON.parse(fs.readFileSync(target, 'utf8'));
+  assert.deepEqual(persisted.suite, suite);
+  assert.equal(answers.length, 0);
+});

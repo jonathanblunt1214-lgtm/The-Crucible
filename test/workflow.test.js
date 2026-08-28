@@ -128,6 +128,29 @@ test('connect workflow install/branch-creation steps are resumable after a parti
   assert.match(workflow, /Refusing to commit/);
 });
 
+test('connect workflow installs the governingDocuments templates it references, only when not already present', () => {
+  const workflow = fs.readFileSync(path.join(root, 'templates', 'connect-workflow.yml'), 'utf8');
+  assert.match(workflow, /\[ -f templates\/ai-conflict-resolution\.md \] \|\| cp \.the-crucible-runtime\/templates\/ai-conflict-resolution\.md templates\/ai-conflict-resolution\.md/);
+  assert.match(workflow, /\[ -f templates\/required-check-rollout\.md \] \|\| cp \.the-crucible-runtime\/templates\/required-check-rollout\.md templates\/required-check-rollout\.md/);
+  // -uall is mandatory here: a brand-new `templates/` directory is entirely
+  // untracked, and plain `git status --porcelain` collapses a wholly-new
+  // directory into one "?? templates/" line instead of listing the files
+  // inside it, which would silently defeat the exact-file verification below.
+  assert.match(workflow, /git status --porcelain -uall/);
+  const handoff = JSON.parse(fs.readFileSync(path.join(root, 'templates', 'ai-handoff.example.json'), 'utf8'));
+  assert.ok(handoff.governingDocuments, 'the adopter AI-HANDOFF.json template must declare governingDocuments');
+  for (const doc of ['AI-HANDOFF.json', 'AI-CONFLICTS.json', 'THE-CRUCIBLE-DESIGN-BRIEF.md', 'templates/ai-conflict-resolution.md', 'templates/required-check-rollout.md', '.github/workflows/ai-conflict-governance.yml', '.github/workflows/ai-handoff-policy.yml']) {
+    assert.ok(typeof handoff.governingDocuments[doc] === 'string' && handoff.governingDocuments[doc].trim(), `governingDocuments must describe ${doc}`);
+    // Every governingDocuments entry must name a file the one-time install
+    // step actually installs (or that already exists in every adopter
+    // repository, like AI-HANDOFF.json itself) - a governing document that
+    // does not exist in the adopting repository is not something its own
+    // AI agents could ever actually re-read.
+    const installed = doc === 'AI-HANDOFF.json' || doc === 'AI-CONFLICTS.json' || doc === 'THE-CRUCIBLE-DESIGN-BRIEF.md' || workflow.includes(doc);
+    assert.ok(installed, `${doc} is declared in governingDocuments but the connect workflow never installs it`);
+  }
+});
+
 test('installed design brief matches the agent-boundaries rules and explains the one-time write', () => {
   const brief = fs.readFileSync(path.join(root, 'templates', 'the-crucible-design-brief.md'), 'utf8');
   assert.match(brief, /never modify anything installed to run The Crucible/i);
@@ -295,6 +318,10 @@ test('DEVLOG.md is required to work as a chain of custody: dev-plan reference pl
   const handoff = JSON.parse(fs.readFileSync(path.join(root, 'AI-HANDOFF.json'), 'utf8'));
   assert.equal(typeof handoff.activePlan.currentPrompt, 'string');
   assert.ok(handoff.activePlan.currentPrompt.trim().length > 0);
+  assert.ok(['regular/default', 'work'].includes(handoff.activePlan.executionMode.mode));
+  assert.equal(handoff.activePlan.executionMode.agent, handoff.activePlan.agent);
+  assert.match(handoff.activePlan.executionMode.distinction, /agent/i);
+  assert.match(handoff.activePlan.executionMode.distinction, /workflow/i);
   assert.ok(handoff.governingDocuments['src/handoffPolicy.js'], 'governingDocuments must reference src/handoffPolicy.js, the code that enforces the chain-of-custody requirement it just added');
   assert.match(handoff.governingDocuments['src/handoffPolicy.js'], /validateDevlogChainOfCustody/);
 });
