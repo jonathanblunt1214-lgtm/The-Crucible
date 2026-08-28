@@ -84,7 +84,7 @@ test('flags other providers\' public API-key-shaped identifiers for restriction 
   const syntheticMapboxToken = `pk.eyJ${'E'.repeat(24)}.${'F'.repeat(12)}`;
   const mapboxFindings = findingsForText(`mapboxPublicToken = '${syntheticMapboxToken}';`);
   assert.ok(mapboxFindings.find((item) => item.type === 'Mapbox public token requires restriction review'));
-  assert.doesNotMatch(JSON.stringify(mapboxFindings), new RegExp(syntheticMapboxToken.replace(/\./g, '\\.')));
+  assert.equal(JSON.stringify(mapboxFindings).includes(syntheticMapboxToken), false, 'security findings must not echo Mapbox public-token values');
 });
 
 test('flags key-shaped identifiers from unrecognized providers instead of silently passing them', () => {
