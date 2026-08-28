@@ -2,15 +2,15 @@
 
 ## Shared AI handoff
 
-- **Agent:** GPT-5.6 Sol.
+- **Agent:** Codex.
 - **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, owner prompt, communication policy, verification, and remaining work.
-- **Actual current step:** Verify the self-safe current-development standards gate after correcting its first CI-exposed self-match; completion is not claimed until the final paired governance tip passes required CI.
-- **Testing rule:** `Isolate ambiguity, continue safe tests, never fake complete coverage.` An unresolved new test is excluded from guessed execution, safe classified tests still run, and any request/cadence obligation that may depend on the unresolved test remains explicitly incomplete.
-- **Standards gate:** `test/testCadence.test.js` fingerprints the current governed testing-rule text from `AI-HANDOFF.json` and scans test JavaScript for known obsolete contracts. Governed rule drift therefore fails Maintenance testing instead of silently certifying stale tests. Its deny-list phrases are constructed from fragments so the scanner does not flag its own source literals.
+- **Actual current step:** Implement the active plan's executable Adapt/Persevere/Overcome decision contract in the pre-check/code-check path, then replace brittle fingerprint certification with reconciliation behavior tests.
+- **Governing behavior:** Adapt reconciles drift against current repository, tool, configuration, and available upstream evidence; Persevere tries safe supported evidence and recovery paths; Overcome accepts only verified repair/re-check or explicitly escalates genuinely ambiguous, semantic, or high-risk decisions for human review.
+- **Safety boundary:** Unknown, stale, or unrecognized is not itself a failure. Known unsafe findings still block, and the engine never invents business logic or silently resolves ambiguous semantic intent.
 - **Retention:** `src/handoffPolicy.js` mechanically rejects more than 10 Command log sessions and rejects retained sessions older than 180 days. This archive is pruned to the 10 newest sessions; all are from 2026-08-28.
 - **Schedule enforcement:** `.github/workflows/scheduled-diagnostics.yml` carries the exact documented daily, Tuesday/Friday, Monday, and first-of-month cron strings and fails closed if GitHub reports an unrecognized scheduled trigger instead of silently substituting `daily`.
 - **Estimated completion:** `2026-08-28 05:40:00 EDT` is a best-effort estimate for completing fresh CI verification/correction, not a guarantee or mechanically fixed completion time.
-- **Verification state:** AI handoff policy #128 passed on `465a0f56f0ebeac05ee786f40ea097f8a3777e71`. Self-Test #193 failed uniformly because the new obsolete-contract scanner found its own literal deny-list phrase; the ambiguity-isolation proof and critical Code cadence both passed. Commit `941f158675c6de2c7804a861b731b5dfda517647` contains the narrow self-scan correction. Fresh CI on the paired corrective tip is required. No promotion to `release` or `main` is authorized.
+- **Verification state:** Implementation has not yet been verified. The synchronized starting point is `5ccad47`; no promotion to `release` or `main` is authorized.
 
 ## Command log archive
 
