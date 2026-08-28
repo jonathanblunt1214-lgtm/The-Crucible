@@ -289,6 +289,23 @@ Codex, Claude, Perplexity, Gemini, and any later AI agent working here share
 `development`; they must treat one another's work as active project state, not
 as unrelated changes.
 
+### Execution mode is separate from agent and workflow
+
+Every `AI-HANDOFF.json` active plan must record `executionMode.mode`, the agent
+that used it, its purpose, and why it was selected. `regular/default` mode is
+for routine, focused, conversational work. `work` mode is for genuinely
+complex, long-running, multi-source, file-heavy, or deliverable-oriented work.
+Mode selection is automatic unless the owner explicitly selects a mode.
+
+Execution mode is not an agent identity and is not a workflow name. A task
+performed by Codex in Work mode must not be continued by Claude in regular mode
+merely because the agent changed; the inverse is equally invalid. A receiving
+agent must preserve the recorded mode when the remaining task still has the
+same needs, or record a new evidence-based mode selection and reason in the
+handoff before continuing. Never translate `work` into “Codex workflow” or
+`regular/default` into “Claude”; either agent can operate in either mode when
+the task warrants it.
+
 - Before editing, fetch `origin/development`, fast-forward only, and read this
   file plus the **Shared AI handoff** section at the top of `DEVLOG.md`.
 - Any instruction to work with, coordinate with, or continue work done with

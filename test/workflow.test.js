@@ -295,6 +295,10 @@ test('DEVLOG.md is required to work as a chain of custody: dev-plan reference pl
   const handoff = JSON.parse(fs.readFileSync(path.join(root, 'AI-HANDOFF.json'), 'utf8'));
   assert.equal(typeof handoff.activePlan.currentPrompt, 'string');
   assert.ok(handoff.activePlan.currentPrompt.trim().length > 0);
+  assert.ok(['regular/default', 'work'].includes(handoff.activePlan.executionMode.mode));
+  assert.equal(handoff.activePlan.executionMode.agent, handoff.activePlan.agent);
+  assert.match(handoff.activePlan.executionMode.distinction, /agent/i);
+  assert.match(handoff.activePlan.executionMode.distinction, /workflow/i);
   assert.ok(handoff.governingDocuments['src/handoffPolicy.js'], 'governingDocuments must reference src/handoffPolicy.js, the code that enforces the chain-of-custody requirement it just added');
   assert.match(handoff.governingDocuments['src/handoffPolicy.js'], /validateDevlogChainOfCustody/);
 });

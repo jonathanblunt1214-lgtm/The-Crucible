@@ -36,6 +36,13 @@
     "interruptionCheckInRule": "If hard usage/tool/session limits, unavailable required capability, safety, or owner-governance boundaries stop work, immediately send a timestamped interruption check-in stating completed work, exact stop reason, and remaining work; update repository handoff first when write capability remains.",
     "continueUntilDoneRule": "For safe in-scope authorized work, do not voluntarily stop, defer, or hand work back while executable work remains. Continue through implementation, correction, and required verification until complete or until a hard usage/tool/session limit or higher-priority platform, safety, or owner-governance boundary prevents further execution."
   },
+  "executionModePolicy": {
+    "automaticSelection": "Select execution mode automatically without asking the owner unless the owner explicitly selects a mode.",
+    "regularDefaultPurpose": "Routine, simple, focused, and conversational tasks that do not materially benefit from long-running orchestration.",
+    "workPurpose": "Genuinely complex, long-running, multi-source, file-heavy, or deliverable-oriented tasks that materially benefit from Work mode.",
+    "handoffRule": "Every active plan records the actual mode, agent, purpose, and selection reason. Mode is independent from agent identity and workflow: Codex and Claude may each use either mode, and an agent change must never silently change the mode.",
+    "continuationRule": "Preserve the recorded mode while the task needs remain the same. If evidence warrants a different mode, record the new mode and reason in AI-HANDOFF.json before continuing."
+  },
   "temporaryInfrastructure": {
     "syntheticTestRequestCommitTransport": {
       "status": "temporary-workaround",
@@ -64,40 +71,40 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Build Adapt, Persevere, and Overcome into the executable pre-check and code-check decision flow, replacing brittle stale-policy certification with evidence-driven reconciliation and bounded human escalation.",
-    "currentPrompt": "Continuing from [Check Crucible Repository](chatgpt-conversation://6a8c3574-040c-83ea-a86a-f69a847adecc): In jonathanblunt1214-lgtm/The-Crucible, build the principles Adapt, Persevere, Overcome into the base code as explicit governing behavior, not just documentation. Integrate them into the core decision flow used by pre-checks/code checks: Adapt = detect drift/change and reconcile against current authoritative repo/tool/config/upstream evidence instead of enforcing stale assumptions; Persevere = on unknown or changed conditions, inspect available evidence and try safe supported recovery/reconciliation paths before failing; Overcome = prefer verified repair and re-check, escalating to human review only when evidence is genuinely ambiguous or the required change is semantic/high-risk. Do not treat unknown/stale/unrecognized as automatic failure. Add/adjust tests so the framework verifies reconciliation behavior rather than brittle stale fingerprints, and update docs/config/reporting as needed. Preserve safety boundaries: never invent business logic or silently make ambiguous semantic decisions. Make the repo changes directly.",
+    "objective": "Make execution mode explicit and enforced in every AI handoff so agent changes never silently substitute regular/default mode for Work mode or vice versa.",
+    "currentPrompt": "also add in the handoff a distinction between this was done in this mode, and explain the purpose of the mode so if a task done in work mode here isn't done in in regular Claude instead of workflow or vice versa",
+    "executionMode": {
+      "mode": "regular/default",
+      "agent": "Codex",
+      "purpose": "Handle this focused governance and validation change without long-running Work-mode orchestration.",
+      "selectionReason": "The requested change is bounded to handoff metadata, policy validation, tests, and documentation in one repository.",
+      "distinction": "Execution mode is independent from agent identity and workflow; Codex and Claude may each use regular/default or work mode, and an agent handoff must not silently change the required mode."
+    },
     "steps": [
-      "Trace the current pre-check, code-check, and test-classification decision paths and define one executable Adapt/Persevere/Overcome decision contract.",
-      "Implement ordered evidence reconciliation and verified re-check behavior while retaining explicit semantic/high-risk human-review boundaries.",
-      "Replace the brittle policy fingerprint test with behavioral reconciliation, recovery, ambiguity, and reporting tests.",
-      "Update configuration documentation, README, AI handoff, and persisted report output to expose decisions and evidence.",
-      "Run focused and full verification, commit and push only to development, then verify required hosted CI and repair current regressions until green or a hard boundary prevents execution."
+      "Add an execution-mode policy and current-mode record to AI-HANDOFF.json.",
+      "Document that mode is independent from agent identity and workflow in AGENTS.md and DEVLOG.md.",
+      "Require and test execution-mode metadata in handoff validation.",
+      "Run governed verification, commit and push only to development, then verify required hosted CI."
     ],
-    "status": "complete",
-    "startedAt": "2026-08-28T09:47:00Z",
-    "lastUpdatedAt": "2026-08-28T09:56:39Z"
+    "status": "handoff-ready",
+    "startedAt": "2026-08-28T10:13:26Z",
+    "lastUpdatedAt": "2026-08-28T10:16:32Z"
   },
   "handoffNotes": {
     "completed": [
-      "Synchronized the clean literal development checkout to origin/development at 5ccad47 and read the shared handoff and governing document set.",
-      "Identified and removed the brittle DEVELOPMENT_TEST_STANDARD_POLICY_SHA256 assertion.",
-      "Added src/governingDecision.js with explicit Adapt, Persevere, and Overcome outcomes, ordered repository/tool/configuration/upstream evidence, verified repair, known-unsafe blocking, and semantic/high-risk human escalation.",
-      "Integrated decision evidence into code-check failures and persisted pre-check reporting; tool startup failure receives one safe retry while timeout and real nonzero exits are not blindly repeated.",
-      "Replaced fingerprint certification with behavioral tests for evidence reconciliation, verified recovery, semantic ambiguity, startup recovery, and persisted report evidence.",
-      "Updated README with the executable behavior and safety boundary."
+      "Synchronized the clean literal development checkout to origin/development at f74a7cb1387f9db9dd49ae17112ad1a9ea37b022 and read the shared handoff and governing document set.",
+      "Published the takeover-ready plan for execution-mode-aware handoffs.",
+      "Added account-level execution-mode policy and per-plan mode metadata to AI-HANDOFF.json.",
+      "Documented that mode is independent from agent identity and workflow in AGENTS.md, README.md, and DEVLOG.md.",
+      "Updated handoff validation and regression tests so missing, invalid, or agent-confused mode metadata fails closed."
     ],
     "verification": [
-      "Focused test/testCadence.test.js and test/code-check.test.js suite passed 52/52.",
-      "Explicit full discovered suite passed 299/299.",
-      "npm test change-impact selection passed 78/78.",
-      "npm run validate, npm run docs:check, npm run audit:security, npm run audit:privacy, npm run audit:ai-conflict-governance, and git diff --check passed.",
-      "npm run lint:workflows passed across 13 workflow files and npm run audit:clutter passed across 124 tracked files.",
-      "One attempted node --test test directory invocation exited 1 because Node 26 treats test as a module path; the corrected explicit discovered-file invocation passed 299/299.",
-      "The Unix .githooks/pre-push launcher could not start because sh is unavailable in this Windows environment; every command it contains was run directly and passed."
-      ,"Pushed plan commit b60999fcf11a0fe50748a63236fe6c6a16551ca4 and implementation commit 4732cf7ead1c688eb212fe0379f3b7237fd0fefd to origin/development."
-      ,"GitHub AI handoff policy run 33161238011, CodeQL run 33161238016, and all nine jobs in Self-Test run 33161238075 succeeded for implementation commit 4732cf7ead1c688eb212fe0379f3b7237fd0fefd."
+      "Focused handoffPolicy and workflow tests passed 36/36.",
+      "npm test governed change-impact selection passed 78/78.",
+      "npm run validate, npm run docs:check, npm run audit:ai-conflict-governance, npm run lint:workflows, npm run audit:clutter, npm run audit:privacy, npm run audit:security, npm run audit:governance, and git diff --check passed."
     ],
     "remaining": [
+      "Commit and push only to development, then verify required hosted CI.",
       "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }

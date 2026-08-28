@@ -3,18 +3,26 @@
 ## Shared AI handoff
 
 - **Agent:** Codex.
+- **Execution mode:** `regular/default` used by Codex for this bounded handoff-governance change. Its purpose is routine, focused work that does not materially benefit from long-running Work-mode orchestration. Mode is separate from agent identity and workflow: Claude must not silently continue Work-mode work in regular mode, nor treat regular mode as Claude-specific; either agent can use either mode when the task warrants it.
 - **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, owner prompt, communication policy, verification, and remaining work.
-- **Actual current step:** Complete. The executable governing behavior, tests, persisted reporting, documentation, local verification, development push, and required hosted CI verification are finished.
+- **Actual current step:** Implementation and local verification complete; commit/push to literal `development` and hosted CI verification remain.
 - **Governing behavior:** Adapt reconciles drift against current repository, tool, configuration, and available upstream evidence; Persevere tries safe supported evidence and recovery paths; Overcome accepts only verified repair/re-check or explicitly escalates genuinely ambiguous, semantic, or high-risk decisions for human review.
 - **Safety boundary:** Unknown, stale, or unrecognized is not itself a failure. Known unsafe findings still block, and the engine never invents business logic or silently resolves ambiguous semantic intent.
 - **Retention:** `src/handoffPolicy.js` mechanically rejects more than 10 Command log sessions and rejects retained sessions older than 180 days. This archive is pruned to the 10 newest sessions; all are from 2026-08-28.
 - **Schedule enforcement:** `.github/workflows/scheduled-diagnostics.yml` carries the exact documented daily, Tuesday/Friday, Monday, and first-of-month cron strings and fails closed if GitHub reports an unrecognized scheduled trigger instead of silently substituting `daily`.
 - **Estimated completion:** `2026-08-28 05:40:00 EDT` is a best-effort estimate for completing fresh CI verification/correction, not a guarantee or mechanically fixed completion time.
-- **Verification state:** Focused tests pass 52/52, the explicit full suite passes 299/299, change-impact testing passes 78/78, and validation/docs/workflow-lint/clutter/security/privacy/conflict-governance/diff checks pass. For implementation commit `4732cf7`, AI handoff policy run `33161238011`, CodeQL run `33161238016`, and all nine jobs in Self-Test run `33161238075` succeeded. The Unix hook launcher is unavailable on this Windows host, so its exact commands were run directly and passed. One invalid Node directory-form test invocation exited 1 and was corrected to explicit file discovery. No promotion to `release` or `main` is authorized.
+- **Verification state:** Mode-aware handoff tests pass 36/36; governed change-impact testing passes 78/78; validation, docs, workflow lint, clutter, privacy, security, AI-conflict governance, general governance, and diff checks pass. Hosted CI remains to be verified after the development push. No promotion to `release` or `main` is authorized.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: mode-aware AI handoff — 2026-08-28T10:13:26Z — Codex
+
+- `git fetch origin development; git merge --ff-only origin/development` — synchronized the clean literal development checkout at `f74a7cb1387f9db9dd49ae17112ad1a9ea37b022`; started 2026-08-28T10:12:50Z, finished 2026-08-28T10:13:05Z, exit 0.
+- `rg -n "validateHandoffPlan|activePlan|currentPrompt" test src AGENTS.md AI-HANDOFF.json DEVLOG.md` — located the structured handoff validator and regression coverage; started 2026-08-28T10:13:05Z, finished 2026-08-28T10:13:06Z, exit 0.
+- `node --test test/handoffPolicy.test.js test/workflow.test.js; npm run validate; npm run docs:check; npm run audit:ai-conflict-governance; git diff --check` — verified the focused handoff contract and governance surfaces; started 2026-08-28T10:15:00Z, finished 2026-08-28T10:15:13Z, exit 1 only because `DEVLOG.md` had one trailing blank line; all tests and project checks passed, and the formatting issue was corrected immediately.
+- `npm test; npm run lint:workflows; npm run audit:clutter; npm run audit:privacy; npm run audit:security; npm run audit:governance; git diff --check` — verified governed change-impact tests 78/78 and the complete pre-push audit set after the formatting correction; started 2026-08-28T10:16:00Z, finished 2026-08-28T10:16:31Z, exit 0.
 
 ### Session: executable Adapt Persevere Overcome governance — 2026-08-28T09:47:00Z — Codex
 
@@ -69,7 +77,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 ### Session: classifier legacy-compatibility correction — 2026-08-28T01:34:00Z — GPT-5.6 Sol
 
 - Inspected Self-Test #177 failures, confirmed the new classifier tests and Code baseline passed, verified CodeQL #138, and prepared compatibility corrections for legacy error/cadence metadata and handoff-policy contracts — started 2026-08-28T01:34:00Z, finished 2026-08-28T01:36:00Z, exit 0.
-
-### Session: independent closest-feature classifier — 2026-08-28T01:26:00Z — GPT-5.6 Sol
-
-- Re-read governance, traced the #176 cadence selection-object regression, added the fallback-only closest-feature classifier and active Orchestrator integration, and preserved explicit mapping precedence plus fail-closed ambiguity behavior — started 2026-08-28T01:26:00Z, finished 2026-08-28T01:31:00Z, exit 0.
