@@ -49,9 +49,16 @@ test('Code standing category produces executable V8 coverage for each core Code 
   const root = path.join(__dirname, '..');
   const coverageDir = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-code-coverage-'));
   const env = { ...process.env, NODE_V8_COVERAGE: coverageDir };
-  const driver = spawnSync(process.execPath, ['-e', "require('./src/code-check').parseCandidate('sample.js', 'const answer = 42;')"], { cwd:root, env, encoding:'utf8', shell:false });
+  const driverSource = [
+    "require('./src/code-check').parseCandidate('sample.js', 'const answer = 42;');",
+    "require('./src/engine');",
+    "require('./src/hostedMultiRepositoryIntegration');",
+    "require('./src/repositoryOperation');",
+    "require('./src/suiteSelection');",
+  ].join('');
+  const driver = spawnSync(process.execPath, ['-e', driverSource], { cwd:root, env, encoding:'utf8', shell:false });
   assert.equal(driver.status, 0, driver.stderr || driver.stdout);
-  const suite = spawnSync(process.execPath, ['--test', 'test/engine.test.js', 'test/hostedMultiRepositoryIntegration.test.js', 'test/repositoryOperation.test.js', 'test/suiteSelection.test.js'], { cwd:root, env, encoding:'utf8', shell:false });
+  const suite = spawnSync(process.execPath, ['--test', 'test/engine.test.js', 'test/hostedMultiRepositoryIntegration.test.js', 'test/repositoryOperation.test.js', 'test/suiteSelection.test.js'], { cwd:root, encoding:'utf8', shell:false });
   assert.equal(suite.status, 0, suite.stderr || suite.stdout);
   const coverageFiles = fs.readdirSync(coverageDir).filter((name) => name.endsWith('.json'));
   assert.ok(coverageFiles.length > 0, 'V8 did not emit executable coverage data');

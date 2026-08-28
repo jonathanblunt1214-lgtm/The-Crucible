@@ -4,24 +4,30 @@
 
 - **Agent:** GPT-5.6 Sol.
 - **Dev plan:** See `AI-HANDOFF.json` for the exact active plan, owner prompt, test-cadence policy, verification, and remaining work.
-- **Current development work:** Add all previously identified missing test types into the existing standing categories without creating new top-level categories or changing category frequency policy.
-- **Standing-category placement:** Code receives executable V8 coverage, CLI end-to-end, and ordinary dependency-policy behavior. Security receives adversarial input fuzzing and supply-chain dependency-policy coverage. Utility receives clutter and interactive suite-configuration coverage. Maintenance receives classifier robustness, cadence-drift, and CI-bypass coverage.
+- **Current development work:** Add all previously identified missing test types into the existing standing categories and correct the one cross-process coverage assumption exposed by Self-Test #180.
+- **Standing-category placement:** Code contains executable V8 coverage, CLI end-to-end, and ordinary dependency-policy behavior. Security contains adversarial input fuzzing and supply-chain dependency-policy coverage. Utility contains clutter and interactive suite-configuration coverage. Maintenance contains classifier robustness, cadence-drift, and CI-bypass coverage.
 - **Category implementation:** The ten additions are test cases inside already explicitly categorized test files, so they inherit the existing standing category and cadence. No new `.test.js` filename or category-map entry is needed for these cases.
-- **Architecture preserved:** Cadence still decides only when categories are due; the Orchestrator still selects/runs tests; the independent classifier remains fallback-only for standalone unmapped test files; reconciliation still fails cadence-triggered work when due coverage is omitted.
-- **Baseline:** Before this change, development commit `66ecf3ce6ee4d77035d2d982b7e787c3c14e63b8` had Self-Test #179 and CodeQL #140 green.
-- **Verification state:** The atomic test-expansion commit is being created on `development`; its Self-Test and CodeQL runs must both be checked and any regression repaired before this work is treated as green. No promotion to `release` or `main` is authorized.
-- **Preserved prior concerns:** The earlier concurrent-agent handoff noted that `AI-CONFLICTS.json` has no record for the prior overlapping GPT-5.6 Sol/Claude restructuring, and that `self-test.yml` currently uses push commit-message content as temporary natural-language request transport. Those concerns remain preserved for owner review; this test-expansion work does not silently resolve or normalize them.
+- **Architecture preserved:** Cadence still decides only when categories are due; the Orchestrator still selects/runs tests; the independent classifier remains fallback-only for standalone unmapped test files; reconciliation still checks due coverage.
+- **Verification finding:** Commit `be46b479e3c69d009b03da383c85780be11a9234` reached Self-Test #180. All matrix jobs failed at the new Code V8 coverage case because the test assumed child `node --test` processes would populate the parent coverage corpus; the inspected job showed the CLI and ordinary dependency-policy additions passing. The correction explicitly loads all five Code modules in the coverage-enabled probe and still runs their existing tests separately.
+- **Other gates on the failed commit:** AI handoff policy #115, AI conflict governance #111, Block locked monitoring PRs #99, and Sync CI monitoring branch #39 succeeded. CodeQL #141 was still running when the correction was assembled.
+- **Promotion:** No promotion to `release` or `main` is authorized.
+- **Preserved prior concerns:** The prior concurrent-agent handoff noted no `AI-CONFLICTS.json` record for earlier overlapping restructuring and the temporary push commit-message request transport. These remain preserved for owner review.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
 
+### Session: standing-test CI correction — 2026-08-28T08:31:00Z — GPT-5.6 Sol
+
+- Checked post-push Actions for `be46b479e3c69d009b03da383c85780be11a9234`; Self-Test #180 failed while policy/conflict/monitoring gates passed and CodeQL #141 remained in progress — started 2026-08-28T08:31:00Z, finished 2026-08-28T08:33:00Z, exit 1 for Self-Test.
+- Inspected Self-Test #180 jobs and Ubuntu Node 20 logs; all matrix jobs failed at the critical Code cadence, with the exact assertion `src/engine.js produced no V8 coverage record`; CLI and dependency-behavior additions passed in the inspected job — started 2026-08-28T08:33:00Z, finished 2026-08-28T08:34:00Z, exit 0 diagnostic.
+- Corrected only the V8 probe boundary so its coverage-enabled process explicitly loads every core Code module while the existing module tests still execute separately; prepared paired handoff updates — started 2026-08-28T08:34:00Z, finished 2026-08-28T08:35:00Z, exit 0.
+
 ### Session: expand standing category tests — 2026-08-28T08:16:00Z — GPT-5.6 Sol
 
-- Read `DEVLOG.md` first, read the current `AI-HANDOFF.json`, refreshed the governing-document set after the idle threshold, inspected the real `development` tip, and preserved Claude's concurrent repair — started 2026-08-28T08:16:00Z, finished 2026-08-28T08:24:00Z, exit 0.
-- Checked the current development Actions baseline; Self-Test #179 and CodeQL #140 were both completed successfully — started 2026-08-28T08:24:00Z, finished 2026-08-28T08:25:00Z, exit 0.
-- Prepared ten standing test cases across the existing Code, Security, Utility, and Maintenance test files, plus paired `AI-HANDOFF.json` and `DEVLOG.md` governance updates — started 2026-08-28T08:25:00Z, finished 2026-08-28T08:28:00Z, exit 0.
-- Create blobs/tree/commit and fast-forward `development` atomically; follow with Self-Test and CodeQL verification — started 2026-08-28T08:28:00Z, finished 2026-08-28T08:29:00Z, exit 0.
+- Read `DEVLOG.md` first, refreshed the governing-document set after the idle threshold, inspected the real `development` tip, and preserved Claude's concurrent repair — started 2026-08-28T08:16:00Z, finished 2026-08-28T08:24:00Z, exit 0.
+- Checked the pre-change development Actions baseline; Self-Test #179 and CodeQL #140 were both completed successfully — started 2026-08-28T08:24:00Z, finished 2026-08-28T08:25:00Z, exit 0.
+- Prepared and atomically pushed ten standing test cases across the existing Code, Security, Utility, and Maintenance test files with paired governance updates — started 2026-08-28T08:25:00Z, finished 2026-08-28T08:31:00Z, exit 0.
 
 ### Session: stale classifier assertion repair — 2026-08-28T01:42:48Z — Claude
 
@@ -54,7 +60,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 ### Session: system-wide code test request — 2026-08-28T00:12:00Z — GPT-5.6 Sol
 
 - Passed the owner request `run a system wide code test` unchanged through the governed request path; the Orchestrator independently selected and executed the Code scope — started 2026-08-28T00:11:44Z, finished 2026-08-28T00:12:30Z, exit 0.
-
-### Session: Orchestrator progress and known bugs — 2026-08-28T00:04:30Z — GPT-5.6 Sol
-
-- Added 60-second progress heartbeats, severity-ordered known-bug persistence, and mandatory passing exact-test re-verification before a bug can be checked off — started 2026-08-28T00:04:30Z, finished 2026-08-28T00:11:00Z, exit 0.

@@ -23,7 +23,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T08:28:00Z"
+    "lastActionAt": "2026-08-28T08:35:00Z"
   },
   "temporaryInfrastructure": {
     "syntheticTestRequestCommitTransport": {
@@ -44,12 +44,7 @@
     "orchestratorAuthority": "The Orchestrator alone selects categories/subcategories/test files and execution scope from explicit requests, change impact, dependencies, cadence obligations, and validated classifications.",
     "balanceRule": "For cadence-triggered work, Cadence declares categories due; the Orchestrator independently resolves them into concrete tests; reconciliation rejects the run before execution if any due category is omitted. Neither authority silently overrides the other.",
     "explicitRequestRule": "A specific owner test request is interpreted and run immediately by the Orchestrator. Cadence and classification cannot delay, randomize, narrow, or replace an explicit request.",
-    "categoryCadence": {
-      "code": "every-push",
-      "security": "daily",
-      "utility": "twice-weekly",
-      "maintenance": "weekly"
-    },
+    "categoryCadence": { "code": "every-push", "security": "daily", "utility": "twice-weekly", "maintenance": "weekly" },
     "standingTestExpansionRule": "New standing test cases may be added inside an already explicitly categorized test file when they belong to that same category. They inherit that file's governed category and the category's cadence without creating a redundant test-file mapping. New standalone .test.js files still require explicit classification or independent closest-feature fallback.",
     "codeCriticalityRule": "Code is due on every push and pull request. The Orchestrator independently selects the complete Code category required to satisfy that cadence obligation.",
     "scheduledCumulativeRule": "Cadence obligations are cumulative: daily requires Code and Security; twice-weekly requires Code, Security, and Utility; weekly/monthly require all four categories.",
@@ -60,40 +55,32 @@
     "objective": "Add every identified missing test type into the appropriate existing standing category without creating new top-level categories or weakening the Orchestrator/Cadence checks-and-balances architecture.",
     "currentPrompt": "add them all into the appropriate standing category  ",
     "steps": [
-      "Re-read the current DEVLOG and governing-document set after the idle threshold, and preserve the concurrent Claude repair at the real development tip.",
-      "Confirm the current development baseline is green before mutation.",
-      "Add Code coverage execution, CLI end-to-end, and dependency-behavior tests to the standing Code test file.",
-      "Add adversarial input fuzzing and supply-chain dependency-policy tests to the standing Security test file.",
-      "Add clutter behavior and interactive suite-configuration tests to the standing Utility test file.",
-      "Add classifier robustness, cadence-drift, and CI-bypass guard tests to the standing Maintenance test file.",
-      "Keep the existing four category mappings unchanged because the new cases live inside already-classified files and inherit their category cadence.",
-      "Push one atomic development commit with AI-HANDOFF.json and DEVLOG.md, then verify Self-Test and CodeQL and repair any regression until green."
+      "Preserve the current four standing categories and their cadence.",
+      "Keep all ten substantive additions inside already-classified standing test files.",
+      "Correct Self-Test #180's cross-process V8 coverage assumption by explicitly loading all five Code modules in the coverage-enabled probe while retaining their existing test execution.",
+      "Push the paired correction to development and verify Self-Test and CodeQL until both are green."
     ],
-    "status": "handoff-ready",
+    "status": "active",
     "startedAt": "2026-08-28T08:16:00Z",
-    "lastUpdatedAt": "2026-08-28T08:28:00Z"
+    "lastUpdatedAt": "2026-08-28T08:35:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Read the current DEVLOG first, refreshed current governance after the idle threshold, and preserved Claude's concurrent compatibility repair at development commit 66ecf3ce6ee4d77035d2d982b7e787c3c14e63b8.",
-      "Confirmed the pre-change baseline: Self-Test #179 and CodeQL #140 both completed successfully.",
-      "Prepared ten substantive standing test cases inside existing explicitly categorized test files: three Code, two Security, two Utility, and three Maintenance.",
-      "Code additions exercise actual V8 execution coverage for core Code modules, CLI end-to-end behavior, and ordinary dependency-policy behavior.",
-      "Security additions provide a deterministic malformed-input fuzz corpus and supply-chain checks for git/URL/local dependencies, unapproved registries, and denied licenses.",
-      "Utility additions exercise clutter detection and persisted interactive suite configuration.",
-      "Maintenance additions stress classifier robustness, prove category cadence cannot drift, and assert CI/promotion paths cannot bypass the Orchestrator and release gate."
+      "Preserved Claude's prior compatibility repair and confirmed pre-change Self-Test #179 and CodeQL #140 were green.",
+      "Pushed ten substantive standing test cases in commit be46b479e3c69d009b03da383c85780be11a9234: three Code, two Security, two Utility, and three Maintenance.",
+      "Self-Test #180 exercised the new every-push Code cases across the matrix and exposed one narrow failure: the V8 coverage test assumed child node --test workers would place module records in the parent coverage corpus.",
+      "CLI end-to-end and ordinary dependency-policy Code additions passed in the inspected failing job; the coverage probe is being corrected without removing any standing test type."
     ],
     "verification": [
-      "Pre-change development baseline 66ecf3ce6ee4d77035d2d982b7e787c3c14e63b8: Self-Test #179 success and CodeQL #140 success.",
-      "Post-change CI has not yet completed at the time this handoff commit is assembled; Self-Test and CodeQL must both be checked on the resulting development commit."
+      "Self-Test #180 on be46b479e3c69d009b03da383c85780be11a9234 completed failure because src/engine.js had no record in the coverage corpus; every matrix job failed at the same critical Code cadence step.",
+      "AI handoff policy #115, AI conflict governance #111, Block locked monitoring PRs #99, and Sync CI monitoring branch #39 succeeded on be46b479e3c69d009b03da383c85780be11a9234.",
+      "CodeQL #141 was still in progress when the Self-Test correction was prepared."
     ],
     "remaining": [
-      "Create the atomic tree/commit from the prepared test and handoff blobs and fast-forward development.",
-      "Verify the resulting Self-Test and CodeQL runs; if either is red, inspect the exact failure and repair on development until both are green.",
-      "Preserve for owner review the earlier concern that AI-CONFLICTS.json has no record for the prior overlapping GPT-5.6 Sol/Claude restructuring; this test-expansion work does not infer an owner resolution.",
-      "Preserve for owner review the earlier safety-model concern that self-test.yml currently uses push commit-message content as temporary natural-language request transport; do not silently normalize or broaden that workaround.",
-      "Do not promote to release or main without a fresh explicit owner instruction.",
-      "When supported direct integration becomes available, replace the temporary synthetic request transport under standing owner authorization."
+      "Commit the V8 coverage-probe correction with paired DEVLOG update and fast-forward development.",
+      "Verify fresh Self-Test and CodeQL; repair any remaining regression until both are green.",
+      "Preserve for owner review the prior AI-CONFLICTS and temporary commit-message transport concerns.",
+      "Do not promote to release or main without a fresh explicit owner instruction."
     ]
   }
 }
