@@ -43,19 +43,30 @@ const MAX_ARCHIVE_AGE_DAYS = 180;
 
 // Devlog-Pruned lives on the reference-only `Archive` branch (a narrow, explicit owner
 // exception to that branch's normal pull-only rule, scoped to this one file): a longer-lived
-// append-only ledger of every "### Session:" entry pruned out of DEVLOG.md's own bounded
-// Command log archive, so pruned chain-of-custody history is not solely dependent on Git
-// history. Its retention floor is time, not count: at least DEVLOG_PRUNED_MAX_AGE_DAYS days of
+// append-only ledger that captures the *entire* DEVLOG.md content exactly as it stood
+// immediately before each prune of its Command log archive on `development` (see AGENTS.md) -
+// not just the excerpted session(s) that prune removed. Each such prune becomes one "Snapshot"
+// entry here. Its retention floor is time, not count: at least DEVLOG_PRUNED_MAX_AGE_DAYS days of
 // history is always kept. DEVLOG_PRUNED_MAX_ENTRIES is only a starting capacity - if more
-// sessions than that are pruned within the age floor, the effective capacity doubles (and
-// keeps doubling) rather than dropping anything still younger than the age floor. Only entries
-// older than the age floor are ever trimmed.
+// snapshots than that are taken within the age floor, the effective capacity doubles (and keeps
+// doubling) rather than dropping anything still younger than the age floor. Only entries older
+// than the age floor are ever trimmed.
 const DEVLOG_PRUNED_MAX_ENTRIES = 50;
 const DEVLOG_PRUNED_MAX_AGE_DAYS = 364;
 const DEVLOG_PRUNED_HEADER = `# Devlog-Pruned
 
-Append-only ledger, on the reference-only \`Archive\` branch, of every \`### Session:\` entry pruned from DEVLOG.md's Command log archive on \`development\` (see AGENTS.md). Newest first. Retention floor: at least ${DEVLOG_PRUNED_MAX_AGE_DAYS} days of pruned history is always kept - an entry is trimmed only once it is older than that. Capacity starts at ${DEVLOG_PRUNED_MAX_ENTRIES} sessions and doubles automatically (100, 200, ...) whenever more than that many sessions fall within the ${DEVLOG_PRUNED_MAX_AGE_DAYS}-day floor, so the count never forces a trim on its own. Anything trimmed remains retrievable via \`git log -p Devlog-Pruned\` on \`Archive\`.
+Append-only ledger, on the reference-only \`Archive\` branch, of the *entire* DEVLOG.md content exactly as it stood immediately before each prune of its Command log archive on \`development\` (see AGENTS.md) - the full file, not just the session(s) the prune removed. Newest first. Retention floor: at least ${DEVLOG_PRUNED_MAX_AGE_DAYS} days of pruned history is always kept - a snapshot is trimmed only once it is older than that. Capacity starts at ${DEVLOG_PRUNED_MAX_ENTRIES} snapshots and doubles automatically (100, 200, ...) whenever more than that many snapshots fall within the ${DEVLOG_PRUNED_MAX_AGE_DAYS}-day floor, so the count never forces a trim on its own. Anything trimmed remains retrievable via \`git log -p Devlog-Pruned\` on \`Archive\`.
 `;
+
+const SNAPSHOT_ENTRY_HEADING = /^## Snapshot: /m;
+
+// A fence longer than any run of backticks already inside content, so embedding arbitrary
+// DEVLOG.md text inside a fenced code block can never be broken out of by that content.
+function fenceFor(content) {
+  const runs = String(content || '').match(/`+/g) || [];
+  const longestRun = runs.reduce((max, run) => Math.max(max, run.length), 0);
+  return '`'.repeat(Math.max(3, longestRun + 1));
+}
 
 // The starting capacity doubles until it can hold every entry still within the age floor, so the
 // entry count alone never trims a session that is younger than DEVLOG_PRUNED_MAX_AGE_DAYS days.
@@ -108,6 +119,9 @@ function validateDevlogChainOfCustody(content, now = new Date()) {
   if (!ARCHIVE_ENTRY_MODE.test(newestHeading)) {
     return { ok:false, message:'DEVLOG.md\'s newest Command log archive entry must record mode:regular/default or mode:work in its Session heading so execution mode remains part of the chain of custody.' };
   }
+  if (!/^Plain-language summary: \S/m.test(newestEntry)) {
+    return { ok:false, message:'DEVLOG.md\'s newest Command log archive entry must include a "Plain-language summary: ..." line in plain English, so the log is searchable and readable without parsing raw commands or diffs.' };
+  }
   if (!/\bstart(?:ed)?\b[\s\S]*?\bfinish(?:ed)?\b/i.test(newestEntry)) {
     return { ok:false, message:'DEVLOG.md\'s newest Command log archive entry must record both a start time and a finish time for each command.' };
   }
@@ -132,21 +146,65 @@ function devlogArchiveEntries(devlogContent) {
 
 // Diffs two DEVLOG.md snapshots (the version before a prune and the version after it) and
 // returns every "### Session:" entry that existed in the old archive but not the new one, in
-// their original newest-first order - the entries an agent must append to Devlog-Pruned.
+// their original newest-first order - used only to describe what a prune removed; the actual
+// Devlog-Pruned payload is the full old DEVLOG.md content, via devlogPruneSnapshot below.
 function prunedDevlogEntries(oldDevlogContent, newDevlogContent) {
   const oldEntries = devlogArchiveEntries(oldDevlogContent);
   const newHeadings = new Set(devlogArchiveEntries(newDevlogContent).map((entry) => entry.heading));
   return oldEntries.filter((entry) => !newHeadings.has(entry.heading));
 }
 
-// Appends newly pruned entries to the current Devlog-Pruned ledger content and re-applies its
+// Builds the Devlog-Pruned entry for one prune: the entire old DEVLOG.md content, embedded
+// verbatim in a fenced code block, labeled with what was removed and when/by what this prune
+// happened, and led by a plain-language summary (meta.summary) so the entry is searchable and
+// readable without parsing raw commands/diffs. Returns null when nothing was actually pruned
+// (old and new archives match).
+function devlogPruneSnapshot(oldDevlogContent, newDevlogContent, now = new Date(), meta = {}) {
+  const removed = prunedDevlogEntries(oldDevlogContent, newDevlogContent);
+  if (!removed.length) return null;
+  const timestamp = meta.timestamp instanceof Date ? meta.timestamp : now;
+  const iso = timestamp.toISOString();
+  const label = meta.commit ? `commit ${meta.commit}` : (meta.label || 'a development push');
+  const heading = `## Snapshot: ${iso} — pruned by ${label}`;
+  const summary = (meta.summary || '').trim() || 'No plain-language summary was provided for this snapshot.';
+  const removedList = removed.map((entry) => `- ${entry.heading.replace(/^### Session: /, '')}`).join('\n');
+  const fence = fenceFor(oldDevlogContent);
+  const text = [
+    heading,
+    '',
+    `Plain-language summary: ${summary}`,
+    '',
+    'Session(s) this prune removed from DEVLOG.md:',
+    removedList,
+    '',
+    'Full DEVLOG.md content immediately before this prune:',
+    '',
+    `${fence}markdown`,
+    String(oldDevlogContent || '').replace(/\s+$/, ''),
+    fence,
+  ].join('\n');
+  return { heading, text, timestamp };
+}
+
+function parseSnapshotEntries(text) {
+  const parts = String(text || '').split(SNAPSHOT_ENTRY_HEADING).slice(1);
+  return parts.map((part) => {
+    const body = `## Snapshot: ${part}`.replace(/\s+$/, '');
+    const heading = body.split(/\r?\n/, 1)[0];
+    const timestampMatch = /^## Snapshot: (\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z) — /.exec(heading);
+    const timestamp = timestampMatch ? new Date(timestampMatch[1]) : null;
+    return { heading, text: body, timestamp: timestamp && !Number.isNaN(timestamp.getTime()) ? timestamp : null };
+  });
+}
+
+// Appends newly taken snapshots to the current Devlog-Pruned ledger content and re-applies its
 // retention rule (at least DEVLOG_PRUNED_MAX_AGE_DAYS days always kept; capacity for that window
 // doubles from DEVLOG_PRUNED_MAX_ENTRIES rather than trimming anything still within it), returning
 // the full new ledger content to write back.
-function appendToDevlogPrunedLedger(ledgerContent, newEntries, now = new Date()) {
-  const existing = parseSessionEntries(ledgerContent);
+function appendToDevlogPrunedLedger(ledgerContent, newSnapshots, now = new Date()) {
+  const existing = parseSnapshotEntries(ledgerContent);
   const existingHeadings = new Set(existing.map((entry) => entry.heading));
-  const additions = (newEntries || []).filter((entry) => entry && entry.heading && !existingHeadings.has(entry.heading));
+  const additions = (newSnapshots || []).filter((entry) => entry && entry.heading && !existingHeadings.has(entry.heading));
   const dated = [];
   const undated = [];
   for (const entry of [...additions, ...existing]) (entry.timestamp ? dated : undated).push(entry);
@@ -200,6 +258,7 @@ module.exports = {
   MAX_ARCHIVE_AGE_DAYS,
   ARCHIVE_ENTRY_MODE,
   prunedDevlogEntries,
+  devlogPruneSnapshot,
   appendToDevlogPrunedLedger,
   effectiveDevlogPrunedCapacity,
   DEVLOG_PRUNED_MAX_ENTRIES,
