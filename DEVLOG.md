@@ -3,17 +3,24 @@
 ## Shared AI handoff
 
 - **Agent:** GPT-5.6 Sol.
-- **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, `temporaryInfrastructure`, and `handoffNotes` for the exact owner request, current plan, standing transport rule, completed work, verification, and remaining work.
-- **Current development work:** Govern the existing `CRUCIBLE TEST REQUEST` synthetic commit-message transport as a temporary workaround only. It is not the target architecture.
-- **Transport replacement rule:** As soon as a supported direct integration or direct connection exists that can carry the user's natural-language test request directly to the Orchestrator without manufacturing a repository commit, the workaround must be replaced and removed. The owner has explicitly granted standing authority for that specific replacement.
-- **Selection boundary:** The direct transport must pass the user's request to the Orchestrator; the Orchestrator alone decides categories, subcategories, test files, scope, and execution.
-- **Authorization boundary:** Standing authority covers only replacement/removal of the temporary test-request transport. It does not authorize unrelated changes or promotion to `main`/`release`.
+- **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, `testCadencePolicy`, `temporaryInfrastructure`, and `handoffNotes` for the exact owner request, current plan, cadence policy, standing transport rule, verification, and remaining work.
+- **Current development work:** Give the Orchestrator owner-defined category cadence while preserving its sole authority over test selection and immediate handling of specific requests.
+- **Category cadence:** Code is the every-push/PR critical baseline; Security is daily; Utility is twice weekly; Maintenance is weekly. Scheduled slower windows are cumulative.
+- **Specific-request rule:** Explicit owner requests are still interpreted and run immediately by the Orchestrator. Cadence never makes a specific request random and never defers an explicitly requested category.
+- **Workflow boundary:** Self-Test may invoke the Orchestrator's every-push Code cadence and pass a request; scheduled diagnostics may pass a cadence window. Neither workflow chooses test files.
+- **Transport replacement rule:** The `CRUCIBLE TEST REQUEST` synthetic commit transport remains temporary workaround infrastructure and must be replaced as soon as a supported direct integration/connection exists, under the owner's standing authorization.
 - **Run governance:** Long-running Orchestrator test commands emit progress every 60 seconds; failures are persisted under `governingDocuments/known-bugs` in criticality order and require a passing exact-test re-test before being checked off.
-- **Remaining work:** Verify this governance-only development commit in Self-Test and CodeQL. When a supported direct integration/connection becomes available, replace the synthetic transport immediately under the standing owner authorization.
+- **Remaining work:** Commit the cadence implementation atomically to `development`, then verify Self-Test and CodeQL and correct any regressions until green.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: owner-defined Orchestrator category cadence — 2026-08-28T00:42:00Z — GPT-5.6 Sol
+
+- Read current `DEVLOG.md`, `AI-HANDOFF.json`, Orchestrator cadence/selection code, regression tests, Self-Test, scheduled diagnostics, and governing cadence instructions — started 2026-08-28T00:42:00Z, finished 2026-08-28T00:43:00Z, exit 0.
+- Designed an Orchestrator-owned cadence layer preserving the mature selection core while defining Code every-push, Security daily, Utility twice-weekly, and Maintenance weekly — started 2026-08-28T00:43:00Z, finished 2026-08-28T00:44:00Z, exit 0.
+- Prepared cadence-layer, Self-Test, scheduled-diagnostics, regression-test, `AI-HANDOFF.json`, and `DEVLOG.md` blobs for one atomic development commit — started 2026-08-28T00:44:00Z, finished 2026-08-28T00:45:00Z, exit 0.
 
 ### Session: temporary test-transport governance — 2026-08-28T00:30:00Z — GPT-5.6 Sol
 
@@ -69,9 +76,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 - Inspected Self-Test run 145 and Ubuntu/Node 24 logs — started 2026-08-27T22:53:00Z, finished 2026-08-27T22:55:00Z, exit 0.
 - Result: Orchestrator selected 3/34 categories and passed 53/53 tests; `validate`, clutter, privacy, security, GitHub-security also passed. Pre-check alone failed with `CRUCIBLE_COMMIT_MISSING_FINAL_NEWLINE: Commit Gate: AI-HANDOFF.json`.
 - Prepared paired `AI-HANDOFF.json`/`DEVLOG.md` correction with the missing final newline restored — started 2026-08-27T22:55:00Z, finished 2026-08-27T22:56:00Z, exit 0.
-
-### Session: orchestrator proving correction — 2026-08-27T22:52:00Z — GPT-5.6 Sol
-
-- GitHub Actions inspection of Self-Test run 143 and representative Ubuntu/Node 24 job logs — started 2026-08-27T22:49:00Z, finished 2026-08-27T22:52:00Z, exit 0.
-- Result: Orchestrator correctly selected 3/34 categories and ran 53 individual tests; two workflow assertions failed solely because required `AI-HANDOFF.json` governance descriptions were shortened.
-- GitHub Git-data preparation of corrected `AI-HANDOFF.json` and `DEVLOG.md` — started 2026-08-27T22:52:00Z, finished 2026-08-27T22:53:00Z, exit 0.

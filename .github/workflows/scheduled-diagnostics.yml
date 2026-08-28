@@ -1,31 +1,28 @@
 # Additive, report-only diagnostics on a cadence slower than every push.
-# This workflow never becomes a required check and never changes what
-# self-test.yml runs on every push/PR - it only runs the daily/weekly/
-# monthly tiers described in src/testCadence.js on their own schedule, so
-# expensive or low-value-per-run checks (real GitHub API calls, dependency
-# audits, repository reproducibility rebuilds) don't have to run on every
-# single commit. See AGENTS.md's "Test and audit cadence" section.
+# Category cadence is owned by the Orchestrator. This workflow only tells
+# the Orchestrator which cadence window fired; it never selects test files.
 name: Scheduled diagnostics (cadence tiers)
 
 on:
   workflow_dispatch:
     inputs:
       tier:
-        description: Cadence tier to run (every-push, daily, weekly, monthly)
+        description: Scheduled category cadence to run (every-push, daily, twice-weekly, weekly, monthly)
         required: false
         default: daily
         type: string
   schedule:
     - cron: '0 7 * * *'    # daily
-    - cron: '0 8 * * 1'    # weekly (Mondays)
-    - cron: '0 9 1 * *'    # monthly (1st of the month)
+    - cron: '0 8 * * 2,5'  # twice weekly (Tuesdays and Fridays)
+    - cron: '0 9 * * 1'    # weekly (Mondays)
+    - cron: '0 10 1 * *'   # monthly (1st of the month)
 
 permissions:
   contents: read
 
 jobs:
   diagnostics:
-    name: Run cadence tier
+    name: Run scheduled Orchestrator cadence
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -38,7 +35,7 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
-      - name: Determine which cadence tier fired
+      - name: Determine which cadence window fired
         id: tier
         run: |
           set -euo pipefail
@@ -47,11 +44,13 @@ jobs:
           else
             case "${{ github.event.schedule }}" in
               '0 7 * * *') tier=daily ;;
-              '0 8 * * 1') tier=weekly ;;
-              '0 9 1 * *') tier=monthly ;;
+              '0 8 * * 2,5') tier=twice-weekly ;;
+              '0 9 * * 1') tier=weekly ;;
+              '0 10 1 * *') tier=monthly ;;
               *) tier=daily ;;
             esac
           fi
           echo "tier=$tier" >> "$GITHUB_OUTPUT"
-          echo "[The Crucible] Scheduled diagnostics: running cadence tier $tier."
-      - run: node src/testCadence.js "${{ steps.tier.outputs.tier }}"
+          echo "[The Crucible] Scheduled diagnostics: passing cadence window $tier to the Orchestrator."
+      - name: Run Orchestrator-owned scheduled category cadence
+        run: node src/testCadence.js scheduled "${{ steps.tier.outputs.tier }}"

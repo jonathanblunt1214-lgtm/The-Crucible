@@ -10,15 +10,18 @@
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
     "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements.",
-    "src/testCadence.js": "The governed Orchestrator entry point. It preserves all existing test selection authority while applying progress-heartbeat, known-bug persistence, and verified-resolution controls to production test invocations.",
-    "src/testCadenceCore.js": "The preserved Orchestrator selection core containing cadence, explicit Code/Security/Utility/Maintenance classification, natural-language request interpretation, change-impact selection, and fail-closed classification behavior.",
+    "src/testCadence.js": "The governed Orchestrator entry point. It preserves natural-language selection authority, applies run governance, and exposes owner-defined scheduled category cadence.",
+    "src/testCadenceCore.js": "Active Orchestrator cadence layer. It delegates mature selection behavior to the preserved legacy core while owning category cadence: Code every push, Security daily, Utility twice weekly, Maintenance weekly.",
+    "src/testCadenceCoreLegacy.js": "Byte-for-byte preserved prior Orchestrator selection core used underneath the active cadence layer so mature request interpretation and change-impact selection remain intact.",
     "src/testRunGovernance.js": "Orchestrator run governance for 60-second test progress updates, category-derived criticality, known-bug persistence, severity ordering, and mandatory passing re-tests before resolution.",
+    ".github/workflows/self-test.yml": "Required Self-Test path. Pushes and PRs invoke the Orchestrator's critical Code cadence before the governed natural-language/change-impact request; workflow_dispatch passes explicit requests unchanged.",
+    ".github/workflows/scheduled-diagnostics.yml": "Report-only cadence trigger. It passes daily, twice-weekly, weekly, or monthly cadence windows to the Orchestrator and never chooses test files itself.",
     "governingDocuments/known-bugs/README.md": "Known-bug governance policy, criticality order, persistence behavior, progress-update cadence, and mandatory re-test lifecycle.",
     "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger. Resolved or checked entries are invalid unless their latest recorded re-test passed."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T00:30:00Z"
+    "lastActionAt": "2026-08-28T00:44:00Z"
   },
   "temporaryInfrastructure": {
     "syntheticTestRequestCommitTransport": {
@@ -31,34 +34,52 @@
       "scopeBoundary": "This standing authorization applies only to replacing the temporary test-request transport with a genuine direct integration/connection. It does not authorize unrelated repository changes or promotion to main/release."
     }
   },
+  "testCadencePolicy": {
+    "selectionAuthority": "The Orchestrator alone selects categories, subcategories, test files, scope, and execution. Workflows may pass requests or cadence windows but may not select tests.",
+    "explicitRequestRule": "A specific owner test request is interpreted and run immediately by the Orchestrator; scheduled cadence never converts a specific request into a random category and never delays an explicitly requested category.",
+    "categoryCadence": {
+      "code": "every-push",
+      "security": "daily",
+      "utility": "twice-weekly",
+      "maintenance": "weekly"
+    },
+    "codeCriticalityRule": "Code is the critical baseline and its complete Code category is invoked by the Orchestrator on every push and pull request. This is additive to the Orchestrator's request/change-impact decision.",
+    "scheduledCumulativeRule": "Scheduled cadence is cumulative: daily includes Code and Security; twice-weekly includes Code, Security, and Utility; weekly and monthly include all four categories.",
+    "twiceWeeklySchedule": "Utility cadence is triggered Tuesdays and Fridays by scheduled-diagnostics.yml; the workflow passes only the twice-weekly cadence window and the Orchestrator selects the tests."
+  },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Record the synthetic CRUCIBLE TEST REQUEST commit transport as temporary workaround infrastructure and preserve standing owner authorization to replace it immediately when a supported direct integration or connection exists.",
-    "currentPrompt": "make sure that in the governing document this is a work around to be fixed as soon as possible as long as integration or direct connection exists",
+    "objective": "Make the Orchestrator own differentiated test cadence by criticality while preserving immediate specific-request behavior and sole test-selection authority.",
+    "currentPrompt": "make the Orchestrator know certain things like code run every line, because its critical, other things like security even though its critical only need to be daily, things like maintenance  are weekly while utility are twice weekly",
     "steps": [
-      "Mark the synthetic test-request commit transport explicitly as a temporary workaround and not the target architecture.",
-      "Define the target architecture as direct request transport to the Orchestrator with no synthetic repository commit.",
-      "Record the owner's standing authorization to replace and remove the workaround as soon as a supported direct integration or connection exists.",
-      "Keep the authorization narrowly scoped; no unrelated main/release promotion is authorized.",
-      "Update DEVLOG.md in the same atomic development commit and verify required CI."
+      "Preserve the mature Orchestrator selection core and layer owner-defined category cadence above it.",
+      "Make Code the every-push/PR critical baseline selected by the Orchestrator.",
+      "Make Security daily, Utility twice weekly, and Maintenance weekly, with cumulative slower cadence windows.",
+      "Keep explicit natural-language requests immediate and Orchestrator-selected regardless of scheduled cadence.",
+      "Update scheduled diagnostics so it passes cadence windows only and never selects test files.",
+      "Add regression tests and update DEVLOG.md in the same atomic development commit.",
+      "Verify Self-Test and CodeQL after the push."
     ],
     "status": "active",
-    "startedAt": "2026-08-28T00:30:00Z",
-    "lastUpdatedAt": "2026-08-28T00:30:00Z"
+    "startedAt": "2026-08-28T00:42:00Z",
+    "lastUpdatedAt": "2026-08-28T00:44:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Owner clarified that the synthetic CRUCIBLE TEST REQUEST commit transport must be governed as a temporary workaround, not target architecture.",
-      "Owner granted standing authority to replace and remove that workaround as soon as a supported direct integration or connection exists."
+      "Defined owner category cadence as Code every-push, Security daily, Utility twice-weekly, Maintenance weekly.",
+      "Designed cadence as an Orchestrator-owned cumulative policy rather than workflow-selected test files.",
+      "Preserved explicit request behavior: specific requested categories remain immediate and are not randomized or deferred by cadence.",
+      "Preserved the prior selection core underneath the active cadence layer to avoid regressing mature natural-language and change-impact behavior."
     ],
     "verification": [
-      "The Orchestrator remains the sole authority for interpreting natural-language test requests and selecting tests.",
-      "No mailbox, comment bus, carrier issue, or other substitute workaround is authorized as the target architecture."
+      "Regression coverage asserts category-to-cadence mapping and cumulative scheduled selections.",
+      "Self-Test is configured to invoke the Orchestrator's Code every-push baseline on push/PR while workflow_dispatch remains request-driven.",
+      "Scheduled diagnostics passes only cadence windows to the Orchestrator, including Utility twice weekly on Tuesdays and Fridays."
     ],
     "remaining": [
-      "Commit the governance clarification atomically with DEVLOG.md on development.",
-      "Check Self-Test and CodeQL after the push.",
-      "When a supported direct integration/connection becomes available, replace and remove the synthetic transport under the recorded standing authorization."
+      "Create the atomic development commit containing cadence code, workflow wiring, tests, AI-HANDOFF.json, and DEVLOG.md.",
+      "Check Self-Test and CodeQL after the push and correct any regressions until green.",
+      "When a supported direct integration/connection becomes available, replace and remove the synthetic request transport under the recorded standing authorization."
     ]
   }
 }
