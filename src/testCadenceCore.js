@@ -28,7 +28,7 @@ function classificationForTest(file, options = {}) {
 function mainCategoryForTest(file, options = {}) {
   const result = classificationForTest(file, options);
   if (result.category) return result.category;
-  throw new Error(`Independent closest-feature classifier could not safely categorize new test "${file}": ${result.reason}.`);
+  throw new Error(`Unclassified test "${file}". Independent closest-feature classifier could not safely categorize it: ${result.reason}.`);
 }
 
 function validateTestClassification(files = legacy.discoverTests(), options = {}) {
@@ -49,6 +49,7 @@ function categorizedTests(files = legacy.discoverTests()) {
     mainCategory: mainCategoryForTest(file),
     category: legacy.categoryForTest(file),
     subcategory: legacy.categoryForTest(file),
+    cadence: legacy.TEST_CADENCE[file] || 'every-push',
     classificationSource: classificationForTest(file).source,
   }));
 }
