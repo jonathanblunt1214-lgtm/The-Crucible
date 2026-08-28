@@ -3,14 +3,23 @@
 ## Shared AI handoff
 
 - **Agent:** GPT-5.6 Sol.
-- **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, and `handoffNotes` for the exact owner request, current plan, completed work, verification, and remaining work.
-- **Current development work:** Transport the owner's exact request `run a system wide code test` to the governed Orchestrator. The assistant does not choose test files or subcategories; the Orchestrator alone interprets the request and selects the actual test scope.
+- **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, `temporaryInfrastructure`, and `handoffNotes` for the exact owner request, current plan, standing transport rule, completed work, verification, and remaining work.
+- **Current development work:** Govern the existing `CRUCIBLE TEST REQUEST` synthetic commit-message transport as a temporary workaround only. It is not the target architecture.
+- **Transport replacement rule:** As soon as a supported direct integration or direct connection exists that can carry the user's natural-language test request directly to the Orchestrator without manufacturing a repository commit, the workaround must be replaced and removed. The owner has explicitly granted standing authority for that specific replacement.
+- **Selection boundary:** The direct transport must pass the user's request to the Orchestrator; the Orchestrator alone decides categories, subcategories, test files, scope, and execution.
+- **Authorization boundary:** Standing authority covers only replacement/removal of the temporary test-request transport. It does not authorize unrelated changes or promotion to `main`/`release`.
 - **Run governance:** Long-running Orchestrator test commands emit progress every 60 seconds; failures are persisted under `governingDocuments/known-bugs` in criticality order and require a passing exact-test re-test before being checked off.
-- **Remaining work:** Push the governed request commit to `development`, inspect the Orchestrator-selected scope/result, and confirm Self-Test and CodeQL. No `main`/`release` promotion is authorized.
+- **Remaining work:** Verify this governance-only development commit in Self-Test and CodeQL. When a supported direct integration/connection becomes available, replace the synthetic transport immediately under the standing owner authorization.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: temporary test-transport governance — 2026-08-28T00:30:00Z — GPT-5.6 Sol
+
+- Recorded the owner's clarification that the `CRUCIBLE TEST REQUEST` synthetic commit-message transport is temporary workaround infrastructure, not target architecture — started 2026-08-28T00:29:30Z, finished 2026-08-28T00:30:00Z, exit 0.
+- Recorded the mandatory replacement condition: replace and remove the workaround as soon as a supported direct integration or direct connection can pass the user's natural-language request directly to the Orchestrator without a synthetic commit — started 2026-08-28T00:30:00Z, finished 2026-08-28T00:30:30Z, exit 0.
+- Recorded standing owner authority for that specific transport replacement while preserving the no-unrelated-`main`/`release` boundary — started 2026-08-28T00:30:30Z, finished 2026-08-28T00:31:00Z, exit 0.
 
 ### Session: system-wide code test request — 2026-08-28T00:12:00Z — GPT-5.6 Sol
 
@@ -66,9 +75,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 - GitHub Actions inspection of Self-Test run 143 and representative Ubuntu/Node 24 job logs — started 2026-08-27T22:49:00Z, finished 2026-08-27T22:52:00Z, exit 0.
 - Result: Orchestrator correctly selected 3/34 categories and ran 53 individual tests; two workflow assertions failed solely because required `AI-HANDOFF.json` governance descriptions were shortened.
 - GitHub Git-data preparation of corrected `AI-HANDOFF.json` and `DEVLOG.md` — started 2026-08-27T22:52:00Z, finished 2026-08-27T22:53:00Z, exit 0.
-
-### Session: orchestrator ownership — 2026-08-27T22:44:02Z — GPT-5.6 Sol
-
-- GitHub connector read of current `development`, governing handoff, `src/testCadence.js`, `test/testCadence.test.js`, `package.json`, `.github/workflows/self-test.yml`, and current CI — started 2026-08-27T22:40:00Z, finished 2026-08-27T22:44:02Z, exit 0.
-- GitHub Git-data blob/tree/commit/ref creation for the Orchestrator implementation, package test entry point, Self-Test range wiring, proving tests, `AI-HANDOFF.json`, and `DEVLOG.md` — started 2026-08-27T22:44:02Z, finished 2026-08-27T22:48:04Z, exit 0.
-- Created and pushed development commit `c625edc982cc5de00abb8da40ca3f5c17e25a828` without force.
