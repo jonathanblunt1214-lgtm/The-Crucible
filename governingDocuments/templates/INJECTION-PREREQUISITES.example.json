@@ -24,10 +24,33 @@
     "shutdownCondition": "assimilation-complete-or-blocked-or-cancelled-or-window-expired",
     "credentialValueStored": false
   },
+  "monitoringLink": {
+    "defaultState": "disabled",
+    "state": "disabled",
+    "authorizationId": "<active-injection-authorization-id-or-null>",
+    "targetRepository": "<owner/repository>",
+    "developmentBranch": "<designated-development-branch>",
+    "activatedAt": "<timestamp-or-null>",
+    "expiresAt": "<timestamp-no-more-than-24-hours-after-activation-or-null>",
+    "maximumLifetimeHours": 24,
+    "allowedWorkflowOrCheckScope": ["<applicable-crucible-or-native-validation>"],
+    "minimumReadScope": ["actions:read", "contents:read"],
+    "minimumRepairScope": ["<least-write-scope-required-by-authorized-injection-or-none>"],
+    "fetchFailedJobStepAndLogs": true,
+    "deduplicateByUnderlyingDefect": true,
+    "repairPayloadRequired": true,
+    "automaticRepairAndRetestWhenAuthorized": true,
+    "disableWhenNoActiveInjection": true,
+    "nonInjectionUseForbidden": true,
+    "lastDefectFingerprint": null,
+    "lastObservedRunId": null,
+    "repairState": "<disabled|monitoring|repairing|retest|resolved|blocked|expired>",
+    "secretValueStored": false
+  },
   "prerequisites": [
     {
       "id": "<stable-id>",
-      "type": "<branch|repository-setting|actions-permission|secret|credential|ruleset|external-service|native-validation|other>",
+      "type": "<branch|repository-setting|actions-permission|secret|credential|ruleset|external-service|native-validation|monitoring|other>",
       "name": "<non-secret prerequisite name>",
       "requiredBy": "<injected capability/check>",
       "reason": "<why required>",
@@ -61,6 +84,7 @@
   },
   "activation": {
     "allRequiredPrerequisitesVerified": false,
+    "monitoringLinkMayActivate": false,
     "requiredGatesMayActivate": false,
     "productionPromotionAllowed": false,
     "assimilationMayComplete": false
