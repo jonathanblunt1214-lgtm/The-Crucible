@@ -17,6 +17,16 @@ The preflight must check, as applicable:
 - required repository-read credentials and minimum permission scope;
 - any other non-code prerequisite required by an injected check.
 
+## Native validation discovery prerequisite
+
+Before package finalization, preflight MUST also discover the receiving project's own applicable validation surfaces under `governingDocuments/templates/injection-native-validation.md`.
+
+This includes native full-test commands; stress, release, packaging, and bounded-workload commands; repository clutter/duplicate/inventory validators; governance/exception/security/integrity validators; and runtime wiring tests that can be affected by assimilation.
+
+Preflight MUST identify any project-owned validator that duplicates or parallels a Crucible rule and determine which governed configuration, allow-list, exception source, or policy source it consumes. If a duplicated validator would interpret intentional injected native governance differently from the governing Crucible configuration, assimilation is blocked until that disagreement is reconciled.
+
+The discovered native commands, validator paths, governing configuration sources, and current verification state MUST be recorded in `governingDocuments/INJECTION-PREREQUISITES.json` before assimilation starts.
+
 ## Injection-only credential prerequisite
 
 Any credential capability used to satisfy an injection prerequisite MUST obey `governingDocuments/templates/injection-credential-scope.md`.
@@ -35,6 +45,8 @@ The file must identify each prerequisite, why it is required, whether it was ver
 
 For any injection-only credential prerequisite, the file MUST also record non-secret activation state and scope metadata: default-disabled status, authorized injection identity/window, target repository, minimum permission scope, allowed injection operations, and shutdown condition. It MUST never contain a credential value.
 
+The file MUST also include native-validation metadata required by `injection-native-validation.md`, including the discovered project-owned commands/checks, duplicated-policy validators, their governed configuration sources, and post-assimilation status.
+
 An injection package is incomplete if this file is absent, generic, stale, or does not reflect the actual receiving repository and selected Crucible version.
 
 ## Activation rule
@@ -50,5 +62,13 @@ If any prerequisite is missing, unavailable, or unverifiable:
 - the missing prerequisite must be reported explicitly for OWNER resolution.
 
 Missing prerequisites are an injection/bootstrap failure, not a downstream surprise CI failure.
+
+## Post-assimilation repair requirement
+
+A verified prerequisite state does not by itself complete assimilation. After injection lands on the designated development branch, the injector MUST run Crucible and all applicable receiving-project native validation discovered during preflight.
+
+If an applicable native validation fails, assimilation remains incomplete. When the failure is safely repairable inside the active injection authority, the injector MUST continue through diagnosis, repair, and retest automatically under `injection-native-validation.md` instead of stopping after diagnosis and waiting for another owner prompt.
+
+Assimilation may be marked complete only when both Crucible and applicable native project validation pass on the assimilated development-branch state.
 
 Secret values must never be written into repository files, logs, handoff state, conflict records, findings, or artifacts.
