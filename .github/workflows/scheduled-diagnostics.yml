@@ -12,10 +12,11 @@ on:
         default: daily
         type: string
   schedule:
-    - cron: '0 7 * * *'    # daily
-    - cron: '0 8 * * 2,5'  # twice weekly (Tuesdays and Fridays)
-    - cron: '0 8 * * 1'    # weekly (Mondays)
-    - cron: '0 9 1 * *'    # monthly (1st of the month)
+    # Exact UTC transports for the documented category cadence.
+    - cron: '0 7 * * *'     # daily at 07:00 UTC
+    - cron: '0 8 * * 2,5'   # twice weekly at 08:00 UTC, Tuesdays and Fridays
+    - cron: '0 8 * * 1'     # weekly at 08:00 UTC, Mondays
+    - cron: '0 9 1 * *'     # monthly at 09:00 UTC, first day of month
 
 permissions:
   contents: read
@@ -47,7 +48,10 @@ jobs:
               '0 8 * * 2,5') tier=twice-weekly ;;
               '0 8 * * 1') tier=weekly ;;
               '0 9 1 * *') tier=monthly ;;
-              *) tier=daily ;;
+              *)
+                echo "[The Crucible] Unknown scheduled cadence '${{ github.event.schedule }}'; refusing to guess." >&2
+                exit 1
+                ;;
             esac
           fi
           echo "tier=$tier" >> "$GITHUB_OUTPUT"
