@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "governingDocuments": {
-    "AGENTS.md": "Repository owner standing branch and agent policy. The owner's current explicit instruction in this session supersedes the prior additive-only test cadence wording for this Orchestrator change; update AGENTS.md after the proving run so the standing document matches the new architecture.",
+    "AGENTS.md": "Repository owner standing branch and agent policy. The owner's current explicit instruction supersedes stale additive-only test cadence wording where necessary for the governed Orchestrator architecture.",
     "DEVLOG.md": "Repository-visible chain of custody and current shared AI handoff.",
     "AI-CONFLICTS.json": "Auditable AI conflict ledger; never bypass or disable it.",
     "CLAUDE.md": "Claude entry point to AGENTS.md.",
@@ -10,46 +10,55 @@
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
     "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements.",
-    "src/testCadence.js": "The test Orchestrator. It discovers every current and future test file, assigns file-derived categories, selects impacted categories for normal test runs, escalates to the full suite when impact cannot be proven safely, and retains scheduled cadence/on-error behavior."
+    "src/testCadence.js": "The governed Orchestrator entry point. It preserves all existing test selection authority while applying progress-heartbeat, known-bug persistence, and verified-resolution controls to production test invocations.",
+    "src/testCadenceCore.js": "The preserved Orchestrator selection core containing cadence, explicit Code/Security/Utility/Maintenance classification, natural-language request interpretation, change-impact selection, and fail-closed classification behavior.",
+    "src/testRunGovernance.js": "Orchestrator run governance for 60-second test progress updates, category-derived criticality, known-bug persistence, severity ordering, and mandatory passing re-tests before resolution.",
+    "governingDocuments/known-bugs/README.md": "Known-bug governance policy, criticality order, persistence behavior, progress-update cadence, and mandatory re-test lifecycle.",
+    "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger. Resolved or checked entries are invalid unless their latest recorded re-test passed."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-27T22:55:00Z"
+    "lastActionAt": "2026-08-28T00:30:00Z"
+  },
+  "temporaryInfrastructure": {
+    "syntheticTestRequestCommitTransport": {
+      "status": "temporary-workaround",
+      "notTargetArchitecture": true,
+      "description": "The CRUCIBLE TEST REQUEST synthetic commit-message transport exists only because the current ChatGPT/GitHub integration cannot directly create the required Orchestrator invocation. It is a workaround, not the intended architecture.",
+      "replacementRequirement": "Replace and remove this workaround as soon as a supported direct integration or direct connection exists that can pass the user's natural-language test request to the Orchestrator without manufacturing a repository commit.",
+      "targetArchitecture": "User test request -> supported direct integration/connection -> Orchestrator -> Orchestrator alone selects and runs tests -> results.",
+      "standingOwnerAuthorization": "The owner explicitly authorizes the governed agent to perform this specific replacement as soon as the supported direct integration/connection capability exists. No additional owner approval is required solely to replace and remove the synthetic test-request transport.",
+      "scopeBoundary": "This standing authorization applies only to replacing the temporary test-request transport with a genuine direct integration/connection. It does not authorize unrelated repository changes or promotion to main/release."
+    }
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Put every current and future repository test under the Orchestrator and prove selective category execution safely.",
-    "currentPrompt": "do The next change should break that `npm test` step behind the Orchestrator so it owns selection of every current and future test, then put the Orchestrator through a proving test",
+    "objective": "Record the synthetic CRUCIBLE TEST REQUEST commit transport as temporary workaround infrastructure and preserve standing owner authorization to replace it immediately when a supported direct integration or connection exists.",
+    "currentPrompt": "make sure that in the governing document this is a work around to be fixed as soon as possible as long as integration or direct connection exists",
     "steps": [
-      "Route npm test through src/testCadence.js changed so no normal test entry bypasses the Orchestrator.",
-      "Automatically discover every test/*.test.js and assign each a deterministic file-derived category, including future tests.",
-      "Select impacted categories from the changed-file range and fail safe to the full suite when impact is uncertain.",
-      "Pass the exact push/PR base and head SHAs from Self-Test so multi-commit changes are evaluated as one impact range.",
-      "Add proving tests for automatic ownership, selective category execution, governance routing, and fail-safe escalation.",
-      "Push to development and inspect the real GitHub Actions Self-Test matrix until the Orchestrator proving run is green."
+      "Mark the synthetic test-request commit transport explicitly as a temporary workaround and not the target architecture.",
+      "Define the target architecture as direct request transport to the Orchestrator with no synthetic repository commit.",
+      "Record the owner's standing authorization to replace and remove the workaround as soon as a supported direct integration or connection exists.",
+      "Keep the authorization narrowly scoped; no unrelated main/release promotion is authorized.",
+      "Update DEVLOG.md in the same atomic development commit and verify required CI."
     ],
     "status": "active",
-    "startedAt": "2026-08-27T22:44:02Z",
-    "lastUpdatedAt": "2026-08-27T22:55:00Z"
+    "startedAt": "2026-08-28T00:30:00Z",
+    "lastUpdatedAt": "2026-08-28T00:30:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Changed package.json so npm test enters the Orchestrator and added npm run test:all for an explicit full-system proof.",
-      "Changed Self-Test to pass the exact GitHub base/head SHA range into the Orchestrator.",
-      "Added automatic discovery and file-derived categories for every current and future test/*.test.js file.",
-      "Added impact selection, governance/workflow/package routing, and fail-safe full-suite escalation for unknown runtime impact.",
-      "Pushed c625edc982cc5de00abb8da40ca3f5c17e25a828 and follow-up 0f6f4827dfd55890f46f5ae62d15b87078f01b52 to development.",
-      "Real CI proving runs selected 3 of 34 test-file categories (handoffPolicy, testCadence, workflow) and executed 53 individual tests rather than the full suite; the second run passed all 53 selected tests."
+      "Owner clarified that the synthetic CRUCIBLE TEST REQUEST commit transport must be governed as a temporary workaround, not target architecture.",
+      "Owner granted standing authority to replace and remove that workaround as soon as a supported direct integration or connection exists."
     ],
     "verification": [
-      "Self-Test run 145 confirmed CRUCIBLE_BASE_SHA c625edc982cc5de00abb8da40ca3f5c17e25a828 and CRUCIBLE_HEAD_SHA 0f6f4827dfd55890f46f5ae62d15b87078f01b52, selected 3/34 categories, and passed 53/53 tests.",
-      "The second proving run then reached the separate pre-check gate, which correctly reported only CRUCIBLE_COMMIT_MISSING_FINAL_NEWLINE for AI-HANDOFF.json.",
-      "This commit fixes that formatting defect while preserving the paired DEVLOG/AI-HANDOFF chain of custody."
+      "The Orchestrator remains the sole authority for interpreting natural-language test requests and selecting tests.",
+      "No mailbox, comment bus, carrier issue, or other substitute workaround is authorized as the target architecture."
     ],
     "remaining": [
-      "Confirm the next Self-Test matrix is green across Ubuntu, Windows, and macOS / Node 20, 22, and 24.",
-      "After the proving run is green, align AGENTS.md's stale additive-only cadence wording and its workflow assertion with the owner-approved Orchestrator architecture in a governed follow-up commit.",
-      "Do not promote to main or release unless separately and explicitly instructed."
+      "Commit the governance clarification atomically with DEVLOG.md on development.",
+      "Check Self-Test and CodeQL after the push.",
+      "When a supported direct integration/connection becomes available, replace and remove the synthetic transport under the recorded standing authorization."
     ]
   }
 }

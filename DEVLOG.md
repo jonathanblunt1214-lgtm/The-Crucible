@@ -3,15 +3,66 @@
 ## Shared AI handoff
 
 - **Agent:** GPT-5.6 Sol.
-- **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, and `handoffNotes` for the exact owner request, current plan, completed work, verification, and remaining work.
-- **Current development work:** `npm test` now enters `src/testCadence.js changed`; every current and future `test/*.test.js` file is discovered automatically and receives a deterministic file-derived category. The Orchestrator selects impacted categories from the exact changed-file range and escalates to the full suite when impact cannot be proven safely. Self-Test supplies the exact GitHub base/head range.
-- **Proving result:** Self-Test run 145 on `0f6f4827...` selected only 3 of 34 categories (`handoffPolicy`, `testCadence`, `workflow`) and passed all 53 selected individual tests. The run then failed later at the separate pre-check gate solely because `AI-HANDOFF.json` lacked a final newline.
-- **Current correction:** Restore the required final newline in `AI-HANDOFF.json`, paired with this DEVLOG update. No Orchestrator logic change is needed for this correction.
-- **Remaining work:** Push this formatting correction, confirm the complete 9-job Self-Test matrix is green, then align `AGENTS.md`'s stale additive-only wording with the owner-approved Orchestrator architecture in a governed follow-up commit. No `main`/`release` promotion is authorized.
+- **Dev plan:** See `AI-HANDOFF.json`'s `activePlan.currentPrompt`, `activePlan.steps`, `temporaryInfrastructure`, and `handoffNotes` for the exact owner request, current plan, standing transport rule, completed work, verification, and remaining work.
+- **Current development work:** Govern the existing `CRUCIBLE TEST REQUEST` synthetic commit-message transport as a temporary workaround only. It is not the target architecture.
+- **Transport replacement rule:** As soon as a supported direct integration or direct connection exists that can carry the user's natural-language test request directly to the Orchestrator without manufacturing a repository commit, the workaround must be replaced and removed. The owner has explicitly granted standing authority for that specific replacement.
+- **Selection boundary:** The direct transport must pass the user's request to the Orchestrator; the Orchestrator alone decides categories, subcategories, test files, scope, and execution.
+- **Authorization boundary:** Standing authority covers only replacement/removal of the temporary test-request transport. It does not authorize unrelated changes or promotion to `main`/`release`.
+- **Run governance:** Long-running Orchestrator test commands emit progress every 60 seconds; failures are persisted under `governingDocuments/known-bugs` in criticality order and require a passing exact-test re-test before being checked off.
+- **Remaining work:** Verify this governance-only development commit in Self-Test and CodeQL. When a supported direct integration/connection becomes available, replace the synthetic transport immediately under the standing owner authorization.
 
 ## Command log archive
 
 Chain-of-custody record for recent units of work. Newest first; maximum 10 sessions and 180 days. Older history remains available through Git history.
+
+### Session: temporary test-transport governance — 2026-08-28T00:30:00Z — GPT-5.6 Sol
+
+- Recorded the owner's clarification that the `CRUCIBLE TEST REQUEST` synthetic commit-message transport is temporary workaround infrastructure, not target architecture — started 2026-08-28T00:29:30Z, finished 2026-08-28T00:30:00Z, exit 0.
+- Recorded the mandatory replacement condition: replace and remove the workaround as soon as a supported direct integration or direct connection can pass the user's natural-language request directly to the Orchestrator without a synthetic commit — started 2026-08-28T00:30:00Z, finished 2026-08-28T00:30:30Z, exit 0.
+- Recorded standing owner authority for that specific transport replacement while preserving the no-unrelated-`main`/`release` boundary — started 2026-08-28T00:30:30Z, finished 2026-08-28T00:31:00Z, exit 0.
+
+### Session: system-wide code test request — 2026-08-28T00:12:00Z — GPT-5.6 Sol
+
+- Accepted owner request `run a system wide code test` and preserved the established boundary that only the Orchestrator decides actual tests — started 2026-08-28T00:11:44Z, finished 2026-08-28T00:12:00Z, exit 0.
+- Prepared paired `AI-HANDOFF.json`/`DEVLOG.md` governance updates for the request-triggering development commit — started 2026-08-28T00:12:00Z, finished 2026-08-28T00:12:30Z, exit 0.
+
+### Session: Orchestrator progress and known-bug governance — 2026-08-28T00:04:30Z — GPT-5.6 Sol
+
+- Read current `DEVLOG.md`, `AI-HANDOFF.json`, `src/testCadence.js`, `test/testCadence.test.js`, Self-Test workflow, and development branch state — started 2026-08-28T00:04:30Z, finished 2026-08-28T00:06:00Z, exit 0.
+- Designed a 60-second companion-process heartbeat that preserves the synchronous Orchestrator API while guaranteeing updates within the owner-authorized 60–90 second window — started 2026-08-28T00:06:00Z, finished 2026-08-28T00:08:00Z, exit 0.
+- Prepared known-bug governance with severity ordering, category-derived default criticality, exact-test re-verification, fail-closed checked-state validation, Self-Test failure artifact preservation, regression coverage, and paired governance updates — started 2026-08-28T00:08:00Z, finished 2026-08-28T00:11:00Z, exit 0.
+
+### Session: random-category proof correction — 2026-08-27T23:52:00Z — GPT-5.6 Sol
+
+- Inspected Self-Test run 166 jobs and Ubuntu/Node 24 log — started 2026-08-27T23:52:00Z, finished 2026-08-27T23:54:30Z, exit 0; Orchestrator chose Security and passed 92/92 requested tests, while pre-check later failed one stale regression assertion.
+- Prepared and pushed first `test/testCadence.test.js` random-category regression update with paired governance files as commit `6f1b616826ac118f8445bc69bd0c1c72e52902fd` — started 2026-08-27T23:54:30Z, finished 2026-08-27T23:55:37Z, exit 0.
+- Inspected Self-Test run 167 and isolated its failure to direct request assertions inheriting `CRUCIBLE_TEST_REQUEST_SOURCE=push` from the surrounding Orchestrator workflow step — started 2026-08-27T23:55:37Z, finished 2026-08-27T23:57:30Z, exit 0.
+- Prepared environment-isolated regression assertions plus paired `AI-HANDOFF.json`/`DEVLOG.md` updates — started 2026-08-27T23:57:30Z, finished 2026-08-27T23:58:30Z, exit 0.
+
+### Session: natural-language Orchestrator transport — 2026-08-27T23:47:00Z — GPT-5.6 Sol
+
+- Read current `DEVLOG.md`, `AI-HANDOFF.json`, Orchestrator, Self-Test workflow, and relevant test contracts — started 2026-08-27T23:47:00Z, finished 2026-08-27T23:49:00Z, exit 0.
+- Inspected Self-Test run 165 jobs and representative Ubuntu/Node 24 logs — started 2026-08-27T23:49:00Z, finished 2026-08-27T23:50:00Z, exit 0; found 269/271 passing with only two stale direct-`npm test` workflow assertions failing.
+- Prepared Git-data blobs for natural-language request interpretation, request transport, and paired governance updates — started 2026-08-27T23:50:00Z, finished 2026-08-27T23:51:00Z, exit 0.
+- Created and fast-forwarded development commit `4f3dab59e9c206ac36f57e6341d4d19ddfb5cce8` with exact message `CRUCIBLE TEST REQUEST: run a random test category` — started 2026-08-27T23:51:00Z, finished 2026-08-27T23:52:00Z, exit 0.
+
+### Session: governed manual test requests — 2026-08-27T23:28:00Z — GPT-5.6 Sol
+
+- GitHub governance, Orchestrator, Self-Test, and regression-test inspection — started 2026-08-27T23:28:00Z, finished 2026-08-27T23:35:30Z, exit 0.
+- Connector contents-API misfires created temporary stray files while low-level Git-data tools were not loaded — started 2026-08-27T23:36:36Z, finished 2026-08-27T23:38:20Z, exit 1 for intended atomic-write path / repository mutations recorded and corrected.
+- Reconstructed the clean pre-incident tree and prepared Orchestrator request handling, Self-Test dispatch inputs, regression tests, `AI-HANDOFF.json`, and `DEVLOG.md` as Git-data blobs — started 2026-08-27T23:39:00Z, finished 2026-08-27T23:45:00Z, exit 0.
+
+### Session: category-order regression fix — 2026-08-27T23:22:00Z — GPT-5.6 Sol
+
+- Inspected Self-Test run 154 matrix and representative Ubuntu/Node 24 logs — started 2026-08-27T23:22:00Z, finished 2026-08-27T23:23:00Z, exit 0.
+- Result: all 34 test files were selected across Code, Security, Utility, and Maintenance; 269 tests ran, 268 passed, and one assertion failed solely on category ordering.
+- Prepared regression assertion correction plus paired `AI-HANDOFF.json`/`DEVLOG.md` governance update — started 2026-08-27T23:23:00Z, finished 2026-08-27T23:23:30Z, exit 0.
+
+### Session: four-category test sorting — 2026-08-27T23:14:00Z — GPT-5.6 Sol
+
+- GitHub governance and suite inventory reads — started 2026-08-27T23:13:48Z, finished 2026-08-27T23:14:00Z, exit 0.
+- Prepared atomic Orchestrator/category mapping, regression tests, `AI-HANDOFF.json`, and `DEVLOG.md` update — started 2026-08-27T23:14:00Z, finished 2026-08-27T23:14:30Z, exit 0.
+- Connector contents-API write accidentally created `temp-will-not-create` in commit `e37b2f9c8235a9641b2f3531a1f1b862fa43f78c`; detected immediately and included for deletion in the governed follow-up commit — started 2026-08-27T23:15:54Z, finished 2026-08-27T23:16:20Z, exit 1 for intended atomic-write path / repository mutation occurred and was corrected.
 
 ### Session: final-newline correction — 2026-08-27T22:55:00Z — GPT-5.6 Sol
 
@@ -24,34 +75,3 @@ Chain-of-custody record for recent units of work. Newest first; maximum 10 sessi
 - GitHub Actions inspection of Self-Test run 143 and representative Ubuntu/Node 24 job logs — started 2026-08-27T22:49:00Z, finished 2026-08-27T22:52:00Z, exit 0.
 - Result: Orchestrator correctly selected 3/34 categories and ran 53 individual tests; two workflow assertions failed solely because required `AI-HANDOFF.json` governance descriptions were shortened.
 - GitHub Git-data preparation of corrected `AI-HANDOFF.json` and `DEVLOG.md` — started 2026-08-27T22:52:00Z, finished 2026-08-27T22:53:00Z, exit 0.
-
-### Session: orchestrator ownership — 2026-08-27T22:44:02Z — GPT-5.6 Sol
-
-- GitHub connector read of current `development`, governing handoff, `src/testCadence.js`, `test/testCadence.test.js`, `package.json`, `.github/workflows/self-test.yml`, and current CI — started 2026-08-27T22:40:00Z, finished 2026-08-27T22:44:02Z, exit 0.
-- GitHub Git-data blob/tree/commit/ref creation for the Orchestrator implementation, package test entry point, Self-Test range wiring, proving tests, `AI-HANDOFF.json`, and `DEVLOG.md` — started 2026-08-27T22:44:02Z, finished 2026-08-27T22:48:04Z, exit 0.
-- Created and pushed development commit `c625edc982cc5de00abb8da40ca3f5c17e25a828` without force.
-
-### Session: a5048de — 2026-08-27T21:47:17Z — Claude
-
-- Diagnosed the real Windows-only Self-Test failures on `9c16f36`: CRLF-unsafe workflow-test regexes plus a Windows npm invocation assumption in `test/testCadence.test.js`.
-- `npm test` — started 2026-08-27T21:46:02Z, finished 2026-08-27T21:46:05Z, exit 0 (260/260 on Linux).
-- `npm run lint:workflows`, `docs:check`, `validate`, `audit:clutter`, `audit:privacy`, `audit:security` — started 2026-08-27T21:47:14Z, finished 2026-08-27T21:47:17Z, exit 0.
-- Push to `development` produced commit `a5048deacbd79926c2652eddad13d5db98a0131b`; subsequent Self-Test, CodeQL, AI handoff policy, AI conflict governance, and locked-PR guard all passed.
-
-### Session: 9c16f36 — 2026-08-27T21:39:09Z — Claude
-
-- Added cadence/orchestrator unit tests and scheduled diagnostics; iterated the new topology/authenticity/integration tests individually until green.
-- `npm run cadence:every-push` — first run failed because `audit:handoff` lacked invocation context; registry corrected and rerun passed.
-- `npm run cadence:daily` and `npm run cadence:on-error -- self-test-failure` passed.
-- Final `npm test` — started 2026-08-27T21:37:22Z, finished 2026-08-27T21:37:25Z, exit 0 (260/260).
-- Workflow lint/docs/validate/clutter/privacy/security checks — finished 2026-08-27T21:39:09Z, exit 0.
-
-### Session: eede127 — 2026-08-27T21:12:23Z — Claude
-
-- Reworked `DEVLOG.md` into Shared AI handoff plus bounded Command log archive and hardened `src/handoffPolicy.js` validation.
-- Final `npm test` with handoff-policy regression tests — started 2026-08-27T21:14:33Z, finished 2026-08-27T21:14:36Z, exit 0 (215/215).
-
-### Session: 0c54c54 — 2026-08-27T20:56:21Z — Claude
-
-- Baseline and final `npm test` passed; workflow lint/docs/validate/clutter/privacy/security audits all passed.
-- Pushed `0c54c54` and confirmed required checks green.
