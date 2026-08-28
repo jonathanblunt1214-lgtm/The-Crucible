@@ -145,9 +145,9 @@ test('development testing standards gate rejects stale governed rules or obsolet
   );
 
   const deprecatedContracts = [
-    'future tests fail closed until they are assigned a main category',
-    'unresolved classification aborts the whole suite',
-    'unknown classification stops all tests',
+    ['future tests fail closed until they are assigned', 'a main category'].join(' '),
+    ['unresolved classification aborts', 'the whole suite'].join(' '),
+    ['unknown classification stops', 'all tests'].join(' '),
   ];
   const testDir = path.join(root, 'test');
   for (const name of fs.readdirSync(testDir).filter((entry) => entry.endsWith('.js'))) {
