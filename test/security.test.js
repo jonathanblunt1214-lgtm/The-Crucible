@@ -75,6 +75,52 @@ test('Firebase API-key review findings can only be suppressed by an explicit sco
   assert.equal(reviewed.findings.length, 0, 'retaining a public Firebase key requires an explicit file-and-rule security decision');
 });
 
+test('flags other providers\' public API-key-shaped identifiers for restriction review, not only Google/Firebase', () => {
+  const syntheticStripeKey = `pk_live_${'D'.repeat(20)}`;
+  const stripeFindings = findingsForText(`stripePublishableKey = '${syntheticStripeKey}';`);
+  assert.ok(stripeFindings.find((item) => item.type === 'Stripe publishable key requires restriction review'));
+  assert.doesNotMatch(JSON.stringify(stripeFindings), new RegExp(syntheticStripeKey));
+
+  const syntheticMapboxToken = `pk.eyJ${'E'.repeat(24)}.${'F'.repeat(12)}`;
+  const mapboxFindings = findingsForText(`mapboxPublicToken = '${syntheticMapboxToken}';`);
+  assert.ok(mapboxFindings.find((item) => item.type === 'Mapbox public token requires restriction review'));
+  assert.doesNotMatch(JSON.stringify(mapboxFindings), new RegExp(syntheticMapboxToken.replace(/\./g, '\\.')));
+});
+
+test('flags key-shaped identifiers from unrecognized providers instead of silently passing them', () => {
+  const syntheticUnknownKey = `zK9${'x'.repeat(15)}42aQ`;
+  const camelCase = findingsForText(`apiKey: '${syntheticUnknownKey}',`);
+  assert.equal(camelCase.length, 1);
+  assert.equal(camelCase[0].type, 'unrecognized public API-key-shaped identifier requires security review');
+  assert.doesNotMatch(JSON.stringify(camelCase), new RegExp(syntheticUnknownKey), 'the unrecognized-provider fallback must not echo the detected value either');
+
+  const snakeCase = findingsForText(`API_KEY = "${syntheticUnknownKey}"`);
+  assert.equal(snakeCase[0].type, 'unrecognized public API-key-shaped identifier requires security review');
+});
+
+test('the unrecognized-provider fallback does not double-report a value a specific provider rule already caught', () => {
+  const syntheticFirebaseKey = `AIza${'G'.repeat(35)}`;
+  const findings = findingsForText(`apiKey: '${syntheticFirebaseKey}',`);
+  assert.deepEqual(findings.map((item) => item.type), ['Google/Firebase API key requires restriction review']);
+});
+
+test('the unrecognized-provider fallback ignores short or non-key-shaped values under key-like names', () => {
+  assert.equal(findingsForText("apiKey: 'your-key-here'").length, 0, 'short placeholder text should not be treated as a real key');
+  assert.equal(findingsForText(`apiKey: '${'x'.repeat(30)}'`).length, 0, 'a value with no digits is unlikely to be a real key and should not be flagged');
+  assert.equal(findingsForText(`apiKey: '${'9'.repeat(30)}'`).length, 0, 'a value with no letters is unlikely to be a real key and should not be flagged');
+});
+
+test('unrecognized-provider API-key review findings can only be suppressed by an explicit scoped security allowance', () => {
+  const root = repository();
+  const syntheticUnknownKey = `zK9${'y'.repeat(15)}42aQ`;
+  fs.writeFileSync(path.join(root, 'thirdPartyConfig.js'), `module.exports = { apiKey: '${syntheticUnknownKey}' };\n`);
+  git(root, ['add', 'thirdPartyConfig.js']);
+  const blocked = auditSecurity(root, config());
+  assert.equal(blocked.findings[0].type, 'unrecognized public API-key-shaped identifier requires security review');
+  const reviewed = auditSecurity(root, config({ allow:[{ path:'thirdPartyConfig.js', rules:['unrecognized public API-key-shaped identifier requires security review'] }] }));
+  assert.equal(reviewed.findings.length, 0, 'retaining an unrecognized-provider key requires an explicit file-and-rule security decision');
+});
+
 test('detects expanded keylogging APIs and clipboard/microphone/camera exfiltration', () => {
   const samples = [
     'RegisterRawInputDevices(devices); fetch(exfilUrl, { body: captured })',
