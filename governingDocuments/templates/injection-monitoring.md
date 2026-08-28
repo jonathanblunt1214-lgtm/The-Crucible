@@ -10,6 +10,8 @@ The monitoring link exists only for the active injection/assimilation. Its maxim
 
 When no authorized injection is active, the monitoring link MUST be disabled and MUST NOT inspect, modify, trigger, or otherwise operate on the receiving project.
 
+The link is not considered active merely because this document or a state file says `monitoring`. Activation requires an actual monitoring mechanism capable of checking the receiving project's applicable workflow/check results during the authorized window. The injection package MUST record the mechanism identity, activation proof, activation time, expiration time, and exact target. A declared link with no executable monitoring mechanism is invalid and blocks assimilation.
+
 ## Exact scope
 
 The link may observe only the target repository, development path, workflows, checks, jobs, artifacts, and logs required to validate or repair the authorized injection/assimilation.
@@ -41,9 +43,9 @@ Repeated workflow runs or commits that encounter the same unresolved defect MUST
 
 A new repair record is created only when the underlying defect materially changes or a distinct defect is detected. When a defect is verified fixed, its record is resolved rather than multiplied.
 
-## Repair delivery requirement
+## Autonomous repair delivery requirement
 
-The monitoring system MUST return a repair payload, not merely an error notification.
+An applicable failure is a repair work item, not merely a reporting event. The monitoring system MUST return a repair payload, not merely an error notification.
 
 A repair payload contains, as applicable:
 
@@ -55,9 +57,15 @@ A repair payload contains, as applicable:
 - the validation that must be rerun after the repair;
 - state: `repair-ready`, `repairing`, `retest`, `resolved`, or `blocked`.
 
-When the repair is safe, technically resolvable, required to complete assimilation, within the active injection authority, and not blocked by an unresolved governance conflict, the injector MUST apply the repair through the receiving project's development-first path and retest automatically. It MUST NOT stop after diagnosis and wait for another OWNER prompt merely to perform that already-authorized repair.
+When the repair is safe, technically resolvable, required to complete assimilation, within the active injection authority, and not blocked by an unresolved governance conflict or higher-priority safety boundary, the injector/monitoring agent MUST apply the repair autonomously through the receiving project's development-first path and retest. It MUST NOT stop after diagnosis, send only a status report, or wait for another OWNER prompt merely to perform that already-authorized repair.
 
-If a safe deterministic patch cannot be produced without inventing business logic, widening authority, weakening a gate, or resolving a genuine ambiguity, the repair payload MUST state the exact blocker and assimilation remains incomplete.
+The required loop is:
+
+`failure -> retrieve exact evidence -> diagnose current source -> repair on development path -> retest -> repeat until resolved`
+
+Prompt-style progress updates are informational only and MUST NOT replace execution. An agent saying it is "moving to repair", "at the source-edit stage", or "next update will be the commit" while leaving a safe authorized repair unapplied is non-compliant.
+
+If a safe deterministic patch cannot be produced without inventing business logic, widening authority, weakening a gate, touching production directly, or resolving a genuine ambiguity, the repair payload MUST state that exact boundary and assimilation remains incomplete.
 
 ## Monitoring state required in the injection package
 
@@ -67,10 +75,13 @@ If a safe deterministic patch cannot be produced without inventing business logi
 - active injection authorization identity;
 - exact target repository and development branch;
 - `activatedAt` and `expiresAt`, with `expiresAt` no later than 24 hours after activation;
+- `mechanismType` and non-secret `mechanismIdentity`;
+- `activationProof` showing that the monitor is actually scheduled/connected and able to inspect the target;
 - allowed workflow/check scope;
 - permission scope required to read failure evidence and deliver authorized repairs;
 - `deduplicateByUnderlyingDefect: true`;
 - `repairPayloadRequired: true`;
+- `autonomousRepairRequiredWhenAuthorized: true`;
 - `disableWhenNoActiveInjection: true`;
 - current state: `disabled`, `monitoring`, `repairing`, `retest`, `resolved`, `blocked`, or `expired`.
 
