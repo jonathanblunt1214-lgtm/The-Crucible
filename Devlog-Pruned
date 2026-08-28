@@ -2,6 +2,11 @@
 
 Append-only ledger, on the reference-only `Archive` branch, of every `### Session:` entry pruned from DEVLOG.md's Command log archive on `development` (see AGENTS.md). Newest first. Retention floor: at least 364 days of pruned history is always kept - an entry is trimmed only once it is older than that. Capacity starts at 50 sessions and doubles automatically (100, 200, ...) whenever more than that many sessions fall within the 364-day floor, so the count never forces a trim on its own. Anything trimmed remains retrievable via `git log -p Devlog-Pruned` on `Archive`.
 
+### Session: standing-test CI correction — 2026-08-28T08:31:00Z — GPT-5.6 Sol — mode:regular/default
+
+- Checked post-push Actions for `be46b479e3c69d009b03da383c85780be11a9234`; Self-Test #180 failed while policy/conflict/monitoring gates passed and CodeQL #141 remained in progress — started 2026-08-28T08:31:00Z, finished 2026-08-28T08:33:00Z, exit 1 for Self-Test.
+- Inspected Self-Test #180 jobs and corrected only the V8 probe boundary exposed by the failure — started 2026-08-28T08:33:00Z, finished 2026-08-28T08:35:00Z, exit 0 diagnostic/correction.
+
 ### Session: expand standing category tests — 2026-08-28T08:16:00Z — GPT-5.6 Sol — mode:regular/default
 
 - Read governance, checked the pre-change Actions baseline, and pushed ten standing test cases across the existing Code, Security, Utility, and Maintenance files with paired governance updates — started 2026-08-28T08:16:00Z, finished 2026-08-28T08:31:00Z, exit 0.
