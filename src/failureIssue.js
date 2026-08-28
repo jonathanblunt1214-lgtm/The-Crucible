@@ -21,7 +21,7 @@ function failureSummary(report) {
     const action = String(result.action || 'unknown').replace(/[^A-Za-z0-9._-]/g, '').slice(0, 80) || 'unknown';
     const error = String(result.error || 'No bounded error summary was recorded.').replace(/[\r\n]+/g, ' ').slice(0, 500);
     const fix = String(result.suggestedFix || 'Review the failed action and rerun Crucible.').replace(/[\r\n]+/g, ' ').slice(0, 700);
-    return `- **${action}**: ${error}\n  - **Suggested repair:** ${fix}`;
+    return `- **${action}**: ${error}\n  - **Repair:** ${fix}`;
   }).join('\n');
 }
 
@@ -33,7 +33,7 @@ function buildFailureNotice(report, environment = process.env) {
   const server = environment.GITHUB_SERVER_URL || 'https://github.com';
   assertWellFormedApiUrl(server);
   const runUrl = runId === 'unknown' ? `${server}/${repository}/actions` : `${server}/${repository}/actions/runs/${runId}`;
-  return `${ISSUE_MARKER}\nThe linked Crucible gate failed in **${repository}**.\n\n- Run: ${runUrl}\n- Attempt: ${attempt}\n- Commit: \`${sha}\`\n- Report artifact: \`the-crucible-report-${runId}-${attempt}\`\n\n### Reported failure\n\n${failureSummary(report)}\n\nThis issue is the single current Crucible failure report for the repository. Later failed runs update this report in place until the underlying failure is resolved.`;
+  return `${ISSUE_MARKER}\nThe linked Crucible gate has an unresolved failure in **${repository}**. This single report is updated in place while the same failure remains unresolved.\n\n- Latest run: ${runUrl}\n- Attempt: ${attempt}\n- Commit: \`${sha}\`\n- Report artifact: \`the-crucible-report-${runId}-${attempt}\`\n\n### Current failure and repair\n\n${failureSummary(report)}\n\nThe linked, pinned Crucible workflow owns this report. Repeated runs update this report instead of creating per-run comments. After correction, rerun the gate and resolve the report when verification passes.`;
 }
 
 async function githubRequest(apiBase, path, token, options, fetchImpl) {
@@ -64,7 +64,7 @@ async function publishFailureIssue(environment = process.env, fetchImpl = global
   const issues = await openResponse.json();
   const existing = issues.find((issue) => !issue.pull_request && (issue.title === ISSUE_TITLE || String(issue.body || '').includes(ISSUE_MARKER)));
   if (existing) {
-    await githubRequest(apiBase, `/repos/${repository}/issues/${existing.number}`, token, { method:'PATCH', body:JSON.stringify({ body:notice }) }, fetchImpl);
+    await githubRequest(apiBase, `/repos/${repository}/issues/${existing.number}`, token, { method:'PATCH', body:JSON.stringify({ title:ISSUE_TITLE, body:notice }) }, fetchImpl);
     return { action:'updated', number:existing.number };
   }
   const createdResponse = await githubRequest(apiBase, `/repos/${repository}/issues`, token, { method:'POST', body:JSON.stringify({ title:ISSUE_TITLE, body:notice }) }, fetchImpl);
