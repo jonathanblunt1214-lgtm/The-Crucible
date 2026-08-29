@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: reference-branch-integrity-${{ github.repository }}-${{ github.ref }}
@@ -14,9 +14,9 @@ concurrency:
 
 jobs:
   reference-integrity:
-    name: Third-branch main-reference integrity
+    name: Third-branch main-reference integrity and repair
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -24,8 +24,11 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
-      - name: Fetch branch tips for read-only reference validation
+      - name: Fetch branch tips for governed reference repair
         shell: bash
         run: git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*'
-      - name: Verify third-branch references to canonical main
-        run: node src/referenceBranchIntegrity.js
+      - name: Repair deterministic third-branch references and retest
+        env:
+          CRUCIBLE_MAIN_BEFORE: ${{ github.event.before }}
+          CRUCIBLE_MAIN_AFTER: ${{ github.sha }}
+        run: node src/referenceBranchIntegrity.js repair
