@@ -38,18 +38,20 @@ jobs:
       - name: Run plugin VM and lifecycle tests
         working-directory: nexus-plugin
         run: node --test test/*.test.js
-      - name: Build deterministic unsigned package
+      - name: Build Nexus-compatible unsigned package
         working-directory: nexus-plugin
         run: node scripts/package.js
-      - name: Verify package output exists
+      - name: Verify package format and contents
+        working-directory: nexus-plugin
         shell: bash
-        run: test -f nexus-plugin/dist/the-crucible-0.0.1.nexusplugin.json
+        run: |
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('dist/the-crucible-0.0.1.nexusplugin','utf8')); if(p.format!=='nexus-plugin-package'||p.version!==1||p.pluginId!=='the-crucible') process.exit(1); const paths=p.files.map(f=>f.path); for(const required of ['nexus.plugin.json','index.js','LICENSE','sbom.spdx.json']) if(!paths.includes(required)) process.exit(1); if(paths.some(x=>x.startsWith('test/')||x.startsWith('scripts/'))) process.exit(1);"
       - name: Upload unsigned screened-source candidate
         if: matrix.os == 'ubuntu-latest' && matrix.node == 24
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: the-crucible-nexus-plugin-0.0.1-${{ github.sha }}
-          path: nexus-plugin/dist/the-crucible-0.0.1.nexusplugin.json
+          path: nexus-plugin/dist/the-crucible-0.0.1.nexusplugin
           if-no-files-found: error
           retention-days: 30
 

@@ -29,12 +29,12 @@
     "governingDocuments/known-bugs/README.md": "Known-bug governance policy.",
     "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed known-bug ledger.",
     "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity and timestamping.",
-    "nexus-plugin/nexus.plugin.json": "The standalone Nexus plugin manifest; plugin version is independent from the core Crucible package version.",
-    "nexus-plugin/HOST-CONTRACT.md": "Generic Nexus host capability, configuration, account-privacy, upgrade, and failure contract for the plugin."
+    "nexus-plugin/nexus.plugin.json": "Standalone Nexus plugin manifest; plugin version is independent from core Crucible version.",
+    "nexus-plugin/HOST-CONTRACT.md": "Generic Nexus host capability, account privacy, configuration, upgrade, and failure contract."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-29T13:38:20Z"
+    "lastActionAt": "2026-08-29T13:41:20Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -50,17 +50,6 @@
     "workPurpose": "Genuinely complex, long-running, multi-source, file-heavy, or deliverable-oriented tasks that materially benefit from Work mode.",
     "handoffRule": "Every active plan records actual mode, agent, purpose, and selection reason; mode is independent from agent identity and workflow.",
     "continuationRule": "Preserve the recorded mode while task needs remain the same; record a changed mode and reason before continuing if evidence warrants it."
-  },
-  "temporaryInfrastructure": {
-    "syntheticTestRequestCommitTransport": {
-      "status": "temporary-workaround",
-      "notTargetArchitecture": true,
-      "description": "The CRUCIBLE TEST REQUEST synthetic commit-message transport exists only because the current ChatGPT/GitHub integration cannot directly create the required Orchestrator invocation.",
-      "replacementRequirement": "Replace and remove this workaround as soon as a supported direct integration can pass the user's natural-language test request to the Orchestrator without manufacturing a repository commit.",
-      "targetArchitecture": "User test request -> supported direct integration/connection -> Orchestrator -> Orchestrator alone selects and runs tests -> results.",
-      "standingOwnerAuthorization": "The owner explicitly authorizes this specific replacement as soon as the supported direct integration/connection capability exists; no additional approval is required solely for that replacement.",
-      "scopeBoundary": "This authorization does not authorize unrelated repository changes or promotion to main/release."
-    }
   },
   "testCadencePolicy": {
     "systemArchitecture": "Orchestrator, Cadence, closest-feature classification, and reconciliation operate as one governed testing system while remaining independent checks-and-balances authorities.",
@@ -91,43 +80,43 @@
   },
   "activePlan": {
     "agent": "GPT-5.6 Sol",
-    "objective": "Build and harden The Crucible Nexus plugin v0.0.1 as a standalone, industry-standard plugin package entirely on the explicitly owner-authorized Plug-in branch, with optional lifecycle, explicit Auto Inject, complete governingDocuments configuration, account-private injection history, least privilege, release tooling, and verification.",
+    "objective": "Build and harden The Crucible Nexus plugin v0.0.1 as a standalone, industry-standard plugin package entirely on the explicitly owner-authorized Plug-in branch.",
     "currentPrompt": "no everything for the plug in should be done on the plug in branch of https://github.com/jonathanblunt1214-lgtm/The-Crucible.git",
     "executionMode": {
       "mode": "regular/default",
       "agent": "GPT-5.6 Sol",
-      "purpose": "Use the directly available GitHub connector to create the standalone plugin package and governed branch state after the owner rejected the product Work-mode handoff earlier in this session.",
-      "selectionReason": "The task is file-heavy and would ordinarily benefit from Work mode, but the owner explicitly declined that handoff; direct GitHub operations remain available and are the executable path for this attended task.",
-      "distinction": "Execution mode is separate from agent identity and workflow; GPT-5.6 Sol is operating in regular/default mode through the GitHub workflow available in this conversation."
+      "purpose": "Use the directly available GitHub connector after the owner declined the earlier product Work-mode handoff.",
+      "selectionReason": "Direct GitHub operations remain the executable owner-approved path in this attended session.",
+      "distinction": "Execution mode is separate from agent identity and workflow."
     },
     "steps": [
       "Re-read Plug-in branch governance, conflict ledger, handoff, DEVLOG, testing/security policy, and current branch tip.",
-      "Create a standalone Nexus plugin v0.0.1 package under nexus-plugin/ with a least-privilege manifest and self-contained VM entry.",
-      "Implement explicit Auto Inject, full text governance list/read/create/update/move/delete contracts, and account-private injection tracking without project-visible tracking metadata.",
-      "Add host contract, security policy, changelog, SPDX SBOM, deterministic package verification, protected-environment signing, and VM/lifecycle regression tests.",
-      "Add a Plug-in-branch CI workflow and root package commands while preserving core Crucible behavior.",
-      "Commit implementation with AI-HANDOFF.json and DEVLOG.md atomically, archive the one pruned DEVLOG session to Devlog-Pruned on Archive, then inspect exact-tip hosted checks and repair any actionable failures."
+      "Create the standalone Nexus plugin v0.0.1 package with least privilege, explicit Auto Inject, full governingDocuments lifecycle actions, and account-private tracking.",
+      "Add host contract, security policy, changelog, SPDX SBOM, deterministic package verification, protected-environment signing, VM/lifecycle regression tests, and Plug-in CI.",
+      "Correct the release artifact to Nexus's exact nexus-plugin-package format and exclude development-only scripts/tests from shipped payload.",
+      "Archive the one pruned DEVLOG session, inspect exact-tip hosted checks, and repair any actionable failures without promoting main/release."
     ],
     "status": "active",
     "startedAt": "2026-08-29T13:32:48Z",
-    "lastUpdatedAt": "2026-08-29T13:38:20Z"
+    "lastUpdatedAt": "2026-08-29T13:41:20Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed the exact owner-authorized target branch is Plug-in and it begins at validated commit 8e9e597395c74e47274a3a0ba9f5dc93c1e078c8.",
-      "Confirmed AI-CONFLICTS.json has no open conflicts and read the branch governing documents before mutation.",
-      "Designed the plugin as a standalone package under nexus-plugin/ rather than Crucible-specific source in the Nexus host repository.",
-      "Prepared v0.0.1 manifest/runtime, least-privilege capability contract, full governingDocuments lifecycle actions, explicit account-tracked Auto Inject, release verification/signing/package tooling, docs, SBOM, tests, and dedicated CI workflow."
+      "Confirmed exact target branch Plug-in, validated parent commit, and no open AI conflicts.",
+      "Created standalone v0.0.1 plugin source under nexus-plugin/ rather than Crucible-specific source in Nexus.",
+      "Implemented least-privilege runtime, explicit Auto Inject, full governingDocuments configuration operations, and authenticated account-private injection tracking.",
+      "Added host/security/release docs, SPDX SBOM, deterministic verification and signing tooling, VM regressions, and dedicated cross-platform CI.",
+      "Corrected the unsigned release artifact to Nexus's exact nexus-plugin-package format and limited the shipped payload to reviewed runtime/docs/license/SBOM files."
     ],
     "verification": [
-      "Static source contract and VM/lifecycle tests are encoded in nexus-plugin/scripts/verify.js and nexus-plugin/test/plugin.test.js.",
-      "Dedicated Plug-in workflow is prepared to test Ubuntu, Windows, and macOS on Node 20/22/24 and run a separate core Crucible regression job.",
-      "Fresh hosted checks on the exact committed Plug-in SHA remain required after the atomic ref move."
+      "Plugin VM/lifecycle tests and source-contract verification are encoded in-repository.",
+      "Dedicated CI tests Ubuntu/Windows/macOS on Node 20/22/24 and separately runs core Crucible regressions.",
+      "Fresh exact-tip hosted checks remain required after the correction commit."
     ],
     "remaining": [
-      "Create and fast-forward the atomic Plug-in implementation commit with paired DEVLOG.md bookkeeping.",
-      "Append the required full pre-prune DEVLOG snapshot to Devlog-Pruned on Archive using the standing narrow exception.",
-      "Inspect exact-tip hosted plugin/core checks and repair any actionable failures without promoting main/release."
+      "Fast-forward the paired package-format correction commit on Plug-in.",
+      "Append the full pre-prune DEVLOG snapshot to Devlog-Pruned on Archive.",
+      "Inspect exact-tip hosted checks and repair actionable failures; do not promote main/release."
     ]
   }
 }
