@@ -13,7 +13,7 @@
     "governingDocuments/templates/injection-monitor-task.md": "Universal 24-hour injection monitor and autonomous repair contract.",
     "governingDocuments/templates/INJECTION-PREREQUISITES.example.json": "Per-injection lifecycle, prerequisite, monitor, evidence-retrieval, and repair-capability manifest shape.",
     "src/injectionMonitor.js": "Fail-closed runtime verifier for active/terminal injection-monitor lifecycle, exact target/branch, <=24-hour lifetime, evidence retrieval, repair capability, autonomous repair/retest, deduplication, and shutdown.",
-    ".github/workflows/the-crucible.yml": "Reusable Crucible gate; now mechanically invokes the injection-monitor verifier whenever an injection prerequisite manifest is present.",
+    ".github/workflows/the-crucible.yml": "Reusable Crucible gate; mechanically invokes the injection-monitor verifier whenever an injection prerequisite manifest is present.",
     "src/referenceBranchIntegrity.js": "Read-only third-branch integrity verifier that discovers references to canonical main, expands main AI-HANDOFF governing documents, and validates optional branch-declared compatibility contracts after main changes.",
     ".github/workflows/reference-branch-integrity.yml": "Runs third-branch main-reference integrity after every main push and on manual dispatch without modifying any branch.",
     "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements and the mandatory plain-language-summary line on DEVLOG.md's newest entry. Also mechanizes syncing full pruned DEVLOG.md snapshots to Devlog-Pruned on Archive via devlogPruneSnapshot/effectiveDevlogPrunedCapacity/appendToDevlogPrunedLedger.",
@@ -34,7 +34,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-29T14:26:00Z"
+    "lastActionAt": "2026-08-29T14:35:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -110,7 +110,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-29T14:16:00Z",
-    "lastUpdatedAt": "2026-08-29T14:26:00Z"
+    "lastUpdatedAt": "2026-08-29T14:35:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -119,16 +119,19 @@
       "Implemented src/referenceBranchIntegrity.js to scan bounded text-like files on third branches for main:path, GitHub blob/main, and raw/main references.",
       "Added optional .crucible-main-references.json contracts with safe-path enforcement, required text tokens, and JSON pointer requirements.",
       "Added transitive expansion of main AI-HANDOFF governingDocuments so shared governance path breakage is detected.",
-      "Added a read-only main-push workflow, manual audit command, and focused regression tests."
+      "Added a read-only main-push workflow, manual audit command, and focused regressions in the existing core-reference test surface.",
+      "Restored README.md exactly after two accidental connector writes during branch-ref publication; the final development tree contains the canonical README content.",
+      "Diagnosed hosted Self-Test failures to generated documentation drift from the already-existing injection monitor step and updated docSync to classify that internal prerequisite as intentionally omitted from the public numbered step list."
     ],
     "verification": [
-      "Regression source covers automatic reference extraction, unsafe manifest rejection, handoff governing-document expansion, declared contract success/failure, and JSON pointer escaping.",
-      "The hosted workflow is read-only and fetches branch tips solely for validation; it does not mutate, merge, rebase, or repair third branches.",
-      "Fresh exact-tip hosted validation remains required after the development ref moves."
+      "AI handoff policy passed on the first integrity feature tip.",
+      "Self-Test reached docs:check and failed only on the pre-existing injection-monitor documentation drift; the corrective docSync change is prepared for a new exact-tip run.",
+      "README.md blob at development tip was rechecked and matches the canonical pre-incident blob.",
+      "The hosted reference workflow is read-only and fetches branch tips solely for validation; it does not mutate, merge, rebase, or repair third branches."
     ],
     "remaining": [
-      "Commit the implementation on development without touching main or release.",
-      "Inspect fresh hosted checks on the exact development SHA and repair any actionable failure.",
+      "Publish the docSync correction on development with DEVLOG mode normalized back to a standard non-executable Markdown file.",
+      "Inspect fresh hosted checks on the exact corrected development SHA and repair any actionable failure.",
       "The new automatic main-push protection becomes active only after a separately authorized promotion places this workflow and runtime on main."
     ]
   }
