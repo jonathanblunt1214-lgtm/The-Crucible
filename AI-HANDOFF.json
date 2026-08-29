@@ -36,7 +36,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-29T18:28:00Z"
+    "lastActionAt": "2026-08-29T18:33:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -112,7 +112,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-29T18:17:00Z",
-    "lastUpdatedAt": "2026-08-29T18:28:00Z"
+    "lastUpdatedAt": "2026-08-29T18:33:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -122,10 +122,12 @@
       "Confirmed the repository contains no scientific-learning implementation or earlier draft blobs to reuse as-is and no open AI conflict."
       ,"Implemented the strict scientific-learning state machine, project-isolated candidate and verified-knowledge stores, contradiction quarantine, rollback, project-bound weekly encryption, OIDC identity verification, permanent policy, and adversarial tests."
       ,"Repaired pre-existing test categorization debt and a fail-closed injection collision regression discovered by the full suite."
+      ,"Corrected the transport tamper regression to flip an actual ciphertext bit deterministically on every supported Node version instead of replacing the first base64url character with a value that could already be identical."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 0f66d3b05989d10580ae22b3202d22ad3cf108d0.",
-      "Focused tests pass 49/49; full governed suite and the mandatory known-bug re-test pass 337/337; configuration, docs, workflow lint, clutter, privacy, security, conflict governance, general governance, design-brief, core-reference, authenticity, and diff checks pass."
+      "Focused tests pass 49/49; full governed suite and the mandatory known-bug re-test pass 337/337; configuration, docs, workflow lint, clutter, privacy, security, conflict governance, general governance, design-brief, core-reference, authenticity, and diff checks pass.",
+      "Exact-tip dc1a96f handoff, conflict governance, and CodeQL passed. Self-Test exposed one cross-version test defect in ciphertext tampering; the engine behavior was correct and the deterministic bit-flip regression correction is prepared for a fresh exact-tip run."
     ],
     "remaining": [
       "Fetch/reconcile immediately before the atomic development commit and push, then inspect exact-tip Self-Test, CodeQL, handoff, and conflict-governance results until green. No main or release mutation is authorized."

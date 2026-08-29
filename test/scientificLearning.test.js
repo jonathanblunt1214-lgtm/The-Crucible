@@ -78,7 +78,8 @@ test('weekly learning transport is encrypted, authenticated, and project bound',
   assert.doesNotMatch(envelope.ciphertext, /c-1/);
   assert.deepEqual(decryptWeeklyEnvelope(envelope, { masterKey, expectedProjectId:'project-a', expectedRepository:'owner/repo-a', expectedWeek:'2026-W35', expectedOidcSubject:'repo:owner/repo-a:ref:refs/heads/development' }), payload);
   assert.throws(() => decryptWeeklyEnvelope(envelope, { masterKey, expectedProjectId:'project-b', expectedRepository:'owner/repo-a', expectedWeek:'2026-W35', expectedOidcSubject:'repo:owner/repo-a:ref:refs/heads/development' }), /binding mismatch/);
-  const tampered = { ...envelope, ciphertext:`A${envelope.ciphertext.slice(1)}` };
+  const tamperedBytes = Buffer.from(envelope.ciphertext, 'base64url'); tamperedBytes[0] ^= 1;
+  const tampered = { ...envelope, ciphertext:tamperedBytes.toString('base64url') };
   assert.throws(() => decryptWeeklyEnvelope(tampered, { masterKey, expectedProjectId:'project-a', expectedRepository:'owner/repo-a', expectedWeek:'2026-W35', expectedOidcSubject:'repo:owner/repo-a:ref:refs/heads/development' }));
 });
 
