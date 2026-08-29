@@ -30,13 +30,13 @@ jobs:
       - name: Verify Nexus package is runtime-only
         shell: bash
         run: |
-          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('dist/the-crucible-0.0.1.nexusplugin','utf8')); if(p.format!=='nexus-plugin-package'||p.version!==1||p.pluginId!=='the-crucible') process.exit(1); const paths=p.files.map(f=>f.path); for(const required of ['nexus.plugin.json','index.js','README.md','sbom.spdx.json']) if(!paths.includes(required)) process.exit(1); if(paths.some(x=>x.startsWith('test/')||x.startsWith('scripts/'))) process.exit(1);"
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('dist/the-crucible-0.1.0.nexusplugin','utf8')); if(p.format!=='nexus-plugin-package'||p.version!==1||p.pluginId!=='the-crucible') process.exit(1); const paths=p.files.map(f=>f.path); for(const required of ['nexus.plugin.json','index.js','README.md','sbom.spdx.json']) if(!paths.includes(required)) process.exit(1); if(paths.some(x=>x.startsWith('test/')||x.startsWith('scripts/'))) process.exit(1);"
       - name: Upload unsigned screened-source candidate
         if: matrix.os == 'ubuntu-latest' && matrix.node == 24
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: the-crucible-nexus-plugin-0.0.1-${{ github.sha }}
-          path: dist/the-crucible-0.0.1.nexusplugin
+          name: the-crucible-nexus-plugin-0.1.0-${{ github.sha }}
+          path: dist/the-crucible-0.1.0.nexusplugin
           if-no-files-found: error
           retention-days: 30
 

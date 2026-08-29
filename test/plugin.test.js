@@ -13,6 +13,7 @@ const source = fs.readFileSync(path.join(root, 'index.js'), 'utf8');
 function loadPlugin(files = {}) {
   let registration;
   const calls = [];
+  const telemetry = [];
   const context = {
     register(value) { registration = value; },
     nexus: {
@@ -26,14 +27,49 @@ function loadPlugin(files = {}) {
           if (!Object.prototype.hasOwnProperty.call(files, payload.path)) throw new Error('not found');
           return { content: files[payload.path] };
         }
-        if (capability === 'workspace:write') return { written: payload.files || [], moved: payload.moves || [], deleted: payload.paths || [] };
+        if (capability === 'workspace:write') {
+          for (const file of payload.files || []) files[file.path] = file.content;
+          for (const move of payload.moves || []) { files[move.to] = files[move.from]; delete files[move.from]; }
+          for (const item of payload.paths || []) delete files[item];
+          return { written: payload.files || [], moved: payload.moves || [], deleted: payload.paths || [] };
+        }
         throw new Error(`unexpected capability ${capability}`);
       },
-      emitTelemetry() {}
+      emitTelemetry(name, payload) { telemetry.push({ name, payload }); }
     }
   };
   vm.runInNewContext(source, context, { filename: 'index.js' });
-  return { registration, calls };
+  return { registration, calls, telemetry, files };
+}
+
+const at = '2026-08-29T19:30:00.000Z';
+function learningCandidate(overrides = {}) {
+  return {
+    schemaVersion: 1, id: 'candidate-1', projectId: 'project-a', claim: 'repair X causes test Y to pass',
+    claimBoundary: 'node-22/windows/test-y', generalizationBoundary: 'no wider than node-22/windows/test-y', kind: 'controlled-experiment',
+    provenance: { sourceType: 'owner-research', sourceId: 'source-1', retrievedAt: at, author: 'author-1', license: 'private-candidate-evidence', contentSha256: 'a'.repeat(64) },
+    createdAt: at, ...overrides
+  };
+}
+function experiment(overrides = {}) {
+  return {
+    hypothesis: 'repair X is responsible for test Y', testedProperty: 'repair X causes test Y to pass', experimentBoundary: 'node-22/windows/test-y',
+    controls: ['no-repair control fails', 'irrelevant repair control fails'], causalIsolation: { method: 'single-variable intervention and reversal', result: 'only repair X changes Y', correlationOnly: false },
+    negativeTests: ['X does not change Z'], regressionTests: ['existing suite remains green'], scopeProof: 'diff limited to test-y',
+    generalizationResult: 'not generalized', contradictionResult: 'none', completedAt: at, ...overrides
+  };
+}
+async function advanceToCausal(registration, candidate = learningCandidate()) {
+  const action = registration.slots['project-actions'];
+  await action({ actionId: 'crucible-learning-ingest', candidate });
+  await action({ actionId: 'crucible-learning-hypothesis', projectId: candidate.projectId, candidateId: candidate.id, hypothesis: experiment().hypothesis, at });
+  await action({ actionId: 'crucible-learning-experiment', projectId: candidate.projectId, candidateId: candidate.id, experiment: experiment({ testedProperty: candidate.claim, experimentBoundary: candidate.claimBoundary }) });
+  return action({ actionId: 'crucible-learning-causal-confirm', projectId: candidate.projectId, candidateId: candidate.id, at });
+}
+async function promoteCandidate(registration, candidate, proofCharacter = 'b') {
+  const action = registration.slots['project-actions']; await advanceToCausal(registration, candidate);
+  await action({ actionId: 'crucible-learning-independent-verify', projectId: candidate.projectId, candidateId: candidate.id, verification: { verifierId: 'verifier-2', independent: true, testedProperty: candidate.claim, experimentBoundary: candidate.claimBoundary, result: 'passed', verifiedAt: at, proofSha256: proofCharacter.repeat(64) } });
+  return action({ actionId: 'crucible-learning-promote', projectId: candidate.projectId, candidateId: candidate.id, at });
 }
 
 test('manifest uses only currently supported minimum capabilities', () => {
@@ -115,4 +151,66 @@ test('governance writes cannot escape governingDocuments', async () => {
     registration.slots['project-actions']({ actionId: 'crucible-governance-write', path: '../AGENTS.md', content: 'x' }),
     /restricted to files inside governingDocuments/
   );
+});
+
+test('scientific learning ingests strict project-isolated candidates as insufficient evidence', async () => {
+  const { registration } = loadPlugin();
+  const action = registration.slots['project-actions'];
+  const result = await action({ actionId: 'crucible-learning-ingest', candidate: learningCandidate() });
+  assert.equal(result.record.state, 'candidate');
+  assert.equal(result.record.candidate.classification, 'Insufficient Evidence');
+  assert.ok(Object.values(result.record.gates).every((value) => value === false));
+  await assert.rejects(action({ actionId: 'crucible-learning-ingest', projectId: 'project-b', candidate: learningCandidate() }), /Cross-project/);
+  await assert.rejects(action({ actionId: 'crucible-learning-ingest', candidate: { ...learningCandidate({ id: 'candidate-2' }), confidence: 0.99 } }), /unknown field/);
+});
+
+test('learning stages fail closed and correlation never satisfies causation', async () => {
+  const { registration } = loadPlugin(); const action = registration.slots['project-actions'];
+  await action({ actionId: 'crucible-learning-ingest', candidate: learningCandidate() });
+  await assert.rejects(action({ actionId: 'crucible-learning-promote', projectId: 'project-a', candidateId: 'candidate-1', at }), /requires independently-verified/);
+  await action({ actionId: 'crucible-learning-hypothesis', projectId: 'project-a', candidateId: 'candidate-1', hypothesis: experiment().hypothesis, at });
+  await assert.rejects(action({ actionId: 'crucible-learning-experiment', projectId: 'project-a', candidateId: 'candidate-1', experiment: experiment({ causalIsolation: { method: 'frequency', result: 'correlated', correlationOnly: true } }) }), /Correlation never/);
+});
+
+test('independent verification is a separate exact-property and boundary gate', async () => {
+  const { registration } = loadPlugin(); const action = registration.slots['project-actions']; await advanceToCausal(registration);
+  const base = { verifierId: 'verifier-2', independent: true, testedProperty: learningCandidate().claim, experimentBoundary: learningCandidate().claimBoundary, result: 'passed', verifiedAt: at, proofSha256: 'b'.repeat(64) };
+  await assert.rejects(action({ actionId: 'crucible-learning-independent-verify', projectId: 'project-a', candidateId: 'candidate-1', verification: { ...base, verifierId: 'author-1' } }), /not independent/);
+  await assert.rejects(action({ actionId: 'crucible-learning-independent-verify', projectId: 'project-a', candidateId: 'candidate-1', verification: { ...base, testedProperty: 'broader claim' } }), /only the tested property/);
+  await assert.rejects(action({ actionId: 'crucible-learning-independent-verify', projectId: 'project-a', candidateId: 'candidate-1', verification: { ...base, experimentBoundary: 'all systems' } }), /inherit experiment boundaries/);
+});
+
+test('verified promotion is versioned and retrieval is read-only rather than proof', async () => {
+  const { registration, telemetry, files } = loadPlugin(); const action = registration.slots['project-actions']; await advanceToCausal(registration);
+  await action({ actionId: 'crucible-learning-independent-verify', projectId: 'project-a', candidateId: 'candidate-1', verification: { verifierId: 'verifier-2', independent: true, testedProperty: learningCandidate().claim, experimentBoundary: learningCandidate().claimBoundary, result: 'passed', verifiedAt: at, proofSha256: 'b'.repeat(64) } });
+  const promoted = await action({ actionId: 'crucible-learning-promote', projectId: 'project-a', candidateId: 'candidate-1', at });
+  assert.equal(promoted.record.state, 'verified'); assert.equal(promoted.knowledge.versions[0].version, 1); assert.equal(promoted.knowledge.versions[0].proofSha256, 'b'.repeat(64));
+  const retrieved = await action({ actionId: 'crucible-learning-retrieve', projectId: 'project-a' });
+  assert.equal(retrieved.knowledge.activeVersion, 1); assert.equal(retrieved.candidates[0].state, 'verified');
+  assert.ok(Object.keys(files).every((item) => item.startsWith('governingDocuments/.crucible-learning/project-a/')));
+  assert.ok(telemetry.every((item) => item.payload.evidentiary === false));
+});
+
+test('raw telemetry and one-off repairs cannot promote even after every proof stage', async () => {
+  for (const kind of ['raw-telemetry', 'one-off-repair', 'retrieval', 'correlation']) {
+    const { registration } = loadPlugin(); const action = registration.slots['project-actions']; const candidate = learningCandidate({ kind }); await advanceToCausal(registration, candidate);
+    await action({ actionId: 'crucible-learning-independent-verify', projectId: 'project-a', candidateId: 'candidate-1', verification: { verifierId: 'verifier-2', independent: true, testedProperty: candidate.claim, experimentBoundary: candidate.claimBoundary, result: 'passed', verifiedAt: at, proofSha256: 'c'.repeat(64) } });
+    await assert.rejects(action({ actionId: 'crucible-learning-promote', projectId: 'project-a', candidateId: 'candidate-1', at }), /can never be promoted/);
+  }
+});
+
+test('contradictory claims quarantine instead of overwriting active knowledge', async () => {
+  const { registration } = loadPlugin(); const first = learningCandidate(); await promoteCandidate(registration, first);
+  const conflict = learningCandidate({ id: 'candidate-2', claim: 'repair X does not cause test Y to pass' });
+  const result = await promoteCandidate(registration, conflict, 'd');
+  assert.equal(result.quarantined, true); assert.equal(result.record.state, 'quarantined'); assert.equal(result.record.candidate.classification, 'Crucible Issue');
+  assert.equal(result.knowledge.activeVersion, 1); assert.equal(result.knowledge.versions.length, 1);
+});
+
+test('verified knowledge supports explicit rollback to a prior version', async () => {
+  const { registration } = loadPlugin(); const action = registration.slots['project-actions'];
+  await promoteCandidate(registration, learningCandidate());
+  await promoteCandidate(registration, learningCandidate({ id: 'candidate-2' }), 'd');
+  const result = await action({ actionId: 'crucible-learning-rollback', projectId: 'project-a', targetVersion: 1, at, reason: 'regression discovered' });
+  assert.equal(result.knowledge.activeVersion, 1); assert.equal(result.knowledge.versions[0].status, 'active'); assert.equal(result.knowledge.versions[1].status, 'rolled-back');
 });
