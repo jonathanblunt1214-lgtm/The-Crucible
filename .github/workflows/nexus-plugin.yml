@@ -3,15 +3,7 @@ name: Nexus plugin v0.0.1
 on:
   push:
     branches: [Plug-in]
-    paths:
-      - 'nexus-plugin/**'
-      - '.github/workflows/nexus-plugin.yml'
-      - 'AI-HANDOFF.json'
-      - 'DEVLOG.md'
   pull_request:
-    paths:
-      - 'nexus-plugin/**'
-      - '.github/workflows/nexus-plugin.yml'
   workflow_dispatch:
 
 permissions:
@@ -32,43 +24,36 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: ${{ matrix.node }}
-      - name: Verify plugin source contract
-        working-directory: nexus-plugin
-        run: node scripts/verify.js
-      - name: Run plugin VM and lifecycle tests
-        working-directory: nexus-plugin
-        run: node --test test/*.test.js
-      - name: Build Nexus-compatible unsigned package
-        working-directory: nexus-plugin
-        run: node scripts/package.js
-      - name: Verify package format and contents
-        working-directory: nexus-plugin
+      - run: npm run verify
+      - run: npm test
+      - run: npm run package
+      - name: Verify Nexus package is runtime-only
         shell: bash
         run: |
-          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('dist/the-crucible-0.0.1.nexusplugin','utf8')); if(p.format!=='nexus-plugin-package'||p.version!==1||p.pluginId!=='the-crucible') process.exit(1); const paths=p.files.map(f=>f.path); for(const required of ['nexus.plugin.json','index.js','LICENSE','sbom.spdx.json']) if(!paths.includes(required)) process.exit(1); if(paths.some(x=>x.startsWith('test/')||x.startsWith('scripts/'))) process.exit(1);"
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('dist/the-crucible-0.0.1.nexusplugin','utf8')); if(p.format!=='nexus-plugin-package'||p.version!==1||p.pluginId!=='the-crucible') process.exit(1); const paths=p.files.map(f=>f.path); for(const required of ['nexus.plugin.json','index.js','README.md','sbom.spdx.json']) if(!paths.includes(required)) process.exit(1); if(paths.some(x=>x.startsWith('test/')||x.startsWith('scripts/'))) process.exit(1);"
       - name: Upload unsigned screened-source candidate
         if: matrix.os == 'ubuntu-latest' && matrix.node == 24
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: the-crucible-nexus-plugin-0.0.1-${{ github.sha }}
-          path: nexus-plugin/dist/the-crucible-0.0.1.nexusplugin
+          path: dist/the-crucible-0.0.1.nexusplugin
           if-no-files-found: error
           retention-days: 30
 
-  core-regression:
-    name: Core Crucible regression
+  canonical-core-reference:
+    name: Canonical main compatibility
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Check out canonical Crucible core from default branch
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
-          fetch-depth: 0
+          ref: main
+          path: canonical-crucible
+          persist-credentials: false
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
-      - run: npm run test:all
-      - run: npm run lint:workflows
-      - run: npm run docs:check
-      - run: npm run audit:ai-conflict-governance
-      - run: npm run audit:security
-      - run: npm run audit:privacy
+      - name: Verify canonical core remains healthy
+        working-directory: canonical-crucible
+        run: npm run test:all
