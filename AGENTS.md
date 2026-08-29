@@ -240,7 +240,7 @@ anything that already runs:
   in that exact conversation, not something inferred from its mergeable
   state, its age, or anything else about its current condition.
   - PR #11 is a replacement: its predecessor, PR #7, was merged directly by
-    the repository owner on 2026-08-27; PR #7's own replacement, PR #9, was
+    the repository owner on 2026-08-27; PR #9 (#7's own replacement) was
     then auto-merged and auto-closed by GitHub with nobody touching its
     merge button, on 2026-08-27, the instant its head - the `development`
     branch ref directly - became reachable from `main` through an
