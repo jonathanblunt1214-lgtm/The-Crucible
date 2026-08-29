@@ -2,7 +2,7 @@
   "name": "the-crucible-nexus-plugin",
   "version": "0.1.0",
   "private": true,
-  "description": "Optional Nexus plugin for The Crucible using canonical default-branch governance references.",
+  "description": "Optional Nexus plugin for fail-closed project-isolated scientific learning and canonical Crucible governance references.",
   "license": "MIT",
   "engines": { "node": ">=20" },
   "scripts": {
