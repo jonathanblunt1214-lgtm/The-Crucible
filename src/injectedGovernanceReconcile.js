@@ -21,7 +21,9 @@ function normalizeRelative(value) {
 
 function safeRelative(value) {
   const normalized = normalizeRelative(value);
-  return Boolean(normalized) && !normalized.startsWith('/') && !normalized.split('/').some((part) => !part || part === '.' || part === '..');
+  return Boolean(normalized)
+    && !normalized.startsWith('/')
+    && !normalized.split('/').some((part) => !part || part === '.' || part === '..');
 }
 
 function walk(root, prefix = '') {
@@ -73,12 +75,32 @@ function uniqueOverridePath(projectRoot, relativePath) {
   return `${base}.preserved-${index}`;
 }
 
-function preserveOutsideParity({ projectRoot, targetRoot, relativePath, reason, state, actions }) {
+function removeEmptyParents(start, stop) {
+  let cursor = path.dirname(start);
+  const boundary = path.resolve(stop);
+  while (path.resolve(cursor).startsWith(`${boundary}${path.sep}`) && path.resolve(cursor) !== boundary) {
+    if (!fs.existsSync(cursor) || fs.readdirSync(cursor).length) break;
+    fs.rmdirSync(cursor);
+    cursor = path.dirname(cursor);
+  }
+}
+
+function retireOutsideParity({ projectRoot, targetRoot, relativePath, reason, state, previousEntry, actions }) {
   const source = path.join(targetRoot, relativePath);
   if (!fs.existsSync(source)) return null;
+
+  const currentHash = fileHash(source);
+  if (previousEntry?.managed && previousEntry.generatedHash === currentHash) {
+    fs.rmSync(source);
+    removeEmptyParents(source, targetRoot);
+    actions.push({ action: 'remove-stale-managed', path: `governingDocuments/${relativePath}`, reason });
+    return null;
+  }
+
   const destination = uniqueOverridePath(projectRoot, relativePath);
   ensureParentDirectory(destination, projectRoot);
   fs.renameSync(source, destination);
+  removeEmptyParents(source, targetRoot);
   const preserved = normalizeRelative(path.relative(projectRoot, destination));
   state.preservedOverrides.push({ from: `governingDocuments/${relativePath}`, to: preserved, reason });
   actions.push({ action: 'preserve-override', from: `governingDocuments/${relativePath}`, to: preserved, reason });
@@ -96,6 +118,7 @@ function reconcileInjectedTree({
   if (!sourceRoot || !targetRoot || !projectRoot || !Array.isArray(canonicalFiles) || typeof renderFile !== 'function') {
     throw new Error('sourceRoot, targetRoot, projectRoot, canonicalFiles, and renderFile are required');
   }
+
   const canonical = [...new Set(canonicalFiles.map(normalizeRelative))].sort();
   if (canonical.some((item) => !safeRelative(item))) throw new Error('canonical governingDocuments inventory contains an unsafe path');
 
@@ -106,15 +129,15 @@ function reconcileInjectedTree({
   const currentFiles = walk(targetRoot);
   const canonicalSet = new Set(canonical);
 
-  // Anything no longer canonical (including project-created extras) leaves the parity tree but is preserved.
   for (const relativePath of currentFiles) {
     if (canonicalSet.has(relativePath)) continue;
-    preserveOutsideParity({
+    retireOutsideParity({
       projectRoot,
       targetRoot,
       relativePath,
       reason: previous[relativePath] ? 'canonical-path-removed-or-moved' : 'project-extra-outside-canonical-parity',
       state,
+      previousEntry: previous[relativePath],
       actions,
     });
   }
@@ -152,7 +175,9 @@ function reconcileInjectedTree({
       nextFiles[relativePath] = { sourceHash, generatedHash: nextHash, managed: true };
     } else {
       nextFiles[relativePath] = { sourceHash, generatedHash: null, managed: false };
-      if (!prior || prior.sourceHash !== sourceHash) actions.push({ action: 'preserve-local-override', path: `governingDocuments/${relativePath}` });
+      if (!prior || prior.sourceHash !== sourceHash) {
+        actions.push({ action: 'preserve-local-override', path: `governingDocuments/${relativePath}` });
+      }
     }
   }
 
@@ -168,6 +193,7 @@ function reconcileInjectedTree({
     preservedOverrides: state.preservedOverrides,
   };
   fs.writeFileSync(path.join(projectRoot, STATE_FILE), `${JSON.stringify(nextState, null, 2)}\n`, 'utf8');
+
   return { actions, state: nextState, canonicalFiles: canonical };
 }
 

@@ -1,20 +1,35 @@
-# Project branch relationship linking
+# Branch and injected-governance linking
 
-Crucible supports multiple branch relationship structures and must identify them from project metadata and observed dependencies, never from example branch names.
+Crucible treats branch names as project data, never as global conventions. Each repository may declare multiple independent branch relationships, and every relationship is identified from explicit metadata plus observed repository references rather than from example names.
 
-A **paired** relationship connects two branches that serve coordinated roles in one project lifecycle. The branch names are arbitrary. The project declares both branch names and each branch's role explicitly. No naming pattern, shared prefix, numeric suffix, or example such as `project-123` / `project-abc` has semantic meaning by itself.
+A `paired` relationship explicitly names the two branches and their roles. A `canonical-reference` relationship explicitly names the dependent branch, the canonical branch it depends on, and any required canonical paths. The names, roles, canonical branch, number of relationships, and required paths are project-specific.
 
-A **canonical-reference** relationship connects a dependent branch to another branch whose files, runtime contract, generated assets, or governance are consumed by reference rather than duplicated. Both branch names are arbitrary. The project declares the dependent branch, the canonical branch it depends on, and any required canonical paths. A branch is never treated as special because it happens to be named `Plug-in`, `main`, `extension`, or anything else.
+Canonical-reference discovery remains active as defense in depth. Recognized branch/path references can reveal a real dependency that was not yet declared, but discovery must not manufacture a relationship merely because names resemble another project.
 
-Injected projects keep two synchronized project-local views of this relationship data: `governingDocuments/BRANCH-LINKS.json` is the governance ledger that agents must re-read, and `.crucible-branch-links.json` is the operational mirror used by automated checks. Injection initializes an empty schema when the project has not declared relationships yet; it must never copy Crucible's own repository-specific branch links into another project. If either file already contains project relationships, injection validates them and refuses to silently replace or contradict them.
+## Automatic repair after canonical changes
 
-The schema supports more than one relationship in the same repository. Each entry is classified by its explicit `relationship` value and required fields:
+When a canonical branch changes, deterministic downstream reference repairs are automatic where Crucible has exact evidence. Exact Git renames and explicitly declared mappings may be used to rewrite recognized references, followed by a normal non-force commit to the dependent branch and a complete retest. Crucible must not stop at diagnosis when a safe deterministic repair is authorized and executable.
 
-- `paired`: exactly two explicit branch records, each with a project-defined `name` and `role`.
-- `canonical-reference`: an explicit dependent `branch`, explicit `dependsOn` canonical branch, and optional `requiredPaths` describing canonical files/contracts the dependent branch relies on.
+Semantic substitutions are different. Crucible must never guess a new API, weaken a requirement, delete a contract, force-push, merge, rebase, or invent project behavior merely to make a downstream check pass. When there is no deterministic repair, the relationship fails closed with the unresolved dependency.
 
-Canonical-reference discovery remains active as defense in depth. Recognized branch-qualified references, repository URLs, and reference manifests can reveal an undeclared dependency, but discovery is evidence to reconcile with the project ledger—not a branch-name heuristic.
+## Adaptive injected governingDocuments
 
-After the canonical branch changes, Crucible automatically repairs deterministic reference drift when it has an exact rename or explicitly declared mapping. It rewrites only recognized references, commits the repair normally to the affected dependent branch, and retests. It must not force-push, merge, rebase, weaken a contract, invent a semantic replacement, or guess project intent. A non-deterministic semantic break fails closed.
+Injection is a reconciliation process, not a one-time copy operation. The current canonical Crucible `governingDocuments` relative file inventory is the source of truth for the active injected `governingDocuments` filename and directory structure.
 
-Injected projects carry the same relative filenames as the canonical Crucible `governingDocuments` tree. Missing governance files are created as project-local reference/overlay documents, existing project files are preserved, project-local ledgers remain project-local, and `AI-HANDOFF.json` is updated so every mirrored governance filename—including this policy and `BRANCH-LINKS.json`—is part of the project's re-read contract.
+On every reconciliation:
+
+- every current canonical relative path must exist in the injected project's `governingDocuments`;
+- paths newly added by canonical governance are created automatically as project-adapted governance files;
+- obsolete Crucible-managed paths that were not locally changed are removed automatically;
+- canonical directory moves and filename changes are reflected by retiring old paths and creating the current canonical paths;
+- locally edited obsolete paths and project-created extra files are preserved outside the parity tree under `.crucible-overrides/governingDocuments/...` rather than deleted;
+- existing local overrides at still-current canonical paths are preserved in place;
+- symbolic links, unsafe paths, and file/directory collisions that cannot be resolved without overwriting project material fail closed;
+- `.crucible-injection-state.json` records managed fingerprints and preservation history so later reconciliations can distinguish untouched generated material from developer-owned changes;
+- `AI-HANDOFF.json.governingDocuments` is reconciled to the current canonical relative path set so agents do not keep stale renamed or removed governance paths.
+
+The resulting active `governingDocuments` file list must exactly match the canonical Crucible `governingDocuments` file list by relative name after reconciliation. Project-specific material that is not part of that canonical filename set belongs in the preservation/override surface, not as an extra file inside the parity tree.
+
+`governingDocuments/BRANCH-LINKS.json` is project-local data even though its filename follows canonical parity. It must describe the receiving repository's real relationships, not Crucible's own relationships. `.crucible-branch-links.json` is the operational mirror. The two must agree.
+
+This model is deliberately designed for actively managed repositories: canonical governance may add, remove, rename, or move files while project developers simultaneously edit their own governance. Reconciliation adapts structure mechanically where safe, preserves local work when ownership is ambiguous, and fails closed instead of clobbering an active project.
