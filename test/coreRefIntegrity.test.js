@@ -165,7 +165,9 @@ test('injected governingDocuments always contain every canonical relative filena
   assert.deepEqual(localKnownBugs.bugs, []);
   const localHandoff = JSON.parse(fs.readFileSync(handoff, 'utf8'));
   assert.ok(localHandoff.governingDocuments['governingDocuments/branch-linking-policy.md']);
-  assert.match(fs.readFileSync(path.join(target, 'branch-linking-policy.md'), 'utf8'), /project-123.*project-abc/i);
-  assert.match(fs.readFileSync(path.join(target, 'branch-linking-policy.md'), 'utf8'), /Plug-in/);
+  const injectedPolicy = fs.readFileSync(path.join(target, 'branch-linking-policy.md'), 'utf8');
+  assert.match(injectedPolicy, /branch relationships are never inferred from example names/i);
+  assert.match(injectedPolicy, /paired.*names both branches and their roles explicitly/i);
+  assert.match(injectedPolicy, /canonical-reference.*dependent branch.*canonical branch/i);
   fs.rmSync(temp, { recursive: true, force: true });
 });
