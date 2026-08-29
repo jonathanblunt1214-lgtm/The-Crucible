@@ -4,7 +4,9 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const CANONICAL_REPOSITORY = 'jonathanblunt1214-lgtm/The-Crucible';
-const CANONICAL_BRANCH = 'main';
+const DEFAULT_CANONICAL_BRANCH = 'main';
+const OPERATIONAL_LINKS_FILE = '.crucible-branch-links.json';
+const GOVERNANCE_LINKS_FILE = 'BRANCH-LINKS.json';
 
 function walkFiles(root, prefix = '') {
   const out = [];
@@ -17,24 +19,77 @@ function walkFiles(root, prefix = '') {
   return out.sort();
 }
 
-function canonicalUrl(relativePath) {
-  return `https://github.com/${CANONICAL_REPOSITORY}/blob/${CANONICAL_BRANCH}/governingDocuments/${relativePath}`;
+function validBranchName(value) {
+  return typeof value === 'string' && value.trim() && !/[\u0000-\u001f\u007f ~^:?*[\\]/.test(value) && !value.startsWith('-') && !value.includes('..') && !value.endsWith('/') && !value.endsWith('.lock');
 }
 
-function projectMarkdown(relativePath) {
+function validRepositoryPath(value) {
+  if (typeof value !== 'string' || !value || value.startsWith('/') || value.includes('\\') || value.includes('\0')) return false;
+  return !value.split('/').some((part) => !part || part === '.' || part === '..');
+}
+
+function normalizeProjectBranchLinks(raw) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw new Error('branch links must be a JSON object');
+  if (raw.schemaVersion !== 1) throw new Error('branch links schemaVersion must be 1');
+  if (!validBranchName(raw.canonicalBranch)) throw new Error('branch links canonicalBranch must be an explicit valid branch name');
+  if (!Array.isArray(raw.links)) throw new Error('branch links links must be an array');
+
+  const normalized = raw.links.map((link, index) => {
+    if (!link || typeof link !== 'object' || Array.isArray(link)) throw new Error(`branch link ${index} must be an object`);
+    if (link.relationship === 'paired') {
+      if (!Array.isArray(link.branches) || link.branches.length !== 2) throw new Error(`paired branch link ${index} must declare exactly two branches`);
+      const branches = link.branches.map((entry) => {
+        if (!entry || typeof entry !== 'object' || !validBranchName(entry.name)) throw new Error(`paired branch link ${index} contains an invalid branch`);
+        if (typeof entry.role !== 'string' || !entry.role.trim()) throw new Error(`paired branch link ${index} requires explicit roles`);
+        return { name: entry.name, role: entry.role };
+      });
+      if (branches[0].name === branches[1].name) throw new Error(`paired branch link ${index} must identify two different branches`);
+      return { relationship: 'paired', branches };
+    }
+    if (link.relationship === 'canonical-reference') {
+      if (!validBranchName(link.branch)) throw new Error(`canonical-reference link ${index} requires a dependent branch`);
+      if (!validBranchName(link.dependsOn)) throw new Error(`canonical-reference link ${index} requires an explicit canonical branch`);
+      if (link.branch === link.dependsOn) throw new Error(`canonical-reference link ${index} cannot depend on itself`);
+      const requiredPaths = link.requiredPaths ?? link.requiredMainPaths ?? [];
+      if (!Array.isArray(requiredPaths) || requiredPaths.some((item) => !validRepositoryPath(item))) throw new Error(`canonical-reference link ${index} requiredPaths must contain safe repository paths`);
+      return { relationship: 'canonical-reference', branch: link.branch, dependsOn: link.dependsOn, requiredPaths: [...requiredPaths] };
+    }
+    throw new Error(`branch link ${index} relationship must be paired or canonical-reference`);
+  });
+
+  return { schemaVersion: 1, canonicalBranch: raw.canonicalBranch, links: normalized };
+}
+
+function emptyProjectBranchLinks(canonicalBranch = DEFAULT_CANONICAL_BRANCH) {
+  return normalizeProjectBranchLinks({ schemaVersion: 1, canonicalBranch, links: [] });
+}
+
+function canonicalUrl(relativePath, canonicalBranch = DEFAULT_CANONICAL_BRANCH) {
+  return `https://github.com/${CANONICAL_REPOSITORY}/blob/${canonicalBranch}/governingDocuments/${relativePath}`;
+}
+
+function projectMarkdown(relativePath, canonicalBranch = DEFAULT_CANONICAL_BRANCH) {
   const title = path.posix.basename(relativePath).replace(/\.md$/i, '');
-  return `# ${title} — injected project governance\n\nThis file intentionally mirrors the canonical Crucible governing-document filename \`${relativePath}\` so an injected project always carries the same governance names as Crucible's canonical \`governingDocuments\` tree.\n\nCanonical policy: ${canonicalUrl(relativePath)}\n\nApply that canonical policy to this repository as a project-local overlay. Do not copy canonical policy text here merely to make the project self-contained; keep project-specific additions below and follow the current canonical \`main\` document for shared rules.\n\nFor branches that do not follow the normal paired naming convention such as \`project-123\` / \`project-abc\`, use \`.crucible-branch-links.json\` to declare a canonical-reference dependency explicitly. A branch such as \`Plug-in\` can therefore be governed as directly dependent on \`main\` even though its name makes it look unrelated. When canonical \`main\` renames a referenced path, Crucible may automatically rewrite recognized references on that linked branch, commit the deterministic repair, and retest. It must never invent semantic replacements when no deterministic repair exists.\n\n## Project-specific overlay\n\nAdd only repository-specific governance here.\n`;
+  return `# ${title} — injected project governance\n\nThis file mirrors the canonical Crucible governing-document filename \`${relativePath}\` so injected projects retain governingDocuments filename parity.\n\nCanonical policy: ${canonicalUrl(relativePath, canonicalBranch)}\n\nApply the shared policy as a project-local overlay. Project branch relationships are never inferred from example names. The receiving repository declares its own relationships in \`${OPERATIONAL_LINKS_FILE}\` and \`governingDocuments/${GOVERNANCE_LINKS_FILE}\`. A \`paired\` relationship names both branches and their roles explicitly. A \`canonical-reference\` relationship names the dependent branch, the canonical branch it depends on, and any required canonical paths explicitly. Multiple independent relationships may coexist.\n\nCrucible may also discover canonical-reference evidence from actual references as defense in depth, but discovery never turns sample names into conventions. Deterministic reference repairs may follow exact renames/mappings and must be retested; semantic replacements must fail closed rather than be guessed.\n\n## Project-specific overlay\n\nAdd only repository-specific governance here.\n`;
 }
 
-function projectJson(relativePath, sourceRoot) {
+function projectJson(relativePath, sourceRoot, canonicalBranch = DEFAULT_CANONICAL_BRANCH) {
   if (relativePath === 'known-bugs/KNOWN-BUGS.json') {
     return `${JSON.stringify({ schemaVersion: 1, severityOrder: ['critical', 'high', 'medium', 'low'], bugs: [] }, null, 2)}\n`;
+  }
+  if (relativePath === GOVERNANCE_LINKS_FILE) {
+    return `${JSON.stringify(emptyProjectBranchLinks(canonicalBranch), null, 2)}\n`;
   }
   return fs.readFileSync(path.join(sourceRoot, relativePath), 'utf8');
 }
 
-function ensureInjectedGovernance({ sourceRoot, targetRoot, handoffPath } = {}) {
+function readAndNormalizeLinks(filePath) {
+  return normalizeProjectBranchLinks(JSON.parse(fs.readFileSync(filePath, 'utf8')));
+}
+
+function ensureInjectedGovernance({ sourceRoot, targetRoot, handoffPath, canonicalBranch = DEFAULT_CANONICAL_BRANCH } = {}) {
   if (!sourceRoot || !targetRoot || !handoffPath) throw new Error('sourceRoot, targetRoot, and handoffPath are required');
+  if (!validBranchName(canonicalBranch)) throw new Error('canonicalBranch must be an explicit valid branch name');
   const canonicalFiles = walkFiles(sourceRoot);
   const created = [];
   for (const relativePath of canonicalFiles) {
@@ -42,8 +97,8 @@ function ensureInjectedGovernance({ sourceRoot, targetRoot, handoffPath } = {}) 
     if (fs.existsSync(target)) continue;
     fs.mkdirSync(path.dirname(target), { recursive: true });
     const content = relativePath.toLowerCase().endsWith('.json')
-      ? projectJson(relativePath, sourceRoot)
-      : projectMarkdown(relativePath);
+      ? projectJson(relativePath, sourceRoot, canonicalBranch)
+      : projectMarkdown(relativePath, canonicalBranch);
     fs.writeFileSync(target, content, 'utf8');
     created.push(relativePath);
   }
@@ -51,27 +106,60 @@ function ensureInjectedGovernance({ sourceRoot, targetRoot, handoffPath } = {}) 
   const missing = canonicalFiles.filter((relativePath) => !fs.existsSync(path.join(targetRoot, relativePath)));
   if (missing.length) throw new Error(`Injected governingDocuments parity failed; missing: ${missing.join(', ')}`);
 
+  const projectRoot = path.dirname(targetRoot);
+  const governanceLinksPath = path.join(targetRoot, GOVERNANCE_LINKS_FILE);
+  const operationalLinksPath = path.join(projectRoot, OPERATIONAL_LINKS_FILE);
+  let branchLinks = fs.existsSync(governanceLinksPath)
+    ? readAndNormalizeLinks(governanceLinksPath)
+    : emptyProjectBranchLinks(canonicalBranch);
+
+  if (fs.existsSync(operationalLinksPath)) {
+    const operational = readAndNormalizeLinks(operationalLinksPath);
+    if (JSON.stringify(operational) !== JSON.stringify(branchLinks)) {
+      throw new Error(`${OPERATIONAL_LINKS_FILE} and governingDocuments/${GOVERNANCE_LINKS_FILE} must describe the same project relationships`);
+    }
+    branchLinks = operational;
+  } else {
+    fs.writeFileSync(operationalLinksPath, `${JSON.stringify(branchLinks, null, 2)}\n`, 'utf8');
+    created.push(OPERATIONAL_LINKS_FILE);
+  }
+
+  if (fs.existsSync(governanceLinksPath)) {
+    fs.writeFileSync(governanceLinksPath, `${JSON.stringify(branchLinks, null, 2)}\n`, 'utf8');
+  }
+
   const handoff = JSON.parse(fs.readFileSync(handoffPath, 'utf8'));
   handoff.governingDocuments = handoff.governingDocuments && typeof handoff.governingDocuments === 'object' && !Array.isArray(handoff.governingDocuments)
     ? handoff.governingDocuments
     : {};
   for (const relativePath of canonicalFiles) {
     const localPath = `governingDocuments/${relativePath}`;
-    const branchLinking = relativePath === 'branch-linking-policy.md';
-    handoff.governingDocuments[localPath] = branchLinking
-      ? 'Project-local canonical-reference branch linking policy. Use .crucible-branch-links.json for branches whose main dependency is real but not expressed by project-123/project-abc naming; safe deterministic repairs are automatic and retested.'
-      : `Project-local governance mirror for canonical main:governingDocuments/${relativePath}.`;
+    handoff.governingDocuments[localPath] = relativePath === 'branch-linking-policy.md' || relativePath === GOVERNANCE_LINKS_FILE
+      ? `Project-local branch relationship governance. Relationship identity comes from explicit project metadata and observed references, never example branch names. Supports paired and canonical-reference links with arbitrary branch names; operational mirror: ${OPERATIONAL_LINKS_FILE}.`
+      : `Project-local governance mirror for canonical ${canonicalBranch}:governingDocuments/${relativePath}.`;
   }
   fs.writeFileSync(handoffPath, `${JSON.stringify(handoff, null, 2)}\n`, 'utf8');
-  return { canonicalFiles, created };
+  return { canonicalFiles, created, branchLinks };
 }
 
 function main() {
-  const [sourceRoot, targetRoot, handoffPath] = process.argv.slice(2);
-  const result = ensureInjectedGovernance({ sourceRoot, targetRoot, handoffPath });
-  console.log(`[The Crucible] Injected governingDocuments parity: ${result.canonicalFiles.length} canonical filename(s), ${result.created.length} created.`);
+  const [sourceRoot, targetRoot, handoffPath, canonicalBranch = DEFAULT_CANONICAL_BRANCH] = process.argv.slice(2);
+  const result = ensureInjectedGovernance({ sourceRoot, targetRoot, handoffPath, canonicalBranch });
+  console.log(`[The Crucible] Injected governingDocuments parity: ${result.canonicalFiles.length} canonical filename(s), ${result.created.length} created, ${result.branchLinks.links.length} project branch relationship(s) validated.`);
 }
 
 if (require.main === module) main();
 
-module.exports = { walkFiles, canonicalUrl, projectMarkdown, projectJson, ensureInjectedGovernance };
+module.exports = {
+  OPERATIONAL_LINKS_FILE,
+  GOVERNANCE_LINKS_FILE,
+  walkFiles,
+  validBranchName,
+  validRepositoryPath,
+  normalizeProjectBranchLinks,
+  emptyProjectBranchLinks,
+  canonicalUrl,
+  projectMarkdown,
+  projectJson,
+  ensureInjectedGovernance
+};
