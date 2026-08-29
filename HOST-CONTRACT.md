@@ -22,7 +22,9 @@ Scientific-learning records are stored as project-isolated JSON documents below 
 
 The learning action contract is fail-closed and stage-specific: ingest candidate, declare hypothesis, record experiment, confirm causal isolation, independently verify, promote, retrieve, quarantine/reject, and roll back. A caller cannot use one action's input production to satisfy a later stage. Telemetry emitted for these actions has `evidentiary: false` and is outside the learning stores.
 
-Nexus plugin API v1 exposes no trusted cryptographic/OIDC capability in this contract. Therefore weekly encrypted learning transport is reported unavailable rather than implemented with an untrusted key or identity substitute.
+The Nexus runtime must expose standard Web Crypto (`globalThis.crypto.subtle` plus `getRandomValues`), `TextEncoder`/`TextDecoder`, and `atob`/`btoa`. Weekly transport uses RS256 OIDC verification, HKDF-SHA256, and AES-256-GCM through those sandbox primitives. The caller supplies the master key only as ephemeral action input; the plugin never writes or emits it. Exact identity and envelope bindings fail closed.
+
+The canonical compatibility job checks the plugin's state list, mandatory gates, and prohibited-promotion kinds against `main:src/scientificLearning.js` on every plugin push.
 
 ## Shared references
 

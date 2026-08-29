@@ -5,6 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
 const path = require('node:path');
+const nodeCrypto = require('node:crypto');
 
 const root = path.resolve(__dirname, '..');
 const manifest = JSON.parse(fs.readFileSync(path.join(root, 'nexus.plugin.json'), 'utf8'));
@@ -15,6 +16,11 @@ function loadPlugin(files = {}) {
   const calls = [];
   const telemetry = [];
   const context = {
+    crypto: nodeCrypto.webcrypto,
+    TextEncoder,
+    TextDecoder,
+    btoa(value) { return Buffer.from(value, 'binary').toString('base64'); },
+    atob(value) { return Buffer.from(value, 'base64').toString('binary'); },
     register(value) { registration = value; },
     nexus: {
       manifest,
@@ -40,6 +46,16 @@ function loadPlugin(files = {}) {
   };
   vm.runInNewContext(source, context, { filename: 'index.js' });
   return { registration, calls, telemetry, files };
+}
+
+function oidcFixture(projectId = 'project-a') {
+  const { publicKey, privateKey } = nodeCrypto.generateKeyPairSync('rsa', { modulusLength: 2048 });
+  const jwk = publicKey.export({ format: 'jwk' }); jwk.kid = 'key-1'; jwk.alg = 'RS256';
+  const seconds = Math.floor(Date.now() / 1000); const issuer = 'https://token.actions.githubusercontent.com'; const audience = 'crucible-learning'; const repository = 'owner/repo-a'; const ref = 'refs/heads/development'; const sub = `repo:${repository}:ref:${ref}`;
+  const header = Buffer.from(JSON.stringify({ alg: 'RS256', kid: jwk.kid })).toString('base64url');
+  const claims = { iss: issuer, aud: audience, repository, ref, project_id: projectId, sub, iat: seconds - 5, exp: seconds + 300 };
+  const body = Buffer.from(JSON.stringify(claims)).toString('base64url'); const signature = nodeCrypto.sign('RSA-SHA256', Buffer.from(`${header}.${body}`), privateKey).toString('base64url');
+  return { token: `${header}.${body}.${signature}`, claims, identity: { jwks: { keys: [jwk] }, issuer, audience, repository, ref, projectId, now: Date.now() } };
 }
 
 const at = '2026-08-29T19:30:00.000Z';
@@ -213,4 +229,25 @@ test('verified knowledge supports explicit rollback to a prior version', async (
   await promoteCandidate(registration, learningCandidate({ id: 'candidate-2' }), 'd');
   const result = await action({ actionId: 'crucible-learning-rollback', projectId: 'project-a', targetVersion: 1, at, reason: 'regression discovered' });
   assert.equal(result.knowledge.activeVersion, 1); assert.equal(result.knowledge.versions[0].status, 'active'); assert.equal(result.knowledge.versions[1].status, 'rolled-back');
+});
+
+test('OIDC identity is verified with trusted RS256 signature and exact project bindings', async () => {
+  const { registration } = loadPlugin(); const action = registration.slots['project-actions']; const fixture = oidcFixture();
+  const result = await action({ actionId: 'crucible-learning-oidc-verify', identity: fixture.identity, oidcToken: fixture.token, oidcSubject: fixture.claims.sub });
+  assert.equal(result.result.project_id, 'project-a');
+  await assert.rejects(action({ actionId: 'crucible-learning-oidc-verify', identity: { ...fixture.identity, projectId: 'project-b' }, oidcToken: fixture.token, oidcSubject: fixture.claims.sub }), /not bound/);
+});
+
+test('weekly transport is encrypted, authenticated, project-bound, and never persists its key', async () => {
+  const { registration, files, telemetry } = loadPlugin(); const action = registration.slots['project-actions']; const fixture = oidcFixture(); const masterKey = nodeCrypto.randomBytes(32).toString('base64url');
+  const weeklyPayload = { schemaVersion: 1, projectId: 'project-a', week: '2026-W35', candidateEvidence: [{ id: 'candidate-1' }], verifiedKnowledge: [] };
+  const encrypted = await action({ actionId: 'crucible-learning-weekly-encrypt', identity: fixture.identity, oidcToken: fixture.token, oidcSubject: fixture.claims.sub, masterKey, week: '2026-W35', weeklyPayload });
+  assert.equal(encrypted.result.algorithm, 'A256GCM-HKDF-SHA256'); assert.doesNotMatch(encrypted.result.ciphertext, /candidate-1/);
+  const decrypted = await action({ actionId: 'crucible-learning-weekly-decrypt', identity: fixture.identity, oidcToken: fixture.token, oidcSubject: fixture.claims.sub, masterKey, week: '2026-W35', envelope: encrypted.result });
+  assert.deepEqual(JSON.parse(JSON.stringify(decrypted.result)), weeklyPayload);
+  await assert.rejects(action({ actionId: 'crucible-learning-weekly-decrypt', identity: { ...fixture.identity, projectId: 'project-b' }, oidcToken: fixture.token, oidcSubject: fixture.claims.sub, masterKey, week: '2026-W35', envelope: encrypted.result }), /not bound/);
+  const tamperedBytes = Buffer.from(encrypted.result.ciphertext, 'base64url'); tamperedBytes[0] ^= 1;
+  const tampered = { ...encrypted.result, ciphertext: tamperedBytes.toString('base64url') };
+  await assert.rejects(action({ actionId: 'crucible-learning-weekly-decrypt', identity: fixture.identity, oidcToken: fixture.token, oidcSubject: fixture.claims.sub, masterKey, week: '2026-W35', envelope: tampered }), /authentication failed/);
+  assert.doesNotMatch(JSON.stringify(files), new RegExp(masterKey)); assert.doesNotMatch(JSON.stringify(telemetry), new RegExp(masterKey)); assert.ok(telemetry.every((item) => item.payload.evidentiary === false));
 });

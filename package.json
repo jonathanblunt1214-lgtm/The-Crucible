@@ -1,6 +1,6 @@
 {
   "name": "the-crucible-nexus-plugin",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Optional Nexus plugin for fail-closed project-isolated scientific learning and canonical Crucible governance references.",
   "license": "MIT",
@@ -8,6 +8,7 @@
   "scripts": {
     "test": "node --test test/plugin.test.js",
     "verify": "node scripts/verify.js",
+    "verify:core-contract": "node scripts/verify-core-contract.js",
     "package": "node scripts/package.js"
   }
 }

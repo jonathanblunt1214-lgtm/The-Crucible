@@ -16,11 +16,13 @@ The plugin requests only Nexus UI-slot, workspace read/write, and telemetry capa
 
 ## Scientific learning
 
-Version 0.1.0 adds project-isolated scientific learning under `governingDocuments/.crucible-learning/<projectId>/`. Candidate evidence is strictly validated and always enters as `Insufficient Evidence`. Separate actions declare a falsifiable hypothesis, record a bounded controlled experiment, confirm causal isolation, record independent verification, promote verified knowledge, retrieve records, quarantine/reject evidence, and roll back a knowledge version.
+Version 0.2.0 provides project-isolated scientific learning under `governingDocuments/.crucible-learning/<projectId>/`. Candidate evidence is strictly validated and always enters as `Insufficient Evidence`. Separate actions declare a falsifiable hypothesis, record a bounded controlled experiment, confirm causal isolation, record independent verification, promote verified knowledge, retrieve records, quarantine/reject evidence, and roll back a knowledge version.
 
 Promotion is fail-closed. Raw telemetry, correlations, retrieval, repeated observations, guesses, incomplete observations, untested hypotheses, and one-off repairs can never promote. Verification must match the exact tested property and experiment boundary. Conflicts with active verified knowledge are classified as `Crucible Issue` and quarantined instead of overwriting knowledge. Retrieval returns records but never satisfies a proof gate.
 
-Plugin telemetry contains only non-evidentiary action metadata and is never read by the learning state machine. Weekly authenticated encrypted exchange remains unavailable in the plugin until Nexus provides a trusted cryptographic and OIDC identity capability; the plugin does not downgrade that core requirement or request secrets/network access to work around it.
+Plugin telemetry contains only non-evidentiary action metadata and is never read by the learning state machine. Weekly exchange uses the Nexus sandbox's standard Web Crypto implementation for trusted RS256 OIDC verification, HKDF-SHA256 project-key derivation, and AES-256-GCM authenticated encryption. Master keys are accepted only as ephemeral action input and are never persisted or emitted. Exact issuer, audience, repository, development ref, project, token lifetime, week, and OIDC-subject bindings fail closed.
+
+Hosted compatibility verification compares the plugin's states, mandatory gates, and prohibited-promotion kinds with canonical `main` and fails if the adapter drifts, while retaining the sandbox's no-`require`, no-process runtime boundary.
 
 ## Canonical references
 

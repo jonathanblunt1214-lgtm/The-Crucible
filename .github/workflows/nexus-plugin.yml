@@ -1,4 +1,4 @@
-name: Nexus plugin v0.1.0
+name: Nexus plugin v0.2.0
 
 on:
   push:
@@ -30,13 +30,13 @@ jobs:
       - name: Verify Nexus package is runtime-only
         shell: bash
         run: |
-          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('dist/the-crucible-0.1.0.nexusplugin','utf8')); if(p.format!=='nexus-plugin-package'||p.version!==1||p.pluginId!=='the-crucible') process.exit(1); const paths=p.files.map(f=>f.path); for(const required of ['nexus.plugin.json','index.js','README.md','sbom.spdx.json']) if(!paths.includes(required)) process.exit(1); if(paths.some(x=>x.startsWith('test/')||x.startsWith('scripts/'))) process.exit(1);"
+          node -e "const fs=require('fs'); const p=JSON.parse(fs.readFileSync('dist/the-crucible-0.2.0.nexusplugin','utf8')); if(p.format!=='nexus-plugin-package'||p.version!==1||p.pluginId!=='the-crucible') process.exit(1); const paths=p.files.map(f=>f.path); for(const required of ['nexus.plugin.json','index.js','README.md','sbom.spdx.json']) if(!paths.includes(required)) process.exit(1); if(paths.some(x=>x.startsWith('test/')||x.startsWith('scripts/'))) process.exit(1);"
       - name: Upload unsigned screened-source candidate
         if: matrix.os == 'ubuntu-latest' && matrix.node == 24
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: the-crucible-nexus-plugin-0.1.0-${{ github.sha }}
-          path: dist/the-crucible-0.1.0.nexusplugin
+          name: the-crucible-nexus-plugin-0.2.0-${{ github.sha }}
+          path: dist/the-crucible-0.2.0.nexusplugin
           if-no-files-found: error
           retention-days: 30
 
@@ -45,6 +45,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - name: Check out plugin adapter
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          path: plugin
+          persist-credentials: false
       - name: Check out canonical Crucible core from default branch
         uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -54,6 +59,8 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 24
+      - name: Verify plugin learning contract matches canonical core
+        run: node plugin/scripts/verify-core-contract.js canonical-crucible/src/scientificLearning.js
       - name: Verify canonical core remains healthy
         working-directory: canonical-crucible
         run: npm run test:all

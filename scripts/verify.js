@@ -14,7 +14,7 @@ function fail(message) {
 }
 
 if (manifest.id !== 'the-crucible') fail('manifest id must be the-crucible');
-if (manifest.version !== '0.1.0' || pkg.version !== manifest.version) fail('package and manifest versions must match v0.1.0');
+if (manifest.version !== '0.2.0' || pkg.version !== manifest.version) fail('package and manifest versions must match v0.2.0');
 if (manifest.apiVersion !== 1) fail('apiVersion must be 1');
 if (manifest.entry !== 'index.js') fail('entry must be index.js');
 const expectedCapabilities = ['telemetry:emit','ui:slot','workspace:read','workspace:write'];
@@ -25,6 +25,7 @@ if (/child_process|\bexec(?:File|Sync)?\s*\(|\bspawn(?:Sync)?\s*\(/.test(entry))
 if (!entry.includes("const CANONICAL_BRANCH = 'main'")) fail('canonical shared content must reference the default main branch');
 if (!entry.includes('CRUCIBLE-REFERENCES.json')) fail('Auto Inject must use the reference manifest');
 if (entry.includes('BOOTSTRAP_FILES')) fail('shared governance must not be bundled as bootstrap copies');
-for (const action of ['crucible-learning-ingest', 'crucible-learning-experiment', 'crucible-learning-independent-verify', 'crucible-learning-promote', 'crucible-learning-retrieve', 'crucible-learning-rollback']) if (!entry.includes(action)) fail(`scientific learning action is missing: ${action}`);
+for (const action of ['crucible-learning-ingest', 'crucible-learning-experiment', 'crucible-learning-independent-verify', 'crucible-learning-promote', 'crucible-learning-retrieve', 'crucible-learning-rollback', 'crucible-learning-oidc-verify', 'crucible-learning-weekly-encrypt', 'crucible-learning-weekly-decrypt']) if (!entry.includes(action)) fail(`scientific learning action is missing: ${action}`);
 if (!entry.includes('telemetryIsEvidence: false')) fail('telemetry must be explicitly non-evidentiary');
+if (!entry.includes("masterKeyPersistence: 'forbidden'")) fail('weekly transport must forbid master-key persistence');
 if (!process.exitCode) console.log('[The Crucible Nexus plugin] static verification passed.');

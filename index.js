@@ -2,7 +2,7 @@
 
 const PLUGIN_ID = 'the-crucible';
 const PLUGIN_NAME = 'The Crucible';
-const VERSION = '0.1.0';
+const VERSION = '0.2.0';
 const GOVERNANCE_ROOT = 'governingDocuments';
 const REFERENCE_MANIFEST = `${GOVERNANCE_ROOT}/CRUCIBLE-REFERENCES.json`;
 const BRANCH_LINK_MANIFEST = `${GOVERNANCE_ROOT}/BRANCH-LINKS.json`;
@@ -117,6 +117,78 @@ function findRecord(store, candidateId) { const record = store.records.find((ite
 async function saveCandidates(store) { store.revision += 1; await writeJson(learningPath(store.projectId, 'candidates'), store); }
 async function saveKnowledge(store) { store.revision += 1; await writeJson(learningPath(store.projectId, 'verified-knowledge'), store); }
 function learningTelemetry(actionId, projectId, state) { nexus.emitTelemetry('crucible.learning.action', { version: VERSION, actionId, projectId, state, evidentiary: false }); }
+
+function requireWebCrypto() {
+  const webCrypto = globalThis.crypto;
+  if (!webCrypto?.subtle || typeof webCrypto.getRandomValues !== 'function') throw new Error('Nexus host must provide standard Web Crypto with subtle and getRandomValues.');
+  return webCrypto;
+}
+function utf8(value) { return new TextEncoder().encode(value); }
+function b64urlEncode(bytes) {
+  let binary = ''; for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/g, '');
+}
+function b64urlDecode(value, label = 'base64url value') {
+  requireText(value, label); if (!/^[A-Za-z0-9_-]+$/.test(value)) throw new Error(`${label} must use base64url encoding.`);
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/'); const padded = normalized + '='.repeat((4 - normalized.length % 4) % 4);
+  let binary; try { binary = atob(padded); } catch { throw new Error(`${label} must use base64url encoding.`); }
+  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+}
+function canonical(value) {
+  if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+  if (value && typeof value === 'object') return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
+  return JSON.stringify(value);
+}
+async function deriveWeeklyKey(masterKey, projectId) {
+  const raw = b64urlDecode(masterKey, 'masterKey'); if (raw.length < 32) throw new Error('masterKey must contain at least 32 bytes.');
+  const subtle = requireWebCrypto().subtle; const material = await subtle.importKey('raw', raw, 'HKDF', false, ['deriveKey']);
+  return subtle.deriveKey({ name: 'HKDF', hash: 'SHA-256', salt: utf8(projectId), info: utf8('the-crucible-weekly-learning-v1') }, material, { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+}
+function validateWeeklyIdentity(payload, binding) {
+  requireExactKeys(payload, ['schemaVersion', 'projectId', 'week', 'candidateEvidence', 'verifiedKnowledge'], 'weekly payload');
+  if (payload.schemaVersion !== 1 || payload.projectId !== binding.projectId || payload.week !== binding.week) throw new Error('Weekly payload identity mismatch.');
+  if (!Array.isArray(payload.candidateEvidence) || !Array.isArray(payload.verifiedKnowledge)) throw new Error('Weekly payload collections must be arrays.');
+  for (const key of ['projectId', 'repository', 'week', 'oidcSubject']) requireText(binding[key], `weekly binding.${key}`);
+}
+async function encryptWeeklyPayload(payload, { masterKey, projectId, repository, week, oidcSubject }) {
+  const binding = { schemaVersion: 1, projectId, repository, week, oidcSubject }; validateWeeklyIdentity(payload, binding);
+  const cryptoApi = requireWebCrypto(); const iv = cryptoApi.getRandomValues(new Uint8Array(12)); const key = await deriveWeeklyKey(masterKey, projectId);
+  const encrypted = new Uint8Array(await cryptoApi.subtle.encrypt({ name: 'AES-GCM', iv, additionalData: utf8(canonical(binding)), tagLength: 128 }, key, utf8(canonical(payload))));
+  const tag = encrypted.slice(encrypted.length - 16); const ciphertext = encrypted.slice(0, -16);
+  return { ...binding, algorithm: 'A256GCM-HKDF-SHA256', iv: b64urlEncode(iv), ciphertext: b64urlEncode(ciphertext), tag: b64urlEncode(tag) };
+}
+async function decryptWeeklyPayload(envelope, { masterKey, expectedProjectId, expectedRepository, expectedWeek, expectedOidcSubject }) {
+  requireExactKeys(envelope, ['schemaVersion', 'projectId', 'repository', 'week', 'oidcSubject', 'algorithm', 'iv', 'ciphertext', 'tag'], 'weekly envelope');
+  if (envelope.schemaVersion !== 1 || envelope.algorithm !== 'A256GCM-HKDF-SHA256' || envelope.projectId !== expectedProjectId || envelope.repository !== expectedRepository || envelope.week !== expectedWeek || envelope.oidcSubject !== expectedOidcSubject) throw new Error('Weekly envelope binding mismatch.');
+  const binding = { schemaVersion: 1, projectId: envelope.projectId, repository: envelope.repository, week: envelope.week, oidcSubject: envelope.oidcSubject };
+  const ciphertext = b64urlDecode(envelope.ciphertext, 'envelope.ciphertext'); const tag = b64urlDecode(envelope.tag, 'envelope.tag'); const combined = new Uint8Array(ciphertext.length + tag.length); combined.set(ciphertext); combined.set(tag, ciphertext.length);
+  const key = await deriveWeeklyKey(masterKey, envelope.projectId); let decrypted;
+  try { decrypted = await requireWebCrypto().subtle.decrypt({ name: 'AES-GCM', iv: b64urlDecode(envelope.iv, 'envelope.iv'), additionalData: utf8(canonical(binding)), tagLength: 128 }, key, combined); }
+  catch { throw new Error('Weekly envelope authentication failed.'); }
+  return JSON.parse(new TextDecoder().decode(decrypted));
+}
+async function verifyOidcToken(token, { jwks, issuer, audience, repository, ref, projectId, now = Date.now() }) {
+  requireText(token, 'OIDC token'); const parts = token.split('.'); if (parts.length !== 3) throw new Error('OIDC token must be a compact JWT.');
+  let header; let claims; try { header = JSON.parse(new TextDecoder().decode(b64urlDecode(parts[0], 'OIDC header'))); claims = JSON.parse(new TextDecoder().decode(b64urlDecode(parts[1], 'OIDC claims'))); } catch (error) { throw new Error(`OIDC token JSON is invalid: ${error.message}`); }
+  if (header.alg !== 'RS256' || typeof header.kid !== 'string' || !header.kid) throw new Error('OIDC token must use RS256 with kid.');
+  const jwk = jwks?.keys?.find((key) => key.kid === header.kid && key.kty === 'RSA'); if (!jwk) throw new Error('OIDC signing key is not trusted.');
+  const key = await requireWebCrypto().subtle.importKey('jwk', jwk, { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' }, false, ['verify']);
+  const valid = await requireWebCrypto().subtle.verify('RSASSA-PKCS1-v1_5', key, b64urlDecode(parts[2], 'OIDC signature'), utf8(`${parts[0]}.${parts[1]}`)); if (!valid) throw new Error('OIDC signature is invalid.');
+  if (claims.iss !== issuer || claims.aud !== audience || claims.repository !== repository || claims.ref !== ref || claims.project_id !== projectId) throw new Error('OIDC identity is not bound to the expected project/repository/ref.');
+  const seconds = Math.floor(now / 1000); if (!Number.isInteger(claims.iat) || !Number.isInteger(claims.exp) || claims.iat > seconds + 60 || claims.exp <= seconds || claims.exp - claims.iat > 600) throw new Error('OIDC token lifetime is invalid.');
+  return clone(claims);
+}
+
+async function learningTransportAction(payload) {
+  const identity = payload.identity; requireObject(identity, 'identity'); const claims = await verifyOidcToken(payload.oidcToken, identity);
+  const projectId = requireProjectId(identity.projectId); if (claims.sub !== payload.oidcSubject) throw new Error('OIDC subject binding mismatch.');
+  let result;
+  if (payload.actionId === 'crucible-learning-weekly-encrypt') result = await encryptWeeklyPayload(payload.weeklyPayload, { masterKey: payload.masterKey, projectId, repository: identity.repository, week: payload.week, oidcSubject: claims.sub });
+  else if (payload.actionId === 'crucible-learning-weekly-decrypt') result = await decryptWeeklyPayload(payload.envelope, { masterKey: payload.masterKey, expectedProjectId: projectId, expectedRepository: identity.repository, expectedWeek: payload.week, expectedOidcSubject: claims.sub });
+  else if (payload.actionId === 'crucible-learning-oidc-verify') result = claims;
+  else throw new Error(`Unknown learning transport action: ${payload.actionId}`);
+  learningTelemetry(payload.actionId, projectId, 'transported'); return { ok: true, result };
+}
 
 async function learningAction(payload) {
   const projectId = requireProjectId(payload.projectId ?? payload.candidate?.projectId);
@@ -356,6 +428,7 @@ async function autoInject(payload) {
 }
 
 async function projectAction(payload = {}) {
+  if (['crucible-learning-oidc-verify', 'crucible-learning-weekly-encrypt', 'crucible-learning-weekly-decrypt'].includes(payload.actionId)) return learningTransportAction(payload);
   if (typeof payload.actionId === 'string' && payload.actionId.startsWith('crucible-learning-')) return learningAction(payload);
   switch (payload.actionId) {
     case 'crucible-auto-inject-preview': return previewAutoInject();
@@ -389,7 +462,8 @@ async function projectAction(payload = {}) {
             telemetryIsEvidence: false,
             prohibitedDirectPromotionKinds: PROHIBITED_PROMOTION_KINDS,
             requiredGates: REQUIRED_LEARNING_GATES,
-            weeklyTransport: 'unavailable-until-host-provides-trusted-cryptography-and-oidc'
+            weeklyTransport: 'web-crypto-rs256-oidc-a256gcm-hkdf-sha256',
+            masterKeyPersistence: 'forbidden'
           }
         },
         actions: [
@@ -405,6 +479,9 @@ async function projectAction(payload = {}) {
           ,action('crucible-learning-promote', 'Learning: Promote verified knowledge', 'Promote only after every mandatory gate passes; fail closed otherwise.')
           ,action('crucible-learning-retrieve', 'Learning: Retrieve project knowledge', 'Retrieve isolated candidates and versioned verified knowledge; retrieval is not proof.')
           ,action('crucible-learning-rollback', 'Learning: Roll back knowledge', 'Restore a prior verified-knowledge version with a timestamped reason.')
+          ,action('crucible-learning-oidc-verify', 'Learning: Verify OIDC identity', 'Verify a trusted RS256 token with exact issuer, audience, repository, ref, project, and lifetime binding.')
+          ,action('crucible-learning-weekly-encrypt', 'Learning: Encrypt weekly envelope', 'Encrypt a project-bound weekly payload with an ephemeral master key using HKDF and AES-256-GCM.')
+          ,action('crucible-learning-weekly-decrypt', 'Learning: Decrypt weekly envelope', 'Authenticate identity and project/repository/week/subject bindings before decrypting a weekly payload.')
         ]
       };
   }
@@ -426,7 +503,7 @@ register({
       localGovernanceFiles: await listLocalGovernance().catch(() => []),
       canonicalDocuments: canonicalReferenceManifest().documents,
       autoInject: { selectedByDefault: false, requiresConfirmation: true }
-      ,scientificLearning: { enabled: true, storageRoot: LEARNING_ROOT, telemetryIsEvidence: false, weeklyTransport: 'host-cryptography-and-oidc-required' }
+      ,scientificLearning: { enabled: true, storageRoot: LEARNING_ROOT, telemetryIsEvidence: false, weeklyTransport: 'web-crypto-rs256-oidc-a256gcm-hkdf-sha256', masterKeyPersistence: 'forbidden' }
     }),
     'command-palette': async () => ({
       commands: [
