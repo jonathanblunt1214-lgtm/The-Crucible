@@ -4,6 +4,13 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { auditCoreRefIntegrity, formatReport, publishReport } = require('../src/coreRefIntegrity');
+const {
+  extractMainReferences,
+  normalizeManifest,
+  auditReferenceBranch,
+  governingPathsFromHandoff,
+  resolveJsonPointer,
+} = require('../src/referenceBranchIntegrity');
 
 const SHA = 'a'.repeat(40);
 
@@ -108,4 +115,98 @@ test('publishReport appends to the job summary when present, no-ops otherwise', 
   assert.equal(publishReport('body', { GITHUB_STEP_SUMMARY: summaryPath }), true);
   assert.match(fs.readFileSync(summaryPath, 'utf8'), /## The Crucible pinned commit integrity[\s\S]*body/);
   assert.equal(publishReport('body', {}), false);
+});
+
+test('third-branch reference discovery extracts main:path and same-repository main URLs', () => {
+  const text = [
+    'Read main:AI-HANDOFF.json before editing.',
+    'See https://github.com/acme/project/blob/main/governingDocuments/policy.md',
+    'Raw: https://raw.githubusercontent.com/acme/project/main/templates/example.json',
+    'Again main:AI-HANDOFF.json',
+  ].join('\n');
+  assert.deepEqual(extractMainReferences(text, 'acme/project'), [
+    'AI-HANDOFF.json',
+    'governingDocuments/policy.md',
+    'templates/example.json',
+  ]);
+});
+
+test('third-branch reference manifest rejects unsafe paths and non-main canonical branches', () => {
+  assert.throws(() => normalizeManifest({ schemaVersion: 1, canonicalBranch: 'release', references: [] }), /canonicalBranch must be main/);
+  assert.throws(() => normalizeManifest({ schemaVersion: 1, references: ['../secret'] }), /unsafe path/);
+});
+
+test('main AI-HANDOFF reference expands governing documents and catches a broken target', () => {
+  const branchFiles = { 'AGENTS.md': 'Follow main:AI-HANDOFF.json.' };
+  const mainFiles = {
+    'AI-HANDOFF.json': JSON.stringify({ governingDocuments: { 'AGENTS.md': 'policy', 'governingDocuments/policy.md': 'policy' } }),
+    'AGENTS.md': '# policy',
+  };
+  const result = auditReferenceBranch({
+    branch: 'Plug-in',
+    repository: 'acme/project',
+    files: Object.keys(branchFiles),
+    readBranchFile: (file) => branchFiles[file],
+    readMainFile: (file) => {
+      if (!(file in mainFiles)) throw new Error('missing');
+      return mainFiles[file];
+    },
+  });
+  assert.equal(result.referenceCount, 3);
+  assert.equal(result.findings.length, 1);
+  assert.equal(result.findings[0].target, 'governingDocuments/policy.md');
+});
+
+test('third-branch manifest contracts validate text and JSON pointers on main', () => {
+  const manifest = JSON.stringify({
+    schemaVersion: 1,
+    canonicalBranch: 'main',
+    references: [
+      { path: 'package.json', jsonPointers: ['/scripts/test', '/engines/node'] },
+      { path: 'HOST-CONTRACT.md', contains: ['workspace:read'] },
+    ],
+  });
+  const mainFiles = {
+    'package.json': JSON.stringify({ scripts: { test: 'node --test' }, engines: { node: '>=20' } }),
+    'HOST-CONTRACT.md': 'Requires workspace:read capability.',
+  };
+  const result = auditReferenceBranch({
+    branch: 'adapter',
+    repository: 'acme/project',
+    files: ['.crucible-main-references.json'],
+    readBranchFile: () => manifest,
+    readMainFile: (file) => mainFiles[file],
+  });
+  assert.equal(result.referenceCount, 2);
+  assert.deepEqual(result.findings, []);
+});
+
+test('missing declared third-branch JSON contract is reported', () => {
+  const manifest = JSON.stringify({ schemaVersion: 1, references: [{ path: 'package.json', jsonPointers: ['/scripts/missing'] }] });
+  const result = auditReferenceBranch({
+    branch: 'adapter',
+    repository: 'acme/project',
+    files: ['.crucible-main-references.json'],
+    readBranchFile: () => manifest,
+    readMainFile: () => JSON.stringify({ scripts: { test: 'ok' } }),
+  });
+  assert.equal(result.findings.length, 1);
+  assert.match(result.findings[0].issue, /JSON pointer is missing/);
+});
+
+test('governing document expansion ignores descriptive non-path ledger labels', () => {
+  const paths = governingPathsFromHandoff(JSON.stringify({
+    governingDocuments: {
+      'AGENTS.md': 'policy',
+      'Devlog-Pruned (Archive branch)': 'descriptive cross-branch ledger label',
+      'src/security.js': 'runtime',
+    },
+  }));
+  assert.deepEqual(paths, ['AGENTS.md', 'src/security.js']);
+});
+
+test('third-branch JSON pointer resolver supports escaped slash and tilde tokens', () => {
+  const document = { 'a/b': { '~key': true } };
+  assert.deepEqual(resolveJsonPointer(document, '/a~1b/~0key'), { exists: true, value: true });
+  assert.equal(resolveJsonPointer(document, '/missing').exists, false);
 });
