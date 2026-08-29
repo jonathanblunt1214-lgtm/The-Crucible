@@ -4,17 +4,11 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { auditCoreRefIntegrity, formatReport, publishReport } = require('../src/coreRefIntegrity');
-const {
-  extractMainReferences,
-  normalizeManifest,
-  auditReferenceBranch,
-  governingPathsFromHandoff,
-  resolveJsonPointer,
-} = require('../src/referenceBranchIntegrity');
+const { normalizeBranchLinks, rewriteRecognizedReferences, rewriteReferenceManifest, auditReferenceBranch } = require('../src/referenceBranchIntegrity');
+const { ensureInjectedGovernance, walkFiles } = require('../src/injectedGovernance');
 
 const SHA = 'a'.repeat(40);
 
-// state: { commitMissing, commitStatus, compareStatus, checksMissing, checkRuns }
 function fetchImplFor(state) {
   return async (url) => {
     if (url.endsWith(`/commits/${SHA}`)) {
@@ -117,96 +111,61 @@ test('publishReport appends to the job summary when present, no-ops otherwise', 
   assert.equal(publishReport('body', {}), false);
 });
 
-test('third-branch reference discovery extracts main:path and same-repository main URLs', () => {
-  const text = [
-    'Read main:AI-HANDOFF.json before editing.',
-    'See https://github.com/acme/project/blob/main/governingDocuments/policy.md',
-    'Raw: https://raw.githubusercontent.com/acme/project/main/templates/example.json',
-    'Again main:AI-HANDOFF.json',
-  ].join('\n');
-  assert.deepEqual(extractMainReferences(text, 'acme/project'), [
-    'AI-HANDOFF.json',
-    'governingDocuments/policy.md',
-    'templates/example.json',
-  ]);
+test('canonical-reference branch manifest recognizes a silently main-dependent branch', () => {
+  const [link] = normalizeBranchLinks({ schemaVersion: 1, canonicalBranch: 'main', links: [{ branch: 'Plug-in', relationship: 'canonical-reference', dependsOn: 'main', requiredMainPaths: ['AI-HANDOFF.json'] }] });
+  assert.equal(link.branch, 'Plug-in');
+  assert.deepEqual(link.requiredMainPaths, ['AI-HANDOFF.json']);
 });
 
-test('third-branch reference manifest rejects unsafe paths and non-main canonical branches', () => {
-  assert.throws(() => normalizeManifest({ schemaVersion: 1, canonicalBranch: 'release', references: [] }), /canonicalBranch must be main/);
-  assert.throws(() => normalizeManifest({ schemaVersion: 1, references: ['../secret'] }), /unsafe path/);
-});
-
-test('main AI-HANDOFF reference expands governing documents and catches a broken target', () => {
-  const branchFiles = { 'AGENTS.md': 'Follow main:AI-HANDOFF.json.' };
-  const mainFiles = {
-    'AI-HANDOFF.json': JSON.stringify({ governingDocuments: { 'AGENTS.md': 'policy', 'governingDocuments/policy.md': 'policy' } }),
-    'AGENTS.md': '# policy',
-  };
+test('declared canonical-reference paths are audited even when branch text has no discoverable main link', () => {
   const result = auditReferenceBranch({
     branch: 'Plug-in',
-    repository: 'acme/project',
-    files: Object.keys(branchFiles),
-    readBranchFile: (file) => branchFiles[file],
-    readMainFile: (file) => {
-      if (!(file in mainFiles)) throw new Error('missing');
-      return mainFiles[file];
-    },
+    repository: 'owner/repo',
+    files: ['README.md'],
+    readBranchFile: () => 'plugin only',
+    readMainFile: (file) => file === 'AI-HANDOFF.json' ? JSON.stringify({ governingDocuments: { 'governingDocuments/branch-linking-policy.md': 'policy' } }) : '# policy',
+    declaredReferences: ['AI-HANDOFF.json']
   });
-  assert.equal(result.referenceCount, 3);
-  assert.equal(result.findings.length, 1);
-  assert.equal(result.findings[0].target, 'governingDocuments/policy.md');
-});
-
-test('third-branch manifest contracts validate text and JSON pointers on main', () => {
-  const manifest = JSON.stringify({
-    schemaVersion: 1,
-    canonicalBranch: 'main',
-    references: [
-      { path: 'package.json', jsonPointers: ['/scripts/test', '/engines/node'] },
-      { path: 'HOST-CONTRACT.md', contains: ['workspace:read'] },
-    ],
-  });
-  const mainFiles = {
-    'package.json': JSON.stringify({ scripts: { test: 'node --test' }, engines: { node: '>=20' } }),
-    'HOST-CONTRACT.md': 'Requires workspace:read capability.',
-  };
-  const result = auditReferenceBranch({
-    branch: 'adapter',
-    repository: 'acme/project',
-    files: ['.crucible-main-references.json'],
-    readBranchFile: () => manifest,
-    readMainFile: (file) => mainFiles[file],
-  });
+  assert.equal(result.findings.length, 0);
   assert.equal(result.referenceCount, 2);
-  assert.deepEqual(result.findings, []);
 });
 
-test('missing declared third-branch JSON contract is reported', () => {
-  const manifest = JSON.stringify({ schemaVersion: 1, references: [{ path: 'package.json', jsonPointers: ['/scripts/missing'] }] });
-  const result = auditReferenceBranch({
-    branch: 'adapter',
-    repository: 'acme/project',
-    files: ['.crucible-main-references.json'],
-    readBranchFile: () => manifest,
-    readMainFile: () => JSON.stringify({ scripts: { test: 'ok' } }),
-  });
-  assert.equal(result.findings.length, 1);
-  assert.match(result.findings[0].issue, /JSON pointer is missing/);
+test('automatic repair rewrites only recognized main reference syntax after a canonical rename', () => {
+  const renames = new Map([['governingDocuments/old.md', 'governingDocuments/new.md']]);
+  const input = 'Use main:governingDocuments/old.md and https://github.com/owner/repo/blob/main/governingDocuments/old.md. Plain governingDocuments/old.md stays descriptive.';
+  const output = rewriteRecognizedReferences(input, 'owner/repo', renames);
+  assert.match(output, /main:governingDocuments\/new\.md/);
+  assert.match(output, /blob\/main\/governingDocuments\/new\.md/);
+  assert.match(output, /Plain governingDocuments\/old\.md stays descriptive/);
 });
 
-test('governing document expansion ignores descriptive non-path ledger labels', () => {
-  const paths = governingPathsFromHandoff(JSON.stringify({
-    governingDocuments: {
-      'AGENTS.md': 'policy',
-      'Devlog-Pruned (Archive branch)': 'descriptive cross-branch ledger label',
-      'src/security.js': 'runtime',
-    },
-  }));
-  assert.deepEqual(paths, ['AGENTS.md', 'src/security.js']);
+test('automatic repair updates explicit reference-manifest paths without weakening contracts', () => {
+  const input = JSON.stringify({ schemaVersion: 1, canonicalBranch: 'main', references: [{ path: 'old.json', contains: ['required'], jsonPointers: ['/api'] }] });
+  const result = rewriteReferenceManifest(input, new Map([['old.json', 'new.json']]));
+  const parsed = JSON.parse(result.content);
+  assert.equal(result.changed, true);
+  assert.equal(parsed.references[0].path, 'new.json');
+  assert.deepEqual(parsed.references[0].contains, ['required']);
+  assert.deepEqual(parsed.references[0].jsonPointers, ['/api']);
 });
 
-test('third-branch JSON pointer resolver supports escaped slash and tilde tokens', () => {
-  const document = { 'a/b': { '~key': true } };
-  assert.deepEqual(resolveJsonPointer(document, '/a~1b/~0key'), { exists: true, value: true });
-  assert.equal(resolveJsonPointer(document, '/missing').exists, false);
+test('injected governingDocuments always contain every canonical relative filename and handoff names them', () => {
+  const temp = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-injected-governance-'));
+  const source = path.join(temp, 'source');
+  const target = path.join(temp, 'project', 'governingDocuments');
+  const handoff = path.join(temp, 'project', 'AI-HANDOFF.json');
+  fs.mkdirSync(path.join(source, 'known-bugs'), { recursive: true });
+  fs.writeFileSync(path.join(source, 'branch-linking-policy.md'), '# canonical');
+  fs.writeFileSync(path.join(source, 'known-bugs', 'KNOWN-BUGS.json'), JSON.stringify({ schemaVersion: 1, severityOrder: ['critical'], bugs: [{ id: 'engine-only' }] }));
+  fs.mkdirSync(path.dirname(handoff), { recursive: true });
+  fs.writeFileSync(handoff, JSON.stringify({ schemaVersion: 1, governingDocuments: {} }));
+  ensureInjectedGovernance({ sourceRoot: source, targetRoot: target, handoffPath: handoff });
+  assert.deepEqual(walkFiles(target), walkFiles(source));
+  const localKnownBugs = JSON.parse(fs.readFileSync(path.join(target, 'known-bugs', 'KNOWN-BUGS.json'), 'utf8'));
+  assert.deepEqual(localKnownBugs.bugs, []);
+  const localHandoff = JSON.parse(fs.readFileSync(handoff, 'utf8'));
+  assert.ok(localHandoff.governingDocuments['governingDocuments/branch-linking-policy.md']);
+  assert.match(fs.readFileSync(path.join(target, 'branch-linking-policy.md'), 'utf8'), /project-123.*project-abc/i);
+  assert.match(fs.readFileSync(path.join(target, 'branch-linking-policy.md'), 'utf8'), /Plug-in/);
+  fs.rmSync(temp, { recursive: true, force: true });
 });
