@@ -51,22 +51,12 @@ jobs:
           ref: REPLACE_WITH_EXACT_COMMIT_SHA
           path: .the-crucible-runtime
           persist-credentials: false
-      - name: Install only the mandatory AI governance files
-        # Idempotent by design: a prior run may have committed and pushed
-        # these files to main and then failed before creating
-        # Development-branch (a network blip, a concurrent push, a runner
-        # loss). Re-running install must be able to finish the job, not get
-        # stuck re-refusing a state it already produced correctly - so an
-        # exact-match "nothing changed" result is treated as already done,
-        # not as an error. Anything else outside the known governance file
-        # set still fails closed, unchanged from before.
-        #
-        # AI-HANDOFF.json's governingDocuments names templates/ai-conflict-resolution.md
-        # and templates/required-check-rollout.md as governing documents, so this
-        # installs those files' actual contents too - a governingDocuments entry must
-        # never point at a file that does not exist in this repository. They are
-        # copied only if not already present, so a repository that already has its
-        # own file at that exact path is never clobbered.
+      - name: Install mandatory AI governance and governingDocuments filename parity
+        # Idempotent by design. The pinned Crucible runtime is the source of truth
+        # for governingDocuments filenames; every missing relative name is created
+        # as a project-local reference/overlay, while any project file that already
+        # exists at that exact path is preserved. This prevents injected projects
+        # from drifting when canonical Crucible governance adds another document.
         run: |
           set -euo pipefail
           mkdir -p templates
@@ -77,6 +67,7 @@ jobs:
           cp .the-crucible-runtime/templates/ai-handoff-policy-workflow.yml .github/workflows/ai-handoff-policy.yml
           [ -f templates/ai-conflict-resolution.md ] || cp .the-crucible-runtime/templates/ai-conflict-resolution.md templates/ai-conflict-resolution.md
           [ -f templates/required-check-rollout.md ] || cp .the-crucible-runtime/templates/required-check-rollout.md templates/required-check-rollout.md
+          node .the-crucible-runtime/src/injectedGovernance.js .the-crucible-runtime/governingDocuments governingDocuments AI-HANDOFF.json
           rm -rf .the-crucible-runtime
           changed="$(git status --porcelain -uall)"
           count="$(printf '%s\n' "$changed" | grep -c . || true)"
@@ -87,9 +78,9 @@ jobs:
             for f in AI-CONFLICTS.json AI-HANDOFF.json THE-CRUCIBLE-DESIGN-BRIEF.md .github/workflows/ai-conflict-governance.yml .github/workflows/ai-handoff-policy.yml; do
               printf '%s\n' "$changed" | grep -qF "$f" || mandatory_missing=1
             done
-            unexpected="$(printf '%s\n' "$changed" | sed -E 's/^.{2} //' | grep -vFx -e 'AI-CONFLICTS.json' -e 'AI-HANDOFF.json' -e 'THE-CRUCIBLE-DESIGN-BRIEF.md' -e '.github/workflows/ai-conflict-governance.yml' -e '.github/workflows/ai-handoff-policy.yml' -e 'templates/ai-conflict-resolution.md' -e 'templates/required-check-rollout.md' || true)"
+            unexpected="$(printf '%s\n' "$changed" | sed -E 's/^.{2} //' | grep -v '^governingDocuments/' | grep -vFx -e 'AI-CONFLICTS.json' -e 'AI-HANDOFF.json' -e 'THE-CRUCIBLE-DESIGN-BRIEF.md' -e '.github/workflows/ai-conflict-governance.yml' -e '.github/workflows/ai-handoff-policy.yml' -e 'templates/ai-conflict-resolution.md' -e 'templates/required-check-rollout.md' || true)"
             if [ "$mandatory_missing" -eq 1 ] || [ -n "$unexpected" ]; then
-              echo "Refusing to commit: expected exactly the design brief, both AI ledgers, both AI governance workflows, and (only when not already present) the governing-document templates they reference (or no changes, if already installed). Found:" >&2
+              echo "Refusing to commit: expected the mandatory AI governance files plus only project-local governingDocuments names derived from the pinned Crucible runtime. Found:" >&2
               printf '%s\n' "$changed" >&2
               exit 1
             else
@@ -101,12 +92,6 @@ jobs:
             fi
           fi
       - name: Create required Development-branch at the governance commit
-        # Distinguishes "branch genuinely doesn't exist yet" (ls-remote
-        # --exit-code exits 2) from a real connectivity/auth failure (any
-        # other nonzero exit) - treating the latter as "safe to create"
-        # would silently attempt a push that's likely to fail anyway for
-        # the same underlying reason, or worse, race a branch that does
-        # exist but couldn't be confirmed.
         run: |
           set -euo pipefail
           set +e

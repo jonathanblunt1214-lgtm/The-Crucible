@@ -13,7 +13,9 @@
     "governingDocuments/templates/injection-monitor-task.md": "Universal 24-hour injection monitor and autonomous repair contract.",
     "governingDocuments/templates/INJECTION-PREREQUISITES.example.json": "Per-injection lifecycle, prerequisite, monitor, evidence-retrieval, and repair-capability manifest shape.",
     "src/injectionMonitor.js": "Fail-closed runtime verifier for active/terminal injection-monitor lifecycle, exact target/branch, <=24-hour lifetime, evidence retrieval, repair capability, autonomous repair/retest, deduplication, and shutdown.",
-    ".github/workflows/the-crucible.yml": "Reusable Crucible gate; now mechanically invokes the injection-monitor verifier whenever an injection prerequisite manifest is present.",
+    ".github/workflows/the-crucible.yml": "Reusable Crucible gate; mechanically invokes the injection-monitor verifier whenever an injection prerequisite manifest is present.",
+    "src/referenceBranchIntegrity.js": "Read-only third-branch integrity verifier that discovers references to canonical main, expands main AI-HANDOFF governing documents, and validates optional branch-declared compatibility contracts after main changes.",
+    ".github/workflows/reference-branch-integrity.yml": "Runs third-branch main-reference integrity after every main push and on manual dispatch without modifying any branch.",
     "src/handoffPolicy.js": "Enforces takeover-ready handoff and DEVLOG chain of custody through validateHandoffPlan and validateDevlogChainOfCustody, including the bounded Command log archive requirements and the mandatory plain-language-summary line on DEVLOG.md's newest entry. Also mechanizes syncing full pruned DEVLOG.md snapshots to Devlog-Pruned on Archive via devlogPruneSnapshot/effectiveDevlogPrunedCapacity/appendToDevlogPrunedLedger.",
     "Devlog-Pruned (Archive branch)": "Standing append-only ledger holding the entire DEVLOG.md content exactly as it stood before each prune of development's Command log archive (full snapshots, not excerpts), each led by a plain-language summary. Retention floor is time, not count: at least 364 days always kept; starting capacity of 50 snapshots doubles automatically rather than trimming anything within that floor. The one narrow, owner-authorized exception to Archive's otherwise pull-only rule.",
     "src/testCadence.js": "Governed Orchestrator entry point and run-governance wrapper.",
@@ -23,6 +25,8 @@
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
     "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
+    "governingDocuments/scientific-learning-policy.md": "Permanent autonomous scientific-learning invariants, promotion boundary, project isolation, contradiction handling, rollback, and weekly transport policy.",
+    "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, project-isolated evidence and versioned knowledge stores, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
     "src/security.js": "Security Gate. Detects secrets, unsafe behavior, and public API-key-shaped identifiers and forces review without persisting detected values.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
     ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport; it never chooses test files.",
@@ -32,7 +36,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-28T22:24:19Z"
+    "lastActionAt": "2026-08-29T18:33:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -89,43 +93,44 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "GPT-5.6 Sol",
-    "objective": "Make universal injection monitoring mechanically enforceable so every injected project has an actual <=24-hour evidence-and-autonomous-repair monitor while injection is active, and the monitor is disabled outside that lifecycle.",
-    "currentPrompt": "fix it I cannot implement that repository change in this turn because the GitHub capability currently exposed to me has switched to read-only operations—there are no commit/update/ref-write actions available. I will not claim it was changed when it wasn't. The required implementation remains pending until GitHub write capability is available again.",
+    "agent": "Codex",
+    "objective": "Implement the autonomous scientific-learning engine as a fail-closed, project-isolated, experimentally verified subsystem on development.",
+    "currentPrompt": "Continuing from Session Changes Review: Implement the Crucible autonomous scientific-learning engine on The Crucible development branch, following all current governance and architecture from this conversation. Do not promote to main. Re-read governance/conflicts/handoff and confirm exact development tip before writes. Implement permanent scientific-learning invariants; explicit state machine; candidate-evidence store; strict allow-list schemas/provenance; causal isolation/control testing; independent verification; claim-boundary/generalization checks; contradiction detection/quarantine; versioned/rollbackable verified-knowledge store; fail-closed transitions; classifications Rejected Evidence / Insufficient Evidence / Crucible Issue; no weighted confidence bypass; no raw telemetry or successful one-off repair direct promotion; correlation never satisfies causation; retrieval is not proof; verification proves only tested property; experimental results inherit experiment boundaries; and no evidence-processing stage may satisfy a later proof stage merely by producing its input. Integrate project-specific authenticated/encrypted weekly learning transport with project-specific key binding and OIDC identity checks, without repo assimilation or project linking. Treat vetted research from this conversation as candidate evidence only with provenance/classifications, never pre-approved verified knowledge. Add/adjust tests for all mandatory gates and anti-garbage cases, address test categorization debt, update AI-HANDOFF.json and DEVLOG.md atomically, run exact-tip CI, fix actionable failures until green, and report exact commit SHA plus CI status. Do not commit the earlier draft blobs as-is; redesign to current requirements.",
     "executionMode": {
-      "mode": "regular/default",
-      "agent": "GPT-5.6 Sol",
-      "purpose": "Add one fail-closed runtime monitor verifier, wire it into the reusable Crucible gate, and update the universal injection lifecycle manifest/policy without widening repository authority.",
-      "selectionReason": "The requested repair is narrowly scoped to the injection system and current GitHub write capability is available.",
-      "distinction": "Execution mode is separate from agent identity and workflow; GPT-5.6 Sol is continuing in regular/default mode."
+      "mode": "work",
+      "agent": "Codex",
+      "purpose": "Carry a multi-file learning architecture through implementation, adversarial verification, atomic custody updates, push, and exact-tip hosted CI.",
+      "selectionReason": "The request is complex, security-sensitive, file-heavy, and requires persistent verification across storage, cryptography, schemas, state transitions, test governance, and hosted CI.",
+      "distinction": "Execution mode is separate from agent identity and workflow; Codex is operating in work mode."
     },
     "steps": [
-      "Re-read current Crucible handoff, injection monitor/prerequisite policy, current development tip, and AI conflicts.",
-      "Add a fail-closed runtime verifier for active and terminal injection-monitor lifecycle state.",
-      "Wire the verifier into the reusable Crucible workflow so injection monitor enforcement is executable rather than declaration-only.",
-      "Add explicit injection lifecycle state to the prerequisite manifest and document the mechanical activation/shutdown gate.",
-      "Commit paired AI-HANDOFF.json and DEVLOG.md bookkeeping atomically with the implementation, then inspect exact-tip hosted checks and continue repair if actionable failures remain."
+      "Define strict candidate, experiment, verification, contradiction, knowledge-version, rollback, and weekly-envelope contracts with permanent invariants.",
+      "Implement the fail-closed state machine and project-isolated stores without any weighted-confidence or stage-skipping path.",
+      "Implement project-bound authenticated encryption and offline OIDC identity validation for weekly learning transport without repository linking or assimilation.",
+      "Add adversarial tests for every promotion gate, invalid schema, replay/boundary violation, contradiction, rollback, and transport identity/key mismatch.",
+      "Update governed test categorization, documentation, AI-HANDOFF.json, and DEVLOG.md atomically; run full local verification, synchronize immediately before push, and verify exact-tip hosted CI until green."
     ],
     "status": "active",
-    "startedAt": "2026-08-28T22:16:00Z",
-    "lastUpdatedAt": "2026-08-28T22:24:19Z"
+    "startedAt": "2026-08-29T18:17:00Z",
+    "lastUpdatedAt": "2026-08-29T18:33:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed AI-CONFLICTS.json contains no open conflicts and development is the authorized mutation branch.",
-      "Confirmed the existing universal monitor policy required a real executable <=24-hour monitor, but the reusable Crucible workflow did not mechanically reject a declaration-only/stale manifest.",
-      "Added src/injectionMonitor.js to fail closed on active injection manifests lacking exact target/branch, <=24-hour lifecycle, monitor identity/proof, evidence retrieval, repair capability, autonomous repair/retest, deduplication, development-first repair, or status-only rejection.",
-      "Wired the reusable Crucible workflow to invoke the monitor verifier for every repository; repositories without an injection manifest are unaffected.",
-      "Extended the injection prerequisite manifest with explicit lifecycle state so active injections require monitoring and terminal injections require monitor/credential shutdown."
+      "Re-read the shared handoff, conflict ledger, and every current governing document.",
+      "Fetched origin/development and fast-forwarded the clean checkout from 81fead2 to exact tip 0f66d3b05989d10580ae22b3202d22ad3cf108d0 before writing.",
+      "Reviewed the referenced scientific-learning discussion and retained its vetted material as candidate input only, not verified knowledge.",
+      "Confirmed the repository contains no scientific-learning implementation or earlier draft blobs to reuse as-is and no open AI conflict."
+      ,"Implemented the strict scientific-learning state machine, project-isolated candidate and verified-knowledge stores, contradiction quarantine, rollback, project-bound weekly encryption, OIDC identity verification, permanent policy, and adversarial tests."
+      ,"Repaired pre-existing test categorization debt and a fail-closed injection collision regression discovered by the full suite."
+      ,"Corrected the transport tamper regression to flip an actual ciphertext bit deterministically on every supported Node version instead of replacing the first base64url character with a value that could already be identical."
     ],
     "verification": [
-      "Implementation is prepared as one development Git-data commit with the policy/manifest/runtime/workflow and paired handoff bookkeeping.",
-      "Fresh exact-tip hosted Self-Test, AI handoff, CodeQL/code-scanning, workflow lint, and governance verification remain required after the ref moves."
+      "Pre-write branch and remote-tip verification completed at 0f66d3b05989d10580ae22b3202d22ad3cf108d0.",
+      "Focused tests pass 49/49; full governed suite and the mandatory known-bug re-test pass 337/337; configuration, docs, workflow lint, clutter, privacy, security, conflict governance, general governance, design-brief, core-reference, authenticity, and diff checks pass.",
+      "Exact-tip dc1a96f handoff, conflict governance, and CodeQL passed. Self-Test exposed one cross-version test defect in ciphertext tampering; the engine behavior was correct and the deterministic bit-flip regression correction is prepared for a fresh exact-tip run."
     ],
     "remaining": [
-      "Fast-forward development to the prepared atomic commit after confirming the branch tip has not moved.",
-      "Inspect fresh hosted checks on the exact new development SHA; repair any actionable failure through development.",
-      "Do not promote release/main without fresh explicit owner authorization and the governed promotion path."
+      "Fetch/reconcile immediately before the atomic development commit and push, then inspect exact-tip Self-Test, CodeQL, handoff, and conflict-governance results until green. No main or release mutation is authorized."
     ]
   }
 }
