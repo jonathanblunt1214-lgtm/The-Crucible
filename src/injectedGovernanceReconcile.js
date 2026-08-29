@@ -129,6 +129,12 @@ function reconcileInjectedTree({
   const currentFiles = walk(targetRoot);
   const canonicalSet = new Set(canonical);
 
+  for (const currentFile of currentFiles) {
+    if (canonical.some((canonicalFile) => canonicalFile.startsWith(`${currentFile}/`))) {
+      throw new Error(`Cannot create canonical governance path because project file blocks directory: governingDocuments/${currentFile}`);
+    }
+  }
+
   for (const relativePath of currentFiles) {
     if (canonicalSet.has(relativePath)) continue;
     retireOutsideParity({

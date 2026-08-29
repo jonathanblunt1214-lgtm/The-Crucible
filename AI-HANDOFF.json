@@ -25,6 +25,8 @@
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
     "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
+    "governingDocuments/scientific-learning-policy.md": "Permanent autonomous scientific-learning invariants, promotion boundary, project isolation, contradiction handling, rollback, and weekly transport policy.",
+    "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, project-isolated evidence and versioned knowledge stores, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
     "src/security.js": "Security Gate. Detects secrets, unsafe behavior, and public API-key-shaped identifiers and forces review without persisting detected values.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
     ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport; it never chooses test files.",
@@ -34,7 +36,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-29T14:35:00Z"
+    "lastActionAt": "2026-08-29T18:28:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -91,48 +93,42 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "GPT-5.6 Sol",
-    "objective": "Add a generic, read-only integrity gate that verifies third branches which reference canonical main remain valid after development is promoted to main.",
-    "currentPrompt": "build something into Crucible that if there is a third branch like Crucible project has for the plugin that references main make sure after each push to main from develop that nothing that references main on that third branch breaks",
+    "agent": "Codex",
+    "objective": "Implement the autonomous scientific-learning engine as a fail-closed, project-isolated, experimentally verified subsystem on development.",
+    "currentPrompt": "Continuing from Session Changes Review: Implement the Crucible autonomous scientific-learning engine on The Crucible development branch, following all current governance and architecture from this conversation. Do not promote to main. Re-read governance/conflicts/handoff and confirm exact development tip before writes. Implement permanent scientific-learning invariants; explicit state machine; candidate-evidence store; strict allow-list schemas/provenance; causal isolation/control testing; independent verification; claim-boundary/generalization checks; contradiction detection/quarantine; versioned/rollbackable verified-knowledge store; fail-closed transitions; classifications Rejected Evidence / Insufficient Evidence / Crucible Issue; no weighted confidence bypass; no raw telemetry or successful one-off repair direct promotion; correlation never satisfies causation; retrieval is not proof; verification proves only tested property; experimental results inherit experiment boundaries; and no evidence-processing stage may satisfy a later proof stage merely by producing its input. Integrate project-specific authenticated/encrypted weekly learning transport with project-specific key binding and OIDC identity checks, without repo assimilation or project linking. Treat vetted research from this conversation as candidate evidence only with provenance/classifications, never pre-approved verified knowledge. Add/adjust tests for all mandatory gates and anti-garbage cases, address test categorization debt, update AI-HANDOFF.json and DEVLOG.md atomically, run exact-tip CI, fix actionable failures until green, and report exact commit SHA plus CI status. Do not commit the earlier draft blobs as-is; redesign to current requirements.",
     "executionMode": {
-      "mode": "regular/default",
-      "agent": "GPT-5.6 Sol",
-      "purpose": "Add one bounded reference-integrity runtime, regression suite, package command, and main-push workflow without modifying third branches or production directly.",
-      "selectionReason": "The feature is repository-scoped and can be implemented through the existing Crucible validation architecture without widening authority.",
-      "distinction": "Execution mode is separate from agent identity and workflow; GPT-5.6 Sol is operating in regular/default mode."
+      "mode": "work",
+      "agent": "Codex",
+      "purpose": "Carry a multi-file learning architecture through implementation, adversarial verification, atomic custody updates, push, and exact-tip hosted CI.",
+      "selectionReason": "The request is complex, security-sensitive, file-heavy, and requires persistent verification across storage, cryptography, schemas, state transitions, test governance, and hosted CI.",
+      "distinction": "Execution mode is separate from agent identity and workflow; Codex is operating in work mode."
     },
     "steps": [
-      "Audit current development/main structure, existing core-reference integrity logic, third-branch reference conventions, and conflicts.",
-      "Implement bounded discovery of third-branch references to main plus optional explicit compatibility contracts.",
-      "Expand referenced main AI-HANDOFF governingDocuments so canonical governance renames/deletions are detected transitively.",
-      "Run the read-only verifier automatically after every main push and expose a manual package audit command.",
-      "Add regressions for discovery, path safety, handoff expansion, text contracts, and JSON-pointer contracts; inspect exact-tip hosted checks after the development commit."
+      "Define strict candidate, experiment, verification, contradiction, knowledge-version, rollback, and weekly-envelope contracts with permanent invariants.",
+      "Implement the fail-closed state machine and project-isolated stores without any weighted-confidence or stage-skipping path.",
+      "Implement project-bound authenticated encryption and offline OIDC identity validation for weekly learning transport without repository linking or assimilation.",
+      "Add adversarial tests for every promotion gate, invalid schema, replay/boundary violation, contradiction, rollback, and transport identity/key mismatch.",
+      "Update governed test categorization, documentation, AI-HANDOFF.json, and DEVLOG.md atomically; run full local verification, synchronize immediately before push, and verify exact-tip hosted CI until green."
     ],
     "status": "active",
-    "startedAt": "2026-08-29T14:16:00Z",
-    "lastUpdatedAt": "2026-08-29T14:35:00Z"
+    "startedAt": "2026-08-29T18:17:00Z",
+    "lastUpdatedAt": "2026-08-29T18:28:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Confirmed development and main share the same project structure and AI-CONFLICTS.json has no open conflicts.",
-      "Confirmed the Plug-in branch uses main:AI-HANDOFF.json as a canonical reference and deliberately avoids duplicating main governance.",
-      "Implemented src/referenceBranchIntegrity.js to scan bounded text-like files on third branches for main:path, GitHub blob/main, and raw/main references.",
-      "Added optional .crucible-main-references.json contracts with safe-path enforcement, required text tokens, and JSON pointer requirements.",
-      "Added transitive expansion of main AI-HANDOFF governingDocuments so shared governance path breakage is detected.",
-      "Added a read-only main-push workflow, manual audit command, and focused regressions in the existing core-reference test surface.",
-      "Restored README.md exactly after two accidental connector writes during branch-ref publication; the final development tree contains the canonical README content.",
-      "Diagnosed hosted Self-Test failures to generated documentation drift from the already-existing injection monitor step and updated docSync to classify that internal prerequisite as intentionally omitted from the public numbered step list."
+      "Re-read the shared handoff, conflict ledger, and every current governing document.",
+      "Fetched origin/development and fast-forwarded the clean checkout from 81fead2 to exact tip 0f66d3b05989d10580ae22b3202d22ad3cf108d0 before writing.",
+      "Reviewed the referenced scientific-learning discussion and retained its vetted material as candidate input only, not verified knowledge.",
+      "Confirmed the repository contains no scientific-learning implementation or earlier draft blobs to reuse as-is and no open AI conflict."
+      ,"Implemented the strict scientific-learning state machine, project-isolated candidate and verified-knowledge stores, contradiction quarantine, rollback, project-bound weekly encryption, OIDC identity verification, permanent policy, and adversarial tests."
+      ,"Repaired pre-existing test categorization debt and a fail-closed injection collision regression discovered by the full suite."
     ],
     "verification": [
-      "AI handoff policy passed on the first integrity feature tip.",
-      "Self-Test reached docs:check and failed only on the pre-existing injection-monitor documentation drift; the corrective docSync change is prepared for a new exact-tip run.",
-      "README.md blob at development tip was rechecked and matches the canonical pre-incident blob.",
-      "The hosted reference workflow is read-only and fetches branch tips solely for validation; it does not mutate, merge, rebase, or repair third branches."
+      "Pre-write branch and remote-tip verification completed at 0f66d3b05989d10580ae22b3202d22ad3cf108d0.",
+      "Focused tests pass 49/49; full governed suite and the mandatory known-bug re-test pass 337/337; configuration, docs, workflow lint, clutter, privacy, security, conflict governance, general governance, design-brief, core-reference, authenticity, and diff checks pass."
     ],
     "remaining": [
-      "Publish the docSync correction on development with DEVLOG mode normalized back to a standard non-executable Markdown file.",
-      "Inspect fresh hosted checks on the exact corrected development SHA and repair any actionable failure.",
-      "The new automatic main-push protection becomes active only after a separately authorized promotion places this workflow and runtime on main."
+      "Fetch/reconcile immediately before the atomic development commit and push, then inspect exact-tip Self-Test, CodeQL, handoff, and conflict-governance results until green. No main or release mutation is authorized."
     ]
   }
 }

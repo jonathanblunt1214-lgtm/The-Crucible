@@ -13,6 +13,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/hostedMultiRepositoryIntegration.test.js',
     'test/repositoryOperation.test.js',
     'test/suiteSelection.test.js',
+    'test/scientificLearning.test.js',
   ],
   security: [
     'test/apiGuard.test.js',
@@ -45,6 +46,8 @@ const TEST_MAIN_CATEGORIES = {
     'test/globalPolicy.test.js',
     'test/globalRepositoryGovernance.test.js',
     'test/handoffPolicy.test.js',
+    'test/injectedBranchRelationships.test.js',
+    'test/injectedGovernanceAdaptive.test.js',
     'test/testCadence.test.js',
     'test/workflow.test.js',
     'test/workflowLint.test.js',
