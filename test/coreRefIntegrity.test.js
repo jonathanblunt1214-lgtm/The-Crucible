@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 const { auditCoreRefIntegrity, formatReport, publishReport } = require('../src/coreRefIntegrity');
-const { normalizeBranchLinks, rewriteRecognizedReferences, rewriteReferenceManifest, auditReferenceBranch } = require('../src/referenceBranchIntegrity');
+const { normalizeBranchLinks, rewriteRecognizedReferences, rewriteReferenceManifest, auditReferenceBranch, governingPathsFromHandoff } = require('../src/referenceBranchIntegrity');
 const { ensureInjectedGovernance, walkFiles } = require('../src/injectedGovernance');
 
 const SHA = 'a'.repeat(40);
@@ -128,6 +128,17 @@ test('declared canonical-reference paths are audited even when branch text has n
   });
   assert.equal(result.findings.length, 0);
   assert.equal(result.referenceCount, 2);
+});
+
+test('handoff expansion checks repository-relative main documents but excludes explicitly branch-qualified governance', () => {
+  const paths = governingPathsFromHandoff(JSON.stringify({
+    governingDocuments: {
+      'AGENTS.md': 'Canonical main governance.',
+      'governingDocuments/policy.md': 'Canonical main policy.',
+      'Archive:Devlog-Pruned': 'Archive-branch-only ledger.'
+    }
+  }));
+  assert.deepEqual(paths, ['AGENTS.md', 'governingDocuments/policy.md']);
 });
 
 test('automatic repair rewrites only recognized main reference syntax after a canonical rename', () => {

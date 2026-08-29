@@ -104,7 +104,9 @@ function governingPathsFromHandoff(content) {
   try { parsed = JSON.parse(content); } catch { return []; }
   const governing = parsed?.governingDocuments;
   if (!governing || typeof governing !== 'object' || Array.isArray(governing)) return [];
-  return Object.keys(governing).filter(isSafeRepositoryPath).sort();
+  return Object.keys(governing)
+    .filter((documentPath) => !/^[A-Za-z0-9._-]+:/.test(documentPath) && isSafeRepositoryPath(documentPath))
+    .sort();
 }
 
 function validateContract(reference, content) {
