@@ -1,11 +1,16 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const crypto = require('node:crypto');
+const fs = require('node:fs');
+const os = require('node:os');
+const path = require('node:path');
 const {
   REQUIRED_GATES, makeCandidate, newRecord, transition, CandidateEvidenceStore,
-  VerifiedKnowledgeStore, detectContradiction, verifyOidcIdentity,
+  VerifiedKnowledgeStore, DurableScientificLearningStore, AutonomousScientificLearner,
+  detectContradiction, verifyOidcIdentity,
   encryptWeeklyEnvelope, decryptWeeklyEnvelope, sha,
 } = require('../src/scientificLearning');
+const { run:runLearningCli } = require('../src/scientificLearningCli');
 
 const at = '2026-08-29T18:20:00.000Z';
 function candidate(overrides = {}) {
@@ -14,18 +19,22 @@ function candidate(overrides = {}) {
 function proof(overrides = {}) {
   return { schemaVersion:1, candidateId:'c-1', projectId:'project-a', hypothesis:'repair X is falsifiably responsible for test Y', testedProperty:'repair X causes test Y to pass', experimentBoundary:'node-22/windows/test-y', controls:['no-repair control fails', 'irrelevant repair control fails'], causalIsolation:{ method:'single-variable intervention and reversal', result:'only repair X changes Y', correlationOnly:false }, negativeTests:['X does not change Z'], regressionTests:['existing suite remains green'], scopeProof:'diff and artifact proof limited to test-y', generalizationResult:'not generalized beyond experiment boundary', contradictionResult:'none', independentVerification:{ verifierId:'independent-runner-2', independent:true, testedProperty:'repair X causes test Y to pass', experimentBoundary:'node-22/windows/test-y', result:'passed', verifiedAt:at }, completedAt:at, ...overrides };
 }
+function experimentalProof(overrides = {}) { const value = proof(overrides); delete value.independentVerification; return value; }
+function verification(overrides = {}) { return { ...proof().independentVerification, ...overrides }; }
 function gates(value = true) { return Object.fromEntries(REQUIRED_GATES.map((gate) => [gate, value])); }
 function verifiedRecord(input = candidate()) {
   const recordProof = proof({
     candidateId:input.id,
     testedProperty:input.claim,
-    independentVerification:{ ...proof().independentVerification, testedProperty:input.claim },
+    experimentBoundary:input.claimBoundary,
+    independentVerification:{ ...proof().independentVerification, testedProperty:input.claim, experimentBoundary:input.claimBoundary },
   });
   let record = newRecord(input);
-  record = transition(record, 'hypothesis', { at, reason:'falsifiable hypothesis declared', gates:gates(false) });
-  record = transition(record, 'experimented', { at, reason:'controlled experiment completed', proof:recordProof, gates:{ ...gates(false), falsifiableHypothesis:true, controlledReproduction:true, controlTesting:true, negativeTesting:true, regressionTesting:true, deterministicScopeProof:true, claimBoundaryCheck:true, generalizationCheck:true, contradictionAnalysis:true } });
+  record = transition(record, 'hypothesis', { at, reason:'falsifiable hypothesis declared', hypothesis:recordProof.hypothesis, gates:gates(false) });
+  const experiment = { ...recordProof }; delete experiment.independentVerification;
+  record = transition(record, 'experimented', { at, reason:'controlled experiment completed', experimentalProof:experiment, gates:{ ...gates(false), falsifiableHypothesis:true, controlledReproduction:true, controlTesting:true, negativeTesting:true, regressionTesting:true, deterministicScopeProof:true, claimBoundaryCheck:true, generalizationCheck:true, contradictionAnalysis:true } });
   record = transition(record, 'causally-proven', { at, reason:'causal isolation passed', gates:{ ...record.gates, causalIsolation:true } });
-  record = transition(record, 'independently-verified', { at, reason:'independent verifier passed', gates:gates(true) });
+  record = transition(record, 'independently-verified', { at, reason:'independent verifier passed', independentVerification:recordProof.independentVerification, gates:gates(true) });
   return transition(record, 'verified', { at, reason:'all mandatory gates passed' });
 }
 
@@ -40,7 +49,7 @@ test('candidate ingestion is strict, project-isolated, and never pre-approved', 
 test('state machine fails closed against skipping, missing gates, and proof-stage self-satisfaction', () => {
   const record = newRecord(candidate());
   assert.throws(() => transition(record, 'verified', { at, reason:'weighted confidence says yes', gates:gates(true), proof:proof() }), /Forbidden/);
-  const hypothesis = transition(record, 'hypothesis', { at, reason:'candidate produced hypothesis input' });
+  const hypothesis = transition(record, 'hypothesis', { at, reason:'candidate produced hypothesis input', hypothesis:proof().hypothesis });
   assert.equal(hypothesis.gates.falsifiableHypothesis, false, 'producing a later stage input cannot satisfy that proof stage');
   assert.throws(() => transition(hypothesis, 'causally-proven', { at, reason:'skip experiment' }), /Forbidden/);
 });
@@ -48,18 +57,21 @@ test('state machine fails closed against skipping, missing gates, and proof-stag
 test('raw telemetry, correlations, retrieval, repetition, guesses, and one-off repairs never promote', () => {
   for (const kind of ['raw-telemetry','correlation','retrieval','repeated-observation','model-guess','incomplete-observation','untested-hypothesis','one-off-repair']) {
     let record = newRecord(candidate({ kind }));
-    record = transition(record, 'hypothesis', { at, reason:'investigate only' });
-    record = transition(record, 'experimented', { at, reason:'input collected', proof:proof(), gates:gates(true) });
+    record = transition(record, 'hypothesis', { at, reason:'investigate only', hypothesis:proof().hypothesis });
+    record = transition(record, 'experimented', { at, reason:'input collected', experimentalProof:experimentalProof(), gates:gates(true) });
     record = transition(record, 'causally-proven', { at, reason:'synthetic path' });
-    record = transition(record, 'independently-verified', { at, reason:'synthetic verification' });
+    record = transition(record, 'independently-verified', { at, reason:'synthetic verification', independentVerification:verification() });
     assert.throws(() => transition(record, 'verified', { at, reason:'attempt shortcut' }), /never be directly promoted/);
   }
-  assert.throws(() => proof({ causalIsolation:{ method:'frequency', result:'10000 correlated projects', correlationOnly:true } }) && transition(transition(transition(newRecord(candidate()), 'hypothesis', {at,reason:'x'}), 'experimented', {at,reason:'x',proof:proof({ causalIsolation:{ method:'frequency', result:'many', correlationOnly:true } })}), 'causally-proven', {at,reason:'x'}), /Correlation never/);
+  assert.throws(() => transition(transition(newRecord(candidate()), 'hypothesis', {at,reason:'x',hypothesis:proof().hypothesis}), 'experimented', {at,reason:'x',experimentalProof:experimentalProof({ causalIsolation:{ method:'frequency', result:'many', correlationOnly:true } })}), /Correlation never/);
 });
 
 test('verification proves only its tested property and inherits experiment boundaries', () => {
-  assert.throws(() => transition(transition(newRecord(candidate()), 'hypothesis', {at,reason:'x'}), 'experimented', {at,reason:'x',proof:proof({ independentVerification:{ ...proof().independentVerification, testedProperty:'broader claim' } })}), /only the tested property/);
-  assert.throws(() => transition(transition(newRecord(candidate()), 'hypothesis', {at,reason:'x'}), 'experimented', {at,reason:'x',proof:proof({ independentVerification:{ ...proof().independentVerification, experimentBoundary:'all-platforms' } })}), /inherit experiment boundaries/);
+  let record = transition(newRecord(candidate()), 'hypothesis', {at,reason:'x',hypothesis:proof().hypothesis});
+  record = transition(record, 'experimented', {at,reason:'x',experimentalProof:experimentalProof()});
+  record = transition(record, 'causally-proven', {at,reason:'x'});
+  assert.throws(() => transition(record, 'independently-verified', {at,reason:'x',independentVerification:verification({ testedProperty:'broader claim' })}), /only the tested property/);
+  assert.throws(() => transition(record, 'independently-verified', {at,reason:'x',independentVerification:verification({ experimentBoundary:'all-platforms' })}), /inherit experiment boundaries/);
 });
 
 test('verified knowledge is versioned, rollbackable, and contradictions quarantine instead of overwrite', () => {
@@ -70,6 +82,64 @@ test('verified knowledge is versioned, rollbackable, and contradictions quaranti
   const quarantined = transition(conflictRecord, 'quarantined', { at, reason:'contradiction detected' }); assert.equal(quarantined.state, 'quarantined');
   const second = store.commit(verifiedRecord(candidate({ id:'c-3' })), at); assert.equal(second.previousVersion, 1);
   assert.equal(store.rollback(1, at, 'regression discovered').status, 'active');
+});
+
+test('unrelated verified claims keep independent active version lineages', () => {
+  const store = new VerifiedKnowledgeStore('project-a');
+  const first = store.commit(verifiedRecord(), at);
+  const unrelatedCandidate = candidate({ id:'c-4', claim:'repair Q causes test R to pass', claimBoundary:'node-22/windows/test-r', generalizationBoundary:'no wider than node-22/windows/test-r' });
+  const second = store.commit(verifiedRecord(unrelatedCandidate), at);
+  assert.equal(first.previousVersion, null); assert.equal(second.previousVersion, null);
+  assert.deepEqual(store.versions.filter((item) => item.status === 'active').map((item) => item.version), [1, 2]);
+  store.rollback(1, at, 'reselect first lineage');
+  assert.equal(store.versions.find((item) => item.version === 2).status, 'active');
+});
+
+test('durable autonomous learning survives restart and retrieves only active verified knowledge', async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-learning-')); t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const store = new DurableScientificLearningStore({ root, projectId:'project-a' });
+  store.ingest(candidate());
+  const experimentExecutor = { id:'experiment-runner-1', run:async ({ candidate:input, hypothesis }) => experimentalProof({ candidateId:input.id, projectId:input.projectId, hypothesis, testedProperty:input.claim, experimentBoundary:input.claimBoundary }) };
+  const independentVerifier = { id:'independent-runner-2', run:async ({ candidate:input, experimentalProof:experiment }) => verification({ testedProperty:input.claim, experimentBoundary:experiment.experimentBoundary }) };
+  const learner = new AutonomousScientificLearner({ store, experimentExecutor, independentVerifier, now:() => at });
+  assert.deepEqual(store.retrieve(), [], 'candidate evidence is never retrievable as knowledge');
+  assert.equal((await learner.process('c-1', proof().hypothesis)).state, 'verified');
+  const reopened = new DurableScientificLearningStore({ root, projectId:'project-a' });
+  assert.equal(reopened.readiness().ready, true); assert.equal(reopened.get('c-1').state, 'verified');
+  assert.equal(reopened.retrieve({ boundary:'node-22/windows/test-y' }).length, 1);
+  assert.equal(reopened.retrieve({ boundary:'all-platforms' }).length, 0);
+});
+
+test('durable store fails closed on corruption, lock contention, and cross-project evidence', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-learning-')); t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const store = new DurableScientificLearningStore({ root, projectId:'project-a' });
+  assert.throws(() => store.ingest(candidate({ projectId:'project-b' })), /Cross-project/);
+  fs.writeFileSync(store.lockFile, 'occupied', { flag:'wx' });
+  assert.throws(() => store.ingest(candidate()), /locked/); fs.rmSync(store.lockFile);
+  const envelope = JSON.parse(fs.readFileSync(store.file, 'utf8')); envelope.payload.revision = 99;
+  fs.writeFileSync(store.file, JSON.stringify(envelope));
+  assert.equal(store.readiness().ready, false); assert.throws(() => store.read(), /integrity check failed/);
+});
+
+test('autonomous learning requires distinct executors and resumes only the persisted hypothesis', async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-learning-')); t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const store = new DurableScientificLearningStore({ root, projectId:'project-a' }); store.ingest(candidate());
+  const executor = { id:'same-runner', run:async () => experimentalProof() };
+  assert.throws(() => new AutonomousScientificLearner({ store, experimentExecutor:executor, independentVerifier:executor }), /distinct executor/);
+  let record = transition(store.get('c-1'), 'hypothesis', { at, reason:'persist before restart', hypothesis:proof().hypothesis });
+  store.update(record, at, 'hypothesis');
+  const learner = new AutonomousScientificLearner({ store, experimentExecutor:{ id:'experiment-runner-1', run:async () => experimentalProof() }, independentVerifier:{ id:'independent-runner-2', run:async () => verification() }, now:() => at });
+  await assert.rejects(() => learner.process('c-1', 'a different hypothesis'), /persisted hypothesis/);
+});
+
+test('operator readiness and ingestion require explicit durable project configuration', (t) => {
+  assert.throws(() => runLearningCli(['readiness'], {}), /PROJECT_ID is required/);
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-learning-')); t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const file = path.join(root, 'candidate.json'); fs.writeFileSync(file, JSON.stringify(candidate()));
+  const environment = { CRUCIBLE_LEARNING_PROJECT_ID:'project-a', CRUCIBLE_LEARNING_ROOT:path.join(root, 'store') };
+  assert.equal(runLearningCli(['readiness'], environment).readyForTrainingEvidence, true);
+  assert.deepEqual(runLearningCli(['ingest', file], environment), { accepted:true, candidateId:'c-1', state:'candidate', classification:'Insufficient Evidence' });
+  assert.deepEqual(runLearningCli(['retrieve'], environment), { verifiedKnowledge:[] });
 });
 
 test('weekly learning transport is encrypted, authenticated, and project bound', () => {
