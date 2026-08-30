@@ -4,6 +4,8 @@ The Crucible is a repository-independent GitHub Actions quality gate. A project 
 
 Its autonomous scientific-learning subsystem admits only project-scoped, experimentally proven knowledge. Candidate evidence cannot change behavior until every causal, control, independent-verification, negative/regression, scope, boundary, generalization, and contradiction gate passes. Weekly learning exchange is encrypted and authenticated to one project/repository/development identity; it does not assimilate or link repositories. See `governingDocuments/scientific-learning-policy.md`.
 
+Durable learning custody is opt-in and fail-closed. Set `CRUCIBLE_LEARNING_PROJECT_ID` to the stable identifier for the project being learned and `CRUCIBLE_LEARNING_ROOT` to a protected persistent directory outside disposable build output. Run `npm run learning:readiness` before supplying evidence, then `npm run learning:ingest -- path/to/candidate.json`. Ingestion validates the strict candidate/provenance allow-list and records `Insufficient Evidence`; it never promotes knowledge. Autonomous processing is exposed by `AutonomousScientificLearner` and requires separately identified experiment and independent-verification executors. `npm run learning:status -- candidate-id` reports custody state, and `npm run learning:retrieve -- optional-boundary` returns active verified knowledge only.
+
 GitHub repository identifiers are validated as a single `owner/repository` pair before API use. Valid GitHub repository names are supported even when the repository segment ends in a hyphen, while schemes, query strings, whitespace, traversal, and additional path segments remain blocked.
 
 ## Exactly what it does

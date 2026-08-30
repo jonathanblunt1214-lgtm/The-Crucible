@@ -26,7 +26,8 @@
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
     "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
     "governingDocuments/scientific-learning-policy.md": "Permanent autonomous scientific-learning invariants, promotion boundary, project isolation, contradiction handling, rollback, and weekly transport policy.",
-    "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, project-isolated evidence and versioned knowledge stores, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
+    "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, atomic durable project-isolated evidence and independent-lineage versioned knowledge, restart-safe autonomous orchestration, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
+    "src/scientificLearningCli.js": "Fail-closed operator readiness, candidate ingestion, custody-state inspection, and verified-only retrieval for explicitly configured project-scoped durable learning stores.",
     "src/security.js": "Security Gate. Detects secrets, unsafe behavior, and public API-key-shaped identifiers and forces review without persisting detected values.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
     ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport; it never chooses test files.",
@@ -36,7 +37,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-29T19:11:00Z"
+    "lastActionAt": "2026-08-30T11:05:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -94,45 +95,41 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Correct the false third-branch integrity failure caused by an Archive-only governing artifact being represented as an unqualified main path.",
-    "currentPrompt": "Fix the remaining red third-branch integrity check for the Plug-in branch reference to the nonexistent main:Devlog-Pruned (Archive branch).",
+    "objective": "Make Crucible scientific learning durable, restart-safe, and autonomously executable while preserving every fail-closed promotion invariant.",
+    "currentPrompt": "fix this until its ready Durable autonomous learning from training evidence:",
     "executionMode": {
-      "mode": "regular/default",
+      "mode": "work",
       "agent": "Codex",
-      "purpose": "Apply and verify a focused governance-reference correction through the development-first protected promotion path.",
-      "selectionReason": "The defect is narrow and has a deterministic metadata correction plus one regression test.",
-      "distinction": "Execution mode is separate from agent identity and workflow; Codex is operating in regular/default mode."
+      "purpose": "Implement and verify a multi-file durable learning runtime, persistence recovery, autonomous experimental workflow, and operational readiness boundary.",
+      "selectionReason": "The request is a complex repository implementation with durable storage, execution safety, recovery semantics, governance updates, and complete hosted verification.",
+      "distinction": "Execution mode is separate from agent identity and workflow; Codex is operating in work mode."
     },
     "steps": [
-      "Represent the Archive-only Devlog-Pruned ledger with an explicit branch-qualified handoff key.",
-      "Add regression coverage proving branch-qualified governance is excluded while repository-relative main governance remains checked.",
-      "Run focused and full governance verification, commit atomically on development, promote through release, and verify the repaired exact-main integrity run."
+      "Replace memory-only learning stores with atomic, project-isolated, integrity-checked durable stores and restart recovery.",
+      "Add a fail-closed autonomous learning coordinator whose distinct experiment and independent-verification executors produce every mandatory proof artifact without stage self-satisfaction.",
+      "Add safe retrieval, contradiction quarantine, rollback, crash recovery, concurrency, corruption, and anti-garbage tests plus a concrete readiness check.",
+      "Run focused and complete governed verification, update handoff and DEVLOG atomically, push only development, and monitor exact-tip hosted checks until green."
     ],
     "status": "active",
-    "startedAt": "2026-08-29T19:02:00Z",
-    "lastUpdatedAt": "2026-08-29T19:11:00Z"
+    "startedAt": "2026-08-30T10:50:00Z",
+    "lastUpdatedAt": "2026-08-30T11:05:00Z"
   },
   "handoffNotes": {
     "completed": [
-      "Re-read the shared handoff, conflict ledger, and every current governing document.",
-      "Fetched origin/development and fast-forwarded the clean checkout from 81fead2 to exact tip 0f66d3b05989d10580ae22b3202d22ad3cf108d0 before writing.",
-      "Reviewed the referenced scientific-learning discussion and retained its vetted material as candidate input only, not verified knowledge.",
-      "Confirmed the repository contains no scientific-learning implementation or earlier draft blobs to reuse as-is and no open AI conflict."
-      ,"Implemented the strict scientific-learning state machine, project-isolated candidate and verified-knowledge stores, contradiction quarantine, rollback, project-bound weekly encryption, OIDC identity verification, permanent policy, and adversarial tests."
-      ,"Repaired pre-existing test categorization debt and a fail-closed injection collision regression discovered by the full suite."
-      ,"Corrected the transport tamper regression to flip an actual ciphertext bit deterministically on every supported Node version instead of replacing the first base64url character with a value that could already be identical."
-      ,"Promoted development tip 8fd433ec835ea4bf2111a4b5d76b0ef9a57d21a4 through release and protected PR #16 to main merge commit 32cf371ff344f8f45f61ec885faa8a4fc4a30d06; its tree is identical to development and exact-main Self-Test, CodeQL, and handoff checks passed."
-      ,"Diagnosed the remaining third-branch failure as a false main-path expansion of the Archive-only Devlog-Pruned ledger and prepared an explicit branch-qualified handoff correction with regression coverage."
+      "Re-read the shared handoff, conflict ledger, current governing documents, scientific-learning policy, implementation, and adversarial tests.",
+      "Fetched origin/development and created an isolated detached worktree at exact tip 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366 without touching Plug-in or main.",
+      "Confirmed the prior scientific-learning stores were memory-only and no autonomous experiment/verification coordinator was connected.",
+      "Implemented atomic integrity-checked project-isolated custody, persisted hypotheses and separated proof stages, restart-safe autonomous orchestration, contradiction quarantine, independent knowledge lineages, rollback, active-only retrieval, and fail-closed operator readiness and ingestion.",
+      "Added adversarial coverage for corruption, locking, cross-project input, restart recovery, executor independence, hypothesis substitution, unverified retrieval, and unrelated version lineages.",
+      "Preserved the required full pre-prune DEVLOG snapshot on Archive at b618e12 under the standing narrow governance exception."
     ],
     "verification": [
-      "Pre-write branch and remote-tip verification completed at 0f66d3b05989d10580ae22b3202d22ad3cf108d0.",
-      "Focused tests pass 49/49; full governed suite and the mandatory known-bug re-test pass 337/337; configuration, docs, workflow lint, clutter, privacy, security, conflict governance, general governance, design-brief, core-reference, authenticity, and diff checks pass.",
-      "Exact development tip 8fd433ec and exact main merge commit 32cf371 passed Self-Test and CodeQL; PR #16 checks passed before protected merge.",
-      "The failed third-branch run 33269032123 reported only Plug-in via AI-HANDOFF.json governingDocuments -> main:Devlog-Pruned (Archive branch); the ledger is intentionally on Archive, not main."
-      ,"Focused reference-integrity and handoff tests pass 40/40; full governed suite passes 338/338; validation, docs, workflow lint, clutter, privacy, security, conflict governance, general governance, design-brief, core-reference, authenticity, and diff checks pass."
+      "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",
+      "Existing starting-tip Self-Test, CodeQL, AI handoff, and AI conflict governance checks were green; the unrelated promotion workflow failure did not validate or invalidate development learning readiness.",
+      "Focused scientific-learning verification passes 12/12 and the pre-final complete governed suite passed 342/342 before the final independent-lineage regression was added."
     ],
     "remaining": [
-      "Run focused and full verification, fetch/reconcile immediately before the atomic development commit and push, promote the authorized repair through release, and verify exact-main third-branch integrity plus the normal hosted checks until green."
+      "Run final complete local audits, fetch origin/development immediately before commit and push, then monitor exact-tip hosted checks until green; do not promote to release or main."
     ]
   }
 }
