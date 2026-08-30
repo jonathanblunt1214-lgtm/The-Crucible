@@ -10,8 +10,7 @@ function cleanText(value) {
   return String(value || '').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ').replace(/<form\b[^>]*>[\s\S]*?<\/form>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&(?:nbsp|#160);/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/\s+/g, ' ').trim();
 }
 
-function boundedAssertions(text, maximum = 3) {
-  if (!Number.isSafeInteger(maximum) || maximum < 1 || maximum > 10) throw new Error('maximum assertions must be between 1 and 10.');
+function boundedAssertions(text) {
   const candidates = cleanText(text).split(/(?<=[.!?])\s+/).map((item) => item.trim()).filter((item) => item.length >= 40 && item.length <= 360);
   const seen = new Set(); const results = [];
   for (const sentence of candidates) {
@@ -19,7 +18,6 @@ function boundedAssertions(text, maximum = 3) {
     if (!/\b(?:is|are|uses?|requires?|returns?|creates?|provides?|supports?|allows?|can|must|should)\b/i.test(sentence)) continue;
     const fingerprint = sha256(sentence.toLowerCase()); if (seen.has(fingerprint)) continue;
     seen.add(fingerprint); results.push(sentence);
-    if (results.length >= maximum) break;
   }
   return results;
 }
@@ -48,10 +46,11 @@ class AtomicClaimExtractionQueue {
 }
 
 class ClaimExtractionWorker {
-  constructor({ queueFile, projectId, learningRoot, extractText = defaultExtractText, now = () => new Date().toISOString(), maximumSources = 20, claimsPerSource = 3, pdfPagesPerBatch = 10 }) {
+  constructor({ queueFile, projectId, learningRoot, extractText = defaultExtractText, now = () => new Date().toISOString(), maximumSources = 25, pdfPagesPerBatch = 20 }) {
     if (!projectId || !learningRoot) throw new Error('Repository-bound projectId and learningRoot are required.');
     if (!Number.isSafeInteger(maximumSources) || maximumSources < 1 || maximumSources > 100) throw new Error('maximumSources must be between 1 and 100.');
-    this.queue = new AtomicClaimExtractionQueue(queueFile, projectId); this.store = new DurableScientificLearningStore({ projectId, root:path.resolve(learningRoot) }); this.projectId = projectId; this.extractText = extractText; this.now = now; this.maximumSources = maximumSources; this.claimsPerSource = claimsPerSource; this.pdfPagesPerBatch = pdfPagesPerBatch;
+    if (!Number.isSafeInteger(pdfPagesPerBatch) || pdfPagesPerBatch < 1 || pdfPagesPerBatch > 100) throw new Error('pdfPagesPerBatch must be between 1 and 100.');
+    this.queue = new AtomicClaimExtractionQueue(queueFile, projectId); this.store = new DurableScientificLearningStore({ projectId, root:path.resolve(learningRoot) }); this.projectId = projectId; this.extractText = extractText; this.now = now; this.maximumSources = maximumSources; this.pdfPagesPerBatch = pdfPagesPerBatch;
   }
 
   candidate(source, assertion, boundary, createdAt) {
@@ -72,7 +71,7 @@ class ClaimExtractionWorker {
         try {
           const pageStart = source.mediaType === 'application/pdf' ? Number(source.claimExtraction.nextPage || 1) : 1;
           const pageEnd = source.mediaType === 'application/pdf' ? Math.min(Number(source.pages || pageStart + this.pdfPagesPerBatch - 1), pageStart + this.pdfPagesPerBatch - 1) : 1;
-          const text = this.extractText(source, pageStart, pageEnd); const assertions = boundedAssertions(text, this.claimsPerSource); const ids = [];
+          const text = this.extractText(source, pageStart, pageEnd); const assertions = boundedAssertions(text); const ids = [];
           for (const assertion of assertions) {
             const boundary = source.mediaType === 'application/pdf' ? `${source.title || source.originalName || source.id}, SHA-256 ${source.contentSha256}, pages ${pageStart}-${pageEnd} only` : `${source.finalUrl || source.url || source.id}, SHA-256 ${source.contentSha256}, retrieved content only`;
             const candidate = this.candidate(source, assertion, boundary, startedAt); const existing = this.store.get(candidate.id); if (!existing) this.store.ingest(candidate); ids.push(candidate.id);

@@ -143,6 +143,7 @@
       ,"Ran live extraction batches that reduced forced web sources from 393 to 288 and advanced all seven PDFs to page 11 without promotion."
       ,"Created project-level hourly claim evaluation and daily rolling release review schedules and deleted the replaced chat-only hourly evaluator."
       ,"Integrated bounded extraction into the automated Google research CLI so scheduled web discovery and ready-source extraction execute and report together."
+      ,"Set extraction to 25 sources and 20 PDF pages per run and removed the arbitrary candidate-count cutoff within each bounded source window."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",
@@ -151,6 +152,7 @@
       "Final retrieval and scientific-learning focused verification passes 16/16; final retrieval-only verification passes 4/4; monthly-refresh proof passes 7/7; automated Google research passes 8/8; complete governed proof passes 362/362; live readiness and configuration, docs, workflow, clutter, privacy, security, conflict-governance, governance, design-brief, core-ref, authenticity, and whitespace audits pass."
       ,"Claim-extraction and automated-research integration proof passes 13/13; cadence categorization proof passes 42/42; pre-integration complete governed proof passes 366/366."
       ,"Final post-integration complete governed proof passes 367/367 and all validation, docs, workflow, clutter, privacy, security, conflict, governance, design-brief, core-reference, authenticity, and whitespace checks pass."
+      ,"Updated extraction-bound proof passes 14/14 focused and 368/368 complete governed tests; validation, docs, security, privacy, clutter, and whitespace checks pass."
     ],
     "remaining": [
       "Complete local governed verification, fetch origin/development immediately before commit, push only development, and monitor exact-tip hosted checks until green. Continue the extraction backlog through the project schedule; do not promote learning scope to release or main."
