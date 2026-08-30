@@ -28,6 +28,7 @@
     "governingDocuments/scientific-learning-policy.md": "Permanent autonomous scientific-learning invariants, promotion boundary, project isolation, contradiction handling, rollback, and weekly transport policy.",
     "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, atomic durable project-isolated evidence and independent-lineage versioned knowledge, restart-safe autonomous orchestration, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
     "src/scientificLearningCli.js": "Fail-closed operator readiness, candidate ingestion, custody-state inspection, and verified-only retrieval for explicitly configured project-scoped durable learning stores.",
+    "src/safeInformationRetrieval.js": "Owner-approved credential-free HTTPS evidence retrieval, passive trusted-domain Google result parsing, auditable kill switch and denylist, network/content limits, provenance hashing, and prompt-injection/executable quarantine.",
     "src/security.js": "Security Gate. Detects secrets, unsafe behavior, and public API-key-shaped identifiers and forces review without persisting detected values.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
     ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport; it never chooses test files.",
@@ -37,7 +38,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-30T11:05:00Z"
+    "lastActionAt": "2026-08-30T17:12:10Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -95,24 +96,24 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Make Crucible scientific learning durable, restart-safe, and autonomously executable while preserving every fail-closed promotion invariant.",
-    "currentPrompt": "fix this until its ready Durable autonomous learning from training evidence:",
+    "objective": "Make Crucible internet-assisted training retrieval strictly owner-approved, untrusted, non-interactive, bounded, quarantined, auditable, and fail-closed.",
+    "currentPrompt": "lets deffiently do this Allow retrieval only from owner-supplied or explicitly approved URLs.\n\n1. Treat every webpage and document as untrusted evidence, never as executable instructions.\n2. Block uploads, logins, form submissions, scripts, repository writes, and arbitrary API calls.\n3. Enforce file-type, download-size, redirect, timeout, and request-rate limits.\n4. Never expose credentials, transport keys, private repository data, or local files to websites.\n5. Store the final URL, retrieval time, author, license status, and content hash.\n6. Quarantine prompt injection, conflicting claims, executable files, and suspicious content.\n7. Require independent sources and controlled testing before anything becomes verified knowledge.\n8. Keep an auditable kill switch and per-domain denylist.\n\nas for browser access what would it take to make google safe? maybe an info parser?",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
-      "purpose": "Implement and verify a multi-file durable learning runtime, persistence recovery, autonomous experimental workflow, and operational readiness boundary.",
-      "selectionReason": "The request is a complex repository implementation with durable storage, execution safety, recovery semantics, governance updates, and complete hosted verification.",
+      "purpose": "Implement and verify a bounded network evidence retriever and safe search-result parser without granting an interactive browser or execution authority.",
+      "selectionReason": "The request is a security-sensitive multi-file repository change involving network boundaries, persistent audit records, adversarial parsing, governance, and hosted verification.",
       "distinction": "Execution mode is separate from agent identity and workflow; Codex is operating in work mode."
     },
     "steps": [
-      "Replace memory-only learning stores with atomic, project-isolated, integrity-checked durable stores and restart recovery.",
-      "Add a fail-closed autonomous learning coordinator whose distinct experiment and independent-verification executors produce every mandatory proof artifact without stage self-satisfaction.",
-      "Add safe retrieval, contradiction quarantine, rollback, crash recovery, concurrency, corruption, and anti-garbage tests plus a concrete readiness check.",
-      "Run focused and complete governed verification, update handoff and DEVLOG atomically, push only development, and monitor exact-tip hosted checks until green."
+      "Add an exact owner-approval URL policy, HTTPS/domain/IP validation, redirect confinement, kill switch, denylist, rate and size limits, content-type and executable rejection, and credential-free request construction.",
+      "Add a passive Google search-result information parser that emits candidate URLs only and never clicks, logs in, submits forms, executes scripts, or treats snippets as evidence.",
+      "Persist final URL, retrieval time, author, license status, content hash, quarantine reason, and auditable decisions without storing secrets or private repository data.",
+      "Add adversarial tests, update policy/docs/handoff/DEVLOG atomically, push only development, and monitor exact-tip hosted checks until green."
     ],
     "status": "active",
     "startedAt": "2026-08-30T10:50:00Z",
-    "lastUpdatedAt": "2026-08-30T11:05:00Z"
+    "lastUpdatedAt": "2026-08-30T16:51:10Z"
   },
   "handoffNotes": {
     "completed": [
@@ -121,15 +122,19 @@
       "Confirmed the prior scientific-learning stores were memory-only and no autonomous experiment/verification coordinator was connected.",
       "Implemented atomic integrity-checked project-isolated custody, persisted hypotheses and separated proof stages, restart-safe autonomous orchestration, contradiction quarantine, independent knowledge lineages, rollback, active-only retrieval, and fail-closed operator readiness and ingestion.",
       "Added adversarial coverage for corruption, locking, cross-project input, restart recovery, executor independence, hypothesis substitution, unverified retrieval, and unrelated version lineages.",
+      "Implemented owner-approved, credential-free HTTPS GET-only evidence retrieval with auditable kill switch, denylist, DNS/private-IP, redirect, rate, timeout, content-type, size, executable, injection-quarantine, provenance, and hashing controls.",
+      "Implemented passive Google candidate-URL parsing with positive trusted-domain admission, automatic .edu/.gov/.org eligibility, permanent social-media/Wikipedia/Reddit/onion exclusion, and extreme-vetting records for news agencies and every .science host.",
+      "Added explicit Security categorization, adversarial tests, package command, README guidance, and permanent scientific-learning policy for the retrieval boundary.",
       "Preserved the required full pre-prune DEVLOG snapshot on Archive at b618e12 under the standing narrow governance exception."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",
       "Existing starting-tip Self-Test, CodeQL, AI handoff, and AI conflict governance checks were green; the unrelated promotion workflow failure did not validate or invalidate development learning readiness.",
-      "Focused scientific-learning verification passes 12/12 and the pre-final complete governed suite passed 342/342 before the final independent-lineage regression was added."
+      "Focused scientific-learning verification passes 12/12 and the pre-final complete governed suite passed 342/342 before the final independent-lineage regression was added.",
+      "Final retrieval and scientific-learning focused verification passes 16/16; final retrieval-only verification passes 4/4; complete governed proof passes 347/347; configuration, docs, workflow, clutter, privacy, security, conflict-governance, governance, design-brief, core-ref, authenticity, whitespace, and staged-snapshot audits pass across 148 tracked files."
     ],
     "remaining": [
-      "Run final complete local audits, fetch origin/development immediately before commit and push, then monitor exact-tip hosted checks until green; do not promote to release or main."
+      "Fetch origin/development immediately before commit and push, then monitor exact-tip hosted checks until green; do not promote to release or main."
     ]
   }
 }

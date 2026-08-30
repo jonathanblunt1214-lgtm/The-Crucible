@@ -25,6 +25,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/privacy.test.js',
     'test/quarantine.test.js',
     'test/requiredCheckBoundary.test.js',
+    'test/safeInformationRetrieval.test.js',
     'test/security.test.js',
   ],
   utility: [
