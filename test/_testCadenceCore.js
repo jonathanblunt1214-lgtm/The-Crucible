@@ -48,6 +48,7 @@ test('current suite classification is stable across the four governed buckets', 
     'test/privacy.test.js',
     'test/quarantine.test.js',
     'test/requiredCheckBoundary.test.js',
+    'test/safeInformationRetrieval.test.js',
     'test/security.test.js',
   ]);
   assert.deepEqual(TEST_MAIN_CATEGORIES.utility, [
