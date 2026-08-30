@@ -17,6 +17,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/monthlyKnowledgeRefresh.test.js',
   ],
   security: [
+    'test/automatedGoogleResearch.test.js',
     'test/apiGuard.test.js',
     'test/authenticity.test.js',
     'test/coreRefIntegrity.test.js',

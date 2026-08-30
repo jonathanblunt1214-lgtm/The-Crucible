@@ -29,6 +29,8 @@
     "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, atomic durable project-isolated evidence and independent-lineage versioned knowledge, restart-safe autonomous orchestration, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
     "src/scientificLearningCli.js": "Fail-closed operator readiness, candidate ingestion, custody-state inspection, and verified-only retrieval for explicitly configured project-scoped durable learning stores.",
     "src/safeInformationRetrieval.js": "Owner-approved credential-free HTTPS evidence retrieval, passive trusted-domain Google result parsing, auditable kill switch and denylist, network/content limits, provenance hashing, and prompt-injection/executable quarantine.",
+    "src/automatedGoogleResearch.js": "Bounded credential-free Google discovery automation with allow-listed topics and suffixes, project-bound atomic query/result audit, due scheduling, kill switch, network limits, and URL deduplication before candidate registration.",
+    "src/automatedGoogleResearchCli.js": "Fail-closed operator entry point for explicitly configured repository-bound automated Google research readiness and due-topic runs.",
     "src/monthlyKnowledgeRefresh.js": "Atomic project-bound URL refresh registry that makes every logged source due within 30 days, suppresses unchanged and previously seen content, and emits only novel bounded candidate claims without bypassing scientific promotion gates.",
     "src/security.js": "Security Gate. Detects secrets, unsafe behavior, and public API-key-shaped identifiers and forces review without persisting detected values.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
@@ -39,7 +41,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-30T20:13:00Z"
+    "lastActionAt": "2026-08-30T20:18:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -97,24 +99,24 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Refresh every logged learning URL at least monthly while suppressing duplicate content and admitting only genuinely new bounded information as candidate evidence.",
-    "currentPrompt": "add something to the learning system that once a URL has been logged it looks at least monthly for updated knowledge and only learn new information never duplicate only learn and update current knowledge",
+    "objective": "Automate Crucible's Google discovery path without granting an interactive browser or weakening the evidence and learning boundaries.",
+    "currentPrompt": "add something to the google part of the learning AI to automate the searching",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
-      "purpose": "Implement and verify a persistent monthly source-refresh and semantic deduplication boundary without weakening scientific promotion controls.",
-      "selectionReason": "The request is a durable multi-file learning-system change involving scheduling, atomic state, content and claim deduplication, governance, and hosted verification.",
+      "purpose": "Implement and verify bounded automated Google discovery with persistent scheduling, auditing, and deduplication.",
+      "selectionReason": "The request is a security-sensitive multi-file learning-system change involving outbound discovery, scheduling, persistent state, governance, and hosted verification.",
       "distinction": "Execution mode is separate from agent identity and workflow; Codex is operating in work mode."
     },
     "steps": [
-      "Add an atomic project-bound URL registry with a maximum 30-day refresh interval and restart-safe due selection.",
-      "Record immutable content revisions while suppressing unchanged content and any content hash previously seen for that URL.",
-      "Deduplicate bounded claim identities and emit only novel claims as candidate evidence; never directly promote or mutate verified knowledge.",
+      "Add an allow-listed query planner and bounded credential-free Google HTML search client with a kill switch, network limits, and no interaction capability.",
+      "Add a project-bound atomic research store that schedules due topics and deduplicates query runs and discovered URLs.",
+      "Route admitted .edu, .org, and .gov results only to candidate registration; never directly retrieve as proof, promote, or mutate verified knowledge.",
       "Add adversarial tests, update policy/docs/handoff/DEVLOG atomically, push only development, and monitor exact-tip hosted checks until green."
     ],
     "status": "handoff-ready",
-    "startedAt": "2026-08-30T20:04:00Z",
-    "lastUpdatedAt": "2026-08-30T20:13:00Z"
+    "startedAt": "2026-08-30T20:09:00Z",
+    "lastUpdatedAt": "2026-08-30T20:18:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -129,12 +131,14 @@
       "Preserved the required full pre-prune DEVLOG snapshot on Archive at b618e12 under the standing narrow governance exception."
       ,"Implemented an atomic repository-bound monthly source registry and coordinator with a maximum 30-day interval, governed-retriever-only execution, historical content-hash suppression, and exact bounded-claim deduplication."
       ,"Updated the active weekly coding-resource research automation so every due logged URL is refreshed through the same gates and unchanged, historical, blocked, or quarantined material produces no learning."
+      ,"Implemented executable automated Google research with approved-topic planning, fixed safe-mode queries, a bounded credential-free client, project-bound atomic scheduling/audit state, and deduplicated source-queue registration as Insufficient Evidence only."
+      ,"Updated the active Monday 11:30 weekly research automation to run the executable coordinator with the repository-bound project identity and durable paths before manual discovery and monthly refresh."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",
       "Existing starting-tip Self-Test, CodeQL, AI handoff, and AI conflict governance checks were green; the unrelated promotion workflow failure did not validate or invalidate development learning readiness.",
       "Focused scientific-learning verification passes 12/12 and the pre-final complete governed suite passed 342/342 before the final independent-lineage regression was added.",
-      "Final retrieval and scientific-learning focused verification passes 16/16; final retrieval-only verification passes 4/4; the monthly-refresh proof passes 7/7; complete governed proof passes 354/354; configuration, docs, workflow, clutter, privacy, security, conflict-governance, governance, design-brief, core-ref, authenticity, and whitespace audits pass."
+      "Final retrieval and scientific-learning focused verification passes 16/16; final retrieval-only verification passes 4/4; monthly-refresh proof passes 7/7; automated Google research passes 8/8; complete governed proof passes 362/362; live readiness and configuration, docs, workflow, clutter, privacy, security, conflict-governance, governance, design-brief, core-ref, authenticity, and whitespace audits pass."
     ],
     "remaining": [
       "Fetch origin/development immediately before commit and push, then monitor exact-tip hosted checks until green; do not promote to release or main."
