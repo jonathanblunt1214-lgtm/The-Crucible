@@ -2,17 +2,17 @@
   "spdxVersion": "SPDX-2.3",
   "dataLicense": "CC0-1.0",
   "SPDXID": "SPDXRef-DOCUMENT",
-  "name": "the-crucible-nexus-plugin-0.2.0",
-  "documentNamespace": "https://github.com/jonathanblunt1214-lgtm/The-Crucible/tree/Plug-in#0.2.0",
+  "name": "the-crucible-nexus-plugin-0.3.0",
+  "documentNamespace": "https://github.com/jonathanblunt1214-lgtm/The-Crucible/tree/Plug-in#0.3.0",
   "creationInfo": {
     "creators": ["Tool: The Crucible plugin release process"],
-    "created": "2026-08-29T19:51:00Z"
+    "created": "2026-08-29T20:00:30Z"
   },
   "packages": [
     {
       "name": "the-crucible-nexus-plugin",
       "SPDXID": "SPDXRef-Package-The-Crucible-Nexus-Plugin",
-      "versionInfo": "0.2.0",
+      "versionInfo": "0.3.0",
       "downloadLocation": "NOASSERTION",
       "filesAnalyzed": false,
       "licenseConcluded": "MIT",

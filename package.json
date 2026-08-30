@@ -1,6 +1,6 @@
 {
   "name": "the-crucible-nexus-plugin",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "Optional Nexus plugin for fail-closed project-isolated scientific learning and canonical Crucible governance references.",
   "license": "MIT",

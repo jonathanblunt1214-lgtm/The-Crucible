@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+- Added a mandatory secure-learning readiness gate before candidate-evidence intake or any learning mutation.
+- Added one-time project setup that verifies and stores the project ID, trusted public RS256 OIDC policy, exact OIDC subject, and SHA-256 commitment to the supplied ephemeral transport key without persisting the key or token.
+- Bound every later OIDC/weekly transport action to stored trust configuration and required the supplied ephemeral key to match the configured commitment.
+
 ## 0.2.0
 
 - Added Web Crypto weekly transport with trusted RS256 OIDC verification, HKDF-SHA256 project-key derivation, AES-256-GCM authenticated encryption, exact identity/envelope binding, and no master-key persistence.

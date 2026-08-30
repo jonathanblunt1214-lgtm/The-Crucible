@@ -2,7 +2,7 @@
 
 const PLUGIN_ID = 'the-crucible';
 const PLUGIN_NAME = 'The Crucible';
-const VERSION = '0.2.0';
+const VERSION = '0.3.0';
 const GOVERNANCE_ROOT = 'governingDocuments';
 const REFERENCE_MANIFEST = `${GOVERNANCE_ROOT}/CRUCIBLE-REFERENCES.json`;
 const BRANCH_LINK_MANIFEST = `${GOVERNANCE_ROOT}/BRANCH-LINKS.json`;
@@ -64,6 +64,33 @@ function requireDigest(value, label) { if (!/^[a-f0-9]{64}$/.test(value || '')) 
 function requireProjectId(value) { const id = requireText(value, 'projectId'); if (!/^[A-Za-z0-9._-]{1,100}$/.test(id)) throw new Error('projectId must use only letters, digits, dot, underscore, or hyphen.'); return id; }
 function requireTextArray(value, label) { if (!Array.isArray(value) || !value.length || value.some((item) => typeof item !== 'string' || !item.trim())) throw new Error(`${label} must be a non-empty text array.`); }
 function learningPath(projectId, name) { return `${LEARNING_ROOT}/${requireProjectId(projectId)}/${name}.json`; }
+
+function validateLearningConfiguration(value, projectId) {
+  const keys = ['schemaVersion', 'status', 'projectId', 'issuer', 'audience', 'repository', 'ref', 'oidcSubject', 'jwks', 'masterKeySha256', 'configuredAt'];
+  requireExactKeys(value, keys, 'learning configuration');
+  if (value.schemaVersion !== 1 || value.status !== 'ready' || value.projectId !== requireProjectId(projectId)) throw new Error('Learning configuration identity, status, or schema is invalid.');
+  for (const key of ['issuer', 'audience', 'repository', 'ref', 'oidcSubject']) requireText(value[key], `learning configuration.${key}`);
+  requireExactKeys(value.jwks, ['keys'], 'learning configuration.jwks');
+  if (!Array.isArray(value.jwks.keys) || !value.jwks.keys.length) throw new Error('learning configuration.jwks.keys must be a non-empty array.');
+  for (const key of value.jwks.keys) {
+    requireExactKeys(key, ['kty', 'kid', 'alg', 'n', 'e'], 'learning configuration JWK');
+    if (key.kty !== 'RSA' || key.alg !== 'RS256') throw new Error('Learning configuration accepts only trusted RS256 RSA keys.');
+    for (const field of ['kid', 'n', 'e']) requireText(key[field], `learning configuration JWK.${field}`);
+  }
+  requireDigest(value.masterKeySha256, 'learning configuration.masterKeySha256');
+  requireIso(value.configuredAt, 'learning configuration.configuredAt');
+  return clone(value);
+}
+
+async function readLearningConfiguration(projectId, required = true) {
+  const id = requireProjectId(projectId);
+  try { return validateLearningConfiguration(JSON.parse(await readWorkspaceText(learningPath(id, 'configuration'))), id); }
+  catch (error) {
+    if (!required && /not found/i.test(String(error?.message || ''))) return null;
+    if (/not found/i.test(String(error?.message || ''))) throw new Error('Scientific learning is not ready. Configure the project ID, trusted OIDC identity, and ephemeral transport key before supplying training evidence.');
+    throw error;
+  }
+}
 
 function validateLearningCandidate(value) {
   requireExactKeys(value, CANDIDATE_KEYS, 'candidate');
@@ -134,6 +161,14 @@ function b64urlDecode(value, label = 'base64url value') {
   let binary; try { binary = atob(padded); } catch { throw new Error(`${label} must use base64url encoding.`); }
   return Uint8Array.from(binary, (character) => character.charCodeAt(0));
 }
+async function sha256Hex(bytes) {
+  return Array.from(new Uint8Array(await requireWebCrypto().subtle.digest('SHA-256', bytes)), (byte) => byte.toString(16).padStart(2, '0')).join('');
+}
+async function requireConfiguredMasterKey(masterKey, configuration) {
+  const raw = b64urlDecode(masterKey, 'masterKey');
+  if (raw.length < 32) throw new Error('masterKey must contain at least 32 bytes.');
+  if (await sha256Hex(raw) !== configuration.masterKeySha256) throw new Error('Ephemeral transport key does not match this project configuration.');
+}
 function canonical(value) {
   if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
   if (value && typeof value === 'object') return `{${Object.keys(value).sort().map((key) => `${JSON.stringify(key)}:${canonical(value[key])}`).join(',')}}`;
@@ -179,9 +214,40 @@ async function verifyOidcToken(token, { jwks, issuer, audience, repository, ref,
   return clone(claims);
 }
 
+async function learningConfigurationAction(payload) {
+  const projectId = requireProjectId(payload.projectId ?? payload.identity?.projectId);
+  if (payload.actionId === 'crucible-learning-readiness') {
+    const configuration = await readLearningConfiguration(projectId, false);
+    return configuration ? { ok: true, ready: true, configuration } : { ok: true, ready: false, projectId, missing: ['trusted OIDC configuration', 'OIDC subject binding', 'ephemeral transport key commitment'] };
+  }
+  if (payload.actionId !== 'crucible-learning-configure') throw new Error(`Unknown learning configuration action: ${payload.actionId}`);
+  if (await readLearningConfiguration(projectId, false)) throw new Error('Scientific learning is already configured for this project; refusing to replace trusted identity or key binding implicitly.');
+  const identity = payload.identity; requireObject(identity, 'identity');
+  if (requireProjectId(identity.projectId) !== projectId) throw new Error('Learning configuration project identity mismatch.');
+  const claims = await verifyOidcToken(payload.oidcToken, identity);
+  const oidcSubject = requireText(payload.oidcSubject, 'oidcSubject');
+  if (claims.sub !== oidcSubject) throw new Error('OIDC subject binding mismatch.');
+  requireIso(payload.configuredAt, 'configuredAt');
+  const rawKey = b64urlDecode(payload.masterKey, 'masterKey');
+  if (rawKey.length < 32) throw new Error('masterKey must contain at least 32 bytes.');
+  const configuration = validateLearningConfiguration({
+    schemaVersion: 1, status: 'ready', projectId, issuer: identity.issuer, audience: identity.audience,
+    repository: identity.repository, ref: identity.ref, oidcSubject,
+    jwks: { keys: identity.jwks?.keys?.map((key) => ({ kty: key.kty, kid: key.kid, alg: key.alg, n: key.n, e: key.e })) },
+    masterKeySha256: await sha256Hex(rawKey), configuredAt: payload.configuredAt
+  }, projectId);
+  await writeJson(learningPath(projectId, 'configuration'), configuration);
+  learningTelemetry(payload.actionId, projectId, 'ready');
+  return { ok: true, ready: true, configuration };
+}
+
 async function learningTransportAction(payload) {
-  const identity = payload.identity; requireObject(identity, 'identity'); const claims = await verifyOidcToken(payload.oidcToken, identity);
-  const projectId = requireProjectId(identity.projectId); if (claims.sub !== payload.oidcSubject) throw new Error('OIDC subject binding mismatch.');
+  const projectId = requireProjectId(payload.projectId ?? payload.identity?.projectId);
+  const configuration = await readLearningConfiguration(projectId);
+  const identity = { jwks: configuration.jwks, issuer: configuration.issuer, audience: configuration.audience, repository: configuration.repository, ref: configuration.ref, projectId };
+  const claims = await verifyOidcToken(payload.oidcToken, identity);
+  if (claims.sub !== configuration.oidcSubject || payload.oidcSubject !== configuration.oidcSubject) throw new Error('OIDC subject binding mismatch.');
+  if (payload.actionId !== 'crucible-learning-oidc-verify') await requireConfiguredMasterKey(payload.masterKey, configuration);
   let result;
   if (payload.actionId === 'crucible-learning-weekly-encrypt') result = await encryptWeeklyPayload(payload.weeklyPayload, { masterKey: payload.masterKey, projectId, repository: identity.repository, week: payload.week, oidcSubject: claims.sub });
   else if (payload.actionId === 'crucible-learning-weekly-decrypt') result = await decryptWeeklyPayload(payload.envelope, { masterKey: payload.masterKey, expectedProjectId: projectId, expectedRepository: identity.repository, expectedWeek: payload.week, expectedOidcSubject: claims.sub });
@@ -192,6 +258,8 @@ async function learningTransportAction(payload) {
 
 async function learningAction(payload) {
   const projectId = requireProjectId(payload.projectId ?? payload.candidate?.projectId);
+  if (payload.candidate && requireProjectId(payload.candidate.projectId) !== projectId) throw new Error('Cross-project candidate evidence is forbidden.');
+  if (payload.actionId !== 'crucible-learning-retrieve') await readLearningConfiguration(projectId);
   const { candidates, knowledge } = await loadLearning(projectId);
   if (payload.actionId === 'crucible-learning-ingest') {
     const candidate = validateLearningCandidate(payload.candidate);
@@ -428,6 +496,7 @@ async function autoInject(payload) {
 }
 
 async function projectAction(payload = {}) {
+  if (['crucible-learning-configure', 'crucible-learning-readiness'].includes(payload.actionId)) return learningConfigurationAction(payload);
   if (['crucible-learning-oidc-verify', 'crucible-learning-weekly-encrypt', 'crucible-learning-weekly-decrypt'].includes(payload.actionId)) return learningTransportAction(payload);
   if (typeof payload.actionId === 'string' && payload.actionId.startsWith('crucible-learning-')) return learningAction(payload);
   switch (payload.actionId) {
@@ -457,6 +526,7 @@ async function projectAction(payload = {}) {
           destructiveOperationsRequireConfirmation: true
           ,scientificLearning: {
             enabled: true,
+            setupRequiredBeforeEvidence: true,
             storageRoot: LEARNING_ROOT,
             projectIsolated: true,
             telemetryIsEvidence: false,
@@ -471,7 +541,9 @@ async function projectAction(payload = {}) {
           action('crucible-branch-links-read', 'Inspect branch relationships', 'Identify project-declared paired and canonical-reference relationships without relying on example branch names.'),
           action('crucible-configure-governance', 'Configure project governance', 'Manage project-specific governance overlays without copying canonical Crucible policy files.', { opensConfiguration: true }),
           action('crucible-open-canonical', 'Open canonical Crucible governance', 'Use the default Crucible branch as the shared source of truth.', { references: canonicalReferenceManifest().documents })
-          ,action('crucible-learning-ingest', 'Learning: Ingest candidate evidence', 'Validate and store project-isolated candidate evidence as Insufficient Evidence.')
+          ,action('crucible-learning-configure', 'Learning: Configure secure project', 'Bind the project ID, trusted OIDC identity, OIDC subject, and ephemeral transport-key commitment before evidence intake.')
+          ,action('crucible-learning-readiness', 'Learning: Check readiness', 'Report whether secure project learning configuration is complete without accepting evidence.')
+          ,action('crucible-learning-ingest', 'Learning: Ingest candidate evidence', 'After secure setup, validate and store project-isolated candidate evidence as Insufficient Evidence.')
           ,action('crucible-learning-hypothesis', 'Learning: Declare hypothesis', 'Declare a falsifiable hypothesis without satisfying any experiment or proof stage.')
           ,action('crucible-learning-experiment', 'Learning: Record controlled experiment', 'Record bounded controlled experiment evidence; later causal and verification stages remain separate.')
           ,action('crucible-learning-causal-confirm', 'Learning: Confirm causal isolation', 'Confirm causal isolation; correlation is never accepted as causation.')
@@ -503,7 +575,7 @@ register({
       localGovernanceFiles: await listLocalGovernance().catch(() => []),
       canonicalDocuments: canonicalReferenceManifest().documents,
       autoInject: { selectedByDefault: false, requiresConfirmation: true }
-      ,scientificLearning: { enabled: true, storageRoot: LEARNING_ROOT, telemetryIsEvidence: false, weeklyTransport: 'web-crypto-rs256-oidc-a256gcm-hkdf-sha256', masterKeyPersistence: 'forbidden' }
+      ,scientificLearning: { enabled: true, setupRequiredBeforeEvidence: true, storageRoot: LEARNING_ROOT, telemetryIsEvidence: false, weeklyTransport: 'web-crypto-rs256-oidc-a256gcm-hkdf-sha256', masterKeyPersistence: 'forbidden' }
     }),
     'command-palette': async () => ({
       commands: [

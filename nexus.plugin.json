@@ -1,7 +1,7 @@
 {
   "id": "the-crucible",
   "name": "The Crucible",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "apiVersion": 1,
   "entry": "index.js",
   "minNexusVersion": "1.0.3",

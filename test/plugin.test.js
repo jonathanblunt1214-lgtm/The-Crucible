@@ -59,6 +59,11 @@ function oidcFixture(projectId = 'project-a') {
 }
 
 const at = '2026-08-29T19:30:00.000Z';
+async function configureLearning(registration, fixture = oidcFixture(), masterKey = nodeCrypto.randomBytes(32).toString('base64url')) {
+  const action = registration.slots['project-actions'];
+  const result = await action({ actionId: 'crucible-learning-configure', projectId: fixture.identity.projectId, identity: fixture.identity, oidcToken: fixture.token, oidcSubject: fixture.claims.sub, masterKey, configuredAt: at });
+  return { result, fixture, masterKey };
+}
 function learningCandidate(overrides = {}) {
   return {
     schemaVersion: 1, id: 'candidate-1', projectId: 'project-a', claim: 'repair X causes test Y to pass',
@@ -77,6 +82,8 @@ function experiment(overrides = {}) {
 }
 async function advanceToCausal(registration, candidate = learningCandidate()) {
   const action = registration.slots['project-actions'];
+  const readiness = await action({ actionId: 'crucible-learning-readiness', projectId: candidate.projectId });
+  if (!readiness.ready) await configureLearning(registration, oidcFixture(candidate.projectId));
   await action({ actionId: 'crucible-learning-ingest', candidate });
   await action({ actionId: 'crucible-learning-hypothesis', projectId: candidate.projectId, candidateId: candidate.id, hypothesis: experiment().hypothesis, at });
   await action({ actionId: 'crucible-learning-experiment', projectId: candidate.projectId, candidateId: candidate.id, experiment: experiment({ testedProperty: candidate.claim, experimentBoundary: candidate.claimBoundary }) });
@@ -172,6 +179,7 @@ test('governance writes cannot escape governingDocuments', async () => {
 test('scientific learning ingests strict project-isolated candidates as insufficient evidence', async () => {
   const { registration } = loadPlugin();
   const action = registration.slots['project-actions'];
+  await configureLearning(registration);
   const result = await action({ actionId: 'crucible-learning-ingest', candidate: learningCandidate() });
   assert.equal(result.record.state, 'candidate');
   assert.equal(result.record.candidate.classification, 'Insufficient Evidence');
@@ -182,6 +190,7 @@ test('scientific learning ingests strict project-isolated candidates as insuffic
 
 test('learning stages fail closed and correlation never satisfies causation', async () => {
   const { registration } = loadPlugin(); const action = registration.slots['project-actions'];
+  await configureLearning(registration);
   await action({ actionId: 'crucible-learning-ingest', candidate: learningCandidate() });
   await assert.rejects(action({ actionId: 'crucible-learning-promote', projectId: 'project-a', candidateId: 'candidate-1', at }), /requires independently-verified/);
   await action({ actionId: 'crucible-learning-hypothesis', projectId: 'project-a', candidateId: 'candidate-1', hypothesis: experiment().hypothesis, at });
@@ -233,21 +242,45 @@ test('verified knowledge supports explicit rollback to a prior version', async (
 
 test('OIDC identity is verified with trusted RS256 signature and exact project bindings', async () => {
   const { registration } = loadPlugin(); const action = registration.slots['project-actions']; const fixture = oidcFixture();
-  const result = await action({ actionId: 'crucible-learning-oidc-verify', identity: fixture.identity, oidcToken: fixture.token, oidcSubject: fixture.claims.sub });
+  await configureLearning(registration, fixture);
+  const result = await action({ actionId: 'crucible-learning-oidc-verify', projectId: 'project-a', oidcToken: fixture.token, oidcSubject: fixture.claims.sub });
   assert.equal(result.result.project_id, 'project-a');
-  await assert.rejects(action({ actionId: 'crucible-learning-oidc-verify', identity: { ...fixture.identity, projectId: 'project-b' }, oidcToken: fixture.token, oidcSubject: fixture.claims.sub }), /not bound/);
+  await assert.rejects(action({ actionId: 'crucible-learning-oidc-verify', projectId: 'project-b', oidcToken: fixture.token, oidcSubject: fixture.claims.sub }), /not ready/);
 });
 
 test('weekly transport is encrypted, authenticated, project-bound, and never persists its key', async () => {
   const { registration, files, telemetry } = loadPlugin(); const action = registration.slots['project-actions']; const fixture = oidcFixture(); const masterKey = nodeCrypto.randomBytes(32).toString('base64url');
+  await configureLearning(registration, fixture, masterKey);
   const weeklyPayload = { schemaVersion: 1, projectId: 'project-a', week: '2026-W35', candidateEvidence: [{ id: 'candidate-1' }], verifiedKnowledge: [] };
   const encrypted = await action({ actionId: 'crucible-learning-weekly-encrypt', identity: fixture.identity, oidcToken: fixture.token, oidcSubject: fixture.claims.sub, masterKey, week: '2026-W35', weeklyPayload });
   assert.equal(encrypted.result.algorithm, 'A256GCM-HKDF-SHA256'); assert.doesNotMatch(encrypted.result.ciphertext, /candidate-1/);
   const decrypted = await action({ actionId: 'crucible-learning-weekly-decrypt', identity: fixture.identity, oidcToken: fixture.token, oidcSubject: fixture.claims.sub, masterKey, week: '2026-W35', envelope: encrypted.result });
   assert.deepEqual(JSON.parse(JSON.stringify(decrypted.result)), weeklyPayload);
-  await assert.rejects(action({ actionId: 'crucible-learning-weekly-decrypt', identity: { ...fixture.identity, projectId: 'project-b' }, oidcToken: fixture.token, oidcSubject: fixture.claims.sub, masterKey, week: '2026-W35', envelope: encrypted.result }), /not bound/);
+  await assert.rejects(action({ actionId: 'crucible-learning-weekly-decrypt', projectId: 'project-b', oidcToken: fixture.token, oidcSubject: fixture.claims.sub, masterKey, week: '2026-W35', envelope: encrypted.result }), /not ready/);
   const tamperedBytes = Buffer.from(encrypted.result.ciphertext, 'base64url'); tamperedBytes[0] ^= 1;
   const tampered = { ...encrypted.result, ciphertext: tamperedBytes.toString('base64url') };
   await assert.rejects(action({ actionId: 'crucible-learning-weekly-decrypt', identity: fixture.identity, oidcToken: fixture.token, oidcSubject: fixture.claims.sub, masterKey, week: '2026-W35', envelope: tampered }), /authentication failed/);
   assert.doesNotMatch(JSON.stringify(files), new RegExp(masterKey)); assert.doesNotMatch(JSON.stringify(telemetry), new RegExp(masterKey)); assert.ok(telemetry.every((item) => item.payload.evidentiary === false));
+});
+
+test('learning rejects evidence until project identity, trusted OIDC, and key commitment are configured', async () => {
+  const { registration, files } = loadPlugin(); const action = registration.slots['project-actions'];
+  const before = await action({ actionId: 'crucible-learning-readiness', projectId: 'project-a' });
+  assert.equal(before.ready, false);
+  await assert.rejects(action({ actionId: 'crucible-learning-ingest', candidate: learningCandidate() }), /not ready/);
+  assert.equal(Object.keys(files).length, 0);
+  const fixture = oidcFixture(); const masterKey = nodeCrypto.randomBytes(32).toString('base64url');
+  const configured = await configureLearning(registration, fixture, masterKey);
+  assert.equal(configured.result.ready, true);
+  const stored = files['governingDocuments/.crucible-learning/project-a/configuration.json'];
+  assert.ok(stored); assert.doesNotMatch(stored, new RegExp(masterKey)); assert.doesNotMatch(stored, new RegExp(fixture.token.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
+  assert.match(stored, /masterKeySha256/);
+  assert.equal((await action({ actionId: 'crucible-learning-readiness', projectId: 'project-a' })).ready, true);
+  await assert.rejects(configureLearning(registration, fixture, masterKey), /already configured/);
+});
+
+test('weekly transport requires the configured ephemeral key commitment', async () => {
+  const { registration } = loadPlugin(); const action = registration.slots['project-actions']; const fixture = oidcFixture(); const masterKey = nodeCrypto.randomBytes(32).toString('base64url');
+  await configureLearning(registration, fixture, masterKey);
+  await assert.rejects(action({ actionId: 'crucible-learning-weekly-encrypt', projectId: 'project-a', oidcToken: fixture.token, oidcSubject: fixture.claims.sub, masterKey: nodeCrypto.randomBytes(32).toString('base64url'), week: '2026-W35', weeklyPayload: { schemaVersion: 1, projectId: 'project-a', week: '2026-W35', candidateEvidence: [], verifiedKnowledge: [] } }), /does not match/);
 });
