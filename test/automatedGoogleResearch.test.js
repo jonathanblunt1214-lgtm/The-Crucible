@@ -78,3 +78,14 @@ test('CLI readiness requires explicit repository-bound durable configuration', a
   const lines = []; await runCli(['readiness'], { CRUCIBLE_LEARNING_PROJECT_ID:'github:owner/repository', CRUCIBLE_LEARNING_ROOT:'.', CRUCIBLE_SOURCE_QUEUE:'queue.json' }, (line) => lines.push(JSON.parse(line)));
   assert.equal(lines[0].ready, true); assert.equal(lines[0].projectId, 'github:owner/repository');
 });
+
+test('automated research runs bounded claim extraction in the same governed execution', async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-google-extract-')); t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const queue = path.join(root, 'queue.json'); fs.writeFileSync(queue, JSON.stringify({ schemaVersion:1, projectId:'github:owner/repository', updatedAt:null, protocol:{}, documents:[], links:[] }));
+  let extractionRuns = 0; const lines = [];
+  await runCli(['run', 'JavaScript'], { CRUCIBLE_LEARNING_PROJECT_ID:'github:owner/repository', CRUCIBLE_LEARNING_ROOT:root, CRUCIBLE_SOURCE_QUEUE:queue }, (line) => lines.push(JSON.parse(line)), {
+    research:{ runDue:async () => [{ state:'completed', novel:1 }] },
+    extractionWorker:{ run:() => { extractionRuns += 1; return [{ state:'claim-extraction-complete', candidateIds:['candidate-1'] }]; } }
+  });
+  assert.equal(extractionRuns, 1); assert.deepEqual(lines[0].extraction, { processed:1, completed:1, continuing:0, blocked:0, candidates:1 });
+});
