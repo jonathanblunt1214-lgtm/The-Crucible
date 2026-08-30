@@ -39,7 +39,18 @@
   "authenticity": {
     "requireArtifacts": true,
     "claims": [
-      { "name": "Engine test suite passes", "run": "npm", "args": ["test"], "evidence": ["package.json"] }
+      {
+        "name": "Engine test suite passes",
+        "run": "npm",
+        "args": ["test"],
+        "evidence": ["package.json"],
+        "learning": {
+          "claimBoundary": "the configured Engine test suite at the current commit on the current declared OS and Node runtime",
+          "generalizationBoundary": "no wider than the exact commit, configured suite, OS, Node runtime, command digest, and evidence-artifact digests",
+          "expectedOutcome": "the configured Engine test command completes successfully and every declared evidence artifact exists",
+          "environment": "The Crucible governed authenticity runner using the checked-out commit and the job's declared OS and Node runtime"
+        }
+      }
     ]
   },
   "codeCheck": {

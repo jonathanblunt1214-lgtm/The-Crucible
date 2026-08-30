@@ -362,6 +362,8 @@ Optional evidence commands for important project claims. Each claim has a human-
 
 Each claim can declare `evidence` files. Crucible reports the command digest, commit SHA, UTC verification time, and SHA-256 digest of every evidence file in the check output. `authenticity.requireArtifacts` makes evidence files mandatory.
 
+An authenticity claim becomes eligible for governed learning by doing only when it declares all four `learning` fields: `claimBoundary`, `generalizationBoundary`, `expectedOutcome`, and `environment`. When both `CRUCIBLE_LEARNING_PROJECT_ID` and `CRUCIBLE_LEARNING_ROOT` are configured, the Authenticity Gate automatically records its successful or failed attempt, exact commit/runtime, command digest, result digest, and combined evidence-artifact digest through `LearningExperienceRecorder`. With no durable learning configuration the gate reports the eligible attempt as not recorded; a partial configuration fails closed. Every recorded attempt remains a non-promotable `Insufficient Evidence` candidate and cannot certify its own claim.
+
 ### Advanced read-only hardening
 
 - `governance.requireExceptionMetadata` requires each exception to carry `path`, `reason`, `owner`, and `expires`. Exceptions fail when expired, unused, overly broad, or when an optional `sha256` no longer matches.
