@@ -19,6 +19,8 @@
     "test:automated-google-research": "node --test test/automatedGoogleResearch.test.js",
     "learning:google-research": "node src/automatedGoogleResearchCli.js run",
     "learning:google-research-readiness": "node src/automatedGoogleResearchCli.js readiness",
+    "learning:extract": "node src/claimExtractionWorkerCli.js run",
+    "learning:extract-readiness": "node src/claimExtractionWorkerCli.js readiness",
     "test:monthly-learning-refresh": "node --test test/monthlyKnowledgeRefresh.test.js",
     "learning:readiness": "node src/scientificLearningCli.js readiness",
     "learning:ingest": "node src/scientificLearningCli.js ingest",

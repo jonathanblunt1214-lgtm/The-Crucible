@@ -26,11 +26,16 @@
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
     "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
     "governingDocuments/scientific-learning-policy.md": "Permanent autonomous scientific-learning invariants, promotion boundary, project isolation, contradiction handling, rollback, and weekly transport policy.",
+    "governingDocuments/scientific-learning-release-plan.md": "Gate-driven rolling release plan for scientific learning; dates forecast readiness but never authorize promotion or weaken proof.",
+    "governingDocuments/scientific-learning-release-status.json": "Machine-readable current gate state, rolling target, forecast confidence, blocker, and target-change history.",
     "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, atomic durable project-isolated evidence and independent-lineage versioned knowledge, restart-safe autonomous orchestration, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
     "src/scientificLearningCli.js": "Fail-closed operator readiness, candidate ingestion, custody-state inspection, and verified-only retrieval for explicitly configured project-scoped durable learning stores.",
     "src/safeInformationRetrieval.js": "Owner-approved credential-free HTTPS evidence retrieval, passive trusted-domain Google result parsing, auditable kill switch and denylist, network/content limits, provenance hashing, and prompt-injection/executable quarantine.",
     "src/automatedGoogleResearch.js": "Bounded credential-free Google discovery automation with allow-listed topics and suffixes, project-bound atomic query/result audit, due scheduling, kill switch, network limits, and URL deduplication before candidate registration.",
     "src/automatedGoogleResearchCli.js": "Fail-closed operator entry point for explicitly configured repository-bound automated Google research readiness and due-topic runs.",
+    "src/claimExtractionWorker.js": "Restart-safe atomic source-queue worker that extracts bounded assertions, persists deterministic Insufficient Evidence candidates, advances PDF windows, and never satisfies proof or promotion gates.",
+    "src/claimExtractionWorkerCli.js": "Fail-closed project-bound readiness and bounded execution entry point for durable claim extraction.",
+    "scripts/extractPdfText.py": "Bounded-page PDF text fallback for trusted Python runtimes when pdftotext is unavailable.",
     "src/monthlyKnowledgeRefresh.js": "Atomic project-bound URL refresh registry that makes every logged source due within 30 days, suppresses unchanged and previously seen content, and emits only novel bounded candidate claims without bypassing scientific promotion gates.",
     "src/security.js": "Security Gate. Detects secrets, unsafe behavior, and public API-key-shaped identifiers and forces review without persisting detected values.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
@@ -41,7 +46,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-30T20:18:00Z"
+    "lastActionAt": "2026-08-30T21:13:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -99,24 +104,25 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Automate Crucible's Google discovery path without granting an interactive browser or weakening the evidence and learning boundaries.",
-    "currentPrompt": "add something to the google part of the learning AI to automate the searching",
+    "objective": "Operate restart-safe extraction and project-level learning schedules under a rolling release plan; keep learning scope on development while allowing proven-isolated non-learning scope to follow normal release governance.",
+    "currentPrompt": "using this 2026-08-30 16:27 EDT] It is too early to push this to `main`.\n\nThe code and CI are green, but operational proof is incomplete:\n\n- No claim has reached verified knowledge yet.\n- The forced extraction backlog has not completed.\n- The automated Google search has not completed its first real scheduled run.\n- Source-queue registration, deduplication, kill-switch behavior, and knowledge updating have been tested, but not yet observed together through a full live cycle.\n- Rollback should be demonstrated on an actual promoted test claim before production adoption.\n\nThe smart promotion point is after Crucible completes at least one end-to-end live cycle:\n\n1. Search or ingest a real source.\n2. Extract bounded claims.\n3. Reject duplicates and unsafe material.\n4. Independently test and verify at least one safe claim.\n5. Promote it into versioned knowledge.\n6. Retrieve and use only that active version.\n7. Demonstrate rollback or supersession.\n8. Complete exact-tip hosted CI again.\n\nKeep it on `development` until those conditions pass. The architecture appears ready; its real-world learning behavior still needs proof.\n\ncome up with a release plan with rolling release date until the plan is completed",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
-      "purpose": "Implement and verify bounded automated Google discovery with persistent scheduling, auditing, and deduplication.",
-      "selectionReason": "The request is a security-sensitive multi-file learning-system change involving outbound discovery, scheduling, persistent state, governance, and hosted verification.",
+      "purpose": "Create and verify a persistent gate-driven release plan plus a recurring evidence-based rolling forecast.",
+      "selectionReason": "The request requires durable governance, current operational evidence, schedule automation, explicit promotion boundaries, and hosted verification.",
       "distinction": "Execution mode is separate from agent identity and workflow; Codex is operating in work mode."
     },
     "steps": [
-      "Add an allow-listed query planner and bounded credential-free Google HTML search client with a kill switch, network limits, and no interaction capability.",
-      "Add a project-bound atomic research store that schedules due topics and deduplicates query runs and discovered URLs.",
-      "Route admitted .edu, .org, and .gov results only to candidate registration; never directly retrieve as proof, promote, or mutate verified knowledge.",
-      "Add adversarial tests, update policy/docs/handoff/DEVLOG atomically, push only development, and monitor exact-tip hosted checks until green."
+      "Define mandatory architecture, extraction, live-search, end-to-end learning, active retrieval, rollback, safety, soak, exact-tip CI, and owner-authorization gates.",
+      "Persist the current low-confidence rolling target and blocker in a machine-readable status file with an auditable target-change history.",
+      "Run the bounded extraction worker against the live durable queue and prove restart-safe measurable progress.",
+      "Create project-level hourly evaluation and daily rolling review schedules, then retire the replaced chat heartbeat.",
+      "Update handoff and DEVLOG atomically, push only development, and monitor exact-tip hosted checks until green."
     ],
-    "status": "handoff-ready",
-    "startedAt": "2026-08-30T20:09:00Z",
-    "lastUpdatedAt": "2026-08-30T20:18:00Z"
+    "status": "active",
+    "startedAt": "2026-08-30T20:32:00Z",
+    "lastUpdatedAt": "2026-08-30T21:13:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -133,15 +139,21 @@
       ,"Updated the active weekly coding-resource research automation so every due logged URL is refreshed through the same gates and unchanged, historical, blocked, or quarantined material produces no learning."
       ,"Implemented executable automated Google research with approved-topic planning, fixed safe-mode queries, a bounded credential-free client, project-bound atomic scheduling/audit state, and deduplicated source-queue registration as Insufficient Evidence only."
       ,"Updated the active Monday 11:30 weekly research automation to run the executable coordinator with the repository-bound project identity and durable paths before manual discovery and monthly refresh."
+      ,"Implemented a restart-safe atomic claim-extraction worker with deterministic candidate IDs and bounded PDF fallback; all extracted material remains Insufficient Evidence."
+      ,"Ran live extraction batches that reduced forced web sources from 393 to 288 and advanced all seven PDFs to page 11 without promotion."
+      ,"Created project-level hourly claim evaluation and daily rolling release review schedules and deleted the replaced chat-only hourly evaluator."
+      ,"Integrated bounded extraction into the automated Google research CLI so scheduled web discovery and ready-source extraction execute and report together."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",
       "Existing starting-tip Self-Test, CodeQL, AI handoff, and AI conflict governance checks were green; the unrelated promotion workflow failure did not validate or invalidate development learning readiness.",
       "Focused scientific-learning verification passes 12/12 and the pre-final complete governed suite passed 342/342 before the final independent-lineage regression was added.",
       "Final retrieval and scientific-learning focused verification passes 16/16; final retrieval-only verification passes 4/4; monthly-refresh proof passes 7/7; automated Google research passes 8/8; complete governed proof passes 362/362; live readiness and configuration, docs, workflow, clutter, privacy, security, conflict-governance, governance, design-brief, core-ref, authenticity, and whitespace audits pass."
+      ,"Claim-extraction and automated-research integration proof passes 13/13; cadence categorization proof passes 42/42; pre-integration complete governed proof passes 366/366."
+      ,"Final post-integration complete governed proof passes 367/367 and all validation, docs, workflow, clutter, privacy, security, conflict, governance, design-brief, core-reference, authenticity, and whitespace checks pass."
     ],
     "remaining": [
-      "Fetch origin/development immediately before commit and push, then monitor exact-tip hosted checks until green; do not promote to release or main."
+      "Complete local governed verification, fetch origin/development immediately before commit, push only development, and monitor exact-tip hosted checks until green. Continue the extraction backlog through the project schedule; do not promote learning scope to release or main."
     ]
   }
 }

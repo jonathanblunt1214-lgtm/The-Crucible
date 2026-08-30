@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
+  "branch": "development",
+  "developmentSha": "55d3c60bb8034067e643cd39636784a19b991660",
+  "updatedAt": "2026-08-30T21:13:00Z",
+  "rollingTarget": "2026-09-14T16:00:00Z",
+  "timezone": "America/New_York",
+  "confidence": "medium",
+  "releaseAuthorized": false,
+  "promotionPerformed": false,
+  "gates": {
+    "R1": "passed",
+    "R2": "in-progress-live-proof",
+    "R3": "pending",
+    "R4": "pending",
+    "R5": "pending",
+    "R6": "pending",
+    "R7": "pending",
+    "R8": "pending-live-proof",
+    "R9": "pending",
+    "R10": "pending",
+    "R11": "pending"
+  },
+  "blockingReason": "The extraction worker is operational and has reduced the forced web backlog from 393 to 288 while advancing all seven PDFs through their first ten-page window; restart completion and the remaining live-cycle gates are not yet proven.",
+  "history": [
+    {
+      "recordedAt": "2026-08-30T20:33:00Z",
+      "priorTarget": null,
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Initial low-confidence forecast; mandatory extraction, live-cycle, rollback, 72-hour soak, exact-tip CI, and owner-authorization gates remain."
+    },
+    {
+      "recordedAt": "2026-08-30T21:13:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Extraction throughput is now measurable: forced web sources fell from 393 to 288 and all seven PDFs advanced to page 11. Confidence increased to medium; remaining live-cycle and soak gates keep the target unchanged."
+    }
+  ]
+}
