@@ -196,8 +196,20 @@
           "run": { "type": "string", "minLength": 1, "maxLength": 200 },
           "args": { "type": "array", "maxItems": 50, "items": { "type": "string", "maxLength": 500 } },
           "cwd": { "type": "string", "minLength": 1, "maxLength": 240 },
-          "evidence": { "type": "array", "maxItems": 50, "items": { "type": "string", "minLength": 1, "maxLength": 240 } }
+          "evidence": { "type": "array", "maxItems": 50, "items": { "type": "string", "minLength": 1, "maxLength": 240 } },
+          "learning": { "$ref": "#/$defs/learningExperience" }
         }
+    },
+    "learningExperience": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claimBoundary", "generalizationBoundary", "expectedOutcome", "environment"],
+      "properties": {
+        "claimBoundary": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "generalizationBoundary": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "expectedOutcome": { "type": "string", "minLength": 1, "maxLength": 500 },
+        "environment": { "type": "string", "minLength": 1, "maxLength": 500 }
+      }
     },
     "exceptions": {
       "type": "array",

@@ -47,7 +47,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-30T21:13:00Z"
+    "lastActionAt": "2026-08-30T22:40:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -105,8 +105,8 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Operate restart-safe extraction and project-level learning schedules under a rolling release plan; keep learning scope on development while allowing proven-isolated non-learning scope to follow normal release governance.",
-    "currentPrompt": "using this 2026-08-30 16:27 EDT] It is too early to push this to `main`.\n\nThe code and CI are green, but operational proof is incomplete:\n\n- No claim has reached verified knowledge yet.\n- The forced extraction backlog has not completed.\n- The automated Google search has not completed its first real scheduled run.\n- Source-queue registration, deduplication, kill-switch behavior, and knowledge updating have been tested, but not yet observed together through a full live cycle.\n- Rollback should be demonstrated on an actual promoted test claim before production adoption.\n\nThe smart promotion point is after Crucible completes at least one end-to-end live cycle:\n\n1. Search or ingest a real source.\n2. Extract bounded claims.\n3. Reject duplicates and unsafe material.\n4. Independently test and verify at least one safe claim.\n5. Promote it into versioned knowledge.\n6. Retrieve and use only that active version.\n7. Demonstrate rollback or supersession.\n8. Complete exact-tip hosted CI again.\n\nKeep it on `development` until those conditions pass. The architecture appears ready; its real-world learning behavior still needs proof.\n\ncome up with a release plan with rolling release date until the plan is completed",
+    "objective": "Connect eligible governed suite claims to learning-by-doing custody and report the live durable learning status without weakening promotion gates.",
+    "currentPrompt": "finish doing this: The remaining connection is for eligible suite operations to explicitly submit their bounded claim and evidence hashes to the recorder. Until that connection is made, normal suite execution tests Crucible but does not automatically teach it.\n\nAlso what is learning status?",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
@@ -123,7 +123,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-30T20:32:00Z",
-    "lastUpdatedAt": "2026-08-30T21:13:00Z"
+    "lastUpdatedAt": "2026-08-30T22:40:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -147,6 +147,7 @@
       ,"Set extraction to 25 sources and 20 PDF pages per run and removed the arbitrary candidate-count cutoff within each bounded source window."
       ,"Added atomic durable candidate-batch ingestion after the first encrypted hosted proof exposed per-candidate full-store writes as the ten-minute throughput bottleneck."
       ,"Added governed learning by doing: bounded successful and failed task attempts become content-addressed experience-observation candidates, never verified knowledge or a proof-stage shortcut."
+      ,"Connected eligible Authenticity Gate suite claims to the durable learning-by-doing recorder; explicit boundaries are mandatory, success and failure are retained, absent custody skips visibly, and partial custody fails closed."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",
@@ -157,9 +158,10 @@
       ,"Final post-integration complete governed proof passes 367/367 and all validation, docs, workflow, clutter, privacy, security, conflict, governance, design-brief, core-reference, authenticity, and whitespace checks pass."
       ,"Updated extraction-bound proof passes 14/14 focused and 368/368 complete governed tests; validation, docs, security, privacy, clutter, and whitespace checks pass."
       ,"Learning-by-doing proof passes 15/15 focused and the final complete governed proof passes 371/371 with success, failure, deduplication, custody, schema, project-isolation, and direct-promotion bypass cases covered; validation, security, privacy, clutter, conflict governance, governance, docs, workflow, and whitespace checks pass."
+      ,"Suite-to-learning focused proof passes 10/10 and the complete governed proof passes 375/375; live custody accepted experience candidate experience-89ed1e2b4567f18d65b2353f21e176642ff451363556b1882a262f0f6804f224 and now contains 2,162 candidates, 0 verified knowledge versions, 127 extraction-complete sources, 278 forced-pending sources, 1 in-progress source, 19 research-pending sources, and 109 retrieval-blocked sources."
     ],
     "remaining": [
-      "Complete local governed verification, fetch origin/development immediately before commit, push only development, and monitor exact-tip hosted checks until green. Continue the extraction backlog through the project schedule; do not promote learning scope to release or main."
+      "Run final audits, fetch origin/development immediately before commit, push only development, and monitor exact-tip hosted checks until green. Continue the extraction backlog and independent claim evaluation; no verified knowledge exists yet, so do not promote learning scope to release or main."
     ]
   }
 }
