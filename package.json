@@ -16,6 +16,7 @@
     "audit:reference-branches": "node src/referenceBranchIntegrity.js",
     "test:scientific-learning": "node --test test/scientificLearning.test.js",
     "test:safe-retrieval": "node --test test/safeInformationRetrieval.test.js",
+    "test:monthly-learning-refresh": "node --test test/monthlyKnowledgeRefresh.test.js",
     "learning:readiness": "node src/scientificLearningCli.js readiness",
     "learning:ingest": "node src/scientificLearningCli.js ingest",
     "learning:status": "node src/scientificLearningCli.js status",

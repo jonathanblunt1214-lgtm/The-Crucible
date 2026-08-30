@@ -14,6 +14,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/repositoryOperation.test.js',
     'test/suiteSelection.test.js',
     'test/scientificLearning.test.js',
+    'test/monthlyKnowledgeRefresh.test.js',
   ],
   security: [
     'test/apiGuard.test.js',
