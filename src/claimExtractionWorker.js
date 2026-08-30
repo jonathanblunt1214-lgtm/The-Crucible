@@ -71,11 +71,12 @@ class ClaimExtractionWorker {
         try {
           const pageStart = source.mediaType === 'application/pdf' ? Number(source.claimExtraction.nextPage || 1) : 1;
           const pageEnd = source.mediaType === 'application/pdf' ? Math.min(Number(source.pages || pageStart + this.pdfPagesPerBatch - 1), pageStart + this.pdfPagesPerBatch - 1) : 1;
-          const text = this.extractText(source, pageStart, pageEnd); const assertions = boundedAssertions(text); const ids = [];
+          const text = this.extractText(source, pageStart, pageEnd); const assertions = boundedAssertions(text); const ids = []; const candidates = [];
           for (const assertion of assertions) {
             const boundary = source.mediaType === 'application/pdf' ? `${source.title || source.originalName || source.id}, SHA-256 ${source.contentSha256}, pages ${pageStart}-${pageEnd} only` : `${source.finalUrl || source.url || source.id}, SHA-256 ${source.contentSha256}, retrieved content only`;
-            const candidate = this.candidate(source, assertion, boundary, startedAt); const existing = this.store.get(candidate.id); if (!existing) this.store.ingest(candidate); ids.push(candidate.id);
+            const candidate = this.candidate(source, assertion, boundary, startedAt); candidates.push(candidate); ids.push(candidate.id);
           }
+          this.store.ingestMany(candidates);
           queue = this.queue.read(); source = [...queue.documents, ...queue.links].find((item) => item.id === selected.id); source.claimExtraction.candidateIds = [...new Set([...(source.claimExtraction.candidateIds || []), ...ids])]; source.claimExtraction.completedAt = this.now(); source.claimExtraction.classification = 'Insufficient Evidence'; delete source.claimExtraction.lastError; delete source.claimExtraction.failedAt;
           const morePdf = source.mediaType === 'application/pdf' && pageEnd < Number(source.pages || pageEnd);
           if (morePdf) { source.claimExtraction.nextPage = pageEnd + 1; source.claimExtraction.nextAction = 'extract-next-page-bounded-claims'; source.state = 'claim-extraction-forced-pending'; }

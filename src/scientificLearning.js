@@ -5,7 +5,7 @@ const path = require('node:path');
 const STATES = Object.freeze(['candidate', 'hypothesis', 'experimented', 'causally-proven', 'independently-verified', 'verified', 'quarantined', 'rejected']);
 const CLASSIFICATIONS = Object.freeze(['Rejected Evidence', 'Insufficient Evidence', 'Crucible Issue']);
 const REQUIRED_GATES = Object.freeze(['falsifiableHypothesis', 'controlledReproduction', 'causalIsolation', 'controlTesting', 'independentVerification', 'negativeTesting', 'regressionTesting', 'deterministicScopeProof', 'claimBoundaryCheck', 'generalizationCheck', 'contradictionAnalysis']);
-const PROHIBITED_PROMOTION_KINDS = Object.freeze(['raw-telemetry', 'correlation', 'one-off-repair', 'repeated-observation', 'model-guess', 'incomplete-observation', 'untested-hypothesis', 'retrieval']);
+const PROHIBITED_PROMOTION_KINDS = Object.freeze(['raw-telemetry', 'correlation', 'one-off-repair', 'repeated-observation', 'model-guess', 'incomplete-observation', 'untested-hypothesis', 'retrieval', 'experience-observation']);
 const TRANSITIONS = Object.freeze({
   candidate: ['hypothesis', 'rejected', 'quarantined'],
   hypothesis: ['experimented', 'rejected', 'quarantined'],
@@ -247,6 +247,19 @@ class DurableScientificLearningStore {
       next.candidateRecords.push(newRecord(checked)); return next;
     }, { at:checked.createdAt, action:`candidate:${checked.id}:ingest` });
     return structuredClone(payload.candidateRecords.find((item) => item.candidate.id === checked.id));
+  }
+  ingestMany(candidates) {
+    if (!Array.isArray(candidates) || !candidates.length) return [];
+    const checked = candidates.map(validateCandidate);
+    if (checked.some((candidate) => candidate.projectId !== this.projectId)) throw new Error('Cross-project candidate evidence is forbidden.');
+    if (new Set(checked.map((candidate) => candidate.id)).size !== checked.length) throw new Error('Candidate batch contains duplicate ids.');
+    const accepted = [];
+    this.transact((next) => {
+      const known = new Set(next.candidateRecords.map((item) => item.candidate.id));
+      for (const candidate of checked) if (!known.has(candidate.id)) { next.candidateRecords.push(newRecord(candidate)); known.add(candidate.id); accepted.push(candidate.id); }
+      return next;
+    }, { at:checked[0].createdAt, action:`candidate-batch:${checked.length}:ingest` });
+    const payload = this.read(); return payload.candidateRecords.filter((item) => accepted.includes(item.candidate.id)).map((item) => structuredClone(item));
   }
   get(id) { const record = this.read().candidateRecords.find((item) => item.candidate.id === id); return record ? structuredClone(record) : null; }
   update(record, at, action = 'update') {

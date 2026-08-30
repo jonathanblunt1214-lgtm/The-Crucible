@@ -29,6 +29,7 @@
     "governingDocuments/scientific-learning-release-plan.md": "Gate-driven rolling release plan for scientific learning; dates forecast readiness but never authorize promotion or weaken proof.",
     "governingDocuments/scientific-learning-release-status.json": "Machine-readable current gate state, rolling target, forecast confidence, blocker, and target-change history.",
     "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, atomic durable project-isolated evidence and independent-lineage versioned knowledge, restart-safe autonomous orchestration, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
+    "src/learningExperience.js": "Strict project-bound learning-by-doing adapter that records content-addressed successful and failed task attempts only as non-promotable candidate evidence.",
     "src/scientificLearningCli.js": "Fail-closed operator readiness, candidate ingestion, custody-state inspection, and verified-only retrieval for explicitly configured project-scoped durable learning stores.",
     "src/safeInformationRetrieval.js": "Owner-approved credential-free HTTPS evidence retrieval, passive trusted-domain Google result parsing, auditable kill switch and denylist, network/content limits, provenance hashing, and prompt-injection/executable quarantine.",
     "src/automatedGoogleResearch.js": "Bounded credential-free Google discovery automation with allow-listed topics and suffixes, project-bound atomic query/result audit, due scheduling, kill switch, network limits, and URL deduplication before candidate registration.",
@@ -144,6 +145,8 @@
       ,"Created project-level hourly claim evaluation and daily rolling release review schedules and deleted the replaced chat-only hourly evaluator."
       ,"Integrated bounded extraction into the automated Google research CLI so scheduled web discovery and ready-source extraction execute and report together."
       ,"Set extraction to 25 sources and 20 PDF pages per run and removed the arbitrary candidate-count cutoff within each bounded source window."
+      ,"Added atomic durable candidate-batch ingestion after the first encrypted hosted proof exposed per-candidate full-store writes as the ten-minute throughput bottleneck."
+      ,"Added governed learning by doing: bounded successful and failed task attempts become content-addressed experience-observation candidates, never verified knowledge or a proof-stage shortcut."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",
@@ -153,6 +156,7 @@
       ,"Claim-extraction and automated-research integration proof passes 13/13; cadence categorization proof passes 42/42; pre-integration complete governed proof passes 366/366."
       ,"Final post-integration complete governed proof passes 367/367 and all validation, docs, workflow, clutter, privacy, security, conflict, governance, design-brief, core-reference, authenticity, and whitespace checks pass."
       ,"Updated extraction-bound proof passes 14/14 focused and 368/368 complete governed tests; validation, docs, security, privacy, clutter, and whitespace checks pass."
+      ,"Learning-by-doing proof passes 15/15 focused and the final complete governed proof passes 371/371 with success, failure, deduplication, custody, schema, project-isolation, and direct-promotion bypass cases covered; validation, security, privacy, clutter, conflict governance, governance, docs, workflow, and whitespace checks pass."
     ],
     "remaining": [
       "Complete local governed verification, fetch origin/development immediately before commit, push only development, and monitor exact-tip hosted checks until green. Continue the extraction backlog through the project schedule; do not promote learning scope to release or main."
