@@ -11,6 +11,7 @@ const {
   encryptWeeklyEnvelope, decryptWeeklyEnvelope, sha,
 } = require('../src/scientificLearning');
 const { run:runLearningCli } = require('../src/scientificLearningCli');
+const { LearningExperienceRecorder, experienceCandidate } = require('../src/learningExperience');
 
 const at = '2026-08-29T18:20:00.000Z';
 function candidate(overrides = {}) {
@@ -140,6 +141,41 @@ test('operator readiness and ingestion require explicit durable project configur
   assert.equal(runLearningCli(['readiness'], environment).readyForTrainingEvidence, true);
   assert.deepEqual(runLearningCli(['ingest', file], environment), { accepted:true, candidateId:'c-1', state:'candidate', classification:'Insufficient Evidence' });
   assert.deepEqual(runLearningCli(['retrieve'], environment), { verifiedKnowledge:[] });
+});
+
+test('durable candidate batches commit atomically and deduplicate restart-safe ids', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-learning-batch-')); t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const store = new DurableScientificLearningStore({ projectId:'project-a', root }); const first = candidate(); const second = { ...candidate(), id:'c-2', claim:'A second bounded claim' };
+  assert.equal(store.ingestMany([first, second]).length, 2); assert.equal(store.ingestMany([first, second]).length, 0); assert.equal(store.read().candidateRecords.length, 2);
+  assert.throws(() => store.ingestMany([first, first]), /duplicate ids/); assert.throws(() => store.ingestMany([{ ...second, id:'c-3', projectId:'project-b' }]), /Cross-project/);
+});
+
+test('learning by doing records success and failure as candidate evidence without promotion', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-experience-')); t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const store = new DurableScientificLearningStore({ projectId:'project-a', root });
+  const recorder = new LearningExperienceRecorder({ store, projectId:'project-a' });
+  const base = { schemaVersion:1, projectId:'project-a', attemptId:'attempt-1', boundedClaim:'action X produces bounded result Y', claimBoundary:'node-22/windows/task-y', generalizationBoundary:'no wider than node-22/windows/task-y', action:'execute action X', environment:'node 22 on Windows', expectedOutcome:'result Y', actualOutcome:'result Y', outcome:'succeeded', actionSha256:sha('action'), environmentSha256:sha('environment'), resultSha256:sha('result'), artifactSha256:sha('artifact'), actorId:'task-runner-1', observedAt:at };
+  const failure = { ...base, attemptId:'attempt-2', actualOutcome:'result Y was absent', outcome:'failed', resultSha256:sha('failed result') };
+  assert.equal(recorder.record([base, failure]).length, 2);
+  assert.equal(recorder.record([base, failure]).length, 0, 'restart-safe repeat creates no duplicate evidence');
+  for (const record of store.read().candidateRecords) {
+    assert.equal(record.state, 'candidate'); assert.equal(record.candidate.classification, 'Insufficient Evidence'); assert.equal(record.candidate.kind, 'experience-observation');
+    let current = transition(record, 'hypothesis', { at, reason:'investigate experience', hypothesis:'falsifiably test the bounded observation' });
+    const observedProof = experimentalProof({ candidateId:record.candidate.id, testedProperty:record.candidate.claim, experimentBoundary:record.candidate.claimBoundary, hypothesis:'falsifiably test the bounded observation' });
+    current = transition(current, 'experimented', { at, reason:'controlled input', experimentalProof:observedProof, gates:gates(true) });
+    current = transition(current, 'causally-proven', { at, reason:'synthetic path' });
+    current = transition(current, 'independently-verified', { at, reason:'independent input', independentVerification:verification({ testedProperty:record.candidate.claim, experimentBoundary:record.candidate.claimBoundary }) });
+    assert.throws(() => transition(current, 'verified', { at, reason:'attempt direct experience promotion' }), /never be directly promoted/);
+  }
+});
+
+test('learning by doing fails closed on missing custody proof, unknown fields, and cross-project stores', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-experience-')); t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const store = new DurableScientificLearningStore({ projectId:'project-a', root });
+  const valid = { schemaVersion:1, projectId:'project-a', attemptId:'attempt-1', boundedClaim:'bounded claim', claimBoundary:'one runtime', generalizationBoundary:'one runtime only', action:'run action', environment:'bounded environment', expectedOutcome:'expected', actualOutcome:'actual', outcome:'failed', actionSha256:sha('a'), environmentSha256:sha('e'), resultSha256:sha('r'), artifactSha256:sha('t'), actorId:'runner', observedAt:at };
+  assert.throws(() => experienceCandidate({ ...valid, artifactSha256:undefined }), /artifactSha256/);
+  assert.throws(() => experienceCandidate({ ...valid, confidence:1 }), /unknown field.*confidence/);
+  assert.throws(() => new LearningExperienceRecorder({ store, projectId:'project-b' }), /same project identity/);
 });
 
 test('weekly learning transport is encrypted, authenticated, and project bound', () => {
