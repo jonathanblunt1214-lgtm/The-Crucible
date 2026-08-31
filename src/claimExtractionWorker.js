@@ -46,11 +46,12 @@ class AtomicClaimExtractionQueue {
 }
 
 class ClaimExtractionWorker {
-  constructor({ queueFile, projectId, learningRoot, extractText = defaultExtractText, now = () => new Date().toISOString(), maximumSources = 25, pdfPagesPerBatch = 20 }) {
+  constructor({ queueFile, projectId, learningRoot, extractText = defaultExtractText, now = () => new Date().toISOString(), maximumSources = 25, maximumDocuments = 10, pdfPagesPerBatch = 20 }) {
     if (!projectId || !learningRoot) throw new Error('Repository-bound projectId and learningRoot are required.');
     if (!Number.isSafeInteger(maximumSources) || maximumSources < 1 || maximumSources > 100) throw new Error('maximumSources must be between 1 and 100.');
+    if (!Number.isSafeInteger(maximumDocuments) || maximumDocuments < 1 || maximumDocuments > maximumSources) throw new Error('maximumDocuments must be between 1 and maximumSources.');
     if (!Number.isSafeInteger(pdfPagesPerBatch) || pdfPagesPerBatch < 1 || pdfPagesPerBatch > 100) throw new Error('pdfPagesPerBatch must be between 1 and 100.');
-    this.queue = new AtomicClaimExtractionQueue(queueFile, projectId); this.store = new DurableScientificLearningStore({ projectId, root:path.resolve(learningRoot) }); this.projectId = projectId; this.extractText = extractText; this.now = now; this.maximumSources = maximumSources; this.pdfPagesPerBatch = pdfPagesPerBatch;
+    this.queue = new AtomicClaimExtractionQueue(queueFile, projectId); this.store = new DurableScientificLearningStore({ projectId, root:path.resolve(learningRoot) }); this.projectId = projectId; this.extractText = extractText; this.now = now; this.maximumSources = maximumSources; this.maximumDocuments = maximumDocuments; this.pdfPagesPerBatch = pdfPagesPerBatch;
   }
 
   candidate(source, assertion, boundary, createdAt) {
@@ -62,7 +63,10 @@ class ClaimExtractionWorker {
     const unlock = this.queue.lock(); const outcomes = [];
     try {
       let queue = this.queue.read();
-      const eligible = [...queue.documents, ...queue.links].filter((item) => item.state === 'claim-extraction-forced-pending' || item.state === 'claim-extraction-in-progress').slice(0, this.maximumSources);
+      const isEligible = (item) => item.state === 'claim-extraction-forced-pending' || item.state === 'claim-extraction-in-progress';
+      const eligibleDocuments = queue.documents.filter(isEligible).slice(0, this.maximumDocuments);
+      const eligibleLinks = queue.links.filter(isEligible).slice(0, Math.max(0, this.maximumSources - eligibleDocuments.length));
+      const eligible = [...eligibleDocuments, ...eligibleLinks];
       for (const selected of eligible) {
         const collection = queue.documents.some((item) => item.id === selected.id) ? queue.documents : queue.links;
         let source = collection.find((item) => item.id === selected.id); const startedAt = this.now();
