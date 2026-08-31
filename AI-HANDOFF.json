@@ -67,7 +67,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-01T01:00:00Z"
+    "lastActionAt": "2026-09-01T01:15:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -148,7 +148,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-09-01T01:00:00Z"
+    "lastUpdatedAt": "2026-09-01T01:15:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -200,7 +200,8 @@
       "Checked the first hosted run of the rewired proof instead of trusting its green result, and found a defect in this session's own change: the guard asked whether the store held any knowledge versions, so the fixture-derived versions still in the encrypted cache made it skip the real-corpus path entirely and pass in a tenth of a second without reading a document. The guard now asks whether the verified knowledge actually traces to a real retrieved source, and a test pins the fixture case.",
       "Confirmed from the hosted custody report that the real corpus is genuinely present and verified on the runner: 403 source files, 329669312 bytes, 8 documents and 526 links, with queue states 278 forced-pending, 127 complete, 109 retrieval-blocked, 1 in-progress, and 19 awaiting retrieval, and plaintextRetained false.",
       "Did not push the conflict record into the oversight repository. OVERSIGHT-POLICY.md forbids Crucible writing there, the outbox channel only accepts candidate manifests with an exact key set, and oversight/verify.mjs auditCrucible already reads and parses AI-CONFLICTS.json from development every five minutes. The owner confirmed leaving it to that path.",
-      "Caught that the first guard fix was still insufficient: the hosted run skipped real learning again in zero seconds, because the synthetic sources were built through the same extractCandidate path as real ones and carry sourceType retrieved-web-document with a valid content hash, so no shape-based check can separate them. Verified knowledge now counts as learned only when its content hash is one the restored manifest attests or its source id is one the restored queue holds."
+      "Caught that the first guard fix was still insufficient: the hosted run skipped real learning again in zero seconds, because the synthetic sources were built through the same extractCandidate path as real ones and carry sourceType retrieved-web-document with a valid content hash, so no shape-based check can separate them. Verified knowledge now counts as learned only when its content hash is one the restored manifest attests or its source id is one the restored queue holds.",
+      "Ran the repaired hosted proof against the real corpus. It failed closed with the decisive finding: the real corpus contains no claim asserted by two or more independently identified sources, so nothing in it can be corroborated. This is the first time the system has honestly reported what it can and cannot prove."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -243,10 +244,11 @@
       "A direct pinned-host deploy-key probe resolved only Crucible-Learning-State/main at c2dfffeea3c343a6993fdc97b8147261177dac15.",
       "Quadruple-checked before recording: focused real-corpus proof 7/7 including extracted candidates from real documents reaching verified knowledge; hosted proof 2/2 against a real corpus and failing closed without one; full suite 496/496 with every audit green; and a direct CLI entrypoint run whose report shows the active verified version carrying a real document URL and content hash rather than a fixture boundary.",
       "R4-R6 are proven locally on real extracted candidates but the hosted run against the actual corpus has not happened since the change, so they are recorded pending hosted re-proof rather than passed. R7 and R8 remain fixture-based and are recorded as such.",
-      "Corpus membership is the discriminator because it is the one thing a fixture cannot forge; the pin test asserts a synthetic source with a valid hash and a plausible URL is still rejected, that a hash the manifest attests is accepted, and that with no restored corpus nothing counts."
+      "Corpus membership is the discriminator because it is the one thing a fixture cannot forge; the pin test asserts a synthetic source with a valid hash and a plausible URL is still rejected, that a hash the manifest attests is accepted, and that with no restored corpus nothing counts.",
+      "The cause is structural, not a shortage of data: corroboration is exact string equality on normalized claim text, and extraction emits verbatim sentences, so two independently written documents essentially never match. Draining R2 backlog cannot produce corroboration; more pages yield more unique sentences, not more matches."
     ],
     "remaining": [
-      "Run the hosted proof again now the guard is fixed. It is expected to stop and report which claims the real 403-source corpus corroborates, because governingDocuments/learning-scope-declarations.json is deliberately empty; declare a scope for one and run again to earn R4-R6 on real hosted evidence.",
+      "OWNER DECISION REQUIRED: define what makes two sources assert the same claim. Options recorded are semantic corroboration (same proposition, needs a deterministic defensible same-meaning test that itself requires proof), owner-paired corroboration (the owner nominates two sources and declares the claim text with the scope), or restricting the corpus to sources where identical claim text is expected such as specifications and API documentation. Until this is decided, no verified knowledge can come from scraped prose.",
       "Purge or supersede the fixture-derived knowledge versions still held in the encrypted hosted state, so the persisted store stops carrying evidence the gates should never have counted.",
       "Make R7 real: the supersession is still performed on a candidate the proof generates for itself and labels a repository test fixture.",
       "Make R8 real: the safety and deduplication cases still run against a stubbed fetch rather than live retrieval.",
