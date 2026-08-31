@@ -50,13 +50,22 @@ async function recordExperience(recorder, claim, record, { outcome, actualOutcom
   return { eligible:true, recorded:ingested.length === 1, candidateId:`experience-${sha(experience)}` };
 }
 
+function learningGuidance(recorder, claim) {
+  if (!claim.learning) return { eligible:false, activeKnowledge:[], nextAction:'run-configured-test-without-learning' };
+  if (!recorder) return { eligible:true, activeKnowledge:[], nextAction:'run-bounded-test-learning-custody-unavailable' };
+  const activeKnowledge=recorder.store.retrieve({boundary:claim.learning.claimBoundary}).map(({version,candidateId,claim:verifiedClaim,boundary,proofSha256,createdAt})=>({version,candidateId,claim:verifiedClaim,boundary,proofSha256,createdAt}));
+  return { eligible:true, activeKnowledge, nextAction:activeKnowledge.length?'use-active-knowledge-as-bounded-regression-context':'run-bounded-test-and-submit-candidate-evidence', knowledgeIsProofForCurrentRun:false, maySkipTest:false };
+}
+
 async function verifyClaims(root, config, environment = process.env) {
   const records = [];
   const learning = [];
+  const learningGuidanceRecords = [];
   const recorder = configuredExperienceRecorder(environment);
   const actorId = environment.CRUCIBLE_EXPERIENCE_ACTOR_ID || 'crucible-authenticity-gate';
   const commit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd:root, encoding:'utf8', windowsHide:true }).trim();
   for (const claim of config.authenticity.claims) {
+    learningGuidanceRecords.push(learningGuidance(recorder,claim));
     const commandSha256 = crypto.createHash('sha256').update(JSON.stringify({ run:claim.run, args:claim.args, cwd:claim.cwd })).digest('hex');
     try {
       await runCommand(root, claim, config.workload.timeoutMinutes * 60_000, ' [claim evidence]');
@@ -77,7 +86,7 @@ async function verifyClaims(root, config, environment = process.env) {
     learning.push(await recordExperience(recorder, claim, record, { outcome:'succeeded', actualOutcome:'configured evidence command completed and declared artifacts were present', resultSha256:sha(record), observedAt:record.verifiedAt, actorId }));
     console.log(`[The Crucible] Evidence: ${JSON.stringify(record)}`);
   }
-  return { claims:records.length, records, learning };
+  return { claims:records.length, records, learning, learningGuidance:learningGuidanceRecords };
 }
 
-module.exports = { verifyClaims, digestFile, configuredExperienceRecorder, recordExperience };
+module.exports = { verifyClaims, digestFile, configuredExperienceRecorder, recordExperience, learningGuidance };

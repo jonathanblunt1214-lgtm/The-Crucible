@@ -47,7 +47,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T03:44:00Z"
+    "lastActionAt": "2026-08-31T03:53:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -105,8 +105,8 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Add governed creativity, decision-making, and bounded adaptability around reasoning and testing without entering or weakening the proof path.",
-    "currentPrompt": "add these too: [2026-08-30 23:32 EDT] Yes, all three are possible and useful with the same boundary:\n\n- **Creativity:** generate multiple testable hypotheses, counterexamples, controls, and alternative experiments. It proposes; it never proves.\n- **Decision-making:** choose among governed next actions—test, narrow, seek evidence, quarantine, retry, or stop—using explicit rules and an audit trail. It cannot choose promotion directly.\n- **Adaptability:** change test plans, scope, batch size, or evidence requests after observed failures while preserving the original claim, prior attempts, and gates. It cannot weaken standards to obtain a pass.\n\nTogether they would make Crucible less rigid and better at recovering from failed approaches. They would be harmful only if novelty, preference, or adaptation were treated as evidence. I’m finishing the logical-reasoning/problem-solving integration first; these capabilities can then sit in its hypothesis-generation and next-action layers without entering the proof path.",
+    "objective": "Connect the governed testing suite bidirectionally to durable learning so exact-boundary active knowledge informs regression context and every bounded result returns as candidate evidence.",
+    "currentPrompt": "give the testing suit the ability to commuicate with the learing system to improve functionality in areas like this: **Evidence discipline:** test output, telemetry, and one-off success remain candidate evidence—not truth.\n\n1. **Critical review:** exposes ambiguity, assumptions, counterexamples, and alternative explanations before running tests.\n2. **Logical reasoning:** checks that conclusions follow from results and separates causation from correlation.\n3. **Problem decomposition:** turns a broad claim into positive, negative, control, regression, and scope tests.\n4. **Creativity:** proposes competing hypotheses and alternative experiment designs when the first approach is weak.\n5. **Decision-making:** chooses governed next actions such as test, narrow, seek evidence, quarantine, retry, or stop.\n6. **Adaptability:** revises the next test after failure while preserving the original claim, failed attempt, and mandatory gates.\n7. **Contradiction handling:** quarantines conflicting results instead of overwriting knowledge.\n8. **Independent verification:** requires a distinct verifier after controlled testing.\n9. **Cumulative memory:** stores only verified, active, versioned knowledge and supports rollback.\n10. **Deduplication:** avoids rerunning unchanged source windows and relearning identical claims.\n11. **Scope awareness:** prevents a passing test in one runtime/version from being generalized beyond it.",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
@@ -123,7 +123,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-30T20:32:00Z",
-    "lastUpdatedAt": "2026-08-31T03:44:00Z"
+    "lastUpdatedAt": "2026-08-31T03:53:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -155,6 +155,7 @@
       ,"Added deterministic adversarial critical review before experiments; it records assumptions, counterexamples, alternative explanations, ambiguity, causal wording, and missing actions while being permanently barred from satisfying proof or overriding failed tests."
       ,"Added durable non-proof logical reasoning and problem solving before and after tests: premises, competing hypotheses, decomposed obligations, controls, identity/scope checks, causal-versus-correlation checks, contradiction routing, and failure-driven next actions."
       ,"Added governed creativity, allow-listed decision-making, and persistent bounded adaptability; strategies preserve original claims and failed attempts, cap retries, retain every gate, and have no promotion action."
+      ,"Connected eligible Authenticity Gate claims bidirectionally: exact-boundary active verified knowledge is returned as non-skipping regression context before execution, while every success or failure returns as hashed non-promotable candidate evidence."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",

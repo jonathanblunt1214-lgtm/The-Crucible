@@ -24,6 +24,8 @@ Before any experiment, `CriticalClaimReviewer` records assumptions, counterexamp
 
 `CreativeDecisionAdaptationEngine` proposes bounded alternative hypotheses, counterexamples, controls, and experiment designs; selects only governed actions (`test`, `narrow`, `seek-evidence`, `quarantine`, `retry`, `stop`, or `send-to-independent-verifier`); and persists bounded retry adaptations after failure. It preserves the original claim and boundary, caps attempts, never removes a required gate, and has no promotion action. Its project-bound strategy ledger is non-evidentiary.
 
+Eligible Authenticity Gate suite claims communicate bidirectionally with durable learning. Before execution, the suite retrieves only active verified knowledge matching the exact declared boundary and exposes it as bounded regression context; retrieved knowledge cannot prove or skip the current run. After execution, both success and failure are submitted with command, runtime, commit, result, and artifact hashes as `experience-observation` candidate evidence. That evidence enters the same comparison, review, reasoning, adaptation, controlled-test, and independent-verification path and never promotes directly.
+
 GitHub repository identifiers are validated as a single `owner/repository` pair before API use. Valid GitHub repository names are supported even when the repository segment ends in a hyphen, while schemes, query strings, whitespace, traversal, and additional path segments remain blocked.
 
 ## Exactly what it does
