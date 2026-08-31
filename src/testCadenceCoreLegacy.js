@@ -13,6 +13,8 @@ const TEST_MAIN_CATEGORIES = {
     'test/ciDiagnosticOrgan.test.js',
     'test/durableLock.test.js',
     'test/soakGate.test.js',
+    'test/soakRun.test.js',
+    'test/preSoakReadiness.test.js',
     'test/engine.test.js',
     'test/ecosystem.test.js',
     'test/hostedMultiRepositoryIntegration.test.js',

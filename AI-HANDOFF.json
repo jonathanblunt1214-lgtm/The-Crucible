@@ -53,11 +53,13 @@
     "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger.",
     "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity, America/New_York timestamping, completion/interruption check-ins, and continue-until-done behavior.",
     "src/durableLock.js": "Owner-recording durable lock shared by the source queue and the durable learning store. Reclaims a lock only from a process proven dead on the same host past a bounded staleness floor, fails closed on live, foreign-host, unreadable, too-recent, and lost-race conditions, and reports every reclamation so recovery from a forced interruption is never invisible.",
-    "src/soakGate.js": "Executable R9 soak definition. One data point per verified knowledge version, candidate record, and queued source; an owner-set ceiling of 1000 observed at once with the remainder held rather than discarded; a deterministic replayable observation window; the owner-set 72-96 hour duration band; and a fail-closed hold when the current data cannot exhibit the failures R9 names. It never reports a pass - passing is what the soak itself establishes over its duration."
+    "src/soakGate.js": "Executable R9 soak definition. One data point per verified knowledge version, candidate record, and queued source; an owner-set ceiling of 1000 observed at once with the remainder held rather than discarded; a deterministic replayable observation window; the owner-set 72-96 hour duration band; and a fail-closed hold when the current data cannot exhibit the failures R9 names. It never reports a pass - passing is what the soak itself establishes over its duration.",
+    "src/soakRun.js": "Executable R9 soak run. Freezes the observed population at the start, records hourly sweeps, resets the clock for a failed data point only, recycles a data point to the collection pool after three failures and marks it trash after three more, orders recirculated sources behind new data, voids the soak on a store-level failure, restarts every surviving clock across an unobserved gap, and reaches a verdict only after the full chosen duration.",
+    "src/preSoakReadiness.js": "Read-only pre-soak gate reporter. Judges R2-R8 from durable state, reports manual-evidence-required rather than inferring a combined R8 cycle from unit coverage, and authorizes nothing."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T19:30:00Z"
+    "lastActionAt": "2026-08-31T20:00:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -138,7 +140,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-08-31T19:30:00Z"
+    "lastUpdatedAt": "2026-08-31T20:00:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -168,7 +170,9 @@
       "Store reclamations are now written into the durable audit log alongside the original transaction name, so a recovery from a forced interruption outlives the process that performed it and is inspectable later; test/durableLock.test.js proves both the fail-closed and the recovering path for the store.",
       "Applied two explicit owner decisions recorded on 2026-08-31: the R9 soak runs for a continuous duration anywhere in the 72-96 hour band with 72 as a hard floor, and the durable-lock staleness floor is set to 30 seconds with 60 seconds as a mechanically enforced ceiling.",
       "Corrected an inaccurate rationale this session had written into the lock, its tests, and this handoff: the staleness floor does not rule out a recycled process id. A recycled id reports the dead owner as alive and leaves the lock held, which is the safe direction; the floor stops a takeover resting on a single liveness check sampled at one instant.",
-      "Closed the R9 definition gap with two further owner decisions on 2026-08-31: an observation ceiling of 1000 data points at once, and an explicit hold of all data rather than a vacuous soak whenever the current population cannot exhibit the failures the gate checks. Implemented in src/soakGate.js with test/soakGate.test.js covering the ceiling, the retention invariant, deterministic window replay, the duration band, and each unobservable-failure case."
+      "Closed the R9 definition gap with two further owner decisions on 2026-08-31: an observation ceiling of 1000 data points at once, and an explicit hold of all data rather than a vacuous soak whenever the current population cannot exhibit the failures the gate checks. Implemented in src/soakGate.js with test/soakGate.test.js covering the ceiling, the retention invariant, deterministic window replay, the duration band, and each unobservable-failure case.",
+      "Built the execution half of R9 in src/soakRun.js to the owner spec of 2026-08-31: per-data-point clock reset on failure, three failures to recycle the source into the collection pool, three further failures to trash the data point, recirculated sources ordered behind new data, and hourly sweeps.",
+      "Built src/preSoakReadiness.js and the read-only npm run learning:pre-soak command so R2-R8 state is reported from a real store rather than tracked by hand."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -188,7 +192,9 @@
       "The staleness bounds are mechanical rather than documentary: staleAfterMs is rejected when zero, negative, fractional, or above the 60000ms owner ceiling, at both acquire and inspect, and a rejected bound acquires nothing.",
       "The live SIGKILL forced-interruption cycle was re-run at the 30-second floor and behaved identically to the 60-second run: refused inside the floor, recovered after it, completed the source with attempts 2 and two unique candidates, released the lock, and stayed idempotent.",
       "A repository-wide search for soak implementation returned no code references: R9 is prose only, with no monitor, no sampling rule, and no automated check for the lost, duplicated, cross-project, corrupt, or unauthorized transitions it names. Last recorded live population figures are historical and from the operator host only: 288 of 393 forced web sources still pending, seven PDFs at page 11, 105 web-source extractions, and zero verified knowledge versions.",
-      "Run against the repository current recorded state, the soak gate reports held with three named blockers: R2-R8 not simultaneously green, zero verified knowledge versions, and no active version. It reported 288 data points, all observed and none held, and soakPassed false. Holding is proven to be a wait rather than a discard: observed plus held equals the full population at 0, 11, 1703, and 2400 data points."
+      "Run against the repository current recorded state, the soak gate reports held with three named blockers: R2-R8 not simultaneously green, zero verified knowledge versions, and no active version. It reported 288 data points, all observed and none held, and soakPassed false. Holding is proven to be a wait rather than a discard: observed plus held equals the full population at 0, 11, 1703, and 2400 data points.",
+      "Two readings in src/soakRun.js are the agent's, not the owner's, and are flagged in the module for confirmation: a store-level failure voids the soak rather than entering the three-strike cycle because no data point owns it, and a sweep gap beyond the hourly interval restarts every surviving clock because continuous observation cannot be claimed over unobserved hours.",
+      "Run against the repository last-recorded state, the pre-soak reporter shows zero of seven gates satisfied: R2-R7 pending and R8 manual-evidence-required, with the soak held. The instrumentation built this session measures and executes R9; it satisfies no gate."
     ],
     "remaining": [
       "Run the live discovery-to-candidate cycle (R3, R4) on a host that holds the operator durable learning store and can perform governed outbound retrieval.",
