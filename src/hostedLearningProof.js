@@ -9,6 +9,7 @@ const { runLearningCycle } = require('./learningCycle');
 const { normalizedClaimSha256 } = require('./claimExtractionWorker');
 const { parseGoogleSearchResults, RetrievalAuditStore, SafeInformationRetriever } = require('./safeInformationRetrieval');
 const { preSoakReadiness } = require('./preSoakReadiness');
+const { learnFromRealCorpus } = require('./realCorpusLearning');
 
 const CLAIM = 'The map method returns a new array and does not modify the original array.';
 const BOUNDARY = 'Node.js ordinary dense arrays of numbers';
@@ -57,7 +58,7 @@ async function retrievalSafety(root) {
   await assert.rejects(()=>make('safe').retrieve('https://unapproved.example.org/evidence'),/not owner supplied/);
   return ['kill-switch','prompt-injection','executable-content','blocked-source'];
 }
-async function runHostedProof({ root, encryptedFile, reportFile, key, repository, ref, runId, now=()=>new Date().toISOString() }) {
+async function runHostedProof({ root, encryptedFile, reportFile, key, repository, ref, runId, bundleRoot, scopeDeclarationFile, now=()=>new Date().toISOString() }) {
   if (!/^[-_A-Za-z0-9+/=]{32,}$/.test(key||'')) throw new Error('CRUCIBLE_HOSTED_STORE_KEY is missing or invalid.');
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository||'')) throw new Error('GitHub repository identity is invalid.');
   if (ref!=='refs/heads/development') throw new Error('Hosted learning proof is development-only.');
@@ -65,9 +66,23 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   const projectId=`github:${repository}`, subject=`repo:${repository}:ref:${ref}`, binding={projectId,repository,subject};
   const storeRoot=path.join(root,'store'); fs.mkdirSync(storeRoot,{recursive:true});
   const store=new DurableScientificLearningStore({root:storeRoot,projectId}); const restored=restore(store,encryptedFile,masterKey,binding); const at=now(); const {experiment,verifier}=harnesses(at);
+  // R4-R6 are learned from the real restored corpus. There is deliberately no synthetic
+  // fallback: this previously built two "sources" in code out of the claim string itself,
+  // which proved the pipeline ran and proved nothing about learning. If the real corpus
+  // cannot supply a corroborated, owner-scoped claim, this reports unsatisfied and stops.
+  let realLearning = null;
   if (!store.read().knowledgeVersions.length) {
-    const sources=[{sourceId:'https://proof.example.edu/arrays',url:'https://proof.example.edu/arrays',content:`Array reference. ${CLAIM}`,retrievedAt:at},{sourceId:'https://proof.example.org/arrays',url:'https://proof.example.org/arrays',content:`Independent array guide. ${CLAIM}`,retrievedAt:at}];
-    await runLearningCycle({store,root,projectId,sources,claim:CLAIM,claimBoundary:BOUNDARY,generalizationBoundary:GENERALIZATION,experiment,verifier,now:()=>at});
+    if (!bundleRoot) throw new Error('CRUCIBLE_HOSTED_BUNDLE_ROOT is required: the hosted proof learns from the restored real corpus and has no fixture fallback.');
+    realLearning = await learnFromRealCorpus({ bundleRoot, learningRoot:storeRoot, projectId, scopeDeclarationFile, harnessesFor:()=>({experiment,verifier}), now:()=>at });
+    if (!realLearning.learned) {
+      const stopped = { schemaVersion:1, projectId, repository, ref, runId:String(runId), completedAt:at, restoredEncryptedState:restored,
+        learnedFromRealCorpus:false, reason:realLearning.reason, corpus:realLearning.corpus,
+        gates:[{id:'R4',state:'unsatisfied'},{id:'R5',state:'unsatisfied'},{id:'R6',state:'unsatisfied'},{id:'R7',state:'unsatisfied'},{id:'R8',state:'unsatisfied'}],
+        authorizesPromotion:false };
+      fs.mkdirSync(path.dirname(reportFile),{recursive:true});
+      fs.writeFileSync(reportFile,`${JSON.stringify(stopped,null,2)}\n`,{mode:0o600});
+      throw new Error(`Hosted learning proof stopped: ${realLearning.reason}`);
+    }
   }
   let payload=store.read(); const first=payload.knowledgeVersions[0];
   if (!payload.knowledgeVersions.some((item)=>item.previousVersion===first.version)) {
@@ -90,6 +105,6 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   fs.mkdirSync(path.dirname(reportFile),{recursive:true}); fs.writeFileSync(reportFile,`${JSON.stringify(report,null,2)}\n`,{mode:0o600}); return report;
 }
 
-if(require.main===module){runHostedProof({root:process.env.RUNNER_TEMP||process.cwd(),encryptedFile:process.env.CRUCIBLE_HOSTED_ENCRYPTED_STATE||'.hosted-learning-cache/store.envelope.json',reportFile:process.env.CRUCIBLE_HOSTED_PROOF_REPORT||'hosted-learning-proof/report.json',key:process.env.CRUCIBLE_HOSTED_STORE_KEY,repository:process.env.GITHUB_REPOSITORY,ref:process.env.GITHUB_REF,runId:process.env.GITHUB_RUN_ID||crypto.randomUUID()}).then((report)=>console.log(`[The Crucible] GitHub-hosted durable learning proof passed R4-R8 at revision ${report.revision}.`)).catch((error)=>{console.error(`[The Crucible] Hosted learning proof failed closed: ${error.message}`);process.exitCode=1;});}
+if(require.main===module){runHostedProof({root:process.env.RUNNER_TEMP||process.cwd(),encryptedFile:process.env.CRUCIBLE_HOSTED_ENCRYPTED_STATE||'.hosted-learning-cache/store.envelope.json',reportFile:process.env.CRUCIBLE_HOSTED_PROOF_REPORT||'hosted-learning-proof/report.json',key:process.env.CRUCIBLE_HOSTED_STORE_KEY,repository:process.env.GITHUB_REPOSITORY,ref:process.env.GITHUB_REF,runId:process.env.GITHUB_RUN_ID,bundleRoot:process.env.CRUCIBLE_HOSTED_BUNDLE_ROOT,scopeDeclarationFile:process.env.CRUCIBLE_HOSTED_SCOPE_DECLARATIONS||crypto.randomUUID()}).then((report)=>console.log(`[The Crucible] GitHub-hosted durable learning proof passed R4-R8 at revision ${report.revision}.`)).catch((error)=>{console.error(`[The Crucible] Hosted learning proof failed closed: ${error.message}`);process.exitCode=1;});}
 
 module.exports={runHostedProof};

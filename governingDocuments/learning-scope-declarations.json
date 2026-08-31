@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "$comment": "Owner-declared scopes for claims the real corpus corroborates. A scope says what a claim was actually tested within. It is a property of the claim, not of the document that asserted it, which is why two independent sources can share one and corroborate each other. It is never inferred: extraction has no way to know a sentence's tested boundary, and guessing one would be the same self-certification this replaces.",
+  "$howToUse": "Run the Learning cycle proof once with this list empty. It stops without promoting anything and reports every claim the real corpus asserts through two or more independently identified sources. Pick one, add a declaration for it below with an experiment that genuinely tests it and a verifier with a distinct identity, and run again. The claim text must match a corroborated claim exactly, ignoring case and surrounding whitespace.",
+  "$boundaries": "A declaration authorizes evaluation, never promotion. The controlled pipeline still has to pass every gate on its own, the critical reviewer still rejects ambiguous wording before any testing, and a failed control still blocks the claim regardless of what is declared here.",
+  "declarations": []
+}
