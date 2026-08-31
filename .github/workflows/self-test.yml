@@ -36,6 +36,9 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: ${{ matrix.node }}
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
       - name: Lint GitHub Actions workflow permissions
         env:
           CRUCIBLE_WORKFLOW_LINT_DIRS: templates
