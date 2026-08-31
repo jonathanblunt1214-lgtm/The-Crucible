@@ -107,14 +107,31 @@ function verifyRestored({ root, repository, ref, reportFile }) {
   fs.mkdirSync(path.dirname(reportFile),{recursive:true}); fs.writeFileSync(reportFile,`${JSON.stringify(report,null,2)}\n`,{mode:0o600}); return report;
 }
 
+function splitEncrypted({ input, outputRoot, maximumBytes = 80 * 1024 * 1024 }) {
+  if (!Number.isSafeInteger(maximumBytes) || maximumBytes < 1024 || maximumBytes >= 100 * 1024 * 1024) throw new Error('Encrypted chunk size must stay between 1 KiB and less than 100 MiB.');
+  fs.mkdirSync(outputRoot,{recursive:true}); const fd=fs.openSync(input,'r'); const chunks=[]; let offset=0,index=0;
+  try { while(offset<fs.statSync(input).size){const length=Math.min(maximumBytes,fs.statSync(input).size-offset);const buffer=Buffer.allocUnsafe(length);fs.readSync(fd,buffer,0,length,offset);const name=`source-bundle.part-${String(index).padStart(4,'0')}.enc`;const file=path.join(outputRoot,name);fs.writeFileSync(file,buffer,{flag:'wx',mode:0o600});chunks.push({name,bytes:length,sha256:sha256File(file)});offset+=length;index+=1;} }
+  finally{fs.closeSync(fd);}
+  const manifest={schemaVersion:1,format:MAGIC,encryptedSha256:sha256File(input),encryptedBytes:fs.statSync(input).size,chunks};fs.writeFileSync(path.join(outputRoot,'encrypted-chunks.json'),`${JSON.stringify(manifest,null,2)}\n`,{flag:'wx',mode:0o600});return manifest;
+}
+
+function joinEncrypted({ inputRoot, output }) {
+  const manifest=JSON.parse(fs.readFileSync(path.join(inputRoot,'encrypted-chunks.json'),'utf8'));const handle=fs.openSync(output,'wx',0o600);
+  try{for(const chunk of manifest.chunks){const file=path.join(inputRoot,chunk.name);if(fs.statSync(file).size!==chunk.bytes||sha256File(file)!==chunk.sha256)throw new Error(`Encrypted chunk failed custody verification: ${chunk.name}`);fs.writeSync(handle,fs.readFileSync(file));}}
+  finally{fs.closeSync(handle);}
+  if(fs.statSync(output).size!==manifest.encryptedBytes||sha256File(output)!==manifest.encryptedSha256)throw new Error('Reassembled encrypted bundle does not match its manifest.');return manifest;
+}
+
 async function main() {
   const [command,...args]=process.argv.slice(2); const value=(name)=>{const i=args.indexOf(name);if(i<0||!args[i+1])throw new Error(`${name} is required.`);return args[i+1];};
   if(command==='stage') return console.log(JSON.stringify(stage({sourceRoot:value('--source-root'),learningFile:value('--learning-file'),stagingRoot:value('--staging-root'),repository:value('--repository'),ref:value('--ref')})));
   if(command==='encrypt') return console.log(JSON.stringify(await encrypt({input:value('--input'),output:value('--output'),projectId:value('--project-id'),repository:value('--repository'),ref:value('--ref')})));
   if(command==='decrypt') return console.log(JSON.stringify(await decrypt({input:value('--input'),output:value('--output'),repository:value('--repository'),ref:value('--ref')})));
   if(command==='verify') return console.log(JSON.stringify(verifyRestored({root:value('--root'),repository:value('--repository'),ref:value('--ref'),reportFile:value('--report')})));
-  throw new Error('Usage: hostedSourceBundle.js stage|encrypt|decrypt|verify ...');
+  if(command==='split') return console.log(JSON.stringify(splitEncrypted({input:value('--input'),outputRoot:value('--output-root')})));
+  if(command==='join') return console.log(JSON.stringify(joinEncrypted({inputRoot:value('--input-root'),output:value('--output')})));
+  throw new Error('Usage: hostedSourceBundle.js stage|encrypt|decrypt|verify|split|join ...');
 }
 
 if(require.main===module)main().catch((error)=>{console.error(`[The Crucible] Hosted source bundle failed: ${error.message}`);process.exitCode=1;});
-module.exports={MAGIC,sha256File,stage,encrypt,decrypt,verifyRestored};
+module.exports={MAGIC,sha256File,stage,encrypt,decrypt,verifyRestored,splitEncrypted,joinEncrypted};

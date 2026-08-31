@@ -65,7 +65,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T22:40:00Z"
+    "lastActionAt": "2026-08-31T23:16:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -228,6 +228,9 @@
       ,"Staged the live owner queue without modifying it, removed operator-local originalPath values, rebound source custody to content-addressed relative paths, and verified every copied source against its declared SHA-256. The sanitized bundle contains 403 unique source files plus the 4.95 MiB durable candidate store."
       ,"Compressed the 320.84 MiB sanitized snapshot to 221.69 MiB, encrypted it with AES-256-GCM under exact project/repository/development-ref authenticated data, stored only the fresh key in GitHub Secrets, and uploaded only ciphertext as draft asset 538620854."
       ,"Full-system proof passes 488/488; configuration, generated documentation, workflow permissions, clutter, privacy, security, AI-conflict, governance, design-brief, and whitespace checks pass across 208 tracked files and 17 workflows."
+      ,"Hosted restore run 33448693651 failed closed before download with HTTP 403 because the read-only Actions token cannot read a private draft asset. Public publication was rejected as unsafe. The bounded repair uses a masked bootstrap secret for one download, copies only ciphertext into private Actions cache, and removes the bootstrap secret after proof."
+      ,"The temporary bootstrap-token proposal was superseded before use. Private Crucible-Learning-State now holds only three authenticated ciphertext chunks at commit c2dfffe; deploy key 161888116 is confined to that repository, and the runner pins GitHub's published Ed25519 host key before clone."
+      ,"A direct pinned-host deploy-key probe resolved only Crucible-Learning-State/main at c2dfffeea3c343a6993fdc97b8147261177dac15."
     ],
     "remaining": [
       "Do not serialize R3 before R4. R4 accepts a source \"from search or owner ingest\", so it is not blocked by R3: one owner ingest through retrieval, provenance hashing, bounded extraction, deduplication, and candidate custody satisfies R4 and unblocks R5, and R6 and R7 behind it. R3 is its own independent gate needing one real bounded discovery run with its query audit, and R2's live drain and R8's combined cycle are independent of both. The real chain is R4 -> R5 -> {R6, R7}, with R5 the linchpin.",
