@@ -47,7 +47,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T04:18:00Z"
+    "lastActionAt": "2026-08-31T04:31:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -123,7 +123,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-30T20:32:00Z",
-    "lastUpdatedAt": "2026-08-31T04:18:00Z"
+    "lastUpdatedAt": "2026-08-31T04:31:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -158,6 +158,7 @@
       ,"Connected eligible Authenticity Gate claims bidirectionally: exact-boundary active verified knowledge is returned as non-skipping regression context before execution, while every success or failure returns as hashed non-promotable candidate evidence."
       ,"Implemented an integrity-checked executive learning orchestrator for attention, planning, routing, coordination, exact-boundary memory, feedback, inhibition, and metacognition; it cannot verify or promote and delegates truth changes to the scientific state machine."
       ,"Implemented a project-bound ecosystem coordinator that connects Crucible's major systems through observe, prioritize, plan, act, verify, learn, adapt, and report; it exposes shared health, rejects cross-project signals, and blocks component self-certification."
+      ,"Added the mandatory production-workflow actuator contract: distinct detection, planning, execution, independent-verification, and rollback identities; exact project/boundary/base binding; reversible planning; change and rollback custody; automatic rollback on failed verification; and candidate-only learning feedback."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",
@@ -172,9 +173,10 @@
       ,"Extraction cap proof passes 7/7 and scientific-learning regression proof passes 15/15; Learning-Worker adaptive state and encrypted-bundle proof passes 6/6."
       ,"Content comparison, controlled evaluation, retrieval, and adversarial-review proof passes 20/20; a favorable review is proven unable to override a failed negative control or impersonate independent verification."
       ,"Ecosystem and cadence proof passes 48/48 after explicit categorization; final complete governed proof passes 391/391 and configuration, documentation, workflow, security, privacy, clutter, conflict-governance, governance, design-brief, core-reference, authenticity, and whitespace checks pass."
+      ,"Production actuator positive, rollback, identity-separation, and boundary proof passes; final complete governed proof passes 393/393 with validation, documentation, security, privacy, clutter, and whitespace checks passing."
     ],
     "remaining": [
-      "Complete full governed verification and exact-tip hosted CI, then connect concrete subsystem handlers to the new ecosystem lifecycle as each bounded production workflow is proven; add trusted hash-bound production harness plans for remaining languages, connect the hosted evaluator to real matching candidate pairs, and demonstrate revalidation supersession plus rollback. Do not promote The Crucible learning scope to release or main."
+      "Implement concrete language/tool-specific detector, planner, executor, verifier, and rollback handlers on the production-workflow actuator contract as each bounded coding/security workflow is proven; add trusted hash-bound production harness plans for remaining languages, connect the hosted evaluator to real matching candidate pairs, and demonstrate revalidation supersession plus rollback. Do not promote The Crucible learning scope to release or main."
     ]
   }
 }

@@ -30,6 +30,8 @@ Eligible Authenticity Gate suite claims communicate bidirectionally with durable
 
 `EcosystemCoordinator` gives Crucible's major systems one governed organism lifecycle: `observe -> prioritize -> plan -> act -> verify -> learn -> adapt -> report`. Its project-bound signal envelope connects retrieval, extraction, both orchestrators, the suite, scientific memory, critical review, reasoning, adaptive strategy, security, quarantine, repair, and reporting. Missing components appear in health state; cross-project signals and component self-certification fail closed. The coordinator is connective tissue, not a new proof authority: only the scientific state machine and distinct experiment/verifier evidence can change active knowledge.
 
+Production coding and security actions use `ProductionWorkflowActuator`. A handler is admitted only when detection, planning, execution, independent verification, and rollback have distinct identities. Every request is bound to one project, file/change boundary, and base hash; every plan must declare a reversible change and rollback plan; every applied change must return content and rollback custody. A failed or boundary-mismatched verification invokes rollback. The resulting feedback remains non-promotable learning evidence even when the coding change is verified.
+
 GitHub repository identifiers are validated as a single `owner/repository` pair before API use. Valid GitHub repository names are supported even when the repository segment ends in a hyphen, while schemes, query strings, whitespace, traversal, and additional path segments remain blocked.
 
 ## Exactly what it does
