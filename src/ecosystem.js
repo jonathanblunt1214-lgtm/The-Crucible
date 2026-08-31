@@ -6,6 +6,7 @@ const CORE_COMPONENTS=Object.freeze([
   {id:'test-suite',role:'controlled-action-and-sensing',module:'authenticity.js',stages:['act','verify','learn']},
   {id:'code-security-organism',role:'code-assistive-security-reflex',module:'codeSecurityOrganism.js',stages:['observe','plan','act','verify','learn','adapt','report']},
   {id:'test-orchestrator',role:'suite-executive-control',module:'testCadence.js',stages:['prioritize','plan','act','report']},
+  {id:'ci-diagnostics',role:'hosted-failure-sensing-and-classification',module:'ciDiagnosticOrgan.js',stages:['observe','prioritize','report']},
   {id:'learning-orchestrator',role:'learning-executive-control',module:'learningOrchestrator.js',stages:['prioritize','plan','learn','adapt','report']},
   {id:'scientific-memory',role:'verified-memory',module:'scientificLearning.js',stages:['verify','learn']},
   {id:'critical-review',role:'adversarial-review',module:'criticalClaimReview.js',stages:['prioritize','plan']},

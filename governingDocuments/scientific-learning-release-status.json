@@ -22,7 +22,7 @@
     "R10": "pending",
     "R11": "pending"
   },
-  "blockingReason": "The extraction worker is operational and has reduced the forced web backlog from 393 to 288 while advancing all seven PDFs through their first ten-page window; restart completion and the remaining live-cycle gates are not yet proven.",
+  "blockingReason": "The extraction worker is operational and has reduced the forced web backlog from 393 to 288 while advancing all seven PDFs through their first ten-page window. Explicit forced-interruption recovery proof is still missing. The remaining live-cycle gates are not yet proven.",
   "history": [
     {
       "recordedAt": "2026-08-30T20:33:00Z",

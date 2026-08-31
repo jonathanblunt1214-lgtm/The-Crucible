@@ -68,9 +68,11 @@ The reusable workflow runs the following named steps, in this exact order. This 
 17. Check for overlapping open pull requests.
 18. Run verification and bounded workload.
 19. Perform weekly Git integrity and safe repacking.
-20. Create or update the Crucible failure issue.
-21. Save quarantined flagged files.
-22. Save Crucible report with this workflow run.
+20. Diagnose opted-in project failure without repair or proof authority.
+21. Preserve opted-in project diagnosis.
+22. Create or update the Crucible failure issue.
+23. Save quarantined flagged files.
+24. Save Crucible report with this workflow run.
 <!-- CRUCIBLE_WORKFLOW_STEPS:END -->
 
 A few of these only run conditionally: step 2 only on a pull request with `dependency_review: true` set; step 12 only when the caller sets `malware_scan: true` (see "Malware scanning" below); step 16 only on pull requests; step 18 only when the caller sets `weekly_maintenance: true` (the weekly schedule); steps 19 and 20 only if an earlier step failed. See "Severing" below for step 3, "Pinned commit integrity" for step 4, "Advanced read-only hardening" for step 7, "Language-aware pre-check report" for step 9, "Malware scanning" for step 12's quarantine behavior, and "Saved reports" for steps 1, 19, 20, and 21. Step 17 (`cli.js run`) re-runs steps 3, 4, and 6-15 a second time internally before starting the configured workload - every one of those gates is read-only and idempotent, so this repeats work without changing the result.

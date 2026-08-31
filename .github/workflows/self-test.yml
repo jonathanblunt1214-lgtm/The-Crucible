@@ -22,7 +22,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-2022, macos-latest]
         node: [20, 22, 24]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
@@ -38,7 +38,8 @@ jobs:
           node-version: ${{ matrix.node }}
           cache: npm
       - name: Install locked dependencies
-        run: npm ci
+        id: install
+        run: node src/ciDiagnosticOrgan.js capture-npm-ci
       - name: Lint GitHub Actions workflow permissions
         env:
           CRUCIBLE_WORKFLOW_LINT_DIRS: templates
@@ -91,3 +92,18 @@ jobs:
         if: failure()
         continue-on-error: true
         run: node src/testCadence.js on-error self-test-failure
+      - name: Diagnose the exact hosted failure without dependencies or repair authority
+        if: failure()
+        env:
+          CRUCIBLE_PROJECT_ID: github:${{ github.repository }}
+          CRUCIBLE_CI_JOB: The Crucible (${{ matrix.os }}, Node ${{ matrix.node }})
+          CRUCIBLE_FAILED_STEP: ${{ steps.install.outcome == 'failure' && 'Install locked dependencies' || 'Post-install Self-Test step' }}
+        run: node src/ciDiagnosticOrgan.js diagnose-local "${{ runner.temp }}/crucible-npm-ci.log"
+      - name: Preserve the typed CI diagnosis
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: crucible-ci-diagnosis-${{ matrix.os }}-${{ matrix.node }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-diagnostic-report.json
+          if-no-files-found: error
+          retention-days: 90
