@@ -1,0 +1,56 @@
+name: GitHub-hosted durable learning proof
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hosted-learning-proof-development
+  cancel-in-progress: false
+
+jobs:
+  prove:
+    name: Prove R4-R8 on encrypted durable state
+    if: github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+      - name: Restore encrypted project-bound learning state
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .hosted-learning-cache
+          key: hosted-learning-${{ github.repository_id }}-${{ github.run_id }}
+          restore-keys: |
+            hosted-learning-${{ github.repository_id }}-
+      - name: Install locked dependencies
+        run: npm ci
+      - name: Run project-bound durable R4-R8 proof
+        env:
+          CRUCIBLE_HOSTED_STORE_KEY: ${{ secrets.CRUCIBLE_HOSTED_STORE_KEY }}
+          CRUCIBLE_HOSTED_ENCRYPTED_STATE: .hosted-learning-cache/store.envelope.json
+          CRUCIBLE_HOSTED_PROOF_REPORT: hosted-learning-proof/report.json
+        run: node src/hostedLearningProof.js
+      - name: Save encrypted project-bound learning state
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .hosted-learning-cache
+          key: hosted-learning-${{ github.repository_id }}-${{ github.run_id }}
+      - name: Retain bounded proof and ciphertext
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hosted-learning-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            hosted-learning-proof/report.json
+            .hosted-learning-cache/store.envelope.json
+          if-no-files-found: error
+          retention-days: 90

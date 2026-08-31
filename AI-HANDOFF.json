@@ -25,6 +25,8 @@
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
     "src/ciDiagnosticOrgan.js": "Dependency-free project-bound hosted CI failure capture, typed diagnosis, organism-health inhibition, and non-proof evidence reporting.",
+    "src/hostedLearningProof.js": "GitHub-hosted, project-bound R4-R8 proof runner with encrypted restart-safe durable-state transport and no release authority.",
+    ".github/workflows/hosted-learning-proof.yml": "Development-only hourly/manual GitHub host for encrypted durable R4-R8 proof and retained bounded evidence.",
     "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
     "governingDocuments/scientific-learning-policy.md": "Permanent autonomous scientific-learning invariants, promotion boundary, project isolation, contradiction handling, rollback, and weekly transport policy.",
     "governingDocuments/scientific-learning-release-plan.md": "Gate-driven rolling release plan for scientific learning; dates forecast readiness but never authorize promotion or weaken proof.",
@@ -61,7 +63,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T22:00:00Z"
+    "lastActionAt": "2026-08-31T21:55:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -123,26 +125,26 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "Claude",
-    "objective": "Execute the outstanding forced-interruption recovery proof, repair whatever it exposes without weakening any gate, and keep the exact development tip green on GitHub runners.",
-    "currentPrompt": "he owner now explicitly says to fix all listed blockers. Finish your current Windows/Node 20 CI repair and diagnostic-organ work first, preserving the exact forced-interruption blocker text. Then continue every safely executable scientific-learning release gate: forced-interruption recovery proof; first live discovery-to-candidate cycle; distinct independent verification and first safe test-claim promotion; verified-only retrieval; rollback or supersession; combined live safety/dedup proof covering kill switch, duplicate URL/content/claim, prompt injection, executable content, blocked sources, and contradiction quarantine; then begin the mandatory 72-hour soak only after R2-R8 genuinely pass. Keep exact-tip hosted CI green. Never weaken gates or self-authorize R11, and never touch main. Update status, AI-HANDOFF, and DEVLOG atomically with durable evidence.",
+    "agent": "Codex",
+    "objective": "Move the real project-bound durable learning proof to GitHub, prove R4-R8 there with restart-safe encrypted state, and retain exact hosted evidence without touching main.",
+    "currentPrompt": "do this Still needing your host: everything above proves the machinery works. Satisfying the gates for your project still means running these paths against your real durable store. on github",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "Claude",
-      "purpose": "Execute the forced-interruption recovery gate and repair the durable-lock defect it exposed.",
-      "selectionReason": "The remaining work is repository-focused, executable through the current development checkout and hosted GitHub evidence, and unchanged in shape from the mode already recorded; the agent changed but the task needs did not, so the recorded mode is preserved rather than re-selected.",
+      "agent": "Codex",
+      "purpose": "Implement and prove GitHub-hosted encrypted durable learning under the repository's exact identity.",
+      "selectionReason": "The owner explicitly required no Work mode; the task remains repository-focused and runs through GitHub Actions, so regular/default is preserved until completion.",
       "distinction": "Execution mode is separate from agent identity and workflow; diagnosis remains evidence processing, not proof or unattended repair authority."
     },
     "steps": [
-      "Confirm the previous exact tip is hosted-green before starting new work.",
-      "Execute a real forced-interruption cycle against a project-bound store and queue, and report what it actually shows rather than what it should show.",
-      "Repair the exposed defect so an interrupted run can resume, without ever letting a live, foreign-host, or unverifiable owner lose its lock.",
-      "Make the whole cycle permanent in the governed every-push cadence, update handoff, DEVLOG, and release status atomically, and preserve the pruned DEVLOG snapshot on Archive.",
-      "Push only development and verify the exact hosted tip; R3-R8 remain for a host holding the operator durable store, and R11 remains owner-only."
+      "Restore prior project state from authenticated ciphertext in GitHub's cache, or initialize an empty same-project store on the first run.",
+      "Run real R4-R6 controlled learning, R7 supersession and rollback, and all eight combined R8 safety behaviours under github repository/ref/run custody.",
+      "Re-encrypt the durable state, retain ciphertext plus a bounded non-sensitive report, and prove restart restoration on a later GitHub run.",
+      "Update handoff and DEVLOG atomically, push only development, and require exact-tip hosted Self-Test plus the hosted learning proof.",
+      "Never self-authorize R11 or touch main; begin R9 only when the real current R2-R8 gate report is simultaneously green."
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-08-31T22:00:00Z"
+    "lastUpdatedAt": "2026-08-31T21:36:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -185,6 +187,8 @@
       "Joined R4 to R5 for the first time and ran a real cycle end to end: two independent documents, bounded extraction binding each claim to its own source content, controlled execution with real negative and regression controls, a distinct independent verifier, promotion to a verified knowledge version, and retrieval of that version inside its tested boundary. The store goes from zero verified knowledge versions to one.",
       "Joining the two halves exposed why R5 had never happened with real data: routeThreeWayComparison decides shared scope by comparing claimBoundary, but the extraction worker builds that string from the source document, so two independent sources never match and always route to bounded-scope-or-version-update rather than new-claim-evaluation. Extracted candidate pairs are therefore structurally unpromotable. The finding is pinned by a test rather than patched over.",
       "The critical reviewer rejected the first claim wording for containing the pronoun it, an unmeasurable referent. The claim was rewritten rather than the reviewer weakened."
+      ,"Built src/hostedLearningProof.js to run under exact github:<repository> and development-ref binding, restore only authenticated AES-256-GCM ciphertext, execute R4-R8 against the durable store, and emit a bounded report with no promotion authority."
+      ,"Added an official-action-only GitHub workflow with read-only repository permissions, encrypted cache continuity, a 20-minute bound, hourly/manual execution, and 90-day retained ciphertext plus proof report."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -212,11 +216,14 @@
       "Governance authority is asserted mechanically, not documented: every adjustment emitted across the exhausted input space is checked against the closed allow-list, the allow-list itself is checked to contain only flow controls, and the forbidden actions are checked never to appear in it.",
       "The cycle is a real run, not a fixture: the experiment and the independent verifier each execute actual JavaScript in a child process, including an identity-reference negative control and an empty-input control, and a claim is refused outright when its own document does not contain it.",
       "Ubuntu native semantic analysis is hosted-green after the Java compile, Roslyn null-key, and Roslyn sink-name repairs, and the Java adapter now passes on Windows too. Only the Windows Roslyn build remains, failing inside NuGet.targets rather than in analyzer code."
+      ,"Local restart proof runs the hosted path twice: the first run creates two verified versions, supersedes and rolls back the first, and exercises all eight R8 behaviours; the second process restores ciphertext, preserves project binding, and advances the durable revision without plaintext persistence."
+      ,"After npm ci installed the clean worktree's locked dependencies without changing the lockfile, full-system proof passes 486/486; configuration, generated documentation, workflow permissions, clutter, privacy, security, AI-conflict, governance, and design-brief audits all pass across 205 tracked files and 16 workflows."
+      ,"The initial missing-TypeScript environment failure was retained as KB-local-eb818297c4 and then checked off only by the governed verifier after its exact 486-test set passed; it was not deleted or manually marked resolved."
+      ,"The first push was stopped locally when the pre-push hook inherited Git's live repository and index environment, redirecting temporary-repository tests into the repository being pushed. The hook now unsets only git rev-parse --local-env-vars before verification, with a permanent workflow-contract assertion; the gate was repaired rather than bypassed."
     ],
     "remaining": [
       "Do not serialize R3 before R4. R4 accepts a source \"from search or owner ingest\", so it is not blocked by R3: one owner ingest through retrieval, provenance hashing, bounded extraction, deduplication, and candidate custody satisfies R4 and unblocks R5, and R6 and R7 behind it. R3 is its own independent gate needing one real bounded discovery run with its query audit, and R2's live drain and R8's combined cycle are independent of both. The real chain is R4 -> R5 -> {R6, R7}, with R5 the linchpin.",
-      "Complete distinct independent verification and the first safe test-claim promotion (R5), verified-only retrieval (R6), and rollback or supersession (R7) against real candidate evidence.",
-      "Execute the combined live safety and deduplication proof (R8) covering kill switch, duplicate URL, duplicate content hash, duplicate bounded claim, prompt injection, executable content, blocked sources, and contradiction quarantine.",
+      "Push and manually dispatch the GitHub-hosted proof, then dispatch it a second time to prove restoration from the first run's encrypted cache; only those hosted reports may change R7/R8 gate status.",
       "Obtain current live extraction/runtime evidence before declaring the remaining backlog drained; candidate extraction must never imply verified-knowledge promotion. This is the part of R2 that is still open: the restart proof passed, the live backlog drain is unverified from any host but the operator one.",
       "Begin the soak only after R2-R8 are simultaneously green, running it for a duration chosen from evidence inside the owner-set 72-96 hour band before the clock starts, then freeze the exact SHA for R10; R11 remains the owner explicit authorization and can never be self-granted. 72 hours is a hard floor, never a default, and forecasts use 96.",
       "Verify the exact hosted tip of this commit on GitHub runners before treating this unit of work as complete.",
