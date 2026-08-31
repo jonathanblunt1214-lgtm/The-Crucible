@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
   "branch": "development",
-  "developmentSha": "492c8fe1d5944b41088a839e5aefdfb8c02aef19",
-  "updatedAt": "2026-08-31T19:30:00Z",
+  "developmentSha": "5ed69f6dcc319f1050b45cfcf84d2108863d5f9a",
+  "updatedAt": "2026-08-31T22:09:00Z",
   "rollingTarget": "2026-09-14T16:00:00Z",
   "timezone": "America/New_York",
   "confidence": "medium",
@@ -13,16 +13,16 @@
     "R1": "passed",
     "R2": "restart-proof-passed; live backlog drain unverified from this host",
     "R3": "pending",
-    "R4": "pending",
-    "R5": "pending",
-    "R6": "pending",
-    "R7": "pending",
-    "R8": "pending-live-proof",
+    "R4": "passed-hosted-project-bound-proof",
+    "R5": "passed-hosted-independent-verification",
+    "R6": "passed-hosted-verified-only-scoped-retrieval",
+    "R7": "passed-hosted-rollback-and-supersession",
+    "R8": "passed-hosted-combined-live-safety-cycle",
     "R9": "held; soak band 72-96 continuous hours, observation ceiling 1000 data points, and the soak does not start while the data cannot exhibit the failures it checks",
     "R10": "pending",
     "R11": "pending"
   },
-  "blockingReason": "The forced-interruption recovery proof is complete: a real worker was SIGKILLed mid-extraction and, after the durable-lock repair, recovered, resumed, and completed the source with attempts incremented and no lost or duplicated candidates. Executing that proof exposed and closed a real defect - both durable locks were bare create-exclusive files with no recovery, so an interrupted run blocked every later run until a human deleted the lock. R2 additionally depends on live backlog evidence that only the host holding the operator durable store can produce. R9 runs for a continuous duration anywhere in 72 to 96 hours, by explicit owner decision on 2026-08-31, with 72 as a hard floor no evidence or schedule pressure may go below; it still cannot start until R2-R8 are simultaneously green, and forecasts use 96 so no date depends on the soak finishing at its minimum. Gates R3-R8 require live outbound retrieval and that same persistent store, so they remain unproven and were not attempted from an ephemeral container. R9 is now specified and implemented in src/soakGate.js: one data point per verified knowledge version, candidate record, and queued source; at most 1000 observed at once with the remainder held rather than dropped; and no soak starts while the population cannot exhibit the failures it checks. Against the repository current recorded state it reports held, because there are zero verified knowledge versions and no active version, so promotion, supersession, and verified-only retrieval are all unobservable.",
+  "blockingReason": "R4-R8 are now proven on GitHub under exact project identity github:jonathanblunt1214-lgtm/The-Crucible and refs/heads/development. Hosted run 33444444978 created authenticated encrypted durable state, executed candidate custody, controlled independent verification, versioned promotion, exact-boundary verified-only retrieval, supersession and rollback, and all eight combined safety behaviours. Its second execution restored that ciphertext and repeated the proof with restoredEncryptedState true. The proof carries no release authority and contains controlled bounded claims, not a claim that the operator training backlog is drained. R2 remains open only for current live backlog-drain evidence, and R3 remains pending a real bounded discovery run. R9 cannot start until R2 and R3 join the now-passing R4-R8; it then runs for a duration chosen from evidence inside the owner-set 72-96 hour band, with 72 as a hard floor and forecasts using 96.",
   "history": [
     {
       "recordedAt": "2026-08-30T20:33:00Z",
@@ -59,6 +59,12 @@
       "priorTarget": "2026-09-14T16:00:00Z",
       "newTarget": "2026-09-14T16:00:00Z",
       "reason": "Owner decision closing the R9 definition gap: an observation ceiling of 1000 data points, and an explicit hold rather than a vacuous run when the current data would return no result. The target does not move; if anything this makes the dependency on R5 and R7 explicit, since verified knowledge versions and supersessions are what make a soak observable at all."
+    },
+    {
+      "recordedAt": "2026-08-31T22:09:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Hosted evidence changed R4-R8 to passed without changing the forecast: run 33444444978 at exact development SHA 5ed69f6dcc319f1050b45cfcf84d2108863d5f9a passed twice, and execution two restored the authenticated encrypted state from execution one. R2 live backlog evidence and R3 live discovery remain open, so R9 remains held and the target does not move earlier."
     }
   ]
 }
