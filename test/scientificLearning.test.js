@@ -4,6 +4,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const { execFileSync } = require('node:child_process');
 const {
   REQUIRED_GATES, makeCandidate, newRecord, transition, CandidateEvidenceStore,
   VerifiedKnowledgeStore, DurableScientificLearningStore, AutonomousScientificLearner,
@@ -12,6 +13,9 @@ const {
 } = require('../src/scientificLearning');
 const { run:runLearningCli } = require('../src/scientificLearningCli');
 const { LearningExperienceRecorder, experienceCandidate } = require('../src/learningExperience');
+const { routeThreeWayComparison, ClaimComparisonLedger } = require('../src/claimComparison');
+const { ControlledClaimEvaluationWorker } = require('../src/claimEvaluationWorker');
+const { CriticalClaimReviewer } = require('../src/criticalClaimReview');
 
 const at = '2026-08-29T18:20:00.000Z';
 function candidate(overrides = {}) {
@@ -197,3 +201,40 @@ test('OIDC transport identity requires trusted signature and exact project/repos
   assert.equal(verifyOidcIdentity(token, { jwks:{keys:[jwk]}, issuer:claims.iss, audience:claims.aud, repository:claims.repository, ref:claims.ref, projectId:claims.project_id }).project_id, 'project-a');
   assert.throws(() => verifyOidcIdentity(token, { jwks:{keys:[jwk]}, issuer:claims.iss, audience:claims.aud, repository:claims.repository, ref:claims.ref, projectId:'project-b' }), /not bound/);
 });
+
+test('three-way comparison routes agreement, contradiction, novelty, and bounded scope without satisfying proof', (t) => {
+  const base={ sourceId:'source-a', claim:'Array map returns a new array.', claimBoundary:'ECMAScript 2026 ordinary arrays', generalizationBoundary:'ordinary arrays only' };
+  const second={ ...base, sourceId:'source-b' }; const knowledge=[{ version:4, projectId:'project-a', claim:base.claim, boundary:base.claimBoundary, status:'active' }];
+  const compare=(overrides={})=>routeThreeWayComparison({ projectId:'project-a', candidateId:'candidate-a', sourceA:base, sourceB:second, activeKnowledge:knowledge, comparedAt:at, ...overrides });
+  const agreed=compare(); assert.equal(agreed.route,'corroboration-recorded'); assert.equal(agreed.nextAction,'controlled-regression-test-without-relearning');
+  assert.equal(agreed.proofStageSatisfied,false); assert.equal(agreed.independentVerificationSatisfied,false); assert.equal(agreed.promotionAllowed,false);
+  assert.equal(compare({ activeKnowledge:[] }).route,'new-claim-evaluation');
+  assert.equal(compare({ activeKnowledge:[{ ...knowledge[0], claim:'Array map mutates the original array.' }] }).route,'possible-knowledge-update-quarantine');
+  assert.equal(compare({ sourceB:{ ...second, claim:'Array map mutates the original array.' } }).route,'contradiction-review');
+  assert.equal(compare({ sourceB:{ ...second, claimBoundary:'ECMAScript 2020 ordinary arrays' } }).route,'bounded-scope-or-version-update');
+  assert.throws(()=>compare({ sourceB:{ ...second, sourceId:'source-a' } }),/independently identified/);
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'claim-comparison-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const ledger=new ClaimComparisonLedger({root,projectId:'project-a'});assert.equal(ledger.record(agreed).created,true);assert.equal(ledger.record(agreed).created,false);assert.equal(ledger.read().decisions.length,1);
+});
+
+test('scientific-learning CLI persists three-way routing without mutating candidate or knowledge state', (t) => {
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'comparison-cli-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const file=path.join(root,'comparison.json');
+  const bounded={ sourceId:'source-a', claim:'A function returns a value to its caller.', claimBoundary:'runtime-a', generalizationBoundary:'runtime-a only' };
+  fs.writeFileSync(file,JSON.stringify({ candidateId:'candidate-a', comparedAt:at, sourceA:bounded, sourceB:{...bounded,sourceId:'source-b'} }));
+  const environment={ CRUCIBLE_LEARNING_PROJECT_ID:'project-a', CRUCIBLE_LEARNING_ROOT:root };const before=runLearningCli(['readiness'],environment);const result=runLearningCli(['compare',file],environment);const after=runLearningCli(['readiness'],environment);
+  assert.equal(result.created,true);assert.equal(result.decision.route,'new-claim-evaluation');assert.equal(result.decision.promotionAllowed,false);assert.deepEqual(after,before);
+});
+
+test('controlled evaluator completes a real JavaScript claim through separate execution, verification, promotion, and retrieval', async (t) => {
+  const root=fs.mkdtempSync(path.join(os.tmpdir(),'controlled-evaluator-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const store=new DurableScientificLearningStore({root,projectId:'project-a'});
+  const claim='Array.prototype.map returns a distinct array without changing the input array.';const boundary='Node.js ordinary dense arrays of numbers';const generalizationBoundary='Does not cover sparse arrays, proxies, subclasses, or host objects.';
+  const source=(id,sourceId)=>makeCandidate({id,projectId:'project-a',claim,claimBoundary:boundary,generalizationBoundary,kind:'extracted-source-assertion',provenance:{sourceType:'retrieved-web-document',sourceId,retrievedAt:at,author:'bounded test source',license:'terms recorded',contentSha256:sha(sourceId)},createdAt:at});store.ingest(source('js-map-a','source-a'));store.ingest(source('js-map-b','source-b'));
+  const execute=()=>{execFileSync(process.execPath,['-e',`const input=[1,2,3];const output=input.map(x=>x*2);if(output===input||JSON.stringify(input)!=='[1,2,3]'||JSON.stringify(output)!=='[2,4,6]')process.exit(1);const negative=[].map(x=>x);if(!Array.isArray(negative)||negative.length!==0)process.exit(2);`],{stdio:'pipe',windowsHide:true});};
+  const experiment={id:'javascript-controlled-runner',run:async({candidate,hypothesis})=>{execute();return {schemaVersion:1,candidateId:candidate.id,projectId:candidate.projectId,hypothesis,testedProperty:candidate.claim,experimentBoundary:candidate.claimBoundary,controls:['identity reference comparison','unchanged input snapshot'],causalIsolation:{method:'single operation with reference and input-state controls',result:'map alone created the distinct output',correlationOnly:false},negativeTests:['empty input returns a distinct empty array'],regressionTests:['input values remain unchanged'],scopeProof:'Node.js ordinary dense numeric arrays only',generalizationResult:'not generalized beyond the declared boundary',contradictionResult:'none',completedAt:at};}};
+  const verifier={id:'javascript-independent-runner',run:async({candidate,experimentalProof})=>{execute();return {verifierId:'javascript-independent-runner',independent:true,testedProperty:candidate.claim,experimentBoundary:experimentalProof.experimentBoundary,result:'passed',verifiedAt:at};}};
+  const worker=new ControlledClaimEvaluationWorker({store,comparisonLedger:new ClaimComparisonLedger({root,projectId:'project-a'}),criticalReviewer:new CriticalClaimReviewer(),experimentHarnesses:{javascript:experiment},verifierHarnesses:{javascript:verifier},now:()=>at});const result=await worker.process({candidateId:'js-map-a',corroboratingCandidateId:'js-map-b',language:'javascript'});
+  assert.equal(result.decision.route,'new-claim-evaluation');assert.equal(result.criticalReview.route,'ready-for-controlled-testing');assert.equal(result.criticalReview.proofStageSatisfied,false);assert.equal(result.record.state,'verified');assert.equal(result.usedKnowledge.length,1);assert.equal(result.usedKnowledge[0].claim,claim);assert.equal(store.retrieve()[0].status,'active');
+});
+
+test('critical review narrows ambiguity and cannot satisfy proof or override contradiction routing',()=>{const reviewer=new CriticalClaimReviewer();const base=candidate();const review=reviewer.review({candidate:{...base,claim:'This is usually better and causes a faster result.'},corroboratingCandidate:{...base,id:'c-2'},comparison:{route:'new-claim-evaluation',classification:'Insufficient Evidence',nextAction:'test'},reviewedAt:at});assert.equal(review.route,'narrow-or-clarify-claim');assert.equal(review.proofStageSatisfied,false);assert.equal(review.independentVerificationSatisfied,false);assert.equal(review.promotionAllowed,false);});
+
+test('a favorable adversarial review cannot override a failed experiment or impersonate verification',async(t)=>{const root=fs.mkdtempSync(path.join(os.tmpdir(),'critical-fail-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));const store=new DurableScientificLearningStore({root,projectId:'project-a'});const first=candidate({id:'critical-a',provenance:{...candidate().provenance,sourceId:'source-a'}});const second=candidate({id:'critical-b',provenance:{...candidate().provenance,sourceId:'source-b'}});store.ingest(first);store.ingest(second);const reviewer=new CriticalClaimReviewer();const failing={id:'controlled-failure',run:async()=>{throw new Error('negative control failed');}};const verifier={id:'separate-verifier',run:async()=>reviewer.review({candidate:first,corroboratingCandidate:second,comparison:{route:'new-claim-evaluation',classification:'Insufficient Evidence',nextAction:'test'},reviewedAt:at})};const worker=new ControlledClaimEvaluationWorker({store,comparisonLedger:new ClaimComparisonLedger({root,projectId:'project-a'}),criticalReviewer:reviewer,experimentHarnesses:{javascript:failing},verifierHarnesses:{javascript:verifier},now:()=>at});await assert.rejects(()=>worker.process({candidateId:'critical-a',corroboratingCandidateId:'critical-b',language:'javascript'}),/negative control failed/);assert.equal(store.get('critical-a').state,'hypothesis');assert.equal(store.activeKnowledge().length,0);});

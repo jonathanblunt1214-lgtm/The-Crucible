@@ -6,6 +6,7 @@ const { DurableScientificLearningStore } = require('./scientificLearning');
 const { INJECTION_PATTERNS } = require('./safeInformationRetrieval');
 
 function sha256(value) { return crypto.createHash('sha256').update(value).digest('hex'); }
+function normalizedClaimSha256(value) { return sha256(cleanText(value).toLowerCase()); }
 function cleanText(value) {
   return String(value || '').replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, ' ').replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, ' ').replace(/<form\b[^>]*>[\s\S]*?<\/form>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&(?:nbsp|#160);/gi, ' ').replace(/&amp;/gi, '&').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/\s+/g, ' ').trim();
 }
@@ -55,7 +56,7 @@ class ClaimExtractionWorker {
   }
 
   candidate(source, assertion, boundary, createdAt) {
-    const assertionSha = sha256(assertion.toLowerCase());
+    const assertionSha = normalizedClaimSha256(assertion);
     return { schemaVersion:1, id:`extracted-${sha256(`${source.id}\n${assertionSha}`).slice(0, 32)}`, projectId:this.projectId, claim:assertion, claimBoundary:boundary, generalizationBoundary:'Untrusted source assertion only; no correctness, causation, current-version applicability, recommendation, or generalization is verified by extraction.', kind:'extracted-source-assertion', provenance:{ sourceType:source.mediaType || source.contentType || 'retrieved-web-document', sourceId:source.id, retrievedAt:source.retrievedAt || createdAt, author:source.author || source.publisher || 'not declared', license:source.license || 'not declared; verify source terms before redistribution', contentSha256:source.contentSha256 }, classification:'Insufficient Evidence', createdAt };
   }
 
@@ -71,21 +72,37 @@ class ClaimExtractionWorker {
         const collection = queue.documents.some((item) => item.id === selected.id) ? queue.documents : queue.links;
         let source = collection.find((item) => item.id === selected.id); const startedAt = this.now();
         source.claimExtraction = source.claimExtraction || { attempts:0, candidateIds:[], classification:'Insufficient Evidence' };
+        const currentContentSha = String(source.contentSha256 || '').toLowerCase();
+        if (!/^[a-f0-9]{64}$/.test(currentContentSha)) throw new Error('Source contentSha256 must be a SHA-256 digest.');
+        if (source.claimExtraction.sourceContentSha256 && source.claimExtraction.sourceContentSha256 !== currentContentSha) {
+          source.claimExtraction.previousRevisions = [...(source.claimExtraction.previousRevisions || []), { contentSha256:source.claimExtraction.sourceContentSha256, candidateIds:[...(source.claimExtraction.candidateIds || [])], completedAt:source.claimExtraction.completedAt || null }];
+          source.claimExtraction.nextPage = 1; source.claimExtraction.candidateIds = []; source.claimExtraction.completedAt = null;
+        }
+        source.claimExtraction.sourceContentSha256 = currentContentSha;
+        source.claimExtraction.windows = source.claimExtraction.windows || [];
         source.claimExtraction.attempts = Number(source.claimExtraction.attempts || 0) + 1; source.claimExtraction.startedAt = startedAt; source.state = 'claim-extraction-in-progress'; queue.updatedAt = startedAt; this.queue.write(queue);
         try {
           const pageStart = source.mediaType === 'application/pdf' ? Number(source.claimExtraction.nextPage || 1) : 1;
           const pageEnd = source.mediaType === 'application/pdf' ? Math.min(Number(source.pages || pageStart + this.pdfPagesPerBatch - 1), pageStart + this.pdfPagesPerBatch - 1) : 1;
-          const text = this.extractText(source, pageStart, pageEnd); const assertions = boundedAssertions(text); const ids = []; const candidates = [];
-          for (const assertion of assertions) {
-            const boundary = source.mediaType === 'application/pdf' ? `${source.title || source.originalName || source.id}, SHA-256 ${source.contentSha256}, pages ${pageStart}-${pageEnd} only` : `${source.finalUrl || source.url || source.id}, SHA-256 ${source.contentSha256}, retrieved content only`;
-            const candidate = this.candidate(source, assertion, boundary, startedAt); candidates.push(candidate); ids.push(candidate.id);
+          const priorWindow = source.claimExtraction.windows.find((window) => window.sourceContentSha256 === currentContentSha && window.pageStart === pageStart && window.pageEnd === pageEnd);
+          let ids; let windowContentSha256; let comparison;
+          if (priorWindow) {
+            ids = [...priorWindow.candidateIds]; windowContentSha256 = priorWindow.windowContentSha256; comparison = 'unchanged-window-skipped';
+          } else {
+            const text = this.extractText(source, pageStart, pageEnd); windowContentSha256 = sha256(Buffer.from(String(text), 'utf8')); const assertions = boundedAssertions(text); ids = []; const candidates = [];
+            for (const assertion of assertions) {
+              const boundary = source.mediaType === 'application/pdf' ? `${source.title || source.originalName || source.id}, SHA-256 ${source.contentSha256}, pages ${pageStart}-${pageEnd} only` : `${source.finalUrl || source.url || source.id}, SHA-256 ${source.contentSha256}, retrieved content only`;
+              const candidate = this.candidate(source, assertion, boundary, startedAt); candidates.push(candidate); ids.push(candidate.id);
+            }
+            this.store.ingestMany(candidates); comparison = 'new-window-extracted';
           }
-          this.store.ingestMany(candidates);
-          queue = this.queue.read(); source = [...queue.documents, ...queue.links].find((item) => item.id === selected.id); source.claimExtraction.candidateIds = [...new Set([...(source.claimExtraction.candidateIds || []), ...ids])]; source.claimExtraction.completedAt = this.now(); source.claimExtraction.classification = 'Insufficient Evidence'; delete source.claimExtraction.lastError; delete source.claimExtraction.failedAt;
+          queue = this.queue.read(); source = [...queue.documents, ...queue.links].find((item) => item.id === selected.id); source.claimExtraction.windows = source.claimExtraction.windows || [];
+          if (!source.claimExtraction.windows.some((window) => window.sourceContentSha256 === currentContentSha && window.pageStart === pageStart && window.pageEnd === pageEnd)) source.claimExtraction.windows.push({ sourceContentSha256:currentContentSha, pageStart, pageEnd, windowContentSha256, candidateIds:[...ids], completedAt:this.now() });
+          source.claimExtraction.candidateIds = [...new Set([...(source.claimExtraction.candidateIds || []), ...ids])]; source.claimExtraction.completedAt = this.now(); source.claimExtraction.classification = 'Insufficient Evidence'; delete source.claimExtraction.lastError; delete source.claimExtraction.failedAt;
           const morePdf = source.mediaType === 'application/pdf' && pageEnd < Number(source.pages || pageEnd);
           if (morePdf) { source.claimExtraction.nextPage = pageEnd + 1; source.claimExtraction.nextAction = 'extract-next-page-bounded-claims'; source.state = 'claim-extraction-forced-pending'; }
           else { source.claimExtraction.nextPage = null; source.claimExtraction.nextAction = ids.length ? 'evaluate-bounded-candidate-claims' : 'no-bounded-assertion-found'; source.state = 'claim-extraction-complete'; }
-          queue.updatedAt = source.claimExtraction.completedAt; this.queue.write(queue); outcomes.push({ sourceId:source.id, state:source.state, candidateIds:ids, pages:source.mediaType === 'application/pdf' ? [pageStart, pageEnd] : null });
+          queue.updatedAt = source.claimExtraction.completedAt; this.queue.write(queue); outcomes.push({ sourceId:source.id, state:source.state, candidateIds:ids, pages:source.mediaType === 'application/pdf' ? [pageStart, pageEnd] : null, comparison });
         } catch (error) {
           queue = this.queue.read(); source = [...queue.documents, ...queue.links].find((item) => item.id === selected.id); source.state = 'claim-extraction-forced-pending'; source.claimExtraction.lastError = String(error.message || error); source.claimExtraction.nextAction = 'retry-bounded-claim-extraction'; source.claimExtraction.failedAt = this.now(); queue.updatedAt = source.claimExtraction.failedAt; this.queue.write(queue); outcomes.push({ sourceId:source.id, state:'blocked', reason:source.claimExtraction.lastError, candidateIds:[] });
         }
@@ -95,4 +112,4 @@ class ClaimExtractionWorker {
   }
 }
 
-module.exports = { cleanText, boundedAssertions, defaultExtractText, AtomicClaimExtractionQueue, ClaimExtractionWorker };
+module.exports = { cleanText, boundedAssertions, normalizedClaimSha256, defaultExtractText, AtomicClaimExtractionQueue, ClaimExtractionWorker };
