@@ -56,11 +56,12 @@
     "src/soakGate.js": "Executable R9 soak definition. One data point per verified knowledge version, candidate record, and queued source; an owner-set ceiling of 1000 observed at once with the remainder held rather than discarded; a deterministic replayable observation window; the owner-set 72-96 hour duration band; and a fail-closed hold when the current data cannot exhibit the failures R9 names. It never reports a pass - passing is what the soak itself establishes over its duration.",
     "src/soakRun.js": "Executable R9 soak run. Freezes the observed population at the start, records hourly sweeps, resets the clock for a failed data point only, recycles a data point to the collection pool after three failures and marks it trash after three more, orders recirculated sources behind new data, voids the soak on a store-level failure, restarts every surviving clock across an unobserved gap, and reaches a verdict only after the full chosen duration.",
     "src/preSoakReadiness.js": "Read-only pre-soak gate reporter. Judges R2-R8 from durable state, reports manual-evidence-required rather than inferring a combined R8 cycle from unit coverage, and authorizes nothing.",
-    "src/learningGovernance.js": "Governance monitoring of the learning gates with indirect pipeline control only. Detects blockages from gate state, analyzer health, store health, contradictions, and backlog, then emits adjustments from a closed allow-list of flow controls: reprioritize, hold, throttle, route, deprioritize. It may never promote, verify, mark a gate passed, authorize a release, start a held soak, repair the durable store, shorten a soak, or discard evidence, and it is never a truth source. What it cannot clear by moving work is escalated to the owner."
+    "src/learningGovernance.js": "Governance monitoring of the learning gates with indirect pipeline control only. Detects blockages from gate state, analyzer health, store health, contradictions, and backlog, then emits adjustments from a closed allow-list of flow controls: reprioritize, hold, throttle, route, deprioritize. It may never promote, verify, mark a gate passed, authorize a release, start a held soak, repair the durable store, shorten a soak, or discard evidence, and it is never a truth source. What it cannot clear by moving work is escalated to the owner.",
+    "src/learningCycle.js": "Executable R4 to R5 cycle. Accepts a claim as candidate evidence only when the exact assertion is present in that source own content through the same bounded extraction the worker uses, then runs the controlled evaluation pipeline with a distinct verifier identity to a verified knowledge version. Keeps claim scope and per-source provenance separate, which is what lets two independent sources corroborate at all."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T21:30:00Z"
+    "lastActionAt": "2026-08-31T22:00:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -141,7 +142,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-08-31T21:30:00Z"
+    "lastUpdatedAt": "2026-08-31T22:00:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -180,7 +181,10 @@
       "The Windows NuGet restore failure was addressed by creating the redirected .NET home and package cache before restore and by skipping the SDK workload integrity check that the redirected home breaks; the toolchain isolation itself was kept rather than given up.",
       "Installed the .NET 10 SDK on this host at the owner request, which turned the C# repairs from reasoned to proven and immediately exposed a second analyzer defect that hosted CI had been masking behind the first.",
       "The Roslyn analyzer was silently blind to any unresolved call sink: when a call did not resolve to a symbol, the fallback name was the whole expression text, so Process.Start produced the name Process.Start and matched no sink name. The fallback now takes the member name, and the C# sink finding the test expects is emitted.",
-      "Added src/learningGovernance.js so governance monitors the learning gates and adjusts the pipeline around a blockage while holding no authority over proof, and recorded in the release plan that the semantic analyzers are learning-system components and therefore not independently releasable ahead of R11."
+      "Added src/learningGovernance.js so governance monitors the learning gates and adjusts the pipeline around a blockage while holding no authority over proof, and recorded in the release plan that the semantic analyzers are learning-system components and therefore not independently releasable ahead of R11.",
+      "Joined R4 to R5 for the first time and ran a real cycle end to end: two independent documents, bounded extraction binding each claim to its own source content, controlled execution with real negative and regression controls, a distinct independent verifier, promotion to a verified knowledge version, and retrieval of that version inside its tested boundary. The store goes from zero verified knowledge versions to one.",
+      "Joining the two halves exposed why R5 had never happened with real data: routeThreeWayComparison decides shared scope by comparing claimBoundary, but the extraction worker builds that string from the source document, so two independent sources never match and always route to bounded-scope-or-version-update rather than new-claim-evaluation. Extracted candidate pairs are therefore structurally unpromotable. The finding is pinned by a test rather than patched over.",
+      "The critical reviewer rejected the first claim wording for containing the pronoun it, an unmeasurable referent. The claim was rewritten rather than the reviewer weakened."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -205,7 +209,9 @@
       "Run against the repository last-recorded state, the pre-soak reporter shows zero of seven gates satisfied: R2-R7 pending and R8 manual-evidence-required, with the soak held. The instrumentation built this session measures and executes R9; it satisfies no gate.",
       "The Java fix was reproduced and proven on this host: javac failed with the exact hosted error before the change and exits 0 after it, and the analyzer emits META, FILE, FUNCTION, CALL, and FINDING records including the exec sink. The C# and Windows toolchain fixes cannot be reproduced here because no dotnet SDK is present, so hosted CI is their only verification and the loop continues if they stay red.",
       "The analyzer proof is now real rather than nominal: the two native tests return early unless CRUCIBLE_HOSTED_NATIVE_ANALYSIS is 1, so an earlier local 11/11 had exercised neither. With the flag actually set and a real dotnet SDK and JDK present, test/semanticAnalysis.test.js passes 11/11 including both the Roslyn and JDK adapters.",
-      "Governance authority is asserted mechanically, not documented: every adjustment emitted across the exhausted input space is checked against the closed allow-list, the allow-list itself is checked to contain only flow controls, and the forbidden actions are checked never to appear in it."
+      "Governance authority is asserted mechanically, not documented: every adjustment emitted across the exhausted input space is checked against the closed allow-list, the allow-list itself is checked to contain only flow controls, and the forbidden actions are checked never to appear in it.",
+      "The cycle is a real run, not a fixture: the experiment and the independent verifier each execute actual JavaScript in a child process, including an identity-reference negative control and an empty-input control, and a claim is refused outright when its own document does not contain it.",
+      "Ubuntu native semantic analysis is hosted-green after the Java compile, Roslyn null-key, and Roslyn sink-name repairs, and the Java adapter now passes on Windows too. Only the Windows Roslyn build remains, failing inside NuGet.targets rather than in analyzer code."
     ],
     "remaining": [
       "Do not serialize R3 before R4. R4 accepts a source \"from search or owner ingest\", so it is not blocked by R3: one owner ingest through retrieval, provenance hashing, bounded extraction, deduplication, and candidate custody satisfies R4 and unblocks R5, and R6 and R7 behind it. R3 is its own independent gate needing one real bounded discovery run with its query audit, and R2's live drain and R8's combined cycle are independent of both. The real chain is R4 -> R5 -> {R6, R7}, with R5 the linchpin.",
@@ -214,7 +220,8 @@
       "Obtain current live extraction/runtime evidence before declaring the remaining backlog drained; candidate extraction must never imply verified-knowledge promotion. This is the part of R2 that is still open: the restart proof passed, the live backlog drain is unverified from any host but the operator one.",
       "Begin the soak only after R2-R8 are simultaneously green, running it for a duration chosen from evidence inside the owner-set 72-96 hour band before the clock starts, then freeze the exact SHA for R10; R11 remains the owner explicit authorization and can never be self-granted. 72 hours is a hard floor, never a default, and forecasts use 96.",
       "Verify the exact hosted tip of this commit on GitHub runners before treating this unit of work as complete.",
-      "Confirm the Native semantic analysis workflow reaches green on both windows-latest and ubuntu-latest; the Windows NuGet and workload repair is unverifiable from an agent host without a dotnet SDK and may need another hosted round."
+      "Confirm the Windows Roslyn build reaches green. The failure is in the SDK toolchain, not analyzer code: the workload resolver injects a null path into NuGet.targets during restore. Skipping the integrity check was insufficient, so the resolver itself is now disabled; if that is still red the next step is replacing the SDK-internal Roslyn HintPath with an explicit reference, which needs an owner decision because it adds a package dependency.",
+      "Decide how extracted candidates should ever corroborate each other, given claimBoundary currently encodes the source document rather than the claim scope. Until that is settled, automated discovery alone cannot produce a promotable pair and every promotion must come through the owner-ingest path."
     ]
   }
 }

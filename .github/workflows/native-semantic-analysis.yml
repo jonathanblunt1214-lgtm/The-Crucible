@@ -57,6 +57,11 @@ jobs:
           # restore error. This analyzer uses no workloads, so the check has nothing to
           # verify for it; it is skipped rather than the isolation being given up.
           DOTNET_SKIP_WORKLOAD_INTEGRITY_CHECK: "1"
+          # Skipping the integrity check was not enough on Windows: the workload *resolver*
+          # still runs during restore and is what feeds a null path into NuGet.targets. This
+          # analyzer declares no workloads, so the resolver has nothing to contribute and is
+          # turned off. Coverage is untouched - both operating systems still run every adapter.
+          MSBuildEnableWorkloadResolver: "false"
           NUGET_PACKAGES: ${{ runner.temp }}/crucible-nuget
           NUGET_HTTP_CACHE_PATH: ${{ runner.temp }}/crucible-nuget-http
         run: node --test test/semanticAnalysis.test.js
