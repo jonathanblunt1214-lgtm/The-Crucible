@@ -20,6 +20,8 @@ Claim extraction records source and page-window content hashes, resumes only unf
 
 Before any experiment, `CriticalClaimReviewer` records assumptions, counterexamples, alternative explanations, ambiguity signals, causal wording, and the next evidence action. It may narrow a claim, request evidence, or preserve a contradiction quarantine, but its output permanently states that it satisfies no proof, independent-verification, or promotion stage.
 
+`LogicalReasoningProblemSolver` operates before and after controlled testing. Before testing it records premises, competing hypotheses, decomposed test obligations, controls, and a bounded hypothesis. After testing it checks property/boundary identity, correlation-versus-causation, required controls, contradictions, and failures, then routes to independent verification, redesign, missing evidence, or quarantine. Its integrity-checked project ledger is advisory custody only: reasoning cannot satisfy gates, act as a verifier, override failure, or promote knowledge.
+
 GitHub repository identifiers are validated as a single `owner/repository` pair before API use. Valid GitHub repository names are supported even when the repository segment ends in a hyphen, while schemes, query strings, whitespace, traversal, and additional path segments remain blocked.
 
 ## Exactly what it does
