@@ -237,7 +237,10 @@ class DurableScientificLearningStore {
       const next = mutator(structuredClone(payload));
       if (this.readEnvelope().revision !== expectedRevision) throw new Error('Durable learning store revision changed concurrently.');
       next.revision = expectedRevision + 1;
-      next.auditLog.push({ revision:next.revision, action, at });
+      // Recovering a lock from an interrupted process is written into the durable audit log,
+      // not just reported in memory, so the recovery outlives the process that performed it.
+      const recorded = lock.reclaimedFrom ? `${action} [recovered from forced interruption: pid ${lock.reclaimedFrom.pid} on ${lock.reclaimedFrom.host}, idle ${lock.reclaimedFrom.idleMs}ms]` : action;
+      next.auditLog.push({ revision:next.revision, action:recorded, at });
       const checked = validateDurablePayload(next, this.projectId);
       this.writeEnvelope(checked);
       return structuredClone(checked);
