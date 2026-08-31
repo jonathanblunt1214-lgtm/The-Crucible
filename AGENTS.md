@@ -124,6 +124,10 @@ cannot verify that literally every command in a session is listed -
 that is on the agent's own honesty, the same as every other rule in
 this file.
 
+## README brevity
+
+Keep README changes concise and operator-facing. Summarize capabilities, setup, and boundaries; put detailed architecture, threat models, proof rules, implementation rationale, and edge cases in the relevant governing document, source documentation, or tests. Do not turn the README into a design-history narrative.
+
 ## Test and audit cadence
 
 `src/testCadence.js` classifies every `test/*.js` file and every CLI audit
