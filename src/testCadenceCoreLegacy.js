@@ -16,6 +16,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/soakRun.test.js',
     'test/preSoakReadiness.test.js',
     'test/learningGovernance.test.js',
+    'test/learningCycle.test.js',
     'test/engine.test.js',
     'test/ecosystem.test.js',
     'test/hostedMultiRepositoryIntegration.test.js',
