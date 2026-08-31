@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { DurableScientificLearningStore } = require('./scientificLearning');
+const { acquireDurableLock } = require('./durableLock');
 const { INJECTION_PATTERNS } = require('./safeInformationRetrieval');
 
 function sha256(value) { return crypto.createHash('sha256').update(value).digest('hex'); }
@@ -43,7 +44,7 @@ class AtomicClaimExtractionQueue {
   constructor(file, projectId) { this.file = path.resolve(file); this.projectId = projectId; this.lockFile = `${this.file}.claim-extraction.lock`; }
   read() { const queue = JSON.parse(fs.readFileSync(this.file, 'utf8')); if (queue?.schemaVersion !== 1 || queue.projectId !== this.projectId || !Array.isArray(queue.documents) || !Array.isArray(queue.links)) throw new Error('Source queue is invalid or belongs to another project.'); return queue; }
   write(queue) { const temporary = `${this.file}.${process.pid}.${crypto.randomUUID()}.tmp`; fs.writeFileSync(temporary, `${JSON.stringify(queue, null, 2)}\n`, { flag:'wx', mode:0o600 }); fs.renameSync(temporary, this.file); }
-  lock() { const handle = fs.openSync(this.lockFile, 'wx', 0o600); return () => { fs.closeSync(handle); fs.rmSync(this.lockFile, { force:true }); }; }
+  lock() { return acquireDurableLock(this.lockFile, { description:'Source queue lock' }); }
 }
 
 class ClaimExtractionWorker {
@@ -61,7 +62,10 @@ class ClaimExtractionWorker {
   }
 
   run() {
-    const unlock = this.queue.lock(); const outcomes = [];
+    const held = this.queue.lock(); const unlock = held.release; const outcomes = [];
+    // A reclaimed queue lock means the previous run was forcibly interrupted. That is
+    // recovery, not routine, so it is reported rather than silently absorbed.
+    this.lastLockReclamation = held.reclaimedFrom;
     try {
       let queue = this.queue.read();
       const isEligible = (item) => item.state === 'claim-extraction-forced-pending' || item.state === 'claim-extraction-in-progress';

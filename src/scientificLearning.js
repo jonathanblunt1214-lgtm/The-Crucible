@@ -1,6 +1,7 @@
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
+const { acquireDurableLock } = require('./durableLock');
 
 const STATES = Object.freeze(['candidate', 'hypothesis', 'experimented', 'causally-proven', 'independently-verified', 'verified', 'quarantined', 'rejected']);
 const CLASSIFICATIONS = Object.freeze(['Rejected Evidence', 'Insufficient Evidence', 'Crucible Issue']);
@@ -224,9 +225,12 @@ class DurableScientificLearningStore {
   }
   transact(mutator, { at, action }) {
     iso(at, 'transaction.at'); text(action, 'transaction.action');
+    // A store lock left behind by a forcibly interrupted process is reclaimed only when
+    // its owner is provably dead on this host; a live or unverifiable owner still fails closed.
     let lock;
-    try { lock = fs.openSync(this.lockFile, 'wx', 0o600); }
-    catch { throw new Error('Durable learning store is locked; concurrent or interrupted mutation fails closed.'); }
+    try { lock = acquireDurableLock(this.lockFile, { description:'Durable learning store lock' }); }
+    catch (error) { throw new Error(`Durable learning store is locked; concurrent or interrupted mutation fails closed. ${error.message}`); }
+    if (lock.reclaimedFrom) this.lastLockReclamation = lock.reclaimedFrom;
     try {
       const payload = this.readEnvelope();
       const expectedRevision = payload.revision;
@@ -237,7 +241,7 @@ class DurableScientificLearningStore {
       const checked = validateDurablePayload(next, this.projectId);
       this.writeEnvelope(checked);
       return structuredClone(checked);
-    } finally { fs.closeSync(lock); fs.rmSync(this.lockFile, { force:true }); }
+    } finally { lock.release(); }
   }
   ingest(candidate) {
     const checked = validateCandidate(candidate);
