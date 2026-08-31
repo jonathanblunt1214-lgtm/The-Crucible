@@ -26,6 +26,8 @@ Before any experiment, `CriticalClaimReviewer` records assumptions, counterexamp
 
 Eligible Authenticity Gate suite claims communicate bidirectionally with durable learning. Before execution, the suite retrieves only active verified knowledge matching the exact declared boundary and exposes it as bounded regression context; retrieved knowledge cannot prove or skip the current run. After execution, both success and failure are submitted with command, runtime, commit, result, and artifact hashes as `experience-observation` candidate evidence. That evidence enters the same comparison, review, reasoning, adaptation, controlled-test, and independent-verification path and never promotes directly.
 
+`CrucibleLearningOrchestrator` is the executive-control layer, not a truth source. It prioritizes unresolved claims, contradictions, failed work, and pending verification; creates dependency-ordered plans; coordinates extraction and evaluation; retrieves exact-boundary active memory; accepts suite feedback; inhibits cross-project, contradictory, unsupported, unbounded, verification, or promotion actions; and reports known, uncertain, blocked, and awaiting-verification state. Its integrity-checked events always declare that they satisfy no proof stage and authorize no promotion.
+
 GitHub repository identifiers are validated as a single `owner/repository` pair before API use. Valid GitHub repository names are supported even when the repository segment ends in a hyphen, while schemes, query strings, whitespace, traversal, and additional path segments remain blocked.
 
 ## Exactly what it does

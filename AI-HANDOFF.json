@@ -47,7 +47,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T03:53:00Z"
+    "lastActionAt": "2026-08-31T04:05:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -105,8 +105,8 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Connect the governed testing suite bidirectionally to durable learning so exact-boundary active knowledge informs regression context and every bounded result returns as candidate evidence.",
-    "currentPrompt": "give the testing suit the ability to commuicate with the learing system to improve functionality in areas like this: **Evidence discipline:** test output, telemetry, and one-off success remain candidate evidence—not truth.\n\n1. **Critical review:** exposes ambiguity, assumptions, counterexamples, and alternative explanations before running tests.\n2. **Logical reasoning:** checks that conclusions follow from results and separates causation from correlation.\n3. **Problem decomposition:** turns a broad claim into positive, negative, control, regression, and scope tests.\n4. **Creativity:** proposes competing hypotheses and alternative experiment designs when the first approach is weak.\n5. **Decision-making:** chooses governed next actions such as test, narrow, seek evidence, quarantine, retry, or stop.\n6. **Adaptability:** revises the next test after failure while preserving the original claim, failed attempt, and mandatory gates.\n7. **Contradiction handling:** quarantines conflicting results instead of overwriting knowledge.\n8. **Independent verification:** requires a distinct verifier after controlled testing.\n9. **Cumulative memory:** stores only verified, active, versioned knowledge and supports rollback.\n10. **Deduplication:** avoids rerunning unchanged source windows and relearning identical claims.\n11. **Scope awareness:** prevents a passing test in one runtime/version from being generalized beyond it.",
+    "objective": "Implement the learning orchestrator as an executive-control brain for attention, planning, routing, coordination, memory, feedback, adaptation, inhibition, metacognition, and governance without making it a truth source.",
+    "currentPrompt": "do this [2026-08-30 23:55 EDT] Orchestrator should act like an **executive-control brain**, not like the source of truth.\n\nIts responsibilities should be:\n\n- **Attention:** prioritize the most important unresolved claims, failures, contradictions, and regressions.\n- **Planning:** decompose goals into bounded tests and order dependent work.\n- **Routing:** send evidence to extraction, comparison, review, reasoning, controlled testing, or quarantine.\n- **Coordination:** keep the test suite, learning store, retriever, harnesses, and verifier working from the same project-bound state.\n- **Memory access:** retrieve only active verified knowledge relevant to the exact scope.\n- **Feedback:** turn suite results into candidate experience and use verified lessons to improve later regression plans.\n- **Adaptation:** revise an approach after failure without erasing history or weakening gates.\n- **Inhibition:** stop unsafe, contradictory, ambiguous, unsupported, or out-of-scope actions.\n- **Metacognition:** report what is known, uncertain, blocked, or still awaiting verification.\n- **Governance:** enforce executor separation, provenance, project identity, auditability, and release boundaries.\n\nIt should not decide that a claim is true merely because it coordinated the work. The state machine, controlled evidence, and independent verifier remain the “sensory proof” that constrains the brain.",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
@@ -123,7 +123,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-30T20:32:00Z",
-    "lastUpdatedAt": "2026-08-31T03:53:00Z"
+    "lastUpdatedAt": "2026-08-31T04:05:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -156,6 +156,7 @@
       ,"Added durable non-proof logical reasoning and problem solving before and after tests: premises, competing hypotheses, decomposed obligations, controls, identity/scope checks, causal-versus-correlation checks, contradiction routing, and failure-driven next actions."
       ,"Added governed creativity, allow-listed decision-making, and persistent bounded adaptability; strategies preserve original claims and failed attempts, cap retries, retain every gate, and have no promotion action."
       ,"Connected eligible Authenticity Gate claims bidirectionally: exact-boundary active verified knowledge is returned as non-skipping regression context before execution, while every success or failure returns as hashed non-promotable candidate evidence."
+      ,"Implemented an integrity-checked executive learning orchestrator for attention, planning, routing, coordination, exact-boundary memory, feedback, inhibition, and metacognition; it cannot verify or promote and delegates truth changes to the scientific state machine."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",
