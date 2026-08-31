@@ -3,7 +3,7 @@
   "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
   "branch": "development",
   "developmentSha": "492c8fe1d5944b41088a839e5aefdfb8c02aef19",
-  "updatedAt": "2026-08-31T17:49:00Z",
+  "updatedAt": "2026-08-31T18:45:00Z",
   "rollingTarget": "2026-09-14T16:00:00Z",
   "timezone": "America/New_York",
   "confidence": "medium",
@@ -18,11 +18,11 @@
     "R6": "pending",
     "R7": "pending",
     "R8": "pending-live-proof",
-    "R9": "pending",
+    "R9": "pending; soak duration raised to 96 continuous hours by owner decision 2026-08-31",
     "R10": "pending",
     "R11": "pending"
   },
-  "blockingReason": "The forced-interruption recovery proof is complete: a real worker was SIGKILLed mid-extraction and, after the durable-lock repair, recovered, resumed, and completed the source with attempts incremented and no lost or duplicated candidates. Executing that proof exposed and closed a real defect - both durable locks were bare create-exclusive files with no recovery, so an interrupted run blocked every later run until a human deleted the lock. R2 additionally depends on live backlog evidence that only the host holding the operator durable store can produce. Gates R3-R8 require live outbound retrieval and that same persistent store, so they remain unproven and were not attempted from an ephemeral container.",
+  "blockingReason": "The forced-interruption recovery proof is complete: a real worker was SIGKILLed mid-extraction and, after the durable-lock repair, recovered, resumed, and completed the source with attempts incremented and no lost or duplicated candidates. Executing that proof exposed and closed a real defect - both durable locks were bare create-exclusive files with no recovery, so an interrupted run blocked every later run until a human deleted the lock. R2 additionally depends on live backlog evidence that only the host holding the operator durable store can produce. R9 now requires 96 continuous hours rather than 72, by explicit owner decision on 2026-08-31; it still cannot start until R2-R8 are simultaneously green. Gates R3-R8 require live outbound retrieval and that same persistent store, so they remain unproven and were not attempted from an ephemeral container.",
   "history": [
     {
       "recordedAt": "2026-08-30T20:33:00Z",
@@ -41,6 +41,12 @@
       "priorTarget": "2026-09-14T16:00:00Z",
       "newTarget": "2026-09-14T16:00:00Z",
       "reason": "Gate change without a date change: R2 restart proof passed via a live SIGKILL recovery cycle now permanently covered by test/durableLock.test.js, and exact tip 492c8fe1d5944b41088a839e5aefdfb8c02aef19 is hosted-green across all nine Self-Test jobs, CodeQL, and every governance workflow. R3-R8 still require live retrieval and the operator durable store, and the mandatory 72-hour soak has not started, so the target does not move earlier."
+    },
+    {
+      "recordedAt": "2026-08-31T18:45:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Owner decision, not a forecast recalculation: the mandatory soak is raised from 72 to 96 continuous hours, and the durable-lock staleness floor is set to 30 seconds with 60 seconds as the ceiling no agent may exceed without the owner saying so. The target does not move, because R3-R8 remain unproven and their completion, not the soak length, is what currently bounds the date; the extra 24 hours is absorbed well inside the existing forecast."
     }
   ]
 }

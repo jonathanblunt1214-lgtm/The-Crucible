@@ -8,7 +8,7 @@ The scientific-learning system remains on `development`. A rolling forecast is n
 
 - Initial forecast: **2026-09-14 at 12:00 PM America/New_York**.
 - Confidence: **medium** after the claim-extraction worker processed restart-safe live batches and established measurable throughput.
-- Earliest release: the later of the rolling forecast or 72 continuous hours after the final operational gate completes.
+- Earliest release: the later of the rolling forecast or 96 continuous hours after the final operational gate completes.
 - Review cadence: daily at 12:00 PM America/New_York and immediately after any gate changes state.
 - Movement rule: move the forecast forward when measured throughput or a blocker makes the current date unrealistic. Never move it earlier merely because a deadline is desired, and never weaken, waive, average, or reinterpret a gate to preserve a date.
 - Completion rule: stop rolling the date only after all gates pass, exact-tip hosted checks are green, owner approval is recorded, and the authorized promotion is verified. The plan itself never authorizes a push to `main`.
@@ -25,7 +25,7 @@ The scientific-learning system remains on `development`. A rolling forecast is n
 | R6 Verified-only retrieval | The active verified version is retrieved and used within its tested boundary while unverified and superseded records remain unavailable. | Pending live proof. |
 | R7 Rollback or supersession | A real promoted test claim is rolled back or superseded, prior history remains auditable, and active retrieval changes exactly as designed. | Pending live proof. |
 | R8 Safety and deduplication | Live kill-switch, duplicate URL, historical content hash, duplicate bounded claim, prompt injection, executable, blocked source, and contradiction cases produce the governed outcomes without promotion. | Unit proof passed; combined live-cycle proof pending. |
-| R9 Soak | No lost, duplicated, cross-project, corrupt, or unauthorized transitions occur for 72 continuous hours after R2-R8 pass. | Pending. |
+| R9 Soak | No lost, duplicated, cross-project, corrupt, or unauthorized transitions occur for 96 continuous hours after R2-R8 pass. | Pending. |
 | R10 Release candidate | The literal `development` tip is frozen for the candidate and complete local plus hosted Self-Test, CodeQL, handoff, conflict, monitoring, privacy, security, clutter, docs, and governance checks pass on that exact SHA. | Pending final candidate SHA. |
 | R11 Owner authorization | The repository owner explicitly authorizes the exact SHA and promotion operation after reviewing this evidence. | Pending; never inferred. |
 
@@ -36,7 +36,7 @@ The scientific-learning system remains on `development`. A rolling forecast is n
 3. Select one low-risk testable claim from real candidate evidence and execute the full independent scientific pipeline.
 4. Prove active-only retrieval, then rollback or supersede that test claim and verify retrieval changes.
 5. Exercise live safety and deduplication cases without weakening gates or using private source contents.
-6. Begin the 72-hour soak only after R2-R8 are simultaneously green; reset the soak clock on any material failure or state-integrity repair.
+6. Begin the 96-hour soak only after R2-R8 are simultaneously green; reset the soak clock on any material failure or state-integrity repair.
 7. Freeze the release-candidate SHA on `development`, run exact-tip local and hosted proof, and assemble a concise release evidence report.
 8. Request explicit owner authorization for that exact SHA. Promote only after authorization; otherwise keep the plan active and the date rolling.
 
@@ -46,7 +46,7 @@ The daily reviewer uses persisted evidence rather than intuition:
 
 1. Determine the oldest incomplete gate and its exact blocker.
 2. For extraction, compute completed sources per successful run and estimate remaining bounded batches; if throughput is zero, mark the forecast low-confidence and move it forward rather than inventing a rate.
-3. Add the mandatory 72-hour soak after the estimated completion of R2-R8.
+3. Add the mandatory 96-hour soak after the estimated completion of R2-R8.
 4. Add one release-candidate verification window after soak.
 5. Place the rolling target on the next practical owner review window at or after those requirements.
 6. Record the prior target, new target, reason, evidence timestamp, gate changes, and exact development SHA in `scientific-learning-release-status.json`.
@@ -55,6 +55,7 @@ The daily reviewer uses persisted evidence rather than intuition:
 
 - No candidate, retrieval, citation, correlation, telemetry, repetition, newer date, search rank, model judgment, or one-off success is proof.
 - No weighted confidence or schedule pressure may bypass a gate.
+- R9's soak is **96 continuous hours**, raised from 72 by explicit owner decision on 2026-08-31. It is a single required duration, not a 72-96 range: 72 hours is no longer sufficient, and nothing may average, round down, or split the difference to reach an earlier date. Shortening it again requires the owner's explicit instruction, recorded here with its reason, exactly as this change was.
 - Contradictions quarantine as `Crucible Issue`; unsupported claims remain `Insufficient Evidence`; invalid evidence is `Rejected Evidence`.
 - No release-plan automation may push, merge, open a promotion pull request, alter branch protection, weaken checks, or authorize itself.
 - Scientific-learning scope remains off `main` until its exact authorized promotion operation. Proven-isolated non-learning scope may proceed independently through normal release governance.

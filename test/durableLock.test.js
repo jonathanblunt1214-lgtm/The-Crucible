@@ -5,7 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
-const { acquireDurableLock, inspectLock, RECLAIM_STALE_AFTER_MS } = require('../src/durableLock');
+const { acquireDurableLock, inspectLock, RECLAIM_STALE_AFTER_MS, MAX_RECLAIM_STALE_AFTER_MS } = require('../src/durableLock');
 const { ClaimExtractionWorker } = require('../src/claimExtractionWorker');
 const { DurableScientificLearningStore } = require('../src/scientificLearning');
 
@@ -73,6 +73,20 @@ test('refuses to reclaim inside the staleness floor, so no takeover rests on one
   assert.equal(inspection.reclaimable, false);
   assert.match(inspection.reason, /below the \d+ms floor/);
   assert.throws(() => acquireDurableLock(file, { isAlive: () => false }), /before a liveness check alone may hand it over/);
+});
+
+// The owner set 30 seconds as the floor and 60 seconds as the ceiling on 2026-08-31.
+// Both bounds are mechanical here, so neither can drift on a later agent's judgement.
+test('holds the owner-set staleness bounds: 30s default, 60s ceiling, never zero', (t) => {
+  const file = path.join(workspace(t), 'i.lock');
+  assert.equal(RECLAIM_STALE_AFTER_MS, 30 * 1000);
+  assert.equal(MAX_RECLAIM_STALE_AFTER_MS, 60 * 1000);
+  assert.ok(RECLAIM_STALE_AFTER_MS <= MAX_RECLAIM_STALE_AFTER_MS);
+  for (const rejected of [0, -1, 1.5, MAX_RECLAIM_STALE_AFTER_MS + 1]) {
+    assert.throws(() => acquireDurableLock(file, { staleAfterMs: rejected }), /staleAfterMs/);
+    assert.throws(() => inspectLock(file, { staleAfterMs: rejected }), /staleAfterMs/);
+  }
+  assert.equal(fs.existsSync(file), false, 'a rejected bound acquires nothing');
 });
 
 // A recycled process id reports the dead owner as alive, which must leave the lock held.
