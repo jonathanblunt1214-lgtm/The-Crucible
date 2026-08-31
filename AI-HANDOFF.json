@@ -56,7 +56,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T19:00:00Z"
+    "lastActionAt": "2026-08-31T19:10:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -137,7 +137,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-08-31T19:00:00Z"
+    "lastUpdatedAt": "2026-08-31T19:10:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -184,9 +184,11 @@
       "Gates R3-R8 were not attempted: they require live outbound retrieval and the operator persistent durable learning store, neither of which exists in this ephemeral container, and evidence produced here would not survive it. No live discovery, promotion, or verified-knowledge claim is made.",
       "Focused durable-lock proof passes 9/9 and full-system proof passes 437/437; configuration, generated documentation, clutter, privacy, security, governance, and workflow permission checks pass across 194 tracked files.",
       "The staleness bounds are mechanical rather than documentary: staleAfterMs is rejected when zero, negative, fractional, or above the 60000ms owner ceiling, at both acquire and inspect, and a rejected bound acquires nothing.",
-      "The live SIGKILL forced-interruption cycle was re-run at the 30-second floor and behaved identically to the 60-second run: refused inside the floor, recovered after it, completed the source with attempts 2 and two unique candidates, released the lock, and stayed idempotent."
+      "The live SIGKILL forced-interruption cycle was re-run at the 30-second floor and behaved identically to the 60-second run: refused inside the floor, recovered after it, completed the source with attempts 2 and two unique candidates, released the lock, and stayed idempotent.",
+      "A repository-wide search for soak implementation returned no code references: R9 is prose only, with no monitor, no sampling rule, and no automated check for the lost, duplicated, cross-project, corrupt, or unauthorized transitions it names. Last recorded live population figures are historical and from the operator host only: 288 of 393 forced web sources still pending, seven PDFs at page 11, 105 web-source extractions, and zero verified knowledge versions."
     ],
     "remaining": [
+      "R9 has no defined observed population and no implementation. Nothing in src/, test/, or .github/ references a soak at all, and the gate text never says what set is under observation, how it is sampled, or what minimum population makes the soak meaningful. Specify that before any soak clock starts, or the duration decision is the only precise thing about the gate.",
       "Run the live discovery-to-candidate cycle (R3, R4) on a host that holds the operator durable learning store and can perform governed outbound retrieval.",
       "Complete distinct independent verification and the first safe test-claim promotion (R5), verified-only retrieval (R6), and rollback or supersession (R7) against real candidate evidence.",
       "Execute the combined live safety and deduplication proof (R8) covering kill switch, duplicate URL, duplicate content hash, duplicate bounded claim, prompt injection, executable content, blocked sources, and contradiction quarantine.",

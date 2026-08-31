@@ -3,7 +3,7 @@
   "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
   "branch": "development",
   "developmentSha": "492c8fe1d5944b41088a839e5aefdfb8c02aef19",
-  "updatedAt": "2026-08-31T19:00:00Z",
+  "updatedAt": "2026-08-31T19:10:00Z",
   "rollingTarget": "2026-09-14T16:00:00Z",
   "timezone": "America/New_York",
   "confidence": "medium",
@@ -18,11 +18,11 @@
     "R6": "pending",
     "R7": "pending",
     "R8": "pending-live-proof",
-    "R9": "pending; soak band set to 72-96 continuous hours by owner decision 2026-08-31, with 72 as a hard floor",
+    "R9": "pending; soak band set to 72-96 continuous hours by owner decision 2026-08-31, with 72 as a hard floor; observed population undefined and unimplemented",
     "R10": "pending",
     "R11": "pending"
   },
-  "blockingReason": "The forced-interruption recovery proof is complete: a real worker was SIGKILLed mid-extraction and, after the durable-lock repair, recovered, resumed, and completed the source with attempts incremented and no lost or duplicated candidates. Executing that proof exposed and closed a real defect - both durable locks were bare create-exclusive files with no recovery, so an interrupted run blocked every later run until a human deleted the lock. R2 additionally depends on live backlog evidence that only the host holding the operator durable store can produce. R9 runs for a continuous duration anywhere in 72 to 96 hours, by explicit owner decision on 2026-08-31, with 72 as a hard floor no evidence or schedule pressure may go below; it still cannot start until R2-R8 are simultaneously green, and forecasts use 96 so no date depends on the soak finishing at its minimum. Gates R3-R8 require live outbound retrieval and that same persistent store, so they remain unproven and were not attempted from an ephemeral container.",
+  "blockingReason": "The forced-interruption recovery proof is complete: a real worker was SIGKILLed mid-extraction and, after the durable-lock repair, recovered, resumed, and completed the source with attempts incremented and no lost or duplicated candidates. Executing that proof exposed and closed a real defect - both durable locks were bare create-exclusive files with no recovery, so an interrupted run blocked every later run until a human deleted the lock. R2 additionally depends on live backlog evidence that only the host holding the operator durable store can produce. R9 runs for a continuous duration anywhere in 72 to 96 hours, by explicit owner decision on 2026-08-31, with 72 as a hard floor no evidence or schedule pressure may go below; it still cannot start until R2-R8 are simultaneously green, and forecasts use 96 so no date depends on the soak finishing at its minimum. Gates R3-R8 require live outbound retrieval and that same persistent store, so they remain unproven and were not attempted from an ephemeral container. A separate gap is recorded against R9 itself: its observed population is undefined and nothing implements it, so the soak duration is currently the only precise part of the gate.",
   "history": [
     {
       "recordedAt": "2026-08-30T20:33:00Z",
