@@ -9,7 +9,7 @@ const { runLearningCycle } = require('./learningCycle');
 const { normalizedClaimSha256 } = require('./claimExtractionWorker');
 const { parseGoogleSearchResults, RetrievalAuditStore, SafeInformationRetriever } = require('./safeInformationRetrieval');
 const { preSoakReadiness } = require('./preSoakReadiness');
-const { learnFromRealCorpus, hasRealCorpusKnowledge } = require('./realCorpusLearning');
+const { learnFromRealCorpus, hasRealCorpusKnowledge, readBundle } = require('./realCorpusLearning');
 
 const CLAIM = 'The map method returns a new array and does not modify the original array.';
 const BOUNDARY = 'Node.js ordinary dense arrays of numbers';
@@ -71,7 +71,8 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   // which proved the pipeline ran and proved nothing about learning. If the real corpus
   // cannot supply a corroborated, owner-scoped claim, this reports unsatisfied and stops.
   let realLearning = null;
-  if (!hasRealCorpusKnowledge(store)) {
+  const restoredBundle = bundleRoot && fs.existsSync(path.join(bundleRoot,'manifest.json')) ? readBundle(bundleRoot) : null;
+  if (!hasRealCorpusKnowledge(store, restoredBundle)) {
     if (!bundleRoot) throw new Error('CRUCIBLE_HOSTED_BUNDLE_ROOT is required: the hosted proof learns from the restored real corpus and has no fixture fallback.');
     realLearning = await learnFromRealCorpus({ bundleRoot, learningRoot:storeRoot, projectId, scopeDeclarationFile, harnessesFor:()=>({experiment,verifier}), now:()=>at });
     if (!realLearning.learned) {
