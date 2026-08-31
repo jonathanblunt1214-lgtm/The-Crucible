@@ -56,7 +56,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T18:14:00Z"
+    "lastActionAt": "2026-08-31T18:30:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -137,7 +137,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-08-31T18:14:00Z"
+    "lastUpdatedAt": "2026-08-31T18:30:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -177,7 +177,7 @@
       "The pre-repair diagnosis artifact for run 33415394151 recorded logBytes 26 and unclassifiedFailure true, because the wrapper died before writing any log; the added rule and log persistence are what close that blind spot.",
       "Focused diagnostic-organ proof passes 7/7; full-system proof passes 428/428; workflow permissions lint passes across 15 workflows; configuration, generated documentation, clutter, privacy, security, AI-conflict, governance, design-brief, core-reference, and whitespace checks pass.",
       "Local proof does not satisfy the exact-tip hosted gate; hosted verification of the new development commit is still required before this repair is called complete.",
-      "Concurrency safety is unchanged by the repair: reclamation fails closed when the owner process is alive, when the lock records another host, when the lock file was not written by this lock, when it is newer than the staleness floor that rules out a recycled process id, and when a competitor wins the reclamation race; acquisition is confirmed by reading the lock back, and release never removes a lock that has changed hands.",
+      "Concurrency safety is unchanged by the repair: reclamation fails closed when the owner process is alive, when the lock records another host, when the lock file was not written by this lock, when it is newer than the staleness floor that stops a takeover resting on a single liveness check, and when a competitor wins the reclamation race; acquisition is confirmed by reading the lock back, and release never removes a lock that has changed hands.",
       "Focused durable-lock proof passes 8/8 and full-system proof passes 436/436; the checks-and-balances cadence test correctly failed first on the unclassified new test file and passed only after explicit classification.",
       "Gates R3-R8 were not attempted: they require live outbound retrieval and the operator persistent durable learning store, neither of which exists in this ephemeral container, and evidence produced here would not survive it. No live discovery, promotion, or verified-knowledge claim is made.",
       "Focused durable-lock proof passes 9/9 and full-system proof passes 437/437; configuration, generated documentation, clutter, privacy, security, governance, and workflow permission checks pass across 194 tracked files."
@@ -188,7 +188,7 @@
       "Execute the combined live safety and deduplication proof (R8) covering kill switch, duplicate URL, duplicate content hash, duplicate bounded claim, prompt injection, executable content, blocked sources, and contradiction quarantine.",
       "Obtain current live extraction/runtime evidence before declaring the remaining backlog drained; candidate extraction must never imply verified-knowledge promotion. This is the part of R2 that is still open: the restart proof passed, the live backlog drain is unverified from any host but the operator one.",
       "Begin the mandatory 72-hour soak only after R2-R8 are simultaneously green, then freeze the exact SHA for R10; R11 remains the owner explicit authorization and can never be self-granted.",
-      "Decide whether the 60-second durable-lock staleness floor is right for real operation: it is the guard against a recycled process id being mistaken for the dead owner, and its cost is that a re-run inside the first minute after a crash fails closed with an explicit reason instead of recovering.",
+      "Decide whether the 60-second durable-lock staleness floor is right for real operation: it stops a takeover resting on one liveness check sampled at an instant, requiring the owner to have been absent for a sustained period as well. It is deliberately not a defence against process-id reuse: a recycled id reports the dead owner as alive, which leaves the lock held - the safe direction. Its cost is that a re-run inside the first minute after a crash fails closed with an explicit reason instead of recovering, which nothing in this repository currently does.",
       "Verify the exact hosted tip of this commit on GitHub runners before treating this unit of work as complete."
     ]
   }

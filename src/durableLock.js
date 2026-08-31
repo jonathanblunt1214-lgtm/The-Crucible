@@ -18,9 +18,21 @@ const crypto = require('node:crypto');
 //   - the owner recorded the same host, because no host may judge whether a
 //     process on another machine is still alive;
 //   - the owner process is genuinely gone; and
-//   - the lock is older than a bounded staleness floor, which is what keeps a
-//     recycled PID from being mistaken for the original dead owner.
+//   - the lock is older than a bounded staleness floor, so a takeover rests on the
+//     owner having been absent for a sustained period rather than on a single
+//     liveness check sampled at one instant.
 // Anything unreadable, foreign, live, or too recent is left exactly where it is.
+//
+// Be precise about what that floor does and does not cover, so it is neither trusted
+// for protection it cannot give nor removed for the wrong reason. A recycled process
+// id makes a dead owner look ALIVE, so the lock is simply left held - inconvenient,
+// never unsafe - and the floor is irrelevant to that case. The dangerous direction is
+// a liveness check that wrongly reports an owner GONE, which a process this one cannot
+// see (a different pid namespace reporting the same hostname) can produce. The floor
+// does not eliminate that either; it refuses to act on a momentary or racing negative,
+// which is what makes a wrongful takeover unlikely in practice. The cost is bounded:
+// nothing here retries inside a minute, so only a hand-run restart immediately after a
+// crash ever waits, and it is told exactly why.
 const RECLAIM_STALE_AFTER_MS = 60 * 1000;
 
 function defaultIsAlive(pid) {
@@ -46,7 +58,7 @@ function inspectLock(lockFile, { hostname = os.hostname(), isAlive = defaultIsAl
   if (isAlive(owner.pid)) return { reclaimable: false, owner, reason: `process ${owner.pid} on this host is still running, so this is genuine concurrency, not an interruption` };
   let ageMs;
   try { ageMs = now() - fs.statSync(lockFile).mtimeMs; } catch { return { reclaimable: false, owner, reason: 'the lock file vanished while it was being inspected' }; }
-  if (ageMs < staleAfterMs) return { reclaimable: false, owner, reason: `the lock is only ${Math.max(0, Math.round(ageMs))}ms old, below the ${staleAfterMs}ms floor that rules out a recycled process id` };
+  if (ageMs < staleAfterMs) return { reclaimable: false, owner, reason: `the lock is only ${Math.max(0, Math.round(ageMs))}ms old, below the ${staleAfterMs}ms floor required before a liveness check alone may hand it over` };
   return { reclaimable: true, owner, reason: `process ${owner.pid} on this host is gone and the lock has been idle for ${Math.round(ageMs)}ms`, ageMs };
 }
 
