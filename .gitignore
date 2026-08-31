@@ -4,3 +4,5 @@ dist/
 *.log
 .DS_Store
 .the-crucible-quarantine/
+tools/roslynSemanticAnalyzer/bin/
+tools/roslynSemanticAnalyzer/obj/

@@ -17,11 +17,12 @@ function boundedTopic(value) {
   return topic;
 }
 
-function buildGoogleSearchUrl(topic, { resultCount = 10 } = {}) {
+function buildGoogleSearchUrl(topic, { resultCount = 10, trustedSuffixes = ['.edu', '.org', '.gov'] } = {}) {
   const checked = boundedTopic(topic);
   if (!Number.isSafeInteger(resultCount) || resultCount < 1 || resultCount > 10) throw new Error('Google resultCount must be between 1 and 10.');
+  if (!Array.isArray(trustedSuffixes) || !trustedSuffixes.length || trustedSuffixes.some((item) => !['.edu', '.org', '.gov'].includes(item))) throw new Error('Research suffixes must be a non-empty subset of .edu, .org, and .gov.');
   const url = new URL('https://www.google.com/search');
-  url.searchParams.set('q', `${checked} (site:.edu OR site:.org OR site:.gov)`);
+  url.searchParams.set('q', `${checked} (${trustedSuffixes.map((suffix) => `site:${suffix}`).join(' OR ')})`);
   url.searchParams.set('num', String(resultCount));
   url.searchParams.set('filter', '1');
   url.searchParams.set('safe', 'active');
@@ -98,9 +99,9 @@ class BoundedGoogleSearchClient {
     this.fetchImpl = fetchImpl; this.lookup = lookup; this.killSwitchFile = path.resolve(killSwitchFile); this.maximumBytes = maximumBytes; this.timeoutMs = timeoutMs; this.minimumIntervalMs = minimumIntervalMs; this.now = now; this.lastRequestAt = 0;
   }
 
-  async search(topic) {
+  async search(topic, { trustedSuffixes = ['.edu', '.org', '.gov'] } = {}) {
     if (fs.existsSync(this.killSwitchFile)) throw new Error('Google research kill switch is active.');
-    const searchUrl = new URL(buildGoogleSearchUrl(topic));
+    const searchUrl = new URL(buildGoogleSearchUrl(topic, { trustedSuffixes }));
     if (searchUrl.hostname !== GOOGLE_SEARCH_HOST || searchUrl.pathname !== '/search') throw new Error('Only the fixed Google search endpoint is allowed.');
     const addresses = await this.lookup(searchUrl.hostname, { all:true, verbatim:true });
     if (!Array.isArray(addresses) || !addresses.length || addresses.some((item) => privateAddress(item.address))) throw new Error('Google search resolved to a forbidden network target.');
@@ -144,20 +145,21 @@ class AtomicSourceQueueCandidateSink {
 }
 
 class AutomatedGoogleResearch {
-  constructor({ store, client, candidateSink, intervalMs = DEFAULT_RESEARCH_INTERVAL_MS, maximumQueriesPerRun = 5 }) {
+  constructor({ store, client, candidateSink, scopeProvider = null, intervalMs = DEFAULT_RESEARCH_INTERVAL_MS, maximumQueriesPerRun = 5 }) {
     if (!store?.due || !store?.recordRun) throw new Error('A Google research store is required.');
     if (!client?.search) throw new Error('A bounded Google search client is required.');
     if (!candidateSink?.register) throw new Error('A candidate URL sink is required.');
     if (!Number.isSafeInteger(maximumQueriesPerRun) || maximumQueriesPerRun < 1 || maximumQueriesPerRun > 10) throw new Error('maximumQueriesPerRun must be between 1 and 10.');
-    this.store = store; this.client = client; this.candidateSink = candidateSink; this.intervalMs = intervalMs; this.maximumQueriesPerRun = maximumQueriesPerRun;
+    this.store = store; this.client = client; this.candidateSink = candidateSink; this.scopeProvider = scopeProvider; this.intervalMs = intervalMs; this.maximumQueriesPerRun = maximumQueriesPerRun;
   }
 
   async runDue(at) {
     const outcomes = [];
     for (const entry of this.store.due(at, this.maximumQueriesPerRun)) {
       try {
-        const search = await this.client.search(entry.topic);
-        const candidates = parseGoogleSearchResults(search.html, { trustedDomains:[], trustedSuffixes:['.edu', '.org', '.gov'], extremeVettingSuffixes:[], maximumResults:10 });
+        const scope = this.scopeProvider ? this.scopeProvider(entry.topic) : { trustedSuffixes:['.edu', '.org', '.gov'], deniedDomains:[] };
+        const search = await this.client.search(entry.topic, { trustedSuffixes:scope.trustedSuffixes });
+        const candidates = parseGoogleSearchResults(search.html, { trustedDomains:[], trustedSuffixes:scope.trustedSuffixes, extremeVettingSuffixes:[], deniedDomains:scope.deniedDomains || [], maximumResults:10 });
         const known = new Set(this.store.read().discoveredUrls);
         const novel = candidates.filter((candidate) => !known.has(candidate.url));
         const registered = [];

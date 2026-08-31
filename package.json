@@ -57,5 +57,17 @@
   "engines": {
     "node": ">=20"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "parse5": "^8.0.0",
+    "postcss": "^8.5.23",
+    "pyright": "^1.1.413",
+    "tree-sitter": "^0.25.1",
+    "tree-sitter-bash": "^0.25.1",
+    "typescript": "^5.9.2"
+  },
+  "allowScripts": {
+    "tree-sitter@0.25.1": true,
+    "tree-sitter-bash@0.25.1": true
+  }
 }
