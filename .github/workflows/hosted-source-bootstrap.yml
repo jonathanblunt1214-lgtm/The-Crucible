@@ -1,0 +1,62 @@
+name: Restore encrypted training queue on GitHub
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - .github/workflows/hosted-source-bootstrap.yml
+      - src/hostedSourceBundle.js
+
+permissions:
+  contents: read
+
+jobs:
+  restore:
+    name: Verify encrypted source queue custody
+    if: github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+      - name: Download authenticated encrypted queue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ASSET_API_URL: ${{ secrets.CRUCIBLE_SOURCE_BUNDLE_ASSET_API_URL }}
+        run: |
+          test -n "$ASSET_API_URL"
+          mkdir -p "$RUNNER_TEMP/crucible-source-restore"
+          curl --fail-with-body --location --proto '=https' --tlsv1.2 \
+            --header "Authorization: Bearer $GH_TOKEN" \
+            --header 'Accept: application/octet-stream' \
+            --output "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc" \
+            "$ASSET_API_URL"
+      - name: Decrypt, restore, and verify every hash
+        env:
+          CRUCIBLE_SOURCE_BUNDLE_KEY: ${{ secrets.CRUCIBLE_SOURCE_BUNDLE_KEY }}
+        run: |
+          node src/hostedSourceBundle.js decrypt \
+            --input "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc" \
+            --output "$RUNNER_TEMP/crucible-source-restore/source-bundle.tar.gz" \
+            --repository "$GITHUB_REPOSITORY" --ref "$GITHUB_REF"
+          mkdir -p "$RUNNER_TEMP/crucible-source-restore/plaintext"
+          tar -xzf "$RUNNER_TEMP/crucible-source-restore/source-bundle.tar.gz" \
+            -C "$RUNNER_TEMP/crucible-source-restore/plaintext"
+          node src/hostedSourceBundle.js verify \
+            --root "$RUNNER_TEMP/crucible-source-restore/plaintext" \
+            --repository "$GITHUB_REPOSITORY" --ref "$GITHUB_REF" \
+            --report hosted-source-bootstrap/report.json
+      - name: Destroy runner plaintext
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/crucible-source-restore"
+      - name: Retain bounded custody report only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hosted-source-bootstrap-${{ github.run_id }}
+          path: hosted-source-bootstrap/report.json
+          if-no-files-found: error
+          retention-days: 90

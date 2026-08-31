@@ -188,6 +188,17 @@ test('GitHub hosts encrypted restart-safe R4-R8 proof without production authori
   assert.doesNotMatch(workflow, /contents: write|pull-requests: write|issues: write/);
 });
 
+test('GitHub restores the owner queue only from authenticated ciphertext and retains no plaintext', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'hosted-source-bootstrap.yml'), 'utf8');
+  assert.match(workflow, /branches:\s*\n\s*- development/);
+  assert.match(workflow, /CRUCIBLE_SOURCE_BUNDLE_ASSET_API_URL/);
+  assert.match(workflow, /CRUCIBLE_SOURCE_BUNDLE_KEY/);
+  assert.match(workflow, /node src\/hostedSourceBundle\.js decrypt/);
+  assert.match(workflow, /node src\/hostedSourceBundle\.js verify/);
+  assert.match(workflow, /Destroy runner plaintext[\s\S]*if: always\(\)/);
+  assert.doesNotMatch(workflow, /contents: write|pull-requests: write|issues: write/);
+});
+
 test('hosted multi-repository integration remains manual and report-only', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'multi-repository-integration.yml'), 'utf8');
   assert.match(workflow, /^on:\s*\n\s*workflow_dispatch:/m);
