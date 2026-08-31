@@ -24,6 +24,7 @@
     "src/testFeatureClassifier.js": "Independent closest-feature classifier for newly discovered unmapped tests. Explicit mappings remain authoritative; a unique evidence-backed closest match supplies a category. Unresolved ambiguity is isolated to the affected test, safe classified tests continue, and incomplete requested coverage must be reported rather than faked.",
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
+    "src/ciDiagnosticOrgan.js": "Dependency-free project-bound hosted CI failure capture, typed diagnosis, organism-health inhibition, and non-proof evidence reporting.",
     "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
     "governingDocuments/scientific-learning-policy.md": "Permanent autonomous scientific-learning invariants, promotion boundary, project isolation, contradiction handling, rollback, and weekly transport policy.",
     "governingDocuments/scientific-learning-release-plan.md": "Gate-driven rolling release plan for scientific learning; dates forecast readiness but never authorize promotion or weaken proof.",
@@ -54,7 +55,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T15:05:53Z"
+    "lastActionAt": "2026-08-31T16:40:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -116,26 +117,26 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "GPT-5.6 Sol",
-    "objective": "Audit the current Crucible implementation and GitHub evidence, repair verified blockers with bounded changes, prove exact-tip CI, then continue the remaining information-pipeline, scientific-learning, oversight, and governance work without weakening learning gates or treating repository visibility as ownership.",
-    "currentPrompt": "if all this Audit uploaded Crucible files/configuration/logs. Upload the relevant source tree as a ZIP or individual files and I can trace the extraction pipeline, evaluator, candidate store, learning gates, governance implementation, tests, workflows, and configuration. Diagnose the extraction-worker failure. With the evaluator/queue/worker code and startup logs, I can determine why the engine is healthy while the queue isn't being consumed and produce the smallest bounded correction. Write the actual patches/code. I can produce replacement functions/files, tests, schemas, migrations, workflow changes, and exact diffs. You can then apply them locally. Build the scientific-learning evaluator. We can finish the state machine and mechanically encode every promotion invariant we've established. Prepare the research corpus. The material we've vetted can be converted into provenance-bound candidate records rather than pretending it is verified knowledge. Audit governance. I can compare the implementation against the Crucible rules we've established and identify missing, contradictory, or over-scoped behavior. Review CI/test output. Paste failing output and I'll diagnose it against the actual code. Review commits/diffs through GitHub when the relevant repository state is available there. That can establish what actually reached development/main, although it won't expose local runtime state such as the Nexus-hosted encrypted identity. Continue source validation. We can keep evaluating foundational material without promoting unproven claims. Create a deterministic completion checklist so another execution environment can't casually report something done without producing the required evidence. The most productive move now is to get the current Crucible implementation into this conversation. Upload a ZIP of the current Crucible working tree—especially src/, test/, .github/workflows/, governance files, and the extraction/evaluator configuration—plus the latest extraction startup log if available. I can then do an actual code audit and answer four concrete questions: where the 400-item queue is stored, why no worker consumes it, exactly what code must change, and which learning/governance gates are already implemented versus still only specified. needs to be done do it",
+    "agent": "Codex",
+    "objective": "Make Crucible self-diagnose hosted CI and project failures through a project-bound, non-proof diagnostic organ, finish the independent vetted-information gates, repair the current Windows native dependency failure without weakening coverage, and prove the exact development tip.",
+    "currentPrompt": "fix it all be immediately because without it Crucible isn't self diagnosing and it makes me concerned how other projects are diagnosed",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "GPT-5.6 Sol",
-      "purpose": "Continue the authorized repository audit and surgical repairs directly through the connected GitHub surface because Work mode is unavailable.",
-      "selectionReason": "The owner explicitly requested continuation without Work mode; GitHub repository and hosted-CI evidence are available directly, while local Nexus/runtime state remains outside this execution surface.",
-      "distinction": "Execution mode is separate from agent identity and workflow; GPT-5.6 Sol is operating in regular/default mode while using the repository's governed workflows for verification."
+      "agent": "Codex",
+      "purpose": "Implement and verify a bounded CI diagnostic organ and exact current hosted-CI repair.",
+      "selectionReason": "The task is repository-focused and executable through the current development checkout and hosted GitHub evidence.",
+      "distinction": "Execution mode is separate from agent identity and workflow; diagnosis remains evidence processing, not proof or unattended repair authority."
     },
     "steps": [
-      "Re-read current governance and exact development state before mutation; preserve concurrent work and never force-push.",
-      "Audit the implemented extraction and scientific-learning path against the owner-defined scientific invariants and distinguish already-implemented behavior from remaining live proof.",
-      "Repair exact-tip actionable CI defects surgically, update AI-HANDOFF.json and DEVLOG.md atomically with each project commit, and verify hosted checks on the exact pushed SHA.",
-      "Treat all research and extracted material as provenance-bound candidate evidence only; no retrieval, repetition, correlation, or one-off success may promote knowledge.",
-      "After the information pipeline and gates are proven, continue remaining oversight/governance tasks and keep learning-specific release gates separate from otherwise-ready non-learning release decisions."
+      "Finish the read-only, signed oversight-to-learning gate and prove unvetted information cannot reach extraction.",
+      "Add a dependency-free hosted-CI diagnostic organ that binds exact project, repository, run, commit, job, step, runtime, and bounded log hashes.",
+      "Route diagnoses into organism health and oversight as Insufficient Evidence without autonomous repair, verification, or promotion authority.",
+      "Repair the current Windows/Node 20 tree-sitter native-build incompatibility without removing supported runtimes or tests.",
+      "Run complete local verification, update handoff and DEVLOG atomically, push only development, and monitor exact-tip hosted CI."
     ],
     "status": "active",
-    "startedAt": "2026-08-31T14:54:00Z",
-    "lastUpdatedAt": "2026-08-31T15:05:53Z"
+    "startedAt": "2026-08-31T16:44:00Z",
+    "lastUpdatedAt": "2026-08-31T16:40:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -146,15 +147,25 @@
       "Confirmed the permanent policy encodes retrieval-is-not-proof, exact tested-property verification, experiment-bound generalization, correlation-not-causation, and no later proof-stage self-satisfaction.",
       "Inspected exact-tip hosted Self-Test evidence and diagnosed a current deterministic failure: all matrix jobs reach the Code cadence without installing package-lock dependencies, causing src/semanticAnalysis.js to fail loading the declared TypeScript dev dependency.",
       "Prepared the minimal workflow repair by mirroring the already-working native semantic workflow's locked npm installation pattern in Self-Test."
+      ,"Advanced the clean detached worktree to literal development tip ebd26ff60e38fb740c2e3a47a9632ac22e7a659b before mutation and preserved the checkout-scoped safe.directory boundary."
+      ,"Implemented a dependency-free CI diagnostic organ that binds project, repository, exact commit, run, workflow, job, step, OS, runtime, and bounded log hash; diagnoses known toolchain/ownership/dependency signals; degrades organism health; and cannot prove, promote, verify, or authorize repair."
+      ,"Wired typed failure diagnosis and immutable artifacts into both The Crucible Self-Test and the reusable opted-in project workflow; cross-project diagnosis fails closed."
+      ,"Pinned the Windows Self-Test matrix to windows-2022 while retaining Node 20, 22, and 24 coverage so tree-sitter uses a supported Visual Studio generation instead of weakening runtime or test coverage."
+      ,"Registered the diagnostic tests in the governed Code/every-push cadence, synchronized the concise generated README workflow summary, and preserved the complete pre-prune DEVLOG snapshot in Archive commit 6de11ac."
+      ,"Completed full local proof at 425/425 and resolved both automatically recorded local known-bug entries only through their governed passing re-tests."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
       "package.json declares typescript ^5.9.2 in devDependencies and package-lock.json is tracked, while .github/workflows/self-test.yml previously had no npm dependency-install step.",
       ".github/workflows/native-semantic-analysis.yml already uses npm ci successfully as the repository's locked dependency-install pattern before semantic tests.",
+      "Focused CI diagnostic, ecosystem, reusable-workflow, and workflow-contract proof passes 35/35; workflow permissions lint passes across 15 workflows.",
+      "Full-system proof passes 425/425; configuration, generated documentation, workflow permissions, clutter, privacy, security, AI-conflict, governance, design-brief, and whitespace checks pass.",
+      "Known bugs KB-local-8f0bbb959b and KB-local-e27b0d5527 have passing governed re-test evidence and are resolved; neither was manually deleted or checked off.",
       "No claim is made that the live runtime queue is currently drained or that learning release gates R2-R11 are complete; GitHub source/history alone cannot establish current local durable-queue state."
     ],
     "remaining": [
-      "Commit the Self-Test dependency-install repair with this handoff and DEVLOG update as one atomic development commit, then require exact-tip hosted CI evidence.",
+      "Explicit forced-interruption recovery proof is still missing.",
+      "Commit the Self-Test diagnostic and Windows runner repair with this handoff and DEVLOG update as one atomic development commit, then require exact-tip hosted CI evidence.",
       "If hosted CI exposes another actionable defect, diagnose and repair it under the same bounded transaction instead of weakening or skipping the failing gate.",
       "Obtain current live extraction/runtime evidence before declaring the remaining backlog drained; candidate extraction must never imply verified-knowledge promotion.",
       "After information-pipeline and scientific gates are operationally proven, continue the remaining oversight/governance review and isolate any non-learning release candidate before promotion through release to main."

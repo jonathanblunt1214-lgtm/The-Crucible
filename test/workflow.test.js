@@ -25,6 +25,9 @@ test('reusable workflow is read-only and uses the exact caller-supplied core ref
   assert.match(workflow, /Pre-check changed commit and code[\s\S]*cli\.js precheck/);
   assert.match(workflow, /cli\.js design-brief[\s\S]*cli\.js core-ref[\s\S]*cli\.js validate/);
   assert.match(workflow, /Scan the checked-out Crucible engine code for malicious patterns[\s\S]*CRUCIBLE_PROJECT_ROOT: \$\{\{ github\.workspace \}\}\/\.the-crucible-runtime[\s\S]*cli\.js security/);
+  assert.match(workflow, /Diagnose opted-in project failure[\s\S]*CRUCIBLE_PROJECT_ID: github:\$\{\{ github\.repository \}\}/);
+  assert.match(workflow, /ciDiagnosticOrgan\.js diagnose-local/);
+  assert.match(workflow, /the-crucible-ci-diagnosis-/);
   assert.match(workflow, /Create or update the Crucible failure issue[\s\S]*if: failure\(\)[\s\S]*cli\.js failure-issue/);
   assert.match(workflow, /malware_scan:[\s\S]*type: boolean/);
   assert.match(workflow, /Install ClamAV for the malware scan[\s\S]*if: inputs\.malware_scan[\s\S]*apt-get install -y clamav[\s\S]*Run Security Gate/);
@@ -168,7 +171,7 @@ test('engine changes test across supported operating systems before adoption', (
   const codeql = fs.readFileSync(path.join(root, '.github', 'workflows', 'codeql.yml'), 'utf8');
   assert.match(workflow, /push:\s*\n\s*branches: \[main, development\]/);
   assert.match(codeql, /push:\s*\n\s*branches: \[main, development\]/);
-  assert.match(workflow, /os: \[ubuntu-latest, windows-latest, macos-latest\]/);
+  assert.match(workflow, /os: \[ubuntu-latest, windows-2022, macos-latest\]/);
   assert.match(workflow, /node: \[20, 22, 24\]/);
   assert.match(workflow, /npm test[\s\S]*npm run validate[\s\S]*npm run audit:clutter[\s\S]*npm run audit:security[\s\S]*npm run precheck[\s\S]*npm run run/);
 });
@@ -383,6 +386,10 @@ test('the required Self-Test job runs an additive, non-blocking on-error diagnos
   // The existing required steps (npm test, the audits, etc.) must be untouched.
   assert.match(workflow, /- run: npm test\r?\n/);
   assert.match(workflow, /- run: npm run validate\r?\n/);
+  assert.match(workflow, /node src\/ciDiagnosticOrgan\.js capture-npm-ci/);
+  assert.match(workflow, /node src\/ciDiagnosticOrgan\.js diagnose-local/);
+  assert.match(workflow, /crucible-ci-diagnosis-/);
+  assert.match(workflow, /os: \[ubuntu-latest, windows-2022, macos-latest\]/);
 });
 
 test('the cadence registry itself is documented in AGENTS.md, including the no-invisible-self-repair boundary for on-error triggers', () => {
