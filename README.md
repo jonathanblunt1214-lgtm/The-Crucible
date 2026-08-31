@@ -28,6 +28,8 @@ Eligible Authenticity Gate suite claims communicate bidirectionally with durable
 
 `CrucibleLearningOrchestrator` is the executive-control layer, not a truth source. It prioritizes unresolved claims, contradictions, failed work, and pending verification; creates dependency-ordered plans; coordinates extraction and evaluation; retrieves exact-boundary active memory; accepts suite feedback; inhibits cross-project, contradictory, unsupported, unbounded, verification, or promotion actions; and reports known, uncertain, blocked, and awaiting-verification state. Its integrity-checked events always declare that they satisfy no proof stage and authorize no promotion.
 
+`EcosystemCoordinator` gives Crucible's major systems one governed organism lifecycle: `observe -> prioritize -> plan -> act -> verify -> learn -> adapt -> report`. Its project-bound signal envelope connects retrieval, extraction, both orchestrators, the suite, scientific memory, critical review, reasoning, adaptive strategy, security, quarantine, repair, and reporting. Missing components appear in health state; cross-project signals and component self-certification fail closed. The coordinator is connective tissue, not a new proof authority: only the scientific state machine and distinct experiment/verifier evidence can change active knowledge.
+
 GitHub repository identifiers are validated as a single `owner/repository` pair before API use. Valid GitHub repository names are supported even when the repository segment ends in a hyphen, while schemes, query strings, whitespace, traversal, and additional path segments remain blocked.
 
 ## Exactly what it does
