@@ -59,7 +59,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T20:00:00Z"
+    "lastActionAt": "2026-08-31T20:40:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -140,7 +140,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-08-31T20:00:00Z"
+    "lastUpdatedAt": "2026-08-31T20:40:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -172,7 +172,11 @@
       "Corrected an inaccurate rationale this session had written into the lock, its tests, and this handoff: the staleness floor does not rule out a recycled process id. A recycled id reports the dead owner as alive and leaves the lock held, which is the safe direction; the floor stops a takeover resting on a single liveness check sampled at one instant.",
       "Closed the R9 definition gap with two further owner decisions on 2026-08-31: an observation ceiling of 1000 data points at once, and an explicit hold of all data rather than a vacuous soak whenever the current population cannot exhibit the failures the gate checks. Implemented in src/soakGate.js with test/soakGate.test.js covering the ceiling, the retention invariant, deterministic window replay, the duration band, and each unobservable-failure case.",
       "Built the execution half of R9 in src/soakRun.js to the owner spec of 2026-08-31: per-data-point clock reset on failure, three failures to recycle the source into the collection pool, three further failures to trash the data point, recirculated sources ordered behind new data, and hourly sweeps.",
-      "Built src/preSoakReadiness.js and the read-only npm run learning:pre-soak command so R2-R8 state is reported from a real store rather than tracked by hand."
+      "Built src/preSoakReadiness.js and the read-only npm run learning:pre-soak command so R2-R8 state is reported from a real store rather than tracked by hand.",
+      "Diagnosed and repaired the Native semantic analysis workflow, red on all three of its runs including two commits predating this session, so it was pre-existing rather than caused by this work; a package.json change re-triggered it.",
+      "scripts/JavaSemanticAnalyzer.java could never compile on any platform: hash was declared throws Exception but is called inside TreePathScanner overrides that cannot propagate a checked exception. It now throws unchecked, reproduced and proven locally on JDK 21 by compiling and running the analyzer end to end against a real sample, including correct detection of an exec sink.",
+      "tools/roslynSemanticAnalyzer/Program.cs passed a null key into Dictionary.TryGetValue whenever a call site had no resolvable symbol, throwing ArgumentNullException at runtime on Ubuntu; the null-forgiving operator had silenced the compiler warning without preventing it. The lookup is now guarded.",
+      "The Windows NuGet restore failure was addressed by creating the redirected .NET home and package cache before restore and by skipping the SDK workload integrity check that the redirected home breaks; the toolchain isolation itself was kept rather than given up."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -194,15 +198,17 @@
       "A repository-wide search for soak implementation returned no code references: R9 is prose only, with no monitor, no sampling rule, and no automated check for the lost, duplicated, cross-project, corrupt, or unauthorized transitions it names. Last recorded live population figures are historical and from the operator host only: 288 of 393 forced web sources still pending, seven PDFs at page 11, 105 web-source extractions, and zero verified knowledge versions.",
       "Run against the repository current recorded state, the soak gate reports held with three named blockers: R2-R8 not simultaneously green, zero verified knowledge versions, and no active version. It reported 288 data points, all observed and none held, and soakPassed false. Holding is proven to be a wait rather than a discard: observed plus held equals the full population at 0, 11, 1703, and 2400 data points.",
       "Two readings in src/soakRun.js are the agent's, not the owner's, and are flagged in the module for confirmation: a store-level failure voids the soak rather than entering the three-strike cycle because no data point owns it, and a sweep gap beyond the hourly interval restarts every surviving clock because continuous observation cannot be claimed over unobserved hours.",
-      "Run against the repository last-recorded state, the pre-soak reporter shows zero of seven gates satisfied: R2-R7 pending and R8 manual-evidence-required, with the soak held. The instrumentation built this session measures and executes R9; it satisfies no gate."
+      "Run against the repository last-recorded state, the pre-soak reporter shows zero of seven gates satisfied: R2-R7 pending and R8 manual-evidence-required, with the soak held. The instrumentation built this session measures and executes R9; it satisfies no gate.",
+      "The Java fix was reproduced and proven on this host: javac failed with the exact hosted error before the change and exits 0 after it, and the analyzer emits META, FILE, FUNCTION, CALL, and FINDING records including the exec sink. The C# and Windows toolchain fixes cannot be reproduced here because no dotnet SDK is present, so hosted CI is their only verification and the loop continues if they stay red."
     ],
     "remaining": [
-      "Run the live discovery-to-candidate cycle (R3, R4) on a host that holds the operator durable learning store and can perform governed outbound retrieval.",
+      "Do not serialize R3 before R4. R4 accepts a source \"from search or owner ingest\", so it is not blocked by R3: one owner ingest through retrieval, provenance hashing, bounded extraction, deduplication, and candidate custody satisfies R4 and unblocks R5, and R6 and R7 behind it. R3 is its own independent gate needing one real bounded discovery run with its query audit, and R2's live drain and R8's combined cycle are independent of both. The real chain is R4 -> R5 -> {R6, R7}, with R5 the linchpin.",
       "Complete distinct independent verification and the first safe test-claim promotion (R5), verified-only retrieval (R6), and rollback or supersession (R7) against real candidate evidence.",
       "Execute the combined live safety and deduplication proof (R8) covering kill switch, duplicate URL, duplicate content hash, duplicate bounded claim, prompt injection, executable content, blocked sources, and contradiction quarantine.",
       "Obtain current live extraction/runtime evidence before declaring the remaining backlog drained; candidate extraction must never imply verified-knowledge promotion. This is the part of R2 that is still open: the restart proof passed, the live backlog drain is unverified from any host but the operator one.",
       "Begin the soak only after R2-R8 are simultaneously green, running it for a duration chosen from evidence inside the owner-set 72-96 hour band before the clock starts, then freeze the exact SHA for R10; R11 remains the owner explicit authorization and can never be self-granted. 72 hours is a hard floor, never a default, and forecasts use 96.",
-      "Verify the exact hosted tip of this commit on GitHub runners before treating this unit of work as complete."
+      "Verify the exact hosted tip of this commit on GitHub runners before treating this unit of work as complete.",
+      "Confirm the Native semantic analysis workflow reaches green on both windows-latest and ubuntu-latest; the Windows NuGet and workload repair is unverifiable from an agent host without a dotnet SDK and may need another hosted round."
     ]
   }
 }
