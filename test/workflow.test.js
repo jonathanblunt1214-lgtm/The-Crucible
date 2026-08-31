@@ -176,6 +176,17 @@ test('engine changes test across supported operating systems before adoption', (
   assert.match(workflow, /npm test[\s\S]*npm run validate[\s\S]*npm run audit:clutter[\s\S]*npm run audit:security[\s\S]*npm run precheck[\s\S]*npm run run/);
 });
 
+test('GitHub hosts encrypted restart-safe R4-R8 proof without production authority', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'hosted-learning-proof.yml'), 'utf8');
+  assert.match(workflow, /github\.ref == 'refs\/heads\/development'/);
+  assert.match(workflow, /actions\/cache\/restore@0057852bfaa89a56745cba8c7296529d2fc39830/);
+  assert.match(workflow, /CRUCIBLE_HOSTED_STORE_KEY: \$\{\{ secrets\.CRUCIBLE_HOSTED_STORE_KEY \}\}/);
+  assert.match(workflow, /node src\/hostedLearningProof\.js/);
+  assert.match(workflow, /actions\/cache\/save@0057852bfaa89a56745cba8c7296529d2fc39830/);
+  assert.match(workflow, /retention-days: 90/);
+  assert.doesNotMatch(workflow, /contents: write|pull-requests: write|issues: write/);
+});
+
 test('hosted multi-repository integration remains manual and report-only', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'multi-repository-integration.yml'), 'utf8');
   assert.match(workflow, /^on:\s*\n\s*workflow_dispatch:/m);
@@ -351,6 +362,7 @@ test('the pre-push hook is tracked as executable and runs the fast offline verif
   const tracked = execFileSync('git', ['ls-files', '-s', '.githooks/pre-push'], { cwd: root, encoding: 'utf8' });
   assert.match(tracked, /^100755 /, 'the pre-push hook must be tracked with the executable bit (mode 100755), or Git silently skips it');
   const hook = fs.readFileSync(path.join(root, '.githooks', 'pre-push'), 'utf8');
+  assert.match(hook, /git rev-parse --local-env-vars/, 'the pre-push hook must isolate temporary-repository tests from the live push repository');
   assert.match(hook, /^#!\/bin\/sh/);
   for (const script of ['lint:workflows', 'docs:check', 'audit:clutter', 'audit:privacy', 'audit:security']) {
     assert.match(hook, new RegExp(`npm run ${script.replace(':', '\\:')}`));

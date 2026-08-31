@@ -52,6 +52,7 @@ test('current suite classification is stable across the four governed buckets', 
     'test/semanticAnalysis.test.js',
     'test/offlineGpuGate.test.js',
     'test/hostIsolation.test.js',
+    'test/hostedLearningProof.test.js',
     'test/externalAiFirewall.test.js',
     'test/knowledgeLifecycle.test.js',
   ]);
