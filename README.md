@@ -22,6 +22,8 @@ Before any experiment, `CriticalClaimReviewer` records assumptions, counterexamp
 
 `LogicalReasoningProblemSolver` operates before and after controlled testing. Before testing it records premises, competing hypotheses, decomposed test obligations, controls, and a bounded hypothesis. After testing it checks property/boundary identity, correlation-versus-causation, required controls, contradictions, and failures, then routes to independent verification, redesign, missing evidence, or quarantine. Its integrity-checked project ledger is advisory custody only: reasoning cannot satisfy gates, act as a verifier, override failure, or promote knowledge.
 
+`CreativeDecisionAdaptationEngine` proposes bounded alternative hypotheses, counterexamples, controls, and experiment designs; selects only governed actions (`test`, `narrow`, `seek-evidence`, `quarantine`, `retry`, `stop`, or `send-to-independent-verifier`); and persists bounded retry adaptations after failure. It preserves the original claim and boundary, caps attempts, never removes a required gate, and has no promotion action. Its project-bound strategy ledger is non-evidentiary.
+
 GitHub repository identifiers are validated as a single `owner/repository` pair before API use. Valid GitHub repository names are supported even when the repository segment ends in a hyphen, while schemes, query strings, whitespace, traversal, and additional path segments remain blocked.
 
 ## Exactly what it does
