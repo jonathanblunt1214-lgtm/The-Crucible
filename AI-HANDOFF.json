@@ -63,7 +63,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T21:55:00Z"
+    "lastActionAt": "2026-08-31T22:01:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -220,6 +220,7 @@
       ,"After npm ci installed the clean worktree's locked dependencies without changing the lockfile, full-system proof passes 486/486; configuration, generated documentation, workflow permissions, clutter, privacy, security, AI-conflict, governance, and design-brief audits all pass across 205 tracked files and 16 workflows."
       ,"The initial missing-TypeScript environment failure was retained as KB-local-eb818297c4 and then checked off only by the governed verifier after its exact 486-test set passed; it was not deleted or manually marked resolved."
       ,"The first push was stopped locally when the pre-push hook inherited Git's live repository and index environment, redirecting temporary-repository tests into the repository being pushed. The hook now unsets only git rev-parse --local-env-vars before verification, with a permanent workflow-contract assertion; the gate was repaired rather than bypassed."
+      ,"GitHub refused manual dispatch because the new workflow is absent from the default branch. Main remains untouched: the workflow now triggers only on pushes to development, and its first hosted run can be rerun at that exact SHA to prove encrypted cache restoration."
     ],
     "remaining": [
       "Do not serialize R3 before R4. R4 accepts a source \"from search or owner ingest\", so it is not blocked by R3: one owner ingest through retrieval, provenance hashing, bounded extraction, deduplication, and candidate custody satisfies R4 and unblocks R5, and R6 and R7 behind it. R3 is its own independent gate needing one real bounded discovery run with its query audit, and R2's live drain and R8's combined cycle are independent of both. The real chain is R4 -> R5 -> {R6, R7}, with R5 the linchpin.",

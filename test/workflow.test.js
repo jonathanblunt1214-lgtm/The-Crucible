@@ -178,6 +178,7 @@ test('engine changes test across supported operating systems before adoption', (
 
 test('GitHub hosts encrypted restart-safe R4-R8 proof without production authority', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'hosted-learning-proof.yml'), 'utf8');
+  assert.match(workflow, /push:\s*\n\s*branches:\s*\n\s*- development/);
   assert.match(workflow, /github\.ref == 'refs\/heads\/development'/);
   assert.match(workflow, /actions\/cache\/restore@0057852bfaa89a56745cba8c7296529d2fc39830/);
   assert.match(workflow, /CRUCIBLE_HOSTED_STORE_KEY: \$\{\{ secrets\.CRUCIBLE_HOSTED_STORE_KEY \}\}/);
