@@ -3,7 +3,7 @@
   "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
   "branch": "development",
   "developmentSha": "492c8fe1d5944b41088a839e5aefdfb8c02aef19",
-  "updatedAt": "2026-08-31T19:10:00Z",
+  "updatedAt": "2026-08-31T19:30:00Z",
   "rollingTarget": "2026-09-14T16:00:00Z",
   "timezone": "America/New_York",
   "confidence": "medium",
@@ -18,11 +18,11 @@
     "R6": "pending",
     "R7": "pending",
     "R8": "pending-live-proof",
-    "R9": "pending; soak band set to 72-96 continuous hours by owner decision 2026-08-31, with 72 as a hard floor; observed population undefined and unimplemented",
+    "R9": "held; soak band 72-96 continuous hours, observation ceiling 1000 data points, and the soak does not start while the data cannot exhibit the failures it checks",
     "R10": "pending",
     "R11": "pending"
   },
-  "blockingReason": "The forced-interruption recovery proof is complete: a real worker was SIGKILLed mid-extraction and, after the durable-lock repair, recovered, resumed, and completed the source with attempts incremented and no lost or duplicated candidates. Executing that proof exposed and closed a real defect - both durable locks were bare create-exclusive files with no recovery, so an interrupted run blocked every later run until a human deleted the lock. R2 additionally depends on live backlog evidence that only the host holding the operator durable store can produce. R9 runs for a continuous duration anywhere in 72 to 96 hours, by explicit owner decision on 2026-08-31, with 72 as a hard floor no evidence or schedule pressure may go below; it still cannot start until R2-R8 are simultaneously green, and forecasts use 96 so no date depends on the soak finishing at its minimum. Gates R3-R8 require live outbound retrieval and that same persistent store, so they remain unproven and were not attempted from an ephemeral container. A separate gap is recorded against R9 itself: its observed population is undefined and nothing implements it, so the soak duration is currently the only precise part of the gate.",
+  "blockingReason": "The forced-interruption recovery proof is complete: a real worker was SIGKILLed mid-extraction and, after the durable-lock repair, recovered, resumed, and completed the source with attempts incremented and no lost or duplicated candidates. Executing that proof exposed and closed a real defect - both durable locks were bare create-exclusive files with no recovery, so an interrupted run blocked every later run until a human deleted the lock. R2 additionally depends on live backlog evidence that only the host holding the operator durable store can produce. R9 runs for a continuous duration anywhere in 72 to 96 hours, by explicit owner decision on 2026-08-31, with 72 as a hard floor no evidence or schedule pressure may go below; it still cannot start until R2-R8 are simultaneously green, and forecasts use 96 so no date depends on the soak finishing at its minimum. Gates R3-R8 require live outbound retrieval and that same persistent store, so they remain unproven and were not attempted from an ephemeral container. R9 is now specified and implemented in src/soakGate.js: one data point per verified knowledge version, candidate record, and queued source; at most 1000 observed at once with the remainder held rather than dropped; and no soak starts while the population cannot exhibit the failures it checks. Against the repository current recorded state it reports held, because there are zero verified knowledge versions and no active version, so promotion, supersession, and verified-only retrieval are all unobservable.",
   "history": [
     {
       "recordedAt": "2026-08-30T20:33:00Z",
@@ -53,6 +53,12 @@
       "priorTarget": "2026-09-14T16:00:00Z",
       "newTarget": "2026-09-14T16:00:00Z",
       "reason": "Owner clarification superseding the earlier same-day entry: the soak is a 72-96 hour band, not a single 96-hour duration. 72 is a hard floor rather than a default, the duration is chosen from evidence before the clock starts and never revised downward mid-soak, and forecasting continues to use 96. The target does not move, because R3-R8 remain unproven and their completion, not the soak length, is what bounds the date."
+    },
+    {
+      "recordedAt": "2026-08-31T19:30:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Owner decision closing the R9 definition gap: an observation ceiling of 1000 data points, and an explicit hold rather than a vacuous run when the current data would return no result. The target does not move; if anything this makes the dependency on R5 and R7 explicit, since verified knowledge versions and supersessions are what make a soak observable at all."
     }
   ]
 }
