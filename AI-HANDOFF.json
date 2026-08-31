@@ -36,6 +36,7 @@
     "src/offlineGpuGate.js": "Owner-signed project/workload GPU permit with an overriding offline hard stop.",
     "src/externalAiFirewall.js": "Default-deny, owner-signed, payload-hash-bound external AI egress firewall.",
     "src/semanticAnalysis.js": "Compiler-native semantic adapters, normalized findings, secure workers, and explicit cross-language graphs.",
+    "src/knowledgeLifecycle.js": "Review routing for aged or challenged active knowledge and proof-bound supersession confirmation.",
     "src/scientificLearningCli.js": "Fail-closed operator readiness, candidate ingestion, custody-state inspection, and verified-only retrieval for explicitly configured project-scoped durable learning stores.",
     "src/safeInformationRetrieval.js": "Owner-approved credential-free HTTPS evidence retrieval, passive trusted-domain Google result parsing, auditable kill switch and denylist, network/content limits, provenance hashing, and prompt-injection/executable quarantine.",
     "src/automatedGoogleResearch.js": "Bounded credential-free Google discovery automation with allow-listed topics and suffixes, project-bound atomic query/result audit, due scheduling, kill switch, network limits, and URL deduplication before candidate registration.",
@@ -53,7 +54,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T12:11:00Z"
+    "lastActionAt": "2026-08-31T12:20:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -112,7 +113,7 @@
   "activePlan": {
     "agent": "Codex",
     "objective": "Complete compiler-native analysis on GitHub-hosted runners while preventing assimilation of the operator machine or GitHub hosts and retaining exact opted-in Crucible repository coordination.",
-    "currentPrompt": "always summarize for the readme do not write a novel",
+    "currentPrompt": "does the brain of crucible have the ability to  analyze and phase out outdated knowledge instead of growing aimlessly with old junk knowldge?",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
@@ -128,7 +129,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-30T20:32:00Z",
-    "lastUpdatedAt": "2026-08-31T12:11:00Z"
+    "lastUpdatedAt": "2026-08-31T12:20:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -173,6 +174,9 @@
       ,"Connected bounded language discovery to the explicitly opted-in project root; it scans filenames/extensions only and excludes dependencies, hidden infrastructure, and generated output."
       ,"Added a default-deny ChatGPT/external-AI egress firewall requiring short-lived owner-signed permission bound to project, provider, exact payload hash, purpose, and allowed fields, with an overriding offline hard stop."
       ,"Added the standing README brevity rule: concise operator summaries only, with technical depth kept in governing documents, code documentation, and tests."
+      ,"Diagnosed the zero-job native workflow failure as use of the runner context at job-level environment evaluation and moved runner-temporary .NET paths to the execution step where that context is available."
+      ,"Added a knowledge lifecycle governor: age, contradictions, source changes, version changes, and failed regressions trigger review but cannot retire knowledge; only a distinct fully verified same-boundary replacement confirms supersession, while old versions remain audit/rollback history outside active retrieval."
+      ,"Knowledge lifecycle and workflow-repair focused proof passes; complete governed proof passes 421/421 and workflow, documentation, security, and whitespace checks pass."
       ,"Scoped process inspection found no running Crucible or Learning-Worker process; no unrelated host state was inventoried or changed."
     ],
     "verification": [

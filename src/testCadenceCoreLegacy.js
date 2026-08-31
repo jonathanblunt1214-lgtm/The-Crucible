@@ -23,6 +23,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/offlineGpuGate.test.js',
     'test/hostIsolation.test.js',
     'test/externalAiFirewall.test.js',
+    'test/knowledgeLifecycle.test.js',
   ],
   security: [
     'test/automatedGoogleResearch.test.js',

@@ -26,10 +26,6 @@ jobs:
     timeout-minutes: 15
     env:
       CRUCIBLE_HOSTED_NATIVE_ANALYSIS: "1"
-      DOTNET_CLI_HOME: ${{ runner.temp }}/crucible-dotnet-home
-      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
-      DOTNET_NOLOGO: "1"
-      NUGET_PACKAGES: ${{ runner.temp }}/crucible-nuget
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -45,4 +41,9 @@ jobs:
           test "$GITHUB_ACTIONS" = "true"
           test -n "$RUNNER_TEMP"
       - name: Prove native semantic adapters
+        env:
+          DOTNET_CLI_HOME: ${{ runner.temp }}/crucible-dotnet-home
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+          DOTNET_NOLOGO: "1"
+          NUGET_PACKAGES: ${{ runner.temp }}/crucible-nuget
         run: node --test test/semanticAnalysis.test.js
