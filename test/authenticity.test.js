@@ -5,7 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
-const { verifyClaims, digestFile, recordExperience } = require('../src/authenticity');
+const { verifyClaims, digestFile, recordExperience, learningGuidance } = require('../src/authenticity');
 const { DurableScientificLearningStore } = require('../src/scientificLearning');
 
 function git(root, args) { return execFileSync('git', args, { cwd:root, encoding:'utf8', windowsHide:true }); }
@@ -84,6 +84,8 @@ test('eligible suite success is automatically recorded as non-promotable experie
   const claim = { name:'Bounded suite succeeds', run:process.execPath, args:['-e', "require('fs').writeFileSync('learn.txt', 'proof')"], cwd:'.', evidence:['learn.txt'], learning:{ claimBoundary:'exact commit/runtime/suite', generalizationBoundary:'no wider than exact commit/runtime/suite', expectedOutcome:'suite succeeds', environment:'governed fixture runner' } };
   const result = await verifyClaims(root, config([claim]), { CRUCIBLE_LEARNING_PROJECT_ID:'project-a', CRUCIBLE_LEARNING_ROOT:learningRoot, CRUCIBLE_EXPERIENCE_ACTOR_ID:'suite-runner-1' });
   assert.equal(result.learning[0].recorded, true);
+  assert.equal(result.learningGuidance[0].nextAction, 'run-bounded-test-and-submit-candidate-evidence');
+  assert.equal(result.learningGuidance[0].maySkipTest, false);
   const records = new DurableScientificLearningStore({ root:learningRoot, projectId:'project-a' }).read().candidateRecords;
   assert.equal(records.length, 1); assert.equal(records[0].state, 'candidate'); assert.equal(records[0].candidate.kind, 'experience-observation'); assert.equal(records[0].candidate.classification, 'Insufficient Evidence');
 });
@@ -112,3 +114,5 @@ test('suite learning retries bounded transient store contention without bypassin
   const result = await recordExperience(recorder, claim, record, { outcome:'succeeded', actualOutcome:'passed', resultSha256:'c'.repeat(64), observedAt:record.verifiedAt, actorId:'runner' });
   assert.equal(result.recorded, true); assert.equal(attempts, 3);
 });
+
+test('suite receives only active exact-boundary knowledge as non-skipping regression context',()=>{const claim={learning:{claimBoundary:'node-22/windows/test-y'}};const recorder={store:{retrieve:({boundary})=>[{version:2,candidateId:'verified-a',claim:'repair X causes test Y to pass',boundary,proofSha256:'a'.repeat(64),createdAt:'2026-08-30T22:00:00.000Z',status:'active',projectId:'project-a'}]}};const guidance=learningGuidance(recorder,claim);assert.equal(guidance.activeKnowledge.length,1);assert.equal(guidance.nextAction,'use-active-knowledge-as-bounded-regression-context');assert.equal(guidance.knowledgeIsProofForCurrentRun,false);assert.equal(guidance.maySkipTest,false);assert.equal('status' in guidance.activeKnowledge[0],false);});
