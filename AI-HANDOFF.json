@@ -51,11 +51,12 @@
     ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport; it never chooses test files.",
     "governingDocuments/known-bugs/README.md": "Known-bug governance policy.",
     "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger.",
-    "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity, America/New_York timestamping, completion/interruption check-ins, and continue-until-done behavior."
+    "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity, America/New_York timestamping, completion/interruption check-ins, and continue-until-done behavior.",
+    "src/durableLock.js": "Owner-recording durable lock shared by the source queue and the durable learning store. Reclaims a lock only from a process proven dead on the same host past a bounded staleness floor, fails closed on live, foreign-host, unreadable, too-recent, and lost-race conditions, and reports every reclamation so recovery from a forced interruption is never invisible."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T17:15:00Z"
+    "lastActionAt": "2026-08-31T17:49:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -118,25 +119,25 @@
   },
   "activePlan": {
     "agent": "Claude",
-    "objective": "Repair the exact-tip hosted install wrapper so the locked dependency install runs on every supported OS/Node combination, keep the diagnostic organ able to type its own start failure, and prove the exact development tip on GitHub runners without weakening any gate or touching main.",
+    "objective": "Execute the outstanding forced-interruption recovery proof, repair whatever it exposes without weakening any gate, and keep the exact development tip green on GitHub runners.",
     "currentPrompt": "he owner now explicitly says to fix all listed blockers. Finish your current Windows/Node 20 CI repair and diagnostic-organ work first, preserving the exact forced-interruption blocker text. Then continue every safely executable scientific-learning release gate: forced-interruption recovery proof; first live discovery-to-candidate cycle; distinct independent verification and first safe test-claim promotion; verified-only retrieval; rollback or supersession; combined live safety/dedup proof covering kill switch, duplicate URL/content/claim, prompt injection, executable content, blocked sources, and contradiction quarantine; then begin the mandatory 72-hour soak only after R2-R8 genuinely pass. Keep exact-tip hosted CI green. Never weaken gates or self-authorize R11, and never touch main. Update status, AI-HANDOFF, and DEVLOG atomically with durable evidence.",
     "executionMode": {
       "mode": "regular/default",
       "agent": "Claude",
-      "purpose": "Continue the receiving agent's bounded CI repair transaction and prove the exact hosted tip.",
+      "purpose": "Execute the forced-interruption recovery gate and repair the durable-lock defect it exposed.",
       "selectionReason": "The remaining work is repository-focused, executable through the current development checkout and hosted GitHub evidence, and unchanged in shape from the mode already recorded; the agent changed but the task needs did not, so the recorded mode is preserved rather than re-selected.",
       "distinction": "Execution mode is separate from agent identity and workflow; diagnosis remains evidence processing, not proof or unattended repair authority."
     },
     "steps": [
-      "Resolve the bundled npm CLI across both supported Node layouts so the locked install starts on Ubuntu, macOS, and Windows alike.",
-      "Preserve the install wrapper's own start failure as typed, bounded evidence so a harness failure is never reported as an unclassified blank diagnosis.",
-      "Run complete local verification, update this handoff and DEVLOG atomically, and preserve the pruned DEVLOG snapshot on Archive.",
-      "Push only development and verify the exact hosted tip on GitHub runners; if hosted CI exposes another defect, repair it under the same bounded transaction rather than weakening the failing gate.",
-      "Only after exact-tip hosted CI is green, continue the remaining safely executable scientific-learning release gates; R11 remains owner-only."
+      "Confirm the previous exact tip is hosted-green before starting new work.",
+      "Execute a real forced-interruption cycle against a project-bound store and queue, and report what it actually shows rather than what it should show.",
+      "Repair the exposed defect so an interrupted run can resume, without ever letting a live, foreign-host, or unverifiable owner lose its lock.",
+      "Make the whole cycle permanent in the governed every-push cadence, update handoff, DEVLOG, and release status atomically, and preserve the pruned DEVLOG snapshot on Archive.",
+      "Push only development and verify the exact hosted tip; R3-R8 remain for a host holding the operator durable store, and R11 remains owner-only."
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-08-31T17:15:00Z"
+    "lastUpdatedAt": "2026-08-31T17:49:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -156,7 +157,11 @@
       "Read exact-tip hosted evidence for Self-Test run 33415394151 at 7274f46785b43d55e0886a7f79ebda6e1c18771a: 6 of 9 matrix jobs failed at Install locked dependencies before any test executed, and all three windows-2022 jobs passed.",
       "Diagnosed the exact cause from the hosted log rather than by inference: the install wrapper resolved the bundled npm CLI only through the Windows Node layout, so POSIX runners raised \"Locked npm CLI was not found beside Node: /opt/hostedtoolcache/node/20.20.2/x64/bin/node_modules/npm/bin/npm-cli.js\".",
       "Repaired src/ciDiagnosticOrgan.js to resolve npm across both supported Node layouts, to persist the wrapper's own start failure to the same captured log path, and to classify it through a new npm-cli-resolution rule so the organ can diagnose its own harness failure instead of emitting an unclassified blank report.",
-      "Reproduced the failing hosted step on this POSIX host and confirmed the repaired wrapper completes the same locked install at exit 0 with a real captured log; no OS, Node version, test, or gate was removed."
+      "Reproduced the failing hosted step on this POSIX host and confirmed the repaired wrapper completes the same locked install at exit 0 with a real captured log; no OS, Node version, test, or gate was removed.",
+      "Verified exact tip 492c8fe1d5944b41088a839e5aefdfb8c02aef19 green on GitHub runners across all nine Self-Test jobs, CodeQL, AI handoff policy, AI conflict governance, Sync CI monitoring branch, and Block locked monitoring PRs.",
+      "Executed the outstanding forced-interruption recovery proof for the first time and reported its real result: it failed. A SIGKILLed worker left its queue lock on disk and every later run died with a raw EEXIST, so the system required a human to delete the lock before it could resume - matching the manual stale-lock removal already recorded in this log.",
+      "Added src/durableLock.js and routed both AtomicClaimExtractionQueue.lock and DurableScientificLearningStore.transact through it, so a lock is reclaimed only from a process proven dead on the same host past a bounded staleness floor, and every reclamation is reported through worker.lastLockReclamation and the extraction CLI recoveredFromForcedInterruption field.",
+      "Re-ran the live cycle after the repair: the kill left state intact, a restart inside the staleness floor correctly refused to reclaim, and a restart after it recovered, resumed, completed the source with attempts 2, persisted two candidates, released the lock, and stayed idempotent on a further run."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -168,15 +173,18 @@
       "No claim is made that the live runtime queue is currently drained or that learning release gates R2-R11 are complete; GitHub source/history alone cannot establish current local durable-queue state.",
       "The pre-repair diagnosis artifact for run 33415394151 recorded logBytes 26 and unclassifiedFailure true, because the wrapper died before writing any log; the added rule and log persistence are what close that blind spot.",
       "Focused diagnostic-organ proof passes 7/7; full-system proof passes 428/428; workflow permissions lint passes across 15 workflows; configuration, generated documentation, clutter, privacy, security, AI-conflict, governance, design-brief, core-reference, and whitespace checks pass.",
-      "Local proof does not satisfy the exact-tip hosted gate; hosted verification of the new development commit is still required before this repair is called complete."
+      "Local proof does not satisfy the exact-tip hosted gate; hosted verification of the new development commit is still required before this repair is called complete.",
+      "Concurrency safety is unchanged by the repair: reclamation fails closed when the owner process is alive, when the lock records another host, when the lock file was not written by this lock, when it is newer than the staleness floor that rules out a recycled process id, and when a competitor wins the reclamation race; acquisition is confirmed by reading the lock back, and release never removes a lock that has changed hands.",
+      "Focused durable-lock proof passes 8/8 and full-system proof passes 436/436; the checks-and-balances cadence test correctly failed first on the unclassified new test file and passed only after explicit classification.",
+      "Gates R3-R8 were not attempted: they require live outbound retrieval and the operator persistent durable learning store, neither of which exists in this ephemeral container, and evidence produced here would not survive it. No live discovery, promotion, or verified-knowledge claim is made."
     ],
     "remaining": [
-      "Explicit forced-interruption recovery proof is still missing.",
-      "Verify the new exact development tip on GitHub runners across the full nine-job matrix; if hosted CI exposes another actionable defect, diagnose and repair it under the same bounded transaction instead of weakening or skipping the failing gate.",
+      "Run the live discovery-to-candidate cycle (R3, R4) on a host that holds the operator durable learning store and can perform governed outbound retrieval.",
+      "Complete distinct independent verification and the first safe test-claim promotion (R5), verified-only retrieval (R6), and rollback or supersession (R7) against real candidate evidence.",
+      "Execute the combined live safety and deduplication proof (R8) covering kill switch, duplicate URL, duplicate content hash, duplicate bounded claim, prompt injection, executable content, blocked sources, and contradiction quarantine.",
       "Obtain current live extraction/runtime evidence before declaring the remaining backlog drained; candidate extraction must never imply verified-knowledge promotion.",
-      "Continue the remaining scientific-learning release gates in order: first live discovery-to-candidate cycle, distinct independent verification and first safe test-claim promotion, verified-only retrieval, rollback or supersession, and the combined live safety/deduplication proof covering kill switch, duplicate URL/content/claim, prompt injection, executable content, blocked sources, and contradiction quarantine.",
-      "Begin the mandatory 72-hour soak only after R2-R8 genuinely pass, then freeze the exact SHA for R10; R11 remains the owner's explicit authorization and can never be self-granted.",
-      "After information-pipeline and scientific gates are operationally proven, continue the remaining oversight/governance review and isolate any non-learning release candidate before promotion through release to main."
+      "Begin the mandatory 72-hour soak only after R2-R8 are simultaneously green, then freeze the exact SHA for R10; R11 remains the owner explicit authorization and can never be self-granted.",
+      "Verify the exact hosted tip of this commit on GitHub runners before treating this unit of work as complete."
     ]
   }
 }

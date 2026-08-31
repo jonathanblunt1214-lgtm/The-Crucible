@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
   "branch": "development",
-  "developmentSha": "55d3c60bb8034067e643cd39636784a19b991660",
-  "updatedAt": "2026-08-30T21:13:00Z",
+  "developmentSha": "492c8fe1d5944b41088a839e5aefdfb8c02aef19",
+  "updatedAt": "2026-08-31T17:49:00Z",
   "rollingTarget": "2026-09-14T16:00:00Z",
   "timezone": "America/New_York",
   "confidence": "medium",
@@ -11,7 +11,7 @@
   "promotionPerformed": false,
   "gates": {
     "R1": "passed",
-    "R2": "in-progress-live-proof",
+    "R2": "restart-proof-passed; live backlog drain unverified from this host",
     "R3": "pending",
     "R4": "pending",
     "R5": "pending",
@@ -22,7 +22,7 @@
     "R10": "pending",
     "R11": "pending"
   },
-  "blockingReason": "The extraction worker is operational and has reduced the forced web backlog from 393 to 288 while advancing all seven PDFs through their first ten-page window. Explicit forced-interruption recovery proof is still missing. The remaining live-cycle gates are not yet proven.",
+  "blockingReason": "The forced-interruption recovery proof is complete: a real worker was SIGKILLed mid-extraction and, after the durable-lock repair, recovered, resumed, and completed the source with attempts incremented and no lost or duplicated candidates. Executing that proof exposed and closed a real defect - both durable locks were bare create-exclusive files with no recovery, so an interrupted run blocked every later run until a human deleted the lock. R2 additionally depends on live backlog evidence that only the host holding the operator durable store can produce. Gates R3-R8 require live outbound retrieval and that same persistent store, so they remain unproven and were not attempted from an ephemeral container.",
   "history": [
     {
       "recordedAt": "2026-08-30T20:33:00Z",
@@ -35,6 +35,12 @@
       "priorTarget": "2026-09-14T16:00:00Z",
       "newTarget": "2026-09-14T16:00:00Z",
       "reason": "Extraction throughput is now measurable: forced web sources fell from 393 to 288 and all seven PDFs advanced to page 11. Confidence increased to medium; remaining live-cycle and soak gates keep the target unchanged."
+    },
+    {
+      "recordedAt": "2026-08-31T17:49:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Gate change without a date change: R2 restart proof passed via a live SIGKILL recovery cycle now permanently covered by test/durableLock.test.js, and exact tip 492c8fe1d5944b41088a839e5aefdfb8c02aef19 is hosted-green across all nine Self-Test jobs, CodeQL, and every governance workflow. R3-R8 still require live retrieval and the operator durable store, and the mandatory 72-hour soak has not started, so the target does not move earlier."
     }
   ]
 }
