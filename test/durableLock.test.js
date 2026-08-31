@@ -66,13 +66,23 @@ test('refuses to reclaim a lock it did not write, rather than deleting on a gues
   assert.equal(fs.readFileSync(file, 'utf8'), 'not a lock record');
 });
 
-test('refuses to reclaim inside the staleness floor that rules out a recycled process id', (t) => {
+test('refuses to reclaim inside the staleness floor, so no takeover rests on one liveness check', (t) => {
   const file = path.join(workspace(t), 'e.lock');
   acquireDurableLock(file, { pid: reapedPid() });
   const inspection = inspectLock(file, { isAlive: () => false });
   assert.equal(inspection.reclaimable, false);
   assert.match(inspection.reason, /below the \d+ms floor/);
-  assert.throws(() => acquireDurableLock(file, { isAlive: () => false }), /recycled process id/);
+  assert.throws(() => acquireDurableLock(file, { isAlive: () => false }), /before a liveness check alone may hand it over/);
+});
+
+// A recycled process id reports the dead owner as alive, which must leave the lock held.
+// That is the safe direction of the failure, and it is deliberately not "recovered" from.
+test('leaves a lock held when the owner id has been recycled to a live process', (t) => {
+  const file = path.join(workspace(t), 'h.lock');
+  acquireDurableLock(file, { pid: reapedPid() });
+  ageLockFile(file, RECLAIM_STALE_AFTER_MS * 2);
+  assert.throws(() => acquireDurableLock(file, { isAlive: () => true }), /still running/);
+  assert.ok(fs.existsSync(file), 'an ambiguous owner keeps its lock rather than losing it');
 });
 
 test('reclaims only from a provably dead owner on this host and reports the recovery', (t) => {
