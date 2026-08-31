@@ -61,11 +61,13 @@
     "src/soakRun.js": "Executable R9 soak run. Freezes the observed population at the start, records hourly sweeps, resets the clock for a failed data point only, recycles a data point to the collection pool after three failures and marks it trash after three more, orders recirculated sources behind new data, voids the soak on a store-level failure, restarts every surviving clock across an unobserved gap, and reaches a verdict only after the full chosen duration.",
     "src/preSoakReadiness.js": "Read-only pre-soak gate reporter. Judges R2-R8 from durable state, reports manual-evidence-required rather than inferring a combined R8 cycle from unit coverage, and authorizes nothing.",
     "src/learningGovernance.js": "Governance monitoring of the learning gates with indirect pipeline control only. Detects blockages from gate state, analyzer health, store health, contradictions, and backlog, then emits adjustments from a closed allow-list of flow controls: reprioritize, hold, throttle, route, deprioritize. It may never promote, verify, mark a gate passed, authorize a release, start a held soak, repair the durable store, shorten a soak, or discard evidence, and it is never a truth source. What it cannot clear by moving work is escalated to the owner.",
-    "src/learningCycle.js": "Executable R4 to R5 cycle. Accepts a claim as candidate evidence only when the exact assertion is present in that source own content through the same bounded extraction the worker uses, then runs the controlled evaluation pipeline with a distinct verifier identity to a verified knowledge version. Keeps claim scope and per-source provenance separate, which is what lets two independent sources corroborate at all."
+    "src/learningCycle.js": "Executable R4 to R5 cycle. Accepts a claim as candidate evidence only when the exact assertion is present in that source own content through the same bounded extraction the worker uses, then runs the controlled evaluation pipeline with a distinct verifier identity to a verified knowledge version. Keeps claim scope and per-source provenance separate, which is what lets two independent sources corroborate at all.",
+    "src/realCorpusLearning.js": "Learns from the real restored corpus. Finds claims two independently identified real sources assert, requires an owner-declared scope that is never inferred, runs the controlled pipeline, and fails closed with a stated reason when the corpus cannot supply. Has no synthetic fallback.",
+    "governingDocuments/learning-scope-declarations.json": "Owner-declared scopes for corroborated claims. A scope is a property of the claim rather than the document that asserted it, which is what lets two independent sources corroborate. It authorizes evaluation, never promotion."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T23:16:00Z"
+    "lastActionAt": "2026-09-01T00:15:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -127,14 +129,14 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "Codex",
-    "objective": "Move the real owner extraction queue and candidate store to GitHub as authenticated ciphertext, prove exact project-bound restoration, and retain no runner plaintext or promotion authority.",
+    "agent": "Claude",
+    "objective": "Make the hosted learning proof learn from the real restored corpus with no fixture fallback, correct the gate states that had been recorded on fixtures, and preserve the AI-to-AI conflict record.",
     "currentPrompt": "do this Still needing your host: everything above proves the machinery works. Satisfying the gates for your project still means running these paths against your real durable store. on github",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "Codex",
-      "purpose": "Implement and prove GitHub-hosted encrypted durable learning under the repository's exact identity.",
-      "selectionReason": "The owner explicitly required no Work mode; the task remains repository-focused and runs through GitHub Actions, so regular/default is preserved until completion.",
+      "agent": "Claude",
+      "purpose": "Wire the hosted learning proof to the real restored corpus, remove the fixture fallback, and correct gate states recorded on fixtures.",
+      "selectionReason": "Repository-focused work driven by hosted GitHub evidence and the real corpus; the receiving plan already recorded regular/default and the task needs have not changed, so the mode is preserved rather than re-selected.",
       "distinction": "Execution mode is separate from agent identity and workflow; diagnosis remains evidence processing, not proof or unattended repair authority."
     },
     "steps": [
@@ -146,7 +148,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-08-31T21:36:00Z"
+    "lastUpdatedAt": "2026-09-01T00:15:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -188,9 +190,13 @@
       "Added src/learningGovernance.js so governance monitors the learning gates and adjusts the pipeline around a blockage while holding no authority over proof, and recorded in the release plan that the semantic analyzers are learning-system components and therefore not independently releasable ahead of R11.",
       "Joined R4 to R5 for the first time and ran a real cycle end to end: two independent documents, bounded extraction binding each claim to its own source content, controlled execution with real negative and regression controls, a distinct independent verifier, promotion to a verified knowledge version, and retrieval of that version inside its tested boundary. The store goes from zero verified knowledge versions to one.",
       "Joining the two halves exposed why R5 had never happened with real data: routeThreeWayComparison decides shared scope by comparing claimBoundary, but the extraction worker builds that string from the source document, so two independent sources never match and always route to bounded-scope-or-version-update rather than new-claim-evaluation. Extracted candidate pairs are therefore structurally unpromotable. The finding is pinned by a test rather than patched over.",
-      "The critical reviewer rejected the first claim wording for containing the pronoun it, an unmeasurable referent. The claim was rewritten rather than the reviewer weakened."
-      ,"Built src/hostedLearningProof.js to run under exact github:<repository> and development-ref binding, restore only authenticated AES-256-GCM ciphertext, execute R4-R8 against the durable store, and emit a bounded report with no promotion authority."
-      ,"Added an official-action-only GitHub workflow with read-only repository permissions, encrypted cache continuity, a 20-minute bound, hourly/manual execution, and 90-day retained ciphertext plus proof report."
+      "The critical reviewer rejected the first claim wording for containing the pronoun it, an unmeasurable referent. The claim was rewritten rather than the reviewer weakened.",
+      "Built src/hostedLearningProof.js to run under exact github:<repository> and development-ref binding, restore only authenticated AES-256-GCM ciphertext, execute R4-R8 against the durable store, and emit a bounded report with no promotion authority.",
+      "Added an official-action-only GitHub workflow with read-only repository permissions, encrypted cache continuity, a 20-minute bound, hourly/manual execution, and 90-day retained ciphertext plus proof report.",
+      "Found that R4-R8 had been recorded passed on a hosted proof that built its two independent sources in code from the claim string, superseded a candidate it generated for itself, ran the safety cases against a stubbed fetch, and never referenced the restored real corpus. Preserved both agents' positions and escalated rather than overwriting.",
+      "Withdrew this session's own competing src/hostedLearningProof.js rather than contest Codex's, which landed first and carries the encrypted state boundary.",
+      "Fixed the structural defect that made real learning impossible: routeThreeWayComparison compared claimBoundary for scope, which extraction builds from the source document, so two independent real sources never matched and every real pair routed to bounded-scope-or-version-update. An optional claimScope now carries declared tested scope separately from provenance and is never inferred.",
+      "Rewired the hosted proof to restore and learn from the real corpus with no fixture fallback, wired the corpus restore into the proof workflow itself rather than a separate workflow that destroyed its plaintext, and corrected the gate states to match the evidence."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -217,30 +223,29 @@
       "The analyzer proof is now real rather than nominal: the two native tests return early unless CRUCIBLE_HOSTED_NATIVE_ANALYSIS is 1, so an earlier local 11/11 had exercised neither. With the flag actually set and a real dotnet SDK and JDK present, test/semanticAnalysis.test.js passes 11/11 including both the Roslyn and JDK adapters.",
       "Governance authority is asserted mechanically, not documented: every adjustment emitted across the exhausted input space is checked against the closed allow-list, the allow-list itself is checked to contain only flow controls, and the forbidden actions are checked never to appear in it.",
       "The cycle is a real run, not a fixture: the experiment and the independent verifier each execute actual JavaScript in a child process, including an identity-reference negative control and an empty-input control, and a claim is refused outright when its own document does not contain it.",
-      "Ubuntu native semantic analysis is hosted-green after the Java compile, Roslyn null-key, and Roslyn sink-name repairs, and the Java adapter now passes on Windows too. Only the Windows Roslyn build remains, failing inside NuGet.targets rather than in analyzer code."
-      ,"Local restart proof runs the hosted path twice: the first run creates two verified versions, supersedes and rolls back the first, and exercises all eight R8 behaviours; the second process restores ciphertext, preserves project binding, and advances the durable revision without plaintext persistence."
-      ,"After npm ci installed the clean worktree's locked dependencies without changing the lockfile, full-system proof passes 486/486; configuration, generated documentation, workflow permissions, clutter, privacy, security, AI-conflict, governance, and design-brief audits all pass across 205 tracked files and 16 workflows."
-      ,"The initial missing-TypeScript environment failure was retained as KB-local-eb818297c4 and then checked off only by the governed verifier after its exact 486-test set passed; it was not deleted or manually marked resolved."
-      ,"The first push was stopped locally when the pre-push hook inherited Git's live repository and index environment, redirecting temporary-repository tests into the repository being pushed. The hook now unsets only git rev-parse --local-env-vars before verification, with a permanent workflow-contract assertion; the gate was repaired rather than bypassed."
-      ,"GitHub refused manual dispatch because the new workflow is absent from the default branch. Main remains untouched: the workflow now triggers only on pushes to development, and its first hosted run can be rerun at that exact SHA to prove encrypted cache restoration."
-      ,"GitHub-hosted run 33444444978 passed twice at exact development SHA 5ed69f6dcc319f1050b45cfcf84d2108863d5f9a. Execution one created authenticated encrypted durable state with R4-R8 satisfied; execution two reported restoredEncryptedState true and repeated the proof under the exact project and development-ref binding."
-      ,"Exact-tip Self-Test run 33444444883 passed all nine OS/Node jobs, with CodeQL 33444444911, handoff 33444444899, conflict governance 33444444956, monitoring sync 33444444894, and locked-monitor guard 33444444900 also green on the same SHA."
-      ,"Staged the live owner queue without modifying it, removed operator-local originalPath values, rebound source custody to content-addressed relative paths, and verified every copied source against its declared SHA-256. The sanitized bundle contains 403 unique source files plus the 4.95 MiB durable candidate store."
-      ,"Compressed the 320.84 MiB sanitized snapshot to 221.69 MiB, encrypted it with AES-256-GCM under exact project/repository/development-ref authenticated data, stored only the fresh key in GitHub Secrets, and uploaded only ciphertext as draft asset 538620854."
-      ,"Full-system proof passes 488/488; configuration, generated documentation, workflow permissions, clutter, privacy, security, AI-conflict, governance, design-brief, and whitespace checks pass across 208 tracked files and 17 workflows."
-      ,"Hosted restore run 33448693651 failed closed before download with HTTP 403 because the read-only Actions token cannot read a private draft asset. Public publication was rejected as unsafe. The bounded repair uses a masked bootstrap secret for one download, copies only ciphertext into private Actions cache, and removes the bootstrap secret after proof."
-      ,"The temporary bootstrap-token proposal was superseded before use. Private Crucible-Learning-State now holds only three authenticated ciphertext chunks at commit c2dfffe; deploy key 161888116 is confined to that repository, and the runner pins GitHub's published Ed25519 host key before clone."
-      ,"A direct pinned-host deploy-key probe resolved only Crucible-Learning-State/main at c2dfffeea3c343a6993fdc97b8147261177dac15."
+      "Ubuntu native semantic analysis is hosted-green after the Java compile, Roslyn null-key, and Roslyn sink-name repairs, and the Java adapter now passes on Windows too. Only the Windows Roslyn build remains, failing inside NuGet.targets rather than in analyzer code.",
+      "Local restart proof runs the hosted path twice: the first run creates two verified versions, supersedes and rolls back the first, and exercises all eight R8 behaviours; the second process restores ciphertext, preserves project binding, and advances the durable revision without plaintext persistence.",
+      "After npm ci installed the clean worktree's locked dependencies without changing the lockfile, full-system proof passes 486/486; configuration, generated documentation, workflow permissions, clutter, privacy, security, AI-conflict, governance, and design-brief audits all pass across 205 tracked files and 16 workflows.",
+      "The initial missing-TypeScript environment failure was retained as KB-local-eb818297c4 and then checked off only by the governed verifier after its exact 486-test set passed; it was not deleted or manually marked resolved.",
+      "The first push was stopped locally when the pre-push hook inherited Git's live repository and index environment, redirecting temporary-repository tests into the repository being pushed. The hook now unsets only git rev-parse --local-env-vars before verification, with a permanent workflow-contract assertion; the gate was repaired rather than bypassed.",
+      "GitHub refused manual dispatch because the new workflow is absent from the default branch. Main remains untouched: the workflow now triggers only on pushes to development, and its first hosted run can be rerun at that exact SHA to prove encrypted cache restoration.",
+      "GitHub-hosted run 33444444978 passed twice at exact development SHA 5ed69f6dcc319f1050b45cfcf84d2108863d5f9a. Execution one created authenticated encrypted durable state with R4-R8 satisfied; execution two reported restoredEncryptedState true and repeated the proof under the exact project and development-ref binding.",
+      "Exact-tip Self-Test run 33444444883 passed all nine OS/Node jobs, with CodeQL 33444444911, handoff 33444444899, conflict governance 33444444956, monitoring sync 33444444894, and locked-monitor guard 33444444900 also green on the same SHA.",
+      "Staged the live owner queue without modifying it, removed operator-local originalPath values, rebound source custody to content-addressed relative paths, and verified every copied source against its declared SHA-256. The sanitized bundle contains 403 unique source files plus the 4.95 MiB durable candidate store.",
+      "Compressed the 320.84 MiB sanitized snapshot to 221.69 MiB, encrypted it with AES-256-GCM under exact project/repository/development-ref authenticated data, stored only the fresh key in GitHub Secrets, and uploaded only ciphertext as draft asset 538620854.",
+      "Full-system proof passes 488/488; configuration, generated documentation, workflow permissions, clutter, privacy, security, AI-conflict, governance, design-brief, and whitespace checks pass across 208 tracked files and 17 workflows.",
+      "Hosted restore run 33448693651 failed closed before download with HTTP 403 because the read-only Actions token cannot read a private draft asset. Public publication was rejected as unsafe. The bounded repair uses a masked bootstrap secret for one download, copies only ciphertext into private Actions cache, and removes the bootstrap secret after proof.",
+      "The temporary bootstrap-token proposal was superseded before use. Private Crucible-Learning-State now holds only three authenticated ciphertext chunks at commit c2dfffe; deploy key 161888116 is confined to that repository, and the runner pins GitHub's published Ed25519 host key before clone.",
+      "A direct pinned-host deploy-key probe resolved only Crucible-Learning-State/main at c2dfffeea3c343a6993fdc97b8147261177dac15.",
+      "Quadruple-checked before recording: focused real-corpus proof 7/7 including extracted candidates from real documents reaching verified knowledge; hosted proof 2/2 against a real corpus and failing closed without one; full suite 496/496 with every audit green; and a direct CLI entrypoint run whose report shows the active verified version carrying a real document URL and content hash rather than a fixture boundary.",
+      "R4-R6 are proven locally on real extracted candidates but the hosted run against the actual corpus has not happened since the change, so they are recorded pending hosted re-proof rather than passed. R7 and R8 remain fixture-based and are recorded as such."
     ],
     "remaining": [
-      "Do not serialize R3 before R4. R4 accepts a source \"from search or owner ingest\", so it is not blocked by R3: one owner ingest through retrieval, provenance hashing, bounded extraction, deduplication, and candidate custody satisfies R4 and unblocks R5, and R6 and R7 behind it. R3 is its own independent gate needing one real bounded discovery run with its query audit, and R2's live drain and R8's combined cycle are independent of both. The real chain is R4 -> R5 -> {R6, R7}, with R5 the linchpin.",
-      "R4-R8 are complete on the GitHub-hosted project-bound store. Preserve run 33444444978 as the two-execution restoration evidence; neither its controlled proof claims nor its ciphertext imply that the separate operator training backlog is drained.",
-      "Push the development-only source-custody workflow and require its hosted report to prove asset 538620854 decrypts under the project binding, restores all 403 source hashes plus queue and learning-store hashes, destroys runner plaintext, and retains only the bounded report.",
-      "Obtain current live extraction/runtime evidence before declaring the remaining backlog drained; candidate extraction must never imply verified-knowledge promotion. This is the part of R2 that is still open: the restart proof passed, the live backlog drain is unverified from any host but the operator one.",
-      "Begin the soak only after R2-R8 are simultaneously green, running it for a duration chosen from evidence inside the owner-set 72-96 hour band before the clock starts, then freeze the exact SHA for R10; R11 remains the owner explicit authorization and can never be self-granted. 72 hours is a hard floor, never a default, and forecasts use 96.",
-      "Verify the exact hosted tip of this commit on GitHub runners before treating this unit of work as complete.",
-      "Confirm the Windows Roslyn build reaches green. The failure is in the SDK toolchain, not analyzer code: the workload resolver injects a null path into NuGet.targets during restore. Skipping the integrity check was insufficient, so the resolver itself is now disabled; if that is still red the next step is replacing the SDK-internal Roslyn HintPath with an explicit reference, which needs an owner decision because it adds a package dependency.",
-      "Decide how extracted candidates should ever corroborate each other, given claimBoundary currently encodes the source document rather than the claim scope. Until that is settled, automated discovery alone cannot produce a promotable pair and every promotion must come through the owner-ingest path."
+      "Run the Learning cycle proof on the real corpus. The first run is expected to stop and report which claims the real corpus corroborates, because governingDocuments/learning-scope-declarations.json is deliberately empty; declare a scope for one of those claims and run again to earn R4-R6 on hosted evidence.",
+      "Make R7 real: the supersession is still performed on a candidate the proof generates for itself and labels a repository test fixture.",
+      "Make R8 real: the safety and deduplication cases still run against a stubbed fetch rather than live retrieval.",
+      "Finish R2 live backlog drain and R3 bounded discovery run.",
+      "Begin the soak only after R2-R8 are simultaneously green on real evidence, within the owner-set 72-96 hour band; R11 remains owner-only."
     ]
   }
 }

@@ -4,18 +4,34 @@ const path = require('node:path');
 
 function hash(value) { return crypto.createHash('sha256').update(typeof value === 'string' ? value : JSON.stringify(value)).digest('hex'); }
 function text(value, label) { if (typeof value !== 'string' || !value.trim()) throw new Error(`${label} is required.`); return value.trim().replace(/\s+/g, ' '); }
+// `claimBoundary` carries provenance: extraction builds it from the source document, so two
+// independent documents never produce the same string. Comparing scope with it therefore made
+// corroboration by independent sources structurally impossible - every real pair routed to
+// `bounded-scope-or-version-update` and could never reach evaluation, which is why extracted
+// evidence could never be promoted no matter how sound the claim.
+//
+// `claimScope` separates the two ideas. It is the declared scope the claim was tested within,
+// which is a property of the claim rather than of the document that asserted it, so two sources
+// can share it. It is optional and never inferred: a candidate without one behaves exactly as
+// before, so nothing already recorded changes meaning, and extraction cannot invent a scope it
+// has no way to know.
 function sourceClaim(value, label) {
   if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`${label} must be a bounded source claim.`);
-  const keys=Object.keys(value).sort(); if (keys.join(',') !== 'claim,claimBoundary,generalizationBoundary,sourceId') throw new Error(`${label} has unknown or missing fields.`);
-  return { sourceId:text(value.sourceId,`${label}.sourceId`), claim:text(value.claim,`${label}.claim`), claimBoundary:text(value.claimBoundary,`${label}.claimBoundary`), generalizationBoundary:text(value.generalizationBoundary,`${label}.generalizationBoundary`) };
+  const keys=Object.keys(value).sort().filter((key)=>key!=='claimScope');
+  if (keys.join(',') !== 'claim,claimBoundary,generalizationBoundary,sourceId') throw new Error(`${label} has unknown or missing fields.`);
+  const declaredScope = value.claimScope === undefined || value.claimScope === null ? null : text(value.claimScope, `${label}.claimScope`);
+  return { sourceId:text(value.sourceId,`${label}.sourceId`), claim:text(value.claim,`${label}.claim`), claimBoundary:text(value.claimBoundary,`${label}.claimBoundary`), generalizationBoundary:text(value.generalizationBoundary,`${label}.generalizationBoundary`), claimScope:declaredScope };
 }
+// The scope two sources are compared on: the declared one when present, otherwise the
+// provenance boundary, which preserves the previous behaviour exactly.
+function comparableScope(source) { return source.claimScope || source.claimBoundary; }
 function normalized(value) { return text(value,'claim').toLowerCase(); }
 function routeThreeWayComparison({ projectId, candidateId, sourceA, sourceB, activeKnowledge, comparedAt }) {
   text(projectId,'projectId'); text(candidateId,'candidateId'); text(comparedAt,'comparedAt'); if (!Number.isFinite(Date.parse(comparedAt))) throw new Error('comparedAt must be an ISO timestamp.');
   const a=sourceClaim(sourceA,'sourceA'); const b=sourceClaim(sourceB,'sourceB'); if (a.sourceId === b.sourceId) throw new Error('Three-way comparison requires two independently identified sources.');
   if (!Array.isArray(activeKnowledge)) throw new Error('Active verified knowledge must be an array.');
   for (const item of activeKnowledge) if (!item || item.projectId !== projectId || item.status !== 'active' || typeof item.claim !== 'string' || typeof item.boundary !== 'string') throw new Error('Only same-project active verified knowledge may be compared.');
-  const sourcesAgree=normalized(a.claim) === normalized(b.claim); const sameScope=a.claimBoundary === b.claimBoundary && a.generalizationBoundary === b.generalizationBoundary;
+  const sourcesAgree=normalized(a.claim) === normalized(b.claim); const sameScope=comparableScope(a) === comparableScope(b) && a.generalizationBoundary === b.generalizationBoundary;
   let route; let classification='Insufficient Evidence'; let nextAction; let knowledgeVersion=null;
   if (!sameScope) { route='bounded-scope-or-version-update'; nextAction='evaluate-each-bounded-claim-separately'; }
   else if (!sourcesAgree) { route='contradiction-review'; classification='Crucible Issue'; nextAction='obtain-additional-independent-source-or-controlled-test'; }

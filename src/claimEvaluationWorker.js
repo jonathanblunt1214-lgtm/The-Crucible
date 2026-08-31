@@ -16,10 +16,13 @@ class ControlledClaimEvaluationWorker {
     if (primary.candidate.id===corroborating.candidate.id || primary.candidate.provenance.sourceId===corroborating.candidate.provenance.sourceId) throw new Error('Evaluation requires two independently identified evidence sources.');
     return {primary,corroborating};
   }
-  async process({ candidateId, corroboratingCandidateId, language }) {
+  // `claimScope` is an optional owner-declared scope for this claim. It is passed into the
+  // comparison rather than written onto the stored candidates, so declaring a scope never
+  // rewrites evidence that is already in custody.
+  async process({ candidateId, corroboratingCandidateId, language, claimScope=null }) {
     const {primary,corroborating}=this.select(candidateId,corroboratingCandidateId);const experiment=this.experimentHarnesses[language];const verifier=this.verifierHarnesses[language];
     if (!experiment || !verifier || typeof experiment.run!=='function' || typeof verifier.run!=='function' || !experiment.id || !verifier.id || experiment.id===verifier.id) throw new Error('A supported language requires distinct experiment and verifier harnesses.');
-    const decision=routeThreeWayComparison({projectId:this.store.projectId,candidateId,sourceA:{sourceId:primary.candidate.provenance.sourceId,claim:primary.candidate.claim,claimBoundary:primary.candidate.claimBoundary,generalizationBoundary:primary.candidate.generalizationBoundary},sourceB:{sourceId:corroborating.candidate.provenance.sourceId,claim:corroborating.candidate.claim,claimBoundary:corroborating.candidate.claimBoundary,generalizationBoundary:corroborating.candidate.generalizationBoundary},activeKnowledge:this.store.activeKnowledge(),comparedAt:this.now()});this.comparisonLedger.record(decision);
+    const decision=routeThreeWayComparison({projectId:this.store.projectId,candidateId,sourceA:{sourceId:primary.candidate.provenance.sourceId,claim:primary.candidate.claim,claimBoundary:primary.candidate.claimBoundary,generalizationBoundary:primary.candidate.generalizationBoundary,claimScope},sourceB:{sourceId:corroborating.candidate.provenance.sourceId,claim:corroborating.candidate.claim,claimBoundary:corroborating.candidate.claimBoundary,generalizationBoundary:corroborating.candidate.generalizationBoundary,claimScope},activeKnowledge:this.store.activeKnowledge(),comparedAt:this.now()});this.comparisonLedger.record(decision);
     const criticalReview=this.criticalReviewer.review({candidate:primary.candidate,corroboratingCandidate:corroborating.candidate,comparison:decision,reviewedAt:this.now()});
     const reasoningPlan=this.reasoningProblemSolver.plan({candidate:primary.candidate,corroboratingCandidate:corroborating.candidate,comparison:decision,criticalReview,plannedAt:this.now()});this.reasoningLedger.record(reasoningPlan);
     const strategy=this.strategyEngine.prepare({candidate:primary.candidate,reasoningPlan,criticalReview,preparedAt:this.now()});this.strategyLedger.record(strategy);

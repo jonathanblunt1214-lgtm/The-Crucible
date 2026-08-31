@@ -30,6 +30,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/offlineGpuGate.test.js',
     'test/hostIsolation.test.js',
     'test/hostedLearningProof.test.js',
+    'test/realCorpusLearning.test.js',
     'test/hostedSourceBundle.test.js',
     'test/externalAiFirewall.test.js',
     'test/knowledgeLifecycle.test.js',
