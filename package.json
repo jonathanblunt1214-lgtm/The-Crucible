@@ -25,6 +25,7 @@
     "learning:readiness": "node src/scientificLearningCli.js readiness",
     "learning:ingest": "node src/scientificLearningCli.js ingest",
     "learning:status": "node src/scientificLearningCli.js status",
+    "learning:pre-soak": "node src/preSoakReadinessCli.js report",
     "learning:retrieve": "node src/scientificLearningCli.js retrieve",
     "learning:compare": "node src/scientificLearningCli.js compare",
     "repair:reference-branches": "node src/referenceBranchIntegrity.js repair",
