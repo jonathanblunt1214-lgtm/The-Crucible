@@ -55,7 +55,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T16:40:00Z"
+    "lastActionAt": "2026-08-31T17:15:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -117,26 +117,26 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "Codex",
-    "objective": "Make Crucible self-diagnose hosted CI and project failures through a project-bound, non-proof diagnostic organ, finish the independent vetted-information gates, repair the current Windows native dependency failure without weakening coverage, and prove the exact development tip.",
-    "currentPrompt": "fix it all be immediately because without it Crucible isn't self diagnosing and it makes me concerned how other projects are diagnosed",
+    "agent": "Claude",
+    "objective": "Repair the exact-tip hosted install wrapper so the locked dependency install runs on every supported OS/Node combination, keep the diagnostic organ able to type its own start failure, and prove the exact development tip on GitHub runners without weakening any gate or touching main.",
+    "currentPrompt": "he owner now explicitly says to fix all listed blockers. Finish your current Windows/Node 20 CI repair and diagnostic-organ work first, preserving the exact forced-interruption blocker text. Then continue every safely executable scientific-learning release gate: forced-interruption recovery proof; first live discovery-to-candidate cycle; distinct independent verification and first safe test-claim promotion; verified-only retrieval; rollback or supersession; combined live safety/dedup proof covering kill switch, duplicate URL/content/claim, prompt injection, executable content, blocked sources, and contradiction quarantine; then begin the mandatory 72-hour soak only after R2-R8 genuinely pass. Keep exact-tip hosted CI green. Never weaken gates or self-authorize R11, and never touch main. Update status, AI-HANDOFF, and DEVLOG atomically with durable evidence.",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "Codex",
-      "purpose": "Implement and verify a bounded CI diagnostic organ and exact current hosted-CI repair.",
-      "selectionReason": "The task is repository-focused and executable through the current development checkout and hosted GitHub evidence.",
+      "agent": "Claude",
+      "purpose": "Continue the receiving agent's bounded CI repair transaction and prove the exact hosted tip.",
+      "selectionReason": "The remaining work is repository-focused, executable through the current development checkout and hosted GitHub evidence, and unchanged in shape from the mode already recorded; the agent changed but the task needs did not, so the recorded mode is preserved rather than re-selected.",
       "distinction": "Execution mode is separate from agent identity and workflow; diagnosis remains evidence processing, not proof or unattended repair authority."
     },
     "steps": [
-      "Finish the read-only, signed oversight-to-learning gate and prove unvetted information cannot reach extraction.",
-      "Add a dependency-free hosted-CI diagnostic organ that binds exact project, repository, run, commit, job, step, runtime, and bounded log hashes.",
-      "Route diagnoses into organism health and oversight as Insufficient Evidence without autonomous repair, verification, or promotion authority.",
-      "Repair the current Windows/Node 20 tree-sitter native-build incompatibility without removing supported runtimes or tests.",
-      "Run complete local verification, update handoff and DEVLOG atomically, push only development, and monitor exact-tip hosted CI."
+      "Resolve the bundled npm CLI across both supported Node layouts so the locked install starts on Ubuntu, macOS, and Windows alike.",
+      "Preserve the install wrapper's own start failure as typed, bounded evidence so a harness failure is never reported as an unclassified blank diagnosis.",
+      "Run complete local verification, update this handoff and DEVLOG atomically, and preserve the pruned DEVLOG snapshot on Archive.",
+      "Push only development and verify the exact hosted tip on GitHub runners; if hosted CI exposes another defect, repair it under the same bounded transaction rather than weakening the failing gate.",
+      "Only after exact-tip hosted CI is green, continue the remaining safely executable scientific-learning release gates; R11 remains owner-only."
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-08-31T16:40:00Z"
+    "lastUpdatedAt": "2026-08-31T17:15:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -146,13 +146,17 @@
       "Confirmed the scientific learner, controlled evaluator, candidate-only ingestion, explicit proof gates, independent verification, contradiction quarantine, and versioned rollbackable knowledge stores are materially implemented on development.",
       "Confirmed the permanent policy encodes retrieval-is-not-proof, exact tested-property verification, experiment-bound generalization, correlation-not-causation, and no later proof-stage self-satisfaction.",
       "Inspected exact-tip hosted Self-Test evidence and diagnosed a current deterministic failure: all matrix jobs reach the Code cadence without installing package-lock dependencies, causing src/semanticAnalysis.js to fail loading the declared TypeScript dev dependency.",
-      "Prepared the minimal workflow repair by mirroring the already-working native semantic workflow's locked npm installation pattern in Self-Test."
-      ,"Advanced the clean detached worktree to literal development tip ebd26ff60e38fb740c2e3a47a9632ac22e7a659b before mutation and preserved the checkout-scoped safe.directory boundary."
-      ,"Implemented a dependency-free CI diagnostic organ that binds project, repository, exact commit, run, workflow, job, step, OS, runtime, and bounded log hash; diagnoses known toolchain/ownership/dependency signals; degrades organism health; and cannot prove, promote, verify, or authorize repair."
-      ,"Wired typed failure diagnosis and immutable artifacts into both The Crucible Self-Test and the reusable opted-in project workflow; cross-project diagnosis fails closed."
-      ,"Pinned the Windows Self-Test matrix to windows-2022 while retaining Node 20, 22, and 24 coverage so tree-sitter uses a supported Visual Studio generation instead of weakening runtime or test coverage."
-      ,"Registered the diagnostic tests in the governed Code/every-push cadence, synchronized the concise generated README workflow summary, and preserved the complete pre-prune DEVLOG snapshot in Archive commit 6de11ac."
-      ,"Completed full local proof at 425/425 and resolved both automatically recorded local known-bug entries only through their governed passing re-tests."
+      "Prepared the minimal workflow repair by mirroring the already-working native semantic workflow's locked npm installation pattern in Self-Test.",
+      "Advanced the clean detached worktree to literal development tip ebd26ff60e38fb740c2e3a47a9632ac22e7a659b before mutation and preserved the checkout-scoped safe.directory boundary.",
+      "Implemented a dependency-free CI diagnostic organ that binds project, repository, exact commit, run, workflow, job, step, OS, runtime, and bounded log hash; diagnoses known toolchain/ownership/dependency signals; degrades organism health; and cannot prove, promote, verify, or authorize repair.",
+      "Wired typed failure diagnosis and immutable artifacts into both The Crucible Self-Test and the reusable opted-in project workflow; cross-project diagnosis fails closed.",
+      "Pinned the Windows Self-Test matrix to windows-2022 while retaining Node 20, 22, and 24 coverage so tree-sitter uses a supported Visual Studio generation instead of weakening runtime or test coverage.",
+      "Registered the diagnostic tests in the governed Code/every-push cadence, synchronized the concise generated README workflow summary, and preserved the complete pre-prune DEVLOG snapshot in Archive commit 6de11ac.",
+      "Completed full local proof at 425/425 and resolved both automatically recorded local known-bug entries only through their governed passing re-tests.",
+      "Read exact-tip hosted evidence for Self-Test run 33415394151 at 7274f46785b43d55e0886a7f79ebda6e1c18771a: 6 of 9 matrix jobs failed at Install locked dependencies before any test executed, and all three windows-2022 jobs passed.",
+      "Diagnosed the exact cause from the hosted log rather than by inference: the install wrapper resolved the bundled npm CLI only through the Windows Node layout, so POSIX runners raised \"Locked npm CLI was not found beside Node: /opt/hostedtoolcache/node/20.20.2/x64/bin/node_modules/npm/bin/npm-cli.js\".",
+      "Repaired src/ciDiagnosticOrgan.js to resolve npm across both supported Node layouts, to persist the wrapper's own start failure to the same captured log path, and to classify it through a new npm-cli-resolution rule so the organ can diagnose its own harness failure instead of emitting an unclassified blank report.",
+      "Reproduced the failing hosted step on this POSIX host and confirmed the repaired wrapper completes the same locked install at exit 0 with a real captured log; no OS, Node version, test, or gate was removed."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -161,13 +165,17 @@
       "Focused CI diagnostic, ecosystem, reusable-workflow, and workflow-contract proof passes 35/35; workflow permissions lint passes across 15 workflows.",
       "Full-system proof passes 425/425; configuration, generated documentation, workflow permissions, clutter, privacy, security, AI-conflict, governance, design-brief, and whitespace checks pass.",
       "Known bugs KB-local-8f0bbb959b and KB-local-e27b0d5527 have passing governed re-test evidence and are resolved; neither was manually deleted or checked off.",
-      "No claim is made that the live runtime queue is currently drained or that learning release gates R2-R11 are complete; GitHub source/history alone cannot establish current local durable-queue state."
+      "No claim is made that the live runtime queue is currently drained or that learning release gates R2-R11 are complete; GitHub source/history alone cannot establish current local durable-queue state.",
+      "The pre-repair diagnosis artifact for run 33415394151 recorded logBytes 26 and unclassifiedFailure true, because the wrapper died before writing any log; the added rule and log persistence are what close that blind spot.",
+      "Focused diagnostic-organ proof passes 7/7; full-system proof passes 428/428; workflow permissions lint passes across 15 workflows; configuration, generated documentation, clutter, privacy, security, AI-conflict, governance, design-brief, core-reference, and whitespace checks pass.",
+      "Local proof does not satisfy the exact-tip hosted gate; hosted verification of the new development commit is still required before this repair is called complete."
     ],
     "remaining": [
       "Explicit forced-interruption recovery proof is still missing.",
-      "Commit the Self-Test diagnostic and Windows runner repair with this handoff and DEVLOG update as one atomic development commit, then require exact-tip hosted CI evidence.",
-      "If hosted CI exposes another actionable defect, diagnose and repair it under the same bounded transaction instead of weakening or skipping the failing gate.",
+      "Verify the new exact development tip on GitHub runners across the full nine-job matrix; if hosted CI exposes another actionable defect, diagnose and repair it under the same bounded transaction instead of weakening or skipping the failing gate.",
       "Obtain current live extraction/runtime evidence before declaring the remaining backlog drained; candidate extraction must never imply verified-knowledge promotion.",
+      "Continue the remaining scientific-learning release gates in order: first live discovery-to-candidate cycle, distinct independent verification and first safe test-claim promotion, verified-only retrieval, rollback or supersession, and the combined live safety/deduplication proof covering kill switch, duplicate URL/content/claim, prompt injection, executable content, blocked sources, and contradiction quarantine.",
+      "Begin the mandatory 72-hour soak only after R2-R8 genuinely pass, then freeze the exact SHA for R10; R11 remains the owner's explicit authorization and can never be self-granted.",
       "After information-pipeline and scientific gates are operationally proven, continue the remaining oversight/governance review and isolate any non-learning release candidate before promotion through release to main."
     ]
   }
