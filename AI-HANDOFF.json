@@ -26,6 +26,8 @@
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
     "src/ciDiagnosticOrgan.js": "Dependency-free project-bound hosted CI failure capture, typed diagnosis, organism-health inhibition, and non-proof evidence reporting.",
     "src/hostedLearningProof.js": "GitHub-hosted, project-bound R4-R8 proof runner with encrypted restart-safe durable-state transport and no release authority.",
+    "src/hostedSourceBundle.js": "Development-bound authenticated encryption, local-path scrubbing, content-hash manifesting, restore, and verification for owner training queues hosted on GitHub.",
+    ".github/workflows/hosted-source-bootstrap.yml": "Read-only GitHub runner custody proof for the encrypted owner queue; runner plaintext is destroyed and only a bounded hash report is retained.",
     ".github/workflows/hosted-learning-proof.yml": "Development-only hourly/manual GitHub host for encrypted durable R4-R8 proof and retained bounded evidence.",
     "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
     "governingDocuments/scientific-learning-policy.md": "Permanent autonomous scientific-learning invariants, promotion boundary, project isolation, contradiction handling, rollback, and weekly transport policy.",
@@ -63,7 +65,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T22:09:00Z"
+    "lastActionAt": "2026-08-31T22:40:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -126,7 +128,7 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Move the real project-bound durable learning proof to GitHub, prove R4-R8 there with restart-safe encrypted state, and retain exact hosted evidence without touching main.",
+    "objective": "Move the real owner extraction queue and candidate store to GitHub as authenticated ciphertext, prove exact project-bound restoration, and retain no runner plaintext or promotion authority.",
     "currentPrompt": "do this Still needing your host: everything above proves the machinery works. Satisfying the gates for your project still means running these paths against your real durable store. on github",
     "executionMode": {
       "mode": "regular/default",
@@ -223,10 +225,14 @@
       ,"GitHub refused manual dispatch because the new workflow is absent from the default branch. Main remains untouched: the workflow now triggers only on pushes to development, and its first hosted run can be rerun at that exact SHA to prove encrypted cache restoration."
       ,"GitHub-hosted run 33444444978 passed twice at exact development SHA 5ed69f6dcc319f1050b45cfcf84d2108863d5f9a. Execution one created authenticated encrypted durable state with R4-R8 satisfied; execution two reported restoredEncryptedState true and repeated the proof under the exact project and development-ref binding."
       ,"Exact-tip Self-Test run 33444444883 passed all nine OS/Node jobs, with CodeQL 33444444911, handoff 33444444899, conflict governance 33444444956, monitoring sync 33444444894, and locked-monitor guard 33444444900 also green on the same SHA."
+      ,"Staged the live owner queue without modifying it, removed operator-local originalPath values, rebound source custody to content-addressed relative paths, and verified every copied source against its declared SHA-256. The sanitized bundle contains 403 unique source files plus the 4.95 MiB durable candidate store."
+      ,"Compressed the 320.84 MiB sanitized snapshot to 221.69 MiB, encrypted it with AES-256-GCM under exact project/repository/development-ref authenticated data, stored only the fresh key in GitHub Secrets, and uploaded only ciphertext as draft asset 538620854."
+      ,"Full-system proof passes 488/488; configuration, generated documentation, workflow permissions, clutter, privacy, security, AI-conflict, governance, design-brief, and whitespace checks pass across 208 tracked files and 17 workflows."
     ],
     "remaining": [
       "Do not serialize R3 before R4. R4 accepts a source \"from search or owner ingest\", so it is not blocked by R3: one owner ingest through retrieval, provenance hashing, bounded extraction, deduplication, and candidate custody satisfies R4 and unblocks R5, and R6 and R7 behind it. R3 is its own independent gate needing one real bounded discovery run with its query audit, and R2's live drain and R8's combined cycle are independent of both. The real chain is R4 -> R5 -> {R6, R7}, with R5 the linchpin.",
       "R4-R8 are complete on the GitHub-hosted project-bound store. Preserve run 33444444978 as the two-execution restoration evidence; neither its controlled proof claims nor its ciphertext imply that the separate operator training backlog is drained.",
+      "Push the development-only source-custody workflow and require its hosted report to prove asset 538620854 decrypts under the project binding, restores all 403 source hashes plus queue and learning-store hashes, destroys runner plaintext, and retains only the bounded report.",
       "Obtain current live extraction/runtime evidence before declaring the remaining backlog drained; candidate extraction must never imply verified-knowledge promotion. This is the part of R2 that is still open: the restart proof passed, the live backlog drain is unverified from any host but the operator one.",
       "Begin the soak only after R2-R8 are simultaneously green, running it for a duration chosen from evidence inside the owner-set 72-96 hour band before the clock starts, then freeze the exact SHA for R10; R11 remains the owner explicit authorization and can never be self-granted. 72 hours is a hard floor, never a default, and forecasts use 96.",
       "Verify the exact hosted tip of this commit on GitHub runners before treating this unit of work as complete.",
