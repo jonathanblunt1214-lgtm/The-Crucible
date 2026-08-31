@@ -31,9 +31,22 @@ const crypto = require('node:crypto');
 // see (a different pid namespace reporting the same hostname) can produce. The floor
 // does not eliminate that either; it refuses to act on a momentary or racing negative,
 // which is what makes a wrongful takeover unlikely in practice. The cost is bounded:
-// nothing here retries inside a minute, so only a hand-run restart immediately after a
-// crash ever waits, and it is told exactly why.
-const RECLAIM_STALE_AFTER_MS = 60 * 1000;
+// nothing here retries that fast on its own - CI re-runs take minutes to reach the step
+// and the scheduled learning tasks tick hourly - so only a hand-run restart immediately
+// after a crash ever waits, and it is told exactly why.
+//
+// The owner set both of these on 2026-08-31: 30 seconds is the floor, and 60 seconds is
+// the ceiling no agent may raise it past without the owner saying so in that request.
+// A floor of zero is never permitted, because that is precisely the single-instant
+// liveness check this exists to refuse.
+const RECLAIM_STALE_AFTER_MS = 30 * 1000;
+const MAX_RECLAIM_STALE_AFTER_MS = 60 * 1000;
+
+function validStaleAfterMs(value) {
+  if (!Number.isSafeInteger(value) || value < 1) throw new Error('staleAfterMs must be a positive whole number of milliseconds; a zero floor would hand a lock over on a single liveness check.');
+  if (value > MAX_RECLAIM_STALE_AFTER_MS) throw new Error(`staleAfterMs must not exceed the owner-set ceiling of ${MAX_RECLAIM_STALE_AFTER_MS}ms.`);
+  return value;
+}
 
 function defaultIsAlive(pid) {
   try { process.kill(pid, 0); return true; }
@@ -52,6 +65,7 @@ function readOwner(lockFile) {
 
 // Explains, in the caller's terms, why a held lock may or may not be taken over.
 function inspectLock(lockFile, { hostname = os.hostname(), isAlive = defaultIsAlive, staleAfterMs = RECLAIM_STALE_AFTER_MS, now = Date.now } = {}) {
+  validStaleAfterMs(staleAfterMs);
   const owner = readOwner(lockFile);
   if (!owner) return { reclaimable: false, owner: null, reason: 'the lock file is missing, unreadable, or was not written by this lock; it is never removed on a guess' };
   if (owner.host !== hostname) return { reclaimable: false, owner, reason: `the lock is held by host ${owner.host}, and this host cannot prove a process on another machine has exited` };
@@ -80,6 +94,7 @@ function acquireDurableLock(lockFile, options = {}) {
     now = Date.now,
     description = 'durable lock',
   } = options;
+  validStaleAfterMs(staleAfterMs);
   const file = path.resolve(lockFile);
   const owner = { schemaVersion: 1, pid, host: hostname, token: crypto.randomUUID(), createdAt: new Date(now()).toISOString() };
 
@@ -119,4 +134,4 @@ function acquireDurableLock(lockFile, options = {}) {
   return { release, reclaimedFrom, owner };
 }
 
-module.exports = { acquireDurableLock, inspectLock, RECLAIM_STALE_AFTER_MS };
+module.exports = { acquireDurableLock, inspectLock, RECLAIM_STALE_AFTER_MS, MAX_RECLAIM_STALE_AFTER_MS };

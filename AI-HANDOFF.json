@@ -56,7 +56,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T18:30:00Z"
+    "lastActionAt": "2026-08-31T18:45:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -137,7 +137,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-08-31T18:30:00Z"
+    "lastUpdatedAt": "2026-08-31T18:45:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -164,7 +164,9 @@
       "Re-ran the live cycle after the repair: the kill left state intact, a restart inside the staleness floor correctly refused to reclaim, and a restart after it recovered, resumed, completed the source with attempts 2, persisted two candidates, released the lock, and stayed idempotent on a further run.",
       "Verified exact tip c8b2ba66a4791696a63958c0d39770e51011fa76 green on GitHub runners across all nine Self-Test jobs, CodeQL, AI handoff policy, AI conflict governance, Sync CI monitoring branch, and Block locked monitoring PRs.",
       "Re-audited the durable-lock commit itself rather than its summary and closed two gaps it left: the durable store recorded a lock reclamation only on the instance, where nothing read it and it died with the process, and no test covered the store side of reclamation at all.",
-      "Store reclamations are now written into the durable audit log alongside the original transaction name, so a recovery from a forced interruption outlives the process that performed it and is inspectable later; test/durableLock.test.js proves both the fail-closed and the recovering path for the store."
+      "Store reclamations are now written into the durable audit log alongside the original transaction name, so a recovery from a forced interruption outlives the process that performed it and is inspectable later; test/durableLock.test.js proves both the fail-closed and the recovering path for the store.",
+      "Applied two explicit owner decisions recorded on 2026-08-31: the mandatory R9 soak is raised from 72 to 96 continuous hours, and the durable-lock staleness floor is set to 30 seconds with 60 seconds as a mechanically enforced ceiling.",
+      "Corrected an inaccurate rationale this session had written into the lock, its tests, and this handoff: the staleness floor does not rule out a recycled process id. A recycled id reports the dead owner as alive and leaves the lock held, which is the safe direction; the floor stops a takeover resting on a single liveness check sampled at one instant."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -180,15 +182,16 @@
       "Concurrency safety is unchanged by the repair: reclamation fails closed when the owner process is alive, when the lock records another host, when the lock file was not written by this lock, when it is newer than the staleness floor that stops a takeover resting on a single liveness check, and when a competitor wins the reclamation race; acquisition is confirmed by reading the lock back, and release never removes a lock that has changed hands.",
       "Focused durable-lock proof passes 8/8 and full-system proof passes 436/436; the checks-and-balances cadence test correctly failed first on the unclassified new test file and passed only after explicit classification.",
       "Gates R3-R8 were not attempted: they require live outbound retrieval and the operator persistent durable learning store, neither of which exists in this ephemeral container, and evidence produced here would not survive it. No live discovery, promotion, or verified-knowledge claim is made.",
-      "Focused durable-lock proof passes 9/9 and full-system proof passes 437/437; configuration, generated documentation, clutter, privacy, security, governance, and workflow permission checks pass across 194 tracked files."
+      "Focused durable-lock proof passes 9/9 and full-system proof passes 437/437; configuration, generated documentation, clutter, privacy, security, governance, and workflow permission checks pass across 194 tracked files.",
+      "The staleness bounds are mechanical rather than documentary: staleAfterMs is rejected when zero, negative, fractional, or above the 60000ms owner ceiling, at both acquire and inspect, and a rejected bound acquires nothing.",
+      "The live SIGKILL forced-interruption cycle was re-run at the 30-second floor and behaved identically to the 60-second run: refused inside the floor, recovered after it, completed the source with attempts 2 and two unique candidates, released the lock, and stayed idempotent."
     ],
     "remaining": [
       "Run the live discovery-to-candidate cycle (R3, R4) on a host that holds the operator durable learning store and can perform governed outbound retrieval.",
       "Complete distinct independent verification and the first safe test-claim promotion (R5), verified-only retrieval (R6), and rollback or supersession (R7) against real candidate evidence.",
       "Execute the combined live safety and deduplication proof (R8) covering kill switch, duplicate URL, duplicate content hash, duplicate bounded claim, prompt injection, executable content, blocked sources, and contradiction quarantine.",
       "Obtain current live extraction/runtime evidence before declaring the remaining backlog drained; candidate extraction must never imply verified-knowledge promotion. This is the part of R2 that is still open: the restart proof passed, the live backlog drain is unverified from any host but the operator one.",
-      "Begin the mandatory 72-hour soak only after R2-R8 are simultaneously green, then freeze the exact SHA for R10; R11 remains the owner explicit authorization and can never be self-granted.",
-      "Decide whether the 60-second durable-lock staleness floor is right for real operation: it stops a takeover resting on one liveness check sampled at an instant, requiring the owner to have been absent for a sustained period as well. It is deliberately not a defence against process-id reuse: a recycled id reports the dead owner as alive, which leaves the lock held - the safe direction. Its cost is that a re-run inside the first minute after a crash fails closed with an explicit reason instead of recovering, which nothing in this repository currently does.",
+      "Begin the mandatory 96-hour soak only after R2-R8 are simultaneously green, then freeze the exact SHA for R10; R11 remains the owner explicit authorization and can never be self-granted. The soak was raised from 72 to 96 hours by owner decision on 2026-08-31 and is a single required duration, never a 72-96 range to be averaged down.",
       "Verify the exact hosted tip of this commit on GitHub runners before treating this unit of work as complete."
     ]
   }
