@@ -10,6 +10,7 @@ const TEST_MAIN_CATEGORIES = {
   code: [
     'test/code-check.test.js',
     'test/engine.test.js',
+    'test/ecosystem.test.js',
     'test/hostedMultiRepositoryIntegration.test.js',
     'test/repositoryOperation.test.js',
     'test/suiteSelection.test.js',
