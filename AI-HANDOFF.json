@@ -53,7 +53,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T12:01:00Z"
+    "lastActionAt": "2026-08-31T12:11:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -112,7 +112,7 @@
   "activePlan": {
     "agent": "Codex",
     "objective": "Complete compiler-native analysis on GitHub-hosted runners while preventing assimilation of the operator machine or GitHub hosts and retaining exact opted-in Crucible repository coordination.",
-    "currentPrompt": "use github systems for this Roslyn itself compiled, but its first run tried to create the normal per-user `.dotnet` profile directory. That violates the host-isolation direction, so the worker stopped. I’m redirecting all .NET home and build artifacts into a per-run temporary directory and deleting it after analysis; no analyzer may write into the user profile or analyzed project.   if its not possible air gapped kill switch integration is possible\n\nif there is anything currently running on my machine for running crucible move it to GitHub unless its absolutely needed local then in that case integrate it to the kill switch\n\nAlso add in safe guards to stop the organism from quietly assimilating its host we are a coding tool not a virus or a parasite\n\ndo not quietly assimilate GitHub either it is your host not part of crucible its servers have the same authority as if I said it\n\nif this cross-repository is part of crucible its allowable same with if its a project opted to use Crucible which if it was injected with crucible it should be treated as opted in\n\nadd JSON to the to the learning list if it hasn't been automatically\n\nis language discovery tied to our development here?\n\nalso add a gated firewall between ChatGPT and Crucible nothing can get to ChatGPT without permission and does  crucible scan itself for code languages to add like its supposed to?",
+    "currentPrompt": "always summarize for the readme do not write a novel",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
@@ -128,7 +128,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-30T20:32:00Z",
-    "lastUpdatedAt": "2026-08-31T12:01:00Z"
+    "lastUpdatedAt": "2026-08-31T12:11:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -172,6 +172,7 @@
       ,"Added JSON to automatic language discovery, settings, and clean-slate edu-only learning research scope."
       ,"Connected bounded language discovery to the explicitly opted-in project root; it scans filenames/extensions only and excludes dependencies, hidden infrastructure, and generated output."
       ,"Added a default-deny ChatGPT/external-AI egress firewall requiring short-lived owner-signed permission bound to project, provider, exact payload hash, purpose, and allowed fields, with an overriding offline hard stop."
+      ,"Added the standing README brevity rule: concise operator summaries only, with technical depth kept in governing documents, code documentation, and tests."
       ,"Scoped process inspection found no running Crucible or Learning-Worker process; no unrelated host state was inventoried or changed."
     ],
     "verification": [
