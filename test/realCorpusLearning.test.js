@@ -153,28 +153,35 @@ test('learns for real: extracted candidates from two real documents reach verifi
   assert.match(promoted.candidate.claimBoundary, /retrieved content only/, 'the candidate still carries its own source provenance');
 });
 
-// The defect this pins: the hosted proof guarded on "does the store hold any knowledge
-// versions", so fixture-derived state in the encrypted cache made it skip the real-corpus
-// path entirely and pass in a tenth of a second without reading a document.
-test('fixture-derived knowledge never counts as having learned from the real corpus', (t) => {
+// The defect this pins, twice over: the hosted proof first guarded on "does the store hold
+// any knowledge versions", so fixture state in the encrypted cache skipped real learning
+// entirely; then on a fixture source-type marker, which the synthetic sources did not carry
+// because they were built through the same extraction path as real ones. Only membership in
+// the restored corpus separates them.
+test('only knowledge whose source is actually in the restored corpus counts as learned', (t) => {
   const dir = workspace(t);
-  const { learningRoot } = buildBundle(dir, twoRealDocuments());
+  const { bundleRoot, learningRoot } = buildBundle(dir, twoRealDocuments());
+  const { hasRealCorpusKnowledge, readBundle } = require('../src/realCorpusLearning');
+  const bundle = readBundle(bundleRoot);
+  const realHash = bundle.manifest.sourceFiles[0].sha256;
+
   const store = new DurableScientificLearningStore({ root: learningRoot, projectId: PROJECT });
-  const { hasRealCorpusKnowledge } = require('../src/realCorpusLearning');
+  assert.equal(hasRealCorpusKnowledge(store, bundle), false, 'extracted candidates alone are not verified knowledge');
 
-  assert.equal(hasRealCorpusKnowledge(store), false, 'extracted candidates alone are not verified knowledge');
-
-  // A knowledge version promoted from a candidate the proof generated for itself.
-  const fixtureStore = { read: () => ({
-    knowledgeVersions: [{ version: 1, candidateId: 'hosted-supersession-abc' }],
-    candidateRecords: [{ candidate: { id: 'hosted-supersession-abc', provenance: { sourceType: 'github-hosted-proof', sourceId: 'github-run:33451086797', contentSha256: 'a'.repeat(64) } } }],
+  // A synthetic source indistinguishable by shape: same sourceType, a valid hash, a plausible
+  // URL. It is not in the corpus, so it does not count.
+  const synthetic = { read: () => ({
+    knowledgeVersions: [{ version: 1, candidateId: 'cycle-synthetic' }],
+    candidateRecords: [{ candidate: { id: 'cycle-synthetic', provenance: { sourceType: 'retrieved-web-document', sourceId: 'https://proof.example.edu/arrays', contentSha256: 'a'.repeat(64) } } }],
   }) };
-  assert.equal(hasRealCorpusKnowledge(fixtureStore), false, 'a self-generated candidate is not the real corpus');
+  assert.equal(hasRealCorpusKnowledge(synthetic, bundle), false, 'a fixture that looks like a real document still is not one');
 
-  // The same shape, but sourced from a real retrieved document.
-  const realStore = { read: () => ({
+  // The same shape, but its content hash is one the restored manifest attests.
+  const real = { read: () => ({
     knowledgeVersions: [{ version: 1, candidateId: 'extracted-real' }],
-    candidateRecords: [{ candidate: { id: 'extracted-real', provenance: { sourceType: 'retrieved-web-document', sourceId: 'https://example.edu/arrays', contentSha256: 'b'.repeat(64) } } }],
+    candidateRecords: [{ candidate: { id: 'extracted-real', provenance: { sourceType: 'retrieved-web-document', sourceId: 'https://example.edu/arrays', contentSha256: realHash } } }],
   }) };
-  assert.equal(hasRealCorpusKnowledge(realStore), true);
+  assert.equal(hasRealCorpusKnowledge(real, bundle), true);
+
+  assert.equal(hasRealCorpusKnowledge(real, null), false, 'with no restored corpus, nothing can be proven to come from it');
 });
