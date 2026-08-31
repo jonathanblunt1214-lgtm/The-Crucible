@@ -7,6 +7,12 @@ const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
 const { acquireDurableLock, inspectLock, RECLAIM_STALE_AFTER_MS } = require('../src/durableLock');
 const { ClaimExtractionWorker } = require('../src/claimExtractionWorker');
+const { DurableScientificLearningStore } = require('../src/scientificLearning');
+
+const AT = '2026-08-31T17:00:00.000Z';
+function sampleCandidate(projectId) {
+  return { schemaVersion: 1, id: 'c-lock-1', projectId, claim: 'the durable store records how it recovered a lock', claimBoundary: 'this store instance only', generalizationBoundary: 'no wider than this store instance', kind: 'extracted-source-assertion', provenance: { sourceType: 'test-fixture', sourceId: 'lock-recovery', retrievedAt: AT, author: 'not declared', license: 'not declared', contentSha256: crypto.createHash('sha256').update('lock recovery fixture').digest('hex') }, classification: 'Insufficient Evidence', createdAt: AT };
+}
 
 function workspace(t) {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-lock-'));
@@ -89,6 +95,29 @@ test('release never removes a lock that has since changed hands', (t) => {
   held.release();
   assert.ok(fs.existsSync(file), 'the current holder keeps its lock');
   other.release();
+});
+
+test('the durable learning store reclaims an interrupted lock and records the recovery durably', (t) => {
+  const root = path.join(workspace(t), 'store');
+  const projectId = 'github:owner/repo';
+  const store = new DurableScientificLearningStore({ root, projectId });
+
+  // A live or unverifiable holder still stops the store dead, exactly as before.
+  fs.writeFileSync(store.lockFile, 'occupied', { flag: 'wx' });
+  assert.throws(() => store.ingest(sampleCandidate(projectId)), /locked/);
+  fs.rmSync(store.lockFile);
+
+  // What a forcibly interrupted mutation leaves: a real lock owned by a process that is gone.
+  acquireDurableLock(store.lockFile, { pid: reapedPid() });
+  ageLockFile(store.lockFile, RECLAIM_STALE_AFTER_MS * 2);
+
+  store.ingest(sampleCandidate(projectId));
+  assert.ok(store.lastLockReclamation, 'the store reports the interrupted owner it recovered from');
+  assert.equal(fs.existsSync(store.lockFile), false);
+
+  const entry = store.read().auditLog.at(-1);
+  assert.match(entry.action, /recovered from forced interruption: pid \d+ on .+, idle \d+ms/);
+  assert.match(entry.action, /^candidate:/, 'the original transaction is still named, not replaced');
 });
 
 test('the extraction worker resumes after a forced interruption without losing or duplicating candidates', (t) => {
