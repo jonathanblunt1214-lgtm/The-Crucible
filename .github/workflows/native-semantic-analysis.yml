@@ -1,0 +1,48 @@
+name: Native semantic analysis
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [development]
+    paths:
+      - "src/semanticAnalysis.js"
+      - "scripts/*SemanticAnalyzer.*"
+      - "tools/roslynSemanticAnalyzer/**"
+      - "test/semanticAnalysis.test.js"
+      - "package.json"
+      - "package-lock.json"
+
+permissions:
+  contents: read
+
+jobs:
+  native-analysis:
+    name: Native analyzers (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      CRUCIBLE_HOSTED_NATIVE_ANALYSIS: "1"
+      DOTNET_CLI_HOME: ${{ runner.temp }}/crucible-dotnet-home
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+      DOTNET_NOLOGO: "1"
+      NUGET_PACKAGES: ${{ runner.temp }}/crucible-nuget
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Confirm execution is an ephemeral GitHub-hosted runner
+        shell: bash
+        run: |
+          test "$GITHUB_ACTIONS" = "true"
+          test -n "$RUNNER_TEMP"
+      - name: Prove native semantic adapters
+        run: node --test test/semanticAnalysis.test.js

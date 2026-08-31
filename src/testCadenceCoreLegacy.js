@@ -18,6 +18,11 @@ const TEST_MAIN_CATEGORIES = {
     'test/scientificLearning.test.js',
     'test/claimExtractionWorker.test.js',
     'test/monthlyKnowledgeRefresh.test.js',
+    'test/languageCatalog.test.js',
+    'test/semanticAnalysis.test.js',
+    'test/offlineGpuGate.test.js',
+    'test/hostIsolation.test.js',
+    'test/externalAiFirewall.test.js',
   ],
   security: [
     'test/automatedGoogleResearch.test.js',

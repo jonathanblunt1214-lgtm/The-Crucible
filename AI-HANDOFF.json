@@ -31,6 +31,11 @@
     "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, atomic durable project-isolated evidence and independent-lineage versioned knowledge, restart-safe autonomous orchestration, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
     "src/learningExperience.js": "Strict project-bound learning-by-doing adapter that records content-addressed successful and failed task attempts only as non-promotable candidate evidence.",
     "src/codeSecurityOrganism.js": "Language-specific code-assistive security profiles, repository threat context, dependency-bound reversible repairs, distinct verification, rollback, regression feedback, and organ health/recovery.",
+    "governingDocuments/host-isolation-policy.md": "Permanent non-assimilation boundary for the operator machine and GitHub execution hosts.",
+    "src/hostIsolation.js": "Mechanical deny-by-default execution-host boundary with explicit Crucible repository opt-in.",
+    "src/offlineGpuGate.js": "Owner-signed project/workload GPU permit with an overriding offline hard stop.",
+    "src/externalAiFirewall.js": "Default-deny, owner-signed, payload-hash-bound external AI egress firewall.",
+    "src/semanticAnalysis.js": "Compiler-native semantic adapters, normalized findings, secure workers, and explicit cross-language graphs.",
     "src/scientificLearningCli.js": "Fail-closed operator readiness, candidate ingestion, custody-state inspection, and verified-only retrieval for explicitly configured project-scoped durable learning stores.",
     "src/safeInformationRetrieval.js": "Owner-approved credential-free HTTPS evidence retrieval, passive trusted-domain Google result parsing, auditable kill switch and denylist, network/content limits, provenance hashing, and prompt-injection/executable quarantine.",
     "src/automatedGoogleResearch.js": "Bounded credential-free Google discovery automation with allow-listed topics and suffixes, project-bound atomic query/result audit, due scheduling, kill switch, network limits, and URL deduplication before candidate registration.",
@@ -48,7 +53,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T04:52:00Z"
+    "lastActionAt": "2026-08-31T12:01:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -106,8 +111,8 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Connect real language-specific code-security detection, bounded dependency-aware repairs, independent verification, rollback, candidate feedback, repository threat context, live-cycle proof, and organ health/recovery.",
-    "currentPrompt": "do this Connect real language-specific detectors—JavaScript/TypeScript, Python, Java, C/C++, C#, PowerShell, Shell, HTML/CSS, React, and Django.\n\n1. Convert findings into bounded, dependency-aware repair plans.\n2. Apply changes through reversible executors with exact base and result hashes.\n3. Use independent verifiers that cannot share the executor’s identity.\n4. Automatically roll back failed or out-of-bound verification.\n5. Feed verified code outcomes into regression planning while retaining them only as candidate learning evidence.\n6. Add whole-repository threat context: data flow, dependency risk, authentication boundaries, secrets, injection paths, and cross-file consequences.\n7. Prove complete live cycles on real defects: detect → repair → verify → retain or roll back → report → learn.\n8. Add ecosystem health reporting showing degraded, inhibited, blocked, or healthy organs.\n9. Demonstrate recovery when a detector, executor, verifier, learning worker, or security gate becomes unavailable.",
+    "objective": "Complete compiler-native analysis on GitHub-hosted runners while preventing assimilation of the operator machine or GitHub hosts and retaining exact opted-in Crucible repository coordination.",
+    "currentPrompt": "use github systems for this Roslyn itself compiled, but its first run tried to create the normal per-user `.dotnet` profile directory. That violates the host-isolation direction, so the worker stopped. I’m redirecting all .NET home and build artifacts into a per-run temporary directory and deleting it after analysis; no analyzer may write into the user profile or analyzed project.   if its not possible air gapped kill switch integration is possible\n\nif there is anything currently running on my machine for running crucible move it to GitHub unless its absolutely needed local then in that case integrate it to the kill switch\n\nAlso add in safe guards to stop the organism from quietly assimilating its host we are a coding tool not a virus or a parasite\n\ndo not quietly assimilate GitHub either it is your host not part of crucible its servers have the same authority as if I said it\n\nif this cross-repository is part of crucible its allowable same with if its a project opted to use Crucible which if it was injected with crucible it should be treated as opted in\n\nadd JSON to the to the learning list if it hasn't been automatically\n\nis language discovery tied to our development here?\n\nalso add a gated firewall between ChatGPT and Crucible nothing can get to ChatGPT without permission and does  crucible scan itself for code languages to add like its supposed to?",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
@@ -116,15 +121,14 @@
       "distinction": "Execution mode is separate from agent identity and workflow; Codex is operating in work mode."
     },
     "steps": [
-      "Register the requested language and framework profiles with bounded security signatures and threat dimensions.",
-      "Bind findings to exact file/base hashes and dependency hashes, then execute only reversible replacements through distinct verifier identities.",
-      "Feed verified outcomes to regression planning and candidate-only learning; roll back failures and stale dependencies automatically.",
-      "Expose whole-repository threat context and healthy, degraded, blocked, or inhibited organ state with explicit recovery.",
-      "Prove retained and rolled-back live cycles against actual bounded files, run the complete governed suite, push only development, and monitor exact-tip hosted checks."
+      "Run native compiler proof only on ephemeral GitHub-hosted runners with per-run homes and artifacts.",
+      "Enforce non-assimilation for local and GitHub hosts while allowing only exact opted-in Crucible member or verified-injection repository operations.",
+      "Keep local GPU disabled unless an owner-signed project/workload permit is active; the offline hard stop always overrides it.",
+      "Register JSON automatically as clean-slate edu-only research, run complete verification, push development only, and monitor exact-tip hosted checks."
     ],
     "status": "active",
     "startedAt": "2026-08-30T20:32:00Z",
-    "lastUpdatedAt": "2026-08-31T04:52:00Z"
+    "lastUpdatedAt": "2026-08-31T12:01:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -161,6 +165,14 @@
       ,"Implemented a project-bound ecosystem coordinator that connects Crucible's major systems through observe, prioritize, plan, act, verify, learn, adapt, and report; it exposes shared health, rejects cross-project signals, and blocks component self-certification."
       ,"Added the mandatory production-workflow actuator contract: distinct detection, planning, execution, independent-verification, and rollback identities; exact project/boundary/base binding; reversible planning; change and rollback custody; automatic rollback on failed verification; and candidate-only learning feedback."
       ,"Connected profiles for JavaScript, TypeScript, Python, Java, C, C++, C#, PowerShell, Shell, HTML, CSS, React, and Django to repository threat context, content/dependency-bound repair plans, reversible in-memory and filesystem execution, independent verification, automatic rollback, regression planning, candidate learning feedback, and recoverable organ health."
+      ,"Added compiler-native adapters for TypeScript/JavaScript/React, Python/Django with Pyright, C/C++ with Clang, C# with Roslyn, Java compiler trees, PowerShell, Shell, and HTML/CSS plus normalized custody and explicit cross-language bindings."
+      ,"Moved Roslyn and Java proof to a read-only GitHub-hosted matrix and confined .NET home, packages, artifacts, and analyzer state to disposable runner paths."
+      ,"Added permanent local-and-GitHub non-assimilation enforcement. Exact manifest members and repositories with verified active injections are opted in only for allow-listed analysis, issue reporting, injection, or project-bound learning transport."
+      ,"Added an owner-only offline Ed25519 GPU permit bound to project, workload, and short lifetime; missing or invalid permits inhibit GPU and the hard-stop file always wins."
+      ,"Added JSON to automatic language discovery, settings, and clean-slate edu-only learning research scope."
+      ,"Connected bounded language discovery to the explicitly opted-in project root; it scans filenames/extensions only and excludes dependencies, hidden infrastructure, and generated output."
+      ,"Added a default-deny ChatGPT/external-AI egress firewall requiring short-lived owner-signed permission bound to project, provider, exact payload hash, purpose, and allowed fields, with an overriding offline hard stop."
+      ,"Scoped process inspection found no running Crucible or Learning-Worker process; no unrelated host state was inventoried or changed."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",
@@ -178,9 +190,10 @@
       ,"Production actuator positive, rollback, identity-separation, and boundary proof passes; final complete governed proof passes 393/393 with validation, documentation, security, privacy, clutter, and whitespace checks passing."
       ,"Language-profile, threat-context, dependency-binding, live retained/rollback filesystem, candidate-feedback, regression, health, inhibition, and recovery proof passes; final complete governed proof passes 399/399 and every listed repository audit passes."
       ,"The staging security gate rejected a literal hostile dynamic-execution fixture; the fixture now constructs the sample at runtime, focused proof remains 6/6, and the final staging security audit passes across 170 tracked files."
+      ,"Host/GPU focused proof passes after correction; the resulting governed known-bug record was re-tested and resolved. Final focused semantic/catalog/firewall/host/GPU proof passes 20/20 and complete governed proof passes 419/419; authenticity, security, privacy, clutter, validation, documentation, workflow, conflict-governance, governance, design-brief, core-reference, and whitespace checks pass."
     ],
     "remaining": [
-      "Run full governed verification and exact-tip hosted CI. Future detector precision can be upgraded from bounded signatures to language-native AST/data-flow engines without changing the actuator gates; production repair recipes still require exact bounded replacements and applicable independent language verifiers. Do not promote The Crucible learning scope to release or main."
+      "Run final complete verification and audits, fetch/rebase immediately before push, push only development, and verify exact-tip hosted Self-Test plus native semantic-analysis matrix. Do not promote to release or main."
     ]
   }
 }
