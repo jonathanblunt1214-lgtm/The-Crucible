@@ -22,18 +22,21 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: 22
-      - name: Download authenticated encrypted queue
+      - name: Restore encrypted queue from its private state repository
         env:
-          GH_TOKEN: ${{ github.token }}
-          ASSET_API_URL: ${{ secrets.CRUCIBLE_SOURCE_BUNDLE_ASSET_API_URL }}
+          STATE_DEPLOY_KEY: ${{ secrets.CRUCIBLE_LEARNING_STATE_DEPLOY_KEY }}
         run: |
-          test -n "$ASSET_API_URL"
-          mkdir -p "$RUNNER_TEMP/crucible-source-restore"
-          curl --fail-with-body --location --proto '=https' --tlsv1.2 \
-            --header "Authorization: Bearer $GH_TOKEN" \
-            --header 'Accept: application/octet-stream' \
-            --output "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc" \
-            "$ASSET_API_URL"
+          test -n "$STATE_DEPLOY_KEY"
+          mkdir -p "$RUNNER_TEMP/crucible-state-ssh" "$RUNNER_TEMP/crucible-source-restore"
+          printf '%s\n' "$STATE_DEPLOY_KEY" > "$RUNNER_TEMP/crucible-state-ssh/key"
+          chmod 600 "$RUNNER_TEMP/crucible-state-ssh/key"
+          printf '%s\n' 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$RUNNER_TEMP/crucible-state-ssh/known_hosts"
+          GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/crucible-state-ssh/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/crucible-state-ssh/known_hosts -o StrictHostKeyChecking=yes" \
+            git clone --depth 1 git@github.com:jonathanblunt1214-lgtm/Crucible-Learning-State.git \
+            "$RUNNER_TEMP/crucible-source-restore/ciphertext"
+          node src/hostedSourceBundle.js join \
+            --input-root "$RUNNER_TEMP/crucible-source-restore/ciphertext" \
+            --output "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc"
       - name: Decrypt, restore, and verify every hash
         env:
           CRUCIBLE_SOURCE_BUNDLE_KEY: ${{ secrets.CRUCIBLE_SOURCE_BUNDLE_KEY }}
@@ -51,7 +54,7 @@ jobs:
             --report hosted-source-bootstrap/report.json
       - name: Destroy runner plaintext
         if: always()
-        run: rm -rf "$RUNNER_TEMP/crucible-source-restore"
+        run: rm -rf "$RUNNER_TEMP/crucible-source-restore" "$RUNNER_TEMP/crucible-state-ssh"
       - name: Retain bounded custody report only
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4

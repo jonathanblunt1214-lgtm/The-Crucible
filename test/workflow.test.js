@@ -191,12 +191,16 @@ test('GitHub hosts encrypted restart-safe R4-R8 proof without production authori
 test('GitHub restores the owner queue only from authenticated ciphertext and retains no plaintext', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'hosted-source-bootstrap.yml'), 'utf8');
   assert.match(workflow, /branches:\s*\n\s*- development/);
-  assert.match(workflow, /CRUCIBLE_SOURCE_BUNDLE_ASSET_API_URL/);
   assert.match(workflow, /CRUCIBLE_SOURCE_BUNDLE_KEY/);
+  assert.match(workflow, /CRUCIBLE_LEARNING_STATE_DEPLOY_KEY/);
+  assert.match(workflow, /git clone --depth 1 git@github\.com:jonathanblunt1214-lgtm\/Crucible-Learning-State\.git/);
+  assert.match(workflow, /github\.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl/);
+  assert.match(workflow, /node src\/hostedSourceBundle\.js join/);
   assert.match(workflow, /node src\/hostedSourceBundle\.js decrypt/);
   assert.match(workflow, /node src\/hostedSourceBundle\.js verify/);
   assert.match(workflow, /Destroy runner plaintext[\s\S]*if: always\(\)/);
   assert.doesNotMatch(workflow, /contents: write|pull-requests: write|issues: write/);
+  assert.doesNotMatch(workflow, /CRUCIBLE_SOURCE_BOOTSTRAP_TOKEN|CRUCIBLE_SOURCE_BUNDLE_ASSET_API_URL/);
 });
 
 test('hosted multi-repository integration remains manual and report-only', () => {
