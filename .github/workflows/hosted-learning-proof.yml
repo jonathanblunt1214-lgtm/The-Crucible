@@ -1,6 +1,9 @@
 name: GitHub-hosted durable learning proof
 
 on:
+  push:
+    branches:
+      - development
   workflow_dispatch:
   schedule:
     - cron: '17 * * * *'
