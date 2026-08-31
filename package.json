@@ -26,6 +26,7 @@
     "learning:ingest": "node src/scientificLearningCli.js ingest",
     "learning:status": "node src/scientificLearningCli.js status",
     "learning:retrieve": "node src/scientificLearningCli.js retrieve",
+    "learning:compare": "node src/scientificLearningCli.js compare",
     "repair:reference-branches": "node src/referenceBranchIntegrity.js repair",
     "audit:privacy": "node src/cli.js privacy",
     "audit:security": "node src/cli.js security",

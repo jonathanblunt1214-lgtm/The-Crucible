@@ -2,6 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { DurableScientificLearningStore } = require('./scientificLearning');
+const { routeThreeWayComparison, ClaimComparisonLedger } = require('./claimComparison');
 
 function configuredStore(environment = process.env) {
   const projectId = environment.CRUCIBLE_LEARNING_PROJECT_ID;
@@ -31,6 +32,11 @@ function run(argv = process.argv.slice(2), environment = process.env) {
     return record;
   }
   if (action === 'retrieve') return { verifiedKnowledge:store.retrieve(argv[1] ? { boundary:argv[1] } : {}) };
+  if (action === 'compare') {
+    const input=readCandidate(argv[1]); const keys=Object.keys(input || {}).sort(); if (keys.join(',') !== 'candidateId,comparedAt,sourceA,sourceB') throw new Error('Comparison input requires exactly candidateId, comparedAt, sourceA, and sourceB.');
+    const decision=routeThreeWayComparison({ projectId:store.projectId, candidateId:input.candidateId, sourceA:input.sourceA, sourceB:input.sourceB, activeKnowledge:store.activeKnowledge(), comparedAt:input.comparedAt });
+    return new ClaimComparisonLedger({ root:store.root, projectId:store.projectId }).record(decision);
+  }
   throw new Error(`Unknown scientific-learning action: ${action}`);
 }
 

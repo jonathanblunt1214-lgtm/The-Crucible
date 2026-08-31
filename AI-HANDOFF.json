@@ -47,7 +47,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T02:42:00Z"
+    "lastActionAt": "2026-08-31T03:18:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -105,8 +105,8 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Bound hosted extraction to nine active documents and add encrypted adaptive 70/35-page throughput control without weakening extraction or learning gates.",
-    "currentPrompt": "set it to 9 documents × 70 pages = 630 pages per run; schedule every 10 minutes; hard timeout 20 minutes.",
+    "objective": "Connect bounded candidate comparison to controlled language harnesses, separate verification, verified promotion, and active knowledge retrieval while preserving every scientific gate.",
+    "currentPrompt": "What would it take to add critical thinking in this loop and would it help or hinder? also do this now; the remaining production gap is supplying governed, hash-bound harness plans for the broader language set and matching them to real queued candidate pairs.",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
@@ -123,7 +123,7 @@
     ],
     "status": "active",
     "startedAt": "2026-08-30T20:32:00Z",
-    "lastUpdatedAt": "2026-08-31T02:27:00Z"
+    "lastUpdatedAt": "2026-08-31T03:18:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -149,6 +149,10 @@
       ,"Added governed learning by doing: bounded successful and failed task attempts become content-addressed experience-observation candidates, never verified knowledge or a proof-stage shortcut."
       ,"Connected eligible Authenticity Gate suite claims to the durable learning-by-doing recorder; explicit boundaries are mandatory, success and failure are retained, absent custody skips visibly, and partial custody fails closed."
       ,"Added an independent nine-document cap beneath the existing 25-source ceiling and exposed it through the extraction CLI for hosted worker enforcement."
+      ,"Added content-addressed completed-window custody and source-revision comparison so unchanged windows skip extraction, unfinished windows resume, and changed documents restart without losing prior provenance."
+      ,"Added an integrity-checked project-bound three-way comparison ledger and CLI that routes two independently identified source claims against active verified knowledge while permanently satisfying no proof, verification, or promotion stage."
+      ,"Connected two-source candidate selection and comparison routing to language-specific experiment/verifier registries; a real bounded JavaScript process proof now demonstrates hypothesis creation, controls, negative/regression/scope testing, distinct verification, verified promotion, and active knowledge retrieval."
+      ,"Added deterministic adversarial critical review before experiments; it records assumptions, counterexamples, alternative explanations, ambiguity, causal wording, and missing actions while being permanently barred from satisfying proof or overriding failed tests."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",
@@ -161,9 +165,10 @@
       ,"Learning-by-doing proof passes 15/15 focused and the final complete governed proof passes 371/371 with success, failure, deduplication, custody, schema, project-isolation, and direct-promotion bypass cases covered; validation, security, privacy, clutter, conflict governance, governance, docs, workflow, and whitespace checks pass."
       ,"Suite-to-learning focused proof passes 10/10 and the complete governed proof passes 375/375; live custody accepted experience candidate experience-89ed1e2b4567f18d65b2353f21e176642ff451363556b1882a262f0f6804f224 and now contains 2,162 candidates, 0 verified knowledge versions, 127 extraction-complete sources, 278 forced-pending sources, 1 in-progress source, 19 research-pending sources, and 109 retrieval-blocked sources."
       ,"Extraction cap proof passes 7/7 and scientific-learning regression proof passes 15/15; Learning-Worker adaptive state and encrypted-bundle proof passes 6/6."
+      ,"Content comparison, controlled evaluation, retrieval, and adversarial-review proof passes 20/20; a favorable review is proven unable to override a failed negative control or impersonate independent verification."
     ],
     "remaining": [
-      "Complete full governed verification, push the nine-document engine cap only to development, push the adaptive private worker controls to its existing main branch, and verify a live hosted 70-page run plus encrypted adaptive-state persistence. Do not promote The Crucible learning scope to release or main."
+      "Complete full governed verification and exact-tip hosted CI, then add trusted hash-bound production harness plans for the remaining supported languages, connect the hosted hourly evaluator to real matching candidate pairs, and demonstrate revalidation supersession plus rollback. Do not promote The Crucible learning scope to release or main."
     ]
   }
 }
