@@ -63,7 +63,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T22:01:00Z"
+    "lastActionAt": "2026-08-31T22:09:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -221,10 +221,12 @@
       ,"The initial missing-TypeScript environment failure was retained as KB-local-eb818297c4 and then checked off only by the governed verifier after its exact 486-test set passed; it was not deleted or manually marked resolved."
       ,"The first push was stopped locally when the pre-push hook inherited Git's live repository and index environment, redirecting temporary-repository tests into the repository being pushed. The hook now unsets only git rev-parse --local-env-vars before verification, with a permanent workflow-contract assertion; the gate was repaired rather than bypassed."
       ,"GitHub refused manual dispatch because the new workflow is absent from the default branch. Main remains untouched: the workflow now triggers only on pushes to development, and its first hosted run can be rerun at that exact SHA to prove encrypted cache restoration."
+      ,"GitHub-hosted run 33444444978 passed twice at exact development SHA 5ed69f6dcc319f1050b45cfcf84d2108863d5f9a. Execution one created authenticated encrypted durable state with R4-R8 satisfied; execution two reported restoredEncryptedState true and repeated the proof under the exact project and development-ref binding."
+      ,"Exact-tip Self-Test run 33444444883 passed all nine OS/Node jobs, with CodeQL 33444444911, handoff 33444444899, conflict governance 33444444956, monitoring sync 33444444894, and locked-monitor guard 33444444900 also green on the same SHA."
     ],
     "remaining": [
       "Do not serialize R3 before R4. R4 accepts a source \"from search or owner ingest\", so it is not blocked by R3: one owner ingest through retrieval, provenance hashing, bounded extraction, deduplication, and candidate custody satisfies R4 and unblocks R5, and R6 and R7 behind it. R3 is its own independent gate needing one real bounded discovery run with its query audit, and R2's live drain and R8's combined cycle are independent of both. The real chain is R4 -> R5 -> {R6, R7}, with R5 the linchpin.",
-      "Push and manually dispatch the GitHub-hosted proof, then dispatch it a second time to prove restoration from the first run's encrypted cache; only those hosted reports may change R7/R8 gate status.",
+      "R4-R8 are complete on the GitHub-hosted project-bound store. Preserve run 33444444978 as the two-execution restoration evidence; neither its controlled proof claims nor its ciphertext imply that the separate operator training backlog is drained.",
       "Obtain current live extraction/runtime evidence before declaring the remaining backlog drained; candidate extraction must never imply verified-knowledge promotion. This is the part of R2 that is still open: the restart proof passed, the live backlog drain is unverified from any host but the operator one.",
       "Begin the soak only after R2-R8 are simultaneously green, running it for a duration chosen from evidence inside the owner-set 72-96 hour band before the clock starts, then freeze the exact SHA for R10; R11 remains the owner explicit authorization and can never be self-granted. 72 hours is a hard floor, never a default, and forecasts use 96.",
       "Verify the exact hosted tip of this commit on GitHub runners before treating this unit of work as complete.",
