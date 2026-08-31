@@ -74,6 +74,25 @@ function readScopeDeclarations(file) {
   });
 }
 
+// Whether the store's verified knowledge actually came from the real corpus.
+//
+// "Does the store have any knowledge versions" is not the same question, and using it as the
+// guard is how fixture-derived state masked real learning: the encrypted cache still held
+// versions promoted from candidates the proof generated for itself, so the real-corpus path
+// was skipped and the run passed in a tenth of a second without reading a document.
+const FIXTURE_SOURCE_TYPES = new Set(['github-hosted-proof']);
+function hasRealCorpusKnowledge(store) {
+  const payload = store.read();
+  return payload.knowledgeVersions.some((version) => {
+    const record = payload.candidateRecords.find((item) => item.candidate.id === version.candidateId);
+    const provenance = record && record.candidate && record.candidate.provenance;
+    if (!provenance) return false;
+    if (FIXTURE_SOURCE_TYPES.has(provenance.sourceType)) return false;
+    if (/^github-run:/.test(String(provenance.sourceId || ''))) return false;
+    return /^[a-f0-9]{64}$/i.test(String(provenance.contentSha256 || ''));
+  });
+}
+
 async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeDeclarationFile, harnessesFor, now = () => new Date().toISOString() }) {
   const bundle = readBundle(bundleRoot);
   if (bundle.manifest.projectId !== projectId) throw new Error(`The restored bundle belongs to ${bundle.manifest.projectId}, not ${projectId}.`);
@@ -147,4 +166,4 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
   };
 }
 
-module.exports = { readBundle, corroboratedClaims, readScopeDeclarations, learnFromRealCorpus };
+module.exports = { readBundle, corroboratedClaims, readScopeDeclarations, hasRealCorpusKnowledge, learnFromRealCorpus };

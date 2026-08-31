@@ -152,3 +152,29 @@ test('learns for real: extracted candidates from two real documents reach verifi
   assert.match(promoted.candidate.provenance.contentSha256, /^[a-f0-9]{64}$/);
   assert.match(promoted.candidate.claimBoundary, /retrieved content only/, 'the candidate still carries its own source provenance');
 });
+
+// The defect this pins: the hosted proof guarded on "does the store hold any knowledge
+// versions", so fixture-derived state in the encrypted cache made it skip the real-corpus
+// path entirely and pass in a tenth of a second without reading a document.
+test('fixture-derived knowledge never counts as having learned from the real corpus', (t) => {
+  const dir = workspace(t);
+  const { learningRoot } = buildBundle(dir, twoRealDocuments());
+  const store = new DurableScientificLearningStore({ root: learningRoot, projectId: PROJECT });
+  const { hasRealCorpusKnowledge } = require('../src/realCorpusLearning');
+
+  assert.equal(hasRealCorpusKnowledge(store), false, 'extracted candidates alone are not verified knowledge');
+
+  // A knowledge version promoted from a candidate the proof generated for itself.
+  const fixtureStore = { read: () => ({
+    knowledgeVersions: [{ version: 1, candidateId: 'hosted-supersession-abc' }],
+    candidateRecords: [{ candidate: { id: 'hosted-supersession-abc', provenance: { sourceType: 'github-hosted-proof', sourceId: 'github-run:33451086797', contentSha256: 'a'.repeat(64) } } }],
+  }) };
+  assert.equal(hasRealCorpusKnowledge(fixtureStore), false, 'a self-generated candidate is not the real corpus');
+
+  // The same shape, but sourced from a real retrieved document.
+  const realStore = { read: () => ({
+    knowledgeVersions: [{ version: 1, candidateId: 'extracted-real' }],
+    candidateRecords: [{ candidate: { id: 'extracted-real', provenance: { sourceType: 'retrieved-web-document', sourceId: 'https://example.edu/arrays', contentSha256: 'b'.repeat(64) } } }],
+  }) };
+  assert.equal(hasRealCorpusKnowledge(realStore), true);
+});
