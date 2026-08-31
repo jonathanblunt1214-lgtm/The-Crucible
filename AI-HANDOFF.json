@@ -47,7 +47,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-31T02:27:00Z"
+    "lastActionAt": "2026-08-31T02:42:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -105,8 +105,8 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Bound hosted extraction to ten active documents and add encrypted adaptive 80/40-page throughput control without weakening extraction or learning gates.",
-    "currentPrompt": "add these Add an explicit maximum of 10 active documents. The current general source limit is 25.\nAdd persistent adaptive-throughput state so the worker remembers durations, timeouts, and its current 40/80-page mode across encrypted GitHub runs.",
+    "objective": "Bound hosted extraction to nine active documents and add encrypted adaptive 70/35-page throughput control without weakening extraction or learning gates.",
+    "currentPrompt": "set it to 9 documents × 70 pages = 630 pages per run; schedule every 10 minutes; hard timeout 20 minutes.",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
@@ -148,7 +148,7 @@
       ,"Added atomic durable candidate-batch ingestion after the first encrypted hosted proof exposed per-candidate full-store writes as the ten-minute throughput bottleneck."
       ,"Added governed learning by doing: bounded successful and failed task attempts become content-addressed experience-observation candidates, never verified knowledge or a proof-stage shortcut."
       ,"Connected eligible Authenticity Gate suite claims to the durable learning-by-doing recorder; explicit boundaries are mandatory, success and failure are retained, absent custody skips visibly, and partial custody fails closed."
-      ,"Added an independent ten-document cap beneath the existing 25-source ceiling and exposed it through the extraction CLI for hosted worker enforcement."
+      ,"Added an independent nine-document cap beneath the existing 25-source ceiling and exposed it through the extraction CLI for hosted worker enforcement."
     ],
     "verification": [
       "Pre-write branch and remote-tip verification completed at 1bc3d0a8c1365d345bdf0b02b5b00b7882aed366.",
@@ -163,7 +163,7 @@
       ,"Extraction cap proof passes 7/7 and scientific-learning regression proof passes 15/15; Learning-Worker adaptive state and encrypted-bundle proof passes 6/6."
     ],
     "remaining": [
-      "Complete full governed verification, push the ten-document engine cap only to development, push the adaptive private worker controls to its existing main branch, and verify a live hosted 80-page run plus encrypted adaptive-state persistence. Do not promote The Crucible learning scope to release or main."
+      "Complete full governed verification, push the nine-document engine cap only to development, push the adaptive private worker controls to its existing main branch, and verify a live hosted 70-page run plus encrypted adaptive-state persistence. Do not promote The Crucible learning scope to release or main."
     ]
   }
 }
