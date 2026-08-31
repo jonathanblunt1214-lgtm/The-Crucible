@@ -32,6 +32,7 @@ test('every current test belongs to exactly one main category', () => {
 test('current suite classification is stable across the four governed buckets', () => {
   assert.deepEqual(TEST_MAIN_CATEGORIES.code, [
     'test/code-check.test.js',
+    'test/codeSecurityOrganism.test.js',
     'test/engine.test.js',
     'test/ecosystem.test.js',
     'test/hostedMultiRepositoryIntegration.test.js',

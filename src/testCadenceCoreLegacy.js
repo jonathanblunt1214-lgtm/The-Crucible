@@ -9,6 +9,7 @@ const MAIN_CATEGORIES = ['code', 'security', 'utility', 'maintenance'];
 const TEST_MAIN_CATEGORIES = {
   code: [
     'test/code-check.test.js',
+    'test/codeSecurityOrganism.test.js',
     'test/engine.test.js',
     'test/ecosystem.test.js',
     'test/hostedMultiRepositoryIntegration.test.js',
