@@ -4,6 +4,7 @@ const CORE_COMPONENTS=Object.freeze([
   {id:'safe-retrieval',role:'sensory-input',module:'safeInformationRetrieval.js',stages:['observe']},
   {id:'source-extraction',role:'sensory-processing',module:'claimExtractionWorker.js',stages:['observe','learn']},
   {id:'test-suite',role:'controlled-action-and-sensing',module:'authenticity.js',stages:['act','verify','learn']},
+  {id:'code-security-organism',role:'code-assistive-security-reflex',module:'codeSecurityOrganism.js',stages:['observe','plan','act','verify','learn','adapt','report']},
   {id:'test-orchestrator',role:'suite-executive-control',module:'testCadence.js',stages:['prioritize','plan','act','report']},
   {id:'learning-orchestrator',role:'learning-executive-control',module:'learningOrchestrator.js',stages:['prioritize','plan','learn','adapt','report']},
   {id:'scientific-memory',role:'verified-memory',module:'scientificLearning.js',stages:['verify','learn']},
