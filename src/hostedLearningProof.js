@@ -22,9 +22,12 @@ function proof(candidate, hypothesis, at) {
 function harnesses(at) {
   const execute = () => { const input=[1,2,3]; const output=input.map((value)=>value*2); assert.notEqual(output,input); assert.deepEqual(input,[1,2,3]); assert.deepEqual(output,[2,4,6]); assert.deepEqual([].map((value)=>value),[]); };
   return {
-    experiment:{ id:'github-controlled-runner', run:async({candidate,hypothesis})=>{ execute(); return proof(candidate,hypothesis,at); } },
-    verifier:{ id:'github-independent-runner', run:async({candidate,experimentalProof})=>{ execute(); return { verifierId:'github-independent-runner', independent:true, testedProperty:candidate.claim, experimentBoundary:experimentalProof.experimentBoundary, result:'passed', verifiedAt:at }; } },
+    experiment:{ id:'github-controlled-runner', run:async({candidate,hypothesis,testPlanSha256})=>{ execute(); return {...proof(candidate,hypothesis,at),testPlanSha256}; } },
+    verifier:{ id:'github-independent-runner', run:async({candidate,experimentalProof,testPlanSha256})=>{ execute(); return { verifierId:'github-independent-runner', independent:true, testedProperty:candidate.claim, experimentBoundary:experimentalProof.experimentBoundary, result:'passed', verifiedAt:at, testPlanSha256 }; } },
   };
+}
+function withoutPlanBinding(harness) {
+  return { id:harness.id, run:async(input)=>{const result=await harness.run(input);const bounded={...result};delete bounded.testPlanSha256;return bounded;} };
 }
 function restore(store, encryptedFile, key, binding) {
   if (!fs.existsSync(encryptedFile)) return false;
@@ -105,8 +108,8 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
     store,
     available: allCandidateRecords(store, corpusStore),
     bundle: restoredBundle,
-    experiment,
-    verifier,
+    experiment:withoutPlanBinding(experiment),
+    verifier:withoutPlanBinding(verifier),
     excludeSourceIds: (realLearning && realLearning.sourceIds) || [],
     now: () => at,
   });

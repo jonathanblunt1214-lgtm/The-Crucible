@@ -49,8 +49,28 @@ function buildBundle(dir, documents) {
 const harnesses = () => {
   const execute = () => execFileSync(process.execPath, ['-e', PROOF], { stdio: 'ignore' });
   return {
-    experiment: { id: 'javascript-controlled-runner', run: async ({ candidate, hypothesis }) => { execute(); return { schemaVersion: 1, candidateId: candidate.id, projectId: candidate.projectId, hypothesis, testedProperty: candidate.claim, experimentBoundary: candidate.claimBoundary, controls: ['identity reference control', 'empty-input control'], causalIsolation: { method: 'single-variable intervention on the mapped callback', result: 'only the returned array changes', correlationOnly: false }, negativeTests: ['the returned array is never the input reference'], regressionTests: ['dense-array mapping still yields expected values'], scopeProof: SCOPE, generalizationResult: 'not generalized beyond the experiment boundary', contradictionResult: 'none', completedAt: AT }; } },
-    verifier: { id: 'javascript-independent-runner', run: async ({ candidate, experimentalProof }) => { execute(); return { verifierId: 'javascript-independent-runner', independent: true, testedProperty: candidate.claim, experimentBoundary: experimentalProof.experimentBoundary, result: 'passed', verifiedAt: AT }; } },
+    experiment: { id: 'javascript-controlled-runner', run: async ({ candidate, hypothesis, testPlanSha256 }) => { execute(); return { schemaVersion: 1, candidateId: candidate.id, projectId: candidate.projectId, hypothesis, testedProperty: candidate.claim, experimentBoundary: candidate.claimBoundary, controls: ['identity reference control', 'empty-input control'], causalIsolation: { method: 'single-variable intervention on the mapped callback', result: 'only the returned array changes', correlationOnly: false }, negativeTests: ['the returned array is never the input reference'], regressionTests: ['dense-array mapping still yields expected values'], scopeProof: SCOPE, generalizationResult: 'not generalized beyond the experiment boundary', contradictionResult: 'none', completedAt: AT, testPlanSha256 }; } },
+    verifier: { id: 'javascript-independent-runner', run: async ({ candidate, experimentalProof, testPlanSha256 }) => { execute(); return { verifierId: 'javascript-independent-runner', independent: true, testedProperty: candidate.claim, experimentBoundary: experimentalProof.experimentBoundary, result: 'passed', verifiedAt: AT, testPlanSha256 }; } },
+  };
+};
+
+function withoutPlanBinding(harness) {
+  return {
+    id: harness.id,
+    run: async (input) => {
+      const result = await harness.run(input);
+      const bounded = { ...result };
+      delete bounded.testPlanSha256;
+      return bounded;
+    },
+  };
+}
+
+const directSupersessionHarnesses = () => {
+  const { experiment, verifier } = harnesses();
+  return {
+    experiment: withoutPlanBinding(experiment),
+    verifier: withoutPlanBinding(verifier),
   };
 };
 
@@ -71,7 +91,7 @@ test('R7 says it follows R4-R6 rather than manufacturing something to supersede'
   const dir = workspace(t);
   const { learningRoot, bundle } = buildBundle(dir, [document('https://a.example/x', 'A', 'One.'), document('https://b.example/x', 'B', 'Two.')]);
   const store = new DurableScientificLearningStore({ root: learningRoot, projectId: PROJECT });
-  const { experiment, verifier } = harnesses();
+  const { experiment, verifier } = directSupersessionHarnesses();
   const result = await realSupersession({ store, available: store.read().candidateRecords, bundle, experiment, verifier, now: () => AT });
   assert.equal(result.satisfied, false);
   assert.match(result.reason, /nothing to supersede/);
@@ -99,7 +119,7 @@ test('a third real independent source verifies but cannot supersede while bounda
 
   const store = new DurableScientificLearningStore({ root: learningRoot, projectId: PROJECT });
   const before = store.read().knowledgeVersions.find((item) => item.status === 'active');
-  const { experiment, verifier } = harnesses();
+  const { experiment, verifier } = directSupersessionHarnesses();
   const result = await realSupersession({ store, available: store.read().candidateRecords, bundle, experiment, verifier, excludeSourceIds: learned.evaluations[0].sourceIds, now: () => AT });
 
   assert.equal(result.satisfied, false, 'nothing is superseded, and nothing pretends to be');
@@ -127,7 +147,7 @@ test('a further source from the same publisher cannot supersede', async (t) => {
   assert.equal(learned.learned, true, learned.reason);
 
   const store = new DurableScientificLearningStore({ root: learningRoot, projectId: PROJECT });
-  const { experiment, verifier } = harnesses();
+  const { experiment, verifier } = directSupersessionHarnesses();
   const result = await realSupersession({ store, available: store.read().candidateRecords, bundle, experiment, verifier, excludeSourceIds: learned.evaluations[0].sourceIds, now: () => AT });
   assert.equal(result.satisfied, false);
   assert.match(result.reason, /independent of/);

@@ -1,20 +1,21 @@
 const crypto=require('node:crypto');const fs=require('node:fs');const path=require('node:path');
 const LIFECYCLE=Object.freeze(['observe','prioritize','plan','act','verify','learn','adapt','report']);
 const CORE_COMPONENTS=Object.freeze([
-  {id:'safe-retrieval',role:'sensory-input',module:'safeInformationRetrieval.js',stages:['observe']},
-  {id:'source-extraction',role:'sensory-processing',module:'claimExtractionWorker.js',stages:['observe','learn']},
-  {id:'test-suite',role:'controlled-action-and-sensing',module:'authenticity.js',stages:['act','verify','learn']},
+  {id:'safe-retrieval',organ:'digestive-system',role:'vetted-intake',module:'safeInformationRetrieval.js',stages:['observe']},
+  {id:'source-extraction',organ:'digestive-system',role:'bounded-breakdown-and-candidate-absorption',module:'claimExtractionWorker.js',stages:['observe','learn']},
+  {id:'test-suite',organ:'nervous-and-sensory-system',role:'controlled-stimulus-and-sensing',module:'authenticity.js',stages:['act','verify','learn']},
   {id:'code-security-organism',role:'code-assistive-security-reflex',module:'codeSecurityOrganism.js',stages:['observe','plan','act','verify','learn','adapt','report']},
-  {id:'test-orchestrator',role:'suite-executive-control',module:'testCadence.js',stages:['prioritize','plan','act','report']},
-  {id:'ci-diagnostics',role:'hosted-failure-sensing-and-classification',module:'ciDiagnosticOrgan.js',stages:['observe','prioritize','report']},
-  {id:'learning-orchestrator',role:'learning-executive-control',module:'learningOrchestrator.js',stages:['prioritize','plan','learn','adapt','report']},
+  {id:'test-orchestrator',organ:'brain',role:'suite-executive-control',module:'testCadence.js',stages:['prioritize','plan','act','report']},
+  {id:'ci-diagnostics',organ:'brain-and-nervous-system',role:'hosted-failure-sensing-and-classification',module:'ciDiagnosticOrgan.js',stages:['observe','prioritize','report']},
+  {id:'learning-orchestrator',organ:'brain',role:'learning-executive-control',module:'learningOrchestrator.js',stages:['prioritize','plan','learn','adapt','report']},
   {id:'scientific-memory',role:'verified-memory',module:'scientificLearning.js',stages:['verify','learn']},
   {id:'critical-review',role:'adversarial-review',module:'criticalClaimReview.js',stages:['prioritize','plan']},
   {id:'reasoning',role:'reasoning-and-problem-solving',module:'reasoningProblemSolving.js',stages:['plan','verify','adapt']},
   {id:'adaptive-strategy',role:'creative-decision-adaptation',module:'creativeDecisionAdaptation.js',stages:['plan','adapt']},
-  {id:'security',role:'immune-control',module:'security.js',stages:['observe','verify']},
-  {id:'quarantine',role:'immune-isolation',module:'quarantine.js',stages:['verify','adapt']},
-  {id:'recovery',role:'homeostasis',module:'repair.js',stages:['adapt']},
+  {id:'security',organ:'immune-system',role:'immune-control',module:'security.js',stages:['observe','verify']},
+  {id:'quarantine',organ:'immune-system',role:'immune-isolation',module:'quarantine.js',stages:['verify','adapt']},
+  {id:'recovery',organ:'immune-system',role:'reversible-repair-and-homeostasis',module:'repair.js',stages:['adapt']},
+  {id:'circulation',organ:'heart-circulatory-and-lung-unit',role:'bounded-signal-pump-and-exchange',module:'organismCirculation.js',stages:['observe','prioritize','plan','act','verify','learn','adapt','report']},
   {id:'reporting',role:'communication',module:'report.js',stages:['report']},
 ]);
 function hash(value){return crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex');}

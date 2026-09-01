@@ -107,6 +107,32 @@ function verifyRestored({ root, repository, ref, reportFile }) {
   fs.mkdirSync(path.dirname(reportFile),{recursive:true}); fs.writeFileSync(reportFile,`${JSON.stringify(report,null,2)}\n`,{mode:0o600}); return report;
 }
 
+function hydrateRestored({ root, repository, ref }) {
+  const manifest=JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8'));validateIdentity(manifest.projectId,repository,ref);
+  const queueFile=path.join(root,'source-queue.json');const queue=JSON.parse(fs.readFileSync(queueFile,'utf8'));validateIdentity(queue.projectId,repository,ref);
+  for(const source of [...queue.documents,...queue.links]){
+    if(!source.durablePath)continue;
+    const relative=source.durablePath.replaceAll('\\','/');if(path.isAbsolute(relative)||!relative.startsWith('sources/'))throw new Error(`Restored source path escapes custody: ${source.id}.`);
+    const absolute=path.resolve(root,relative);if(!absolute.startsWith(`${path.resolve(root)}${path.sep}`)||!fs.existsSync(absolute))throw new Error(`Restored source content is missing: ${source.id}.`);
+    if(sha256File(absolute)!==String(source.contentSha256).toLowerCase())throw new Error(`Restored source hash mismatch: ${source.id}.`);source.durablePath=absolute;
+  }
+  const temporary=`${queueFile}.${process.pid}.${crypto.randomUUID()}.tmp`;fs.writeFileSync(temporary,`${JSON.stringify(queue,null,2)}\n`,{flag:'wx',mode:0o600});fs.renameSync(temporary,queueFile);
+  return {projectId:queue.projectId,queueFile,learningRoot:path.resolve(root),sources:[...queue.documents,...queue.links].filter((item)=>item.durablePath).length};
+}
+
+function restageRestored({ root, repository, ref }) {
+  const manifestFile=path.join(root,'manifest.json');const manifest=JSON.parse(fs.readFileSync(manifestFile,'utf8'));validateIdentity(manifest.projectId,repository,ref);
+  const queueFile=path.join(root,'source-queue.json');const queue=JSON.parse(fs.readFileSync(queueFile,'utf8'));validateIdentity(queue.projectId,repository,ref);
+  for(const source of [...queue.documents,...queue.links]){
+    if(!source.durablePath)continue;const absolute=path.resolve(source.durablePath);const sourcesRoot=path.resolve(root,'sources');
+    if(!absolute.startsWith(`${sourcesRoot}${path.sep}`)||!fs.existsSync(absolute))throw new Error(`Worker source path escapes encrypted custody: ${source.id}.`);
+    if(sha256File(absolute)!==String(source.contentSha256).toLowerCase())throw new Error(`Worker changed immutable source content: ${source.id}.`);source.durablePath=`sources/${path.basename(absolute)}`;delete source.originalPath;
+  }
+  const temporary=`${queueFile}.${process.pid}.${crypto.randomUUID()}.tmp`;fs.writeFileSync(temporary,`${JSON.stringify(queue,null,2)}\n`,{flag:'wx',mode:0o600});fs.renameSync(temporary,queueFile);
+  manifest.updatedAt=new Date().toISOString();manifest.queueSha256=sha256File(queueFile);manifest.learningSha256=sha256File(path.join(root,manifest.learningFile));
+  const manifestTemporary=`${manifestFile}.${process.pid}.${crypto.randomUUID()}.tmp`;fs.writeFileSync(manifestTemporary,`${JSON.stringify(manifest,null,2)}\n`,{flag:'wx',mode:0o600});fs.renameSync(manifestTemporary,manifestFile);return manifest;
+}
+
 function splitEncrypted({ input, outputRoot, maximumBytes = 80 * 1024 * 1024 }) {
   if (!Number.isSafeInteger(maximumBytes) || maximumBytes < 1024 || maximumBytes >= 100 * 1024 * 1024) throw new Error('Encrypted chunk size must stay between 1 KiB and less than 100 MiB.');
   fs.mkdirSync(outputRoot,{recursive:true}); const fd=fs.openSync(input,'r'); const chunks=[]; let offset=0,index=0;
@@ -128,10 +154,12 @@ async function main() {
   if(command==='encrypt') return console.log(JSON.stringify(await encrypt({input:value('--input'),output:value('--output'),projectId:value('--project-id'),repository:value('--repository'),ref:value('--ref')})));
   if(command==='decrypt') return console.log(JSON.stringify(await decrypt({input:value('--input'),output:value('--output'),repository:value('--repository'),ref:value('--ref')})));
   if(command==='verify') return console.log(JSON.stringify(verifyRestored({root:value('--root'),repository:value('--repository'),ref:value('--ref'),reportFile:value('--report')})));
+  if(command==='hydrate') return console.log(JSON.stringify(hydrateRestored({root:value('--root'),repository:value('--repository'),ref:value('--ref')})));
+  if(command==='restage') return console.log(JSON.stringify(restageRestored({root:value('--root'),repository:value('--repository'),ref:value('--ref')})));
   if(command==='split') return console.log(JSON.stringify(splitEncrypted({input:value('--input'),outputRoot:value('--output-root')})));
   if(command==='join') return console.log(JSON.stringify(joinEncrypted({inputRoot:value('--input-root'),output:value('--output')})));
-  throw new Error('Usage: hostedSourceBundle.js stage|encrypt|decrypt|verify|split|join ...');
+  throw new Error('Usage: hostedSourceBundle.js stage|encrypt|decrypt|verify|hydrate|restage|split|join ...');
 }
 
 if(require.main===module)main().catch((error)=>{console.error(`[The Crucible] Hosted source bundle failed: ${error.message}`);process.exitCode=1;});
-module.exports={MAGIC,sha256File,stage,encrypt,decrypt,verifyRestored,splitEncrypted,joinEncrypted};
+module.exports={MAGIC,sha256File,stage,encrypt,decrypt,verifyRestored,hydrateRestored,restageRestored,splitEncrypted,joinEncrypted};
