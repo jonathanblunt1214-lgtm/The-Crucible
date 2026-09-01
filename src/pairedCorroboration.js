@@ -32,10 +32,16 @@ const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex'
 // Bundled sources record durablePath relative to the bundle root; a source staged in place may
 // still hold an absolute one. Either way the content must hash to what the queue recorded.
 function readSourceContent(bundleRoot, source) {
-  const declared = String(source.durablePath || '');
+  const declared = String(source.durablePath || '').replaceAll('\\', '/');
   if (!declared) throw new Error(`Source ${source.id} has no stored content path.`);
   const file = path.isAbsolute(declared) ? declared : path.join(bundleRoot, declared);
   const resolved = path.resolve(file);
+  // The queue is restored from a repository Crucible does not control, so a declared path is a
+  // claim about where content lives rather than permission to read there. Absolute is allowed
+  // because a source staged in place records one, but it must still land inside the corpus's own
+  // sources directory: a pairing must never be able to make a runner file into corroboration.
+  const sourcesRoot = path.resolve(bundleRoot, 'sources');
+  if (resolved !== sourcesRoot && !resolved.startsWith(`${sourcesRoot}${path.sep}`)) throw new Error(`Source ${source.id} declares content outside the corpus: ${declared}.`);
   if (!fs.existsSync(resolved)) throw new Error(`Source ${source.id} has no restored content at ${declared}.`);
   const content = fs.readFileSync(resolved, 'utf8');
   const recorded = String(source.contentSha256 || '').toLowerCase();

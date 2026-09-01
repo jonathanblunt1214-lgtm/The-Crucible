@@ -227,3 +227,23 @@ test('a pairing whose sources were never extracted reports that, rather than inv
   assert.match(report.reason, /have not been through claim extraction/);
   assert.deepEqual(report.gates, { R4: false, R5: false, R6: false });
 });
+
+// A pairing nominates two sources by id; the content behind those ids comes from a queue restored
+// from a repository Crucible does not control. A declared path is a claim about where the content
+// lives, not permission to read there.
+test('a declared source path outside the corpus is refused rather than read as corroboration', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'paired-containment-'));
+  const bundleRoot = path.join(root, 'bundle');
+  fs.mkdirSync(path.join(bundleRoot, 'sources'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'runner-secret.txt'), 'a runner file that is none of the corpus business');
+  const inside = 'Bounded caches are invalidated on write.';
+  fs.writeFileSync(path.join(bundleRoot, 'sources', 'ok.html'), inside);
+
+  const read = (durablePath, contentSha256) => readSourceContent(bundleRoot, { id: 's1', durablePath, contentSha256 });
+  for (const escape of ['../runner-secret.txt', 'sources/../../runner-secret.txt', path.join(root, 'runner-secret.txt'), '/etc/passwd']) {
+    assert.throws(() => read(escape), /declares content outside the corpus/, `${escape} must be refused`);
+  }
+  // A contained source still reads normally, absolute or relative.
+  assert.equal(read('sources/ok.html'), inside);
+  assert.equal(read(path.join(bundleRoot, 'sources', 'ok.html')), inside);
+});
