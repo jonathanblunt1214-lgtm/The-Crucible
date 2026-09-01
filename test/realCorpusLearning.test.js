@@ -7,7 +7,7 @@ const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const { ClaimExtractionWorker } = require('../src/claimExtractionWorker');
 const { DurableScientificLearningStore } = require('../src/scientificLearning');
-const { corroboratedClaims, readScopeDeclarations, learnFromRealCorpus } = require('../src/realCorpusLearning');
+const { readBundle, corpusCandidateStore, corroboratedClaims, readScopeDeclarations, learnFromRealCorpus } = require('../src/realCorpusLearning');
 
 const PROJECT = 'github:owner/repo';
 const AT = '2026-09-01T00:00:00.000Z';
@@ -212,4 +212,49 @@ test('corroborates two real documents that assert one claim in different words',
   ]);
   const contrary = corroboratedClaims(new DurableScientificLearningStore({ root: other, projectId: PROJECT }));
   assert.equal(contrary.length, 0, 'opposite claims are a contradiction, never corroboration');
+});
+
+// The second defect of the same family as measuring gates against fixtures: the proof restored
+// two stores and read the wrong one. The corpus's extracted candidates live in the learning
+// state staged inside the bundle, not in the persistent store the proof writes promotions to,
+// so corroboration was searching a store holding almost no extracted evidence and would have
+// found nothing however sameness was decided.
+test('corroborates candidates held in the corpus own learning state, not only the persistent store', async (t) => {
+  const dir = workspace(t);
+  const restated = 'The map method returns a new array and does not modify the original input.';
+  const documents = [
+    { url: 'https://example.edu/arrays', content: `Working with arrays in JavaScript.\n${CLAIM} Callers keep the original values for later work.` },
+    { url: 'https://example.org/reference', content: `A reference on iteration helpers.\n${restated} Chaining further calls stays predictable.` },
+  ];
+
+  // Extraction writes into the BUNDLE root, exactly as the owner's staged learning state does.
+  const staged = path.join(dir, 'staged');
+  const { bundleRoot } = buildBundle(staged, documents);
+  const stagedStoreFile = path.join(staged, 'learning', `${sha256(PROJECT)}.learning.json`);
+  fs.copyFileSync(stagedStoreFile, path.join(bundleRoot, path.basename(stagedStoreFile)));
+  const manifestFile = path.join(bundleRoot, 'manifest.json');
+  const manifest = JSON.parse(fs.readFileSync(manifestFile, 'utf8'));
+  manifest.learningFile = path.basename(stagedStoreFile);
+  fs.writeFileSync(manifestFile, `${JSON.stringify(manifest, null, 2)}\n`);
+
+  const bundle = readBundle(bundleRoot);
+  assert.equal(path.basename(bundle.learningFile), path.basename(stagedStoreFile), 'the bundle exposes its own learning state');
+  const corpusStore = corpusCandidateStore(bundle, bundleRoot, PROJECT);
+  assert.ok(corpusStore.read().candidateRecords.length >= 2, 'the corpus store holds the extracted candidates');
+
+  // A persistent store that has never seen any of it - which is what the hosted run restores.
+  const emptyRoot = path.join(dir, 'persistent');
+  fs.mkdirSync(emptyRoot, { recursive: true });
+  const persistent = new DurableScientificLearningStore({ root: emptyRoot, projectId: PROJECT });
+  assert.equal(persistent.read().candidateRecords.length, 0);
+  assert.equal(corroboratedClaims(persistent).length, 0, 'the persistent store alone corroborates nothing');
+
+  const report = await learnFromRealCorpus({ bundleRoot, learningRoot: emptyRoot, projectId: PROJECT, scopeDeclarationFile: writeDeclaration(dir), harnessesFor, now: () => AT });
+  assert.equal(report.corpus.corpusLearningStateRestored, true);
+  assert.ok(report.corpus.corpusCandidateRecords >= 2, 'the corpus candidates were counted');
+  assert.equal(report.learned, true, report.reason);
+  assert.equal(report.corroborationRoute, 'corpus-corroborated');
+  assert.equal(report.ingestedFromCorpus.length, 2, 'both candidates were taken into custody from the corpus, not invented');
+  assert.deepEqual(report.gates, { R4: true, R5: true, R6: true });
+  assert.equal(report.promotionAuthorized, false);
 });
