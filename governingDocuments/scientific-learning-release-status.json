@@ -3,7 +3,7 @@
   "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
   "branch": "development",
   "developmentSha": "5ed69f6dcc319f1050b45cfcf84d2108863d5f9a",
-  "updatedAt": "2026-09-01T05:40:00Z",
+  "updatedAt": "2026-09-01T06:25:00Z",
   "rollingTarget": "2026-09-14T16:00:00Z",
   "timezone": "America/New_York",
   "confidence": "medium",
@@ -22,7 +22,7 @@
     "R10": "pending",
     "R11": "pending"
   },
-  "blockingReason": "Extraction emits document chrome - navigation, disclaimers, download gates, cookie and browser notices - as bounded assertions, so the only claims the corpus corroborates are furniture rather than testable assertions. R4-R6 cannot promote anything worth promoting until that is rejected at extraction. R7 is separately blocked on the experiment boundary being provenance-derived rather than the owner-declared scope.",
+  "blockingReason": "The hosted proof cannot reach the corpus. Every run since some time between 00:19 and 05:31 UTC on 2026-09-01 fails at restore with \"Unsupported state or unable to authenticate data\": the corpus ciphertext no longer authenticates against CRUCIBLE_SOURCE_BUNDLE_KEY. The parallel session reports rotating the intake key to an oversight-only key and re-encrypting the staged bundle at that time, so this repository holds a stale key. Until that is resolved no gate beyond R1 can be evidenced on real material, and the furniture rejection that unblocked corroboration is unverified against the real corpus. Behind it, the remaining blockers are unchanged: R7 needs the owner-declared scope to reach the experiment boundary, and R4-R6 need one declared scope for a claim that survives furniture rejection.",
   "history": [
     {
       "recordedAt": "2026-08-30T20:33:00Z",
