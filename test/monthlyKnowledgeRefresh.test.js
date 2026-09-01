@@ -81,3 +81,42 @@ test('due refreshes use the governed retriever and never learn blocked or quaran
   assert.equal(outcomes[0].state, 'quarantined');
   assert.deepEqual(outcomes[0].candidateClaims, []);
 });
+
+// Atomic rename stops a half-written file being read; it never stopped a lost update. Each mutation
+// read the whole snapshot, changed it and replaced the file, so two overlapping mutations both
+// succeeded and the later rename silently discarded the earlier one - a registered source, a
+// recorded revision or a learned fingerprint simply gone, with nothing reporting it. A write now
+// refuses unless the file still holds the snapshot the mutation was computed from.
+test('a mutation computed from a stale snapshot is refused rather than silently winning', () => {
+  const { root, store } = fixture();
+  const registered = store.register('https://example.org/reference');
+
+  // Another writer commits while this one is preparing its change: read the snapshot, let the
+  // other mutation land, then try to write the change built from the now-stale revision.
+  const stale = store.read();
+  const revisionItWasBuiltFrom = store.currentSha256();
+  store.register('https://example.org/committed-meanwhile');
+  stale.sources.push({ id:'source-lost', url:'https://example.org/third', registeredAt:'2026-08-30T20:00:00.000Z', lastCheckedAt:null, nextCheckAt:'2026-08-30T20:00:00.000Z', contentRevisions:[], learnedClaimFingerprints:[] });
+  assert.throws(() => store.write(stale, revisionItWasBuiltFrom), /changed while this update was being prepared/);
+
+  // The other writer's registration survived, which is the whole point.
+  assert.deepEqual(store.read().sources.map((source) => source.url).sort(), ['https://example.org/committed-meanwhile', 'https://example.org/reference']);
+  // And ordinary sequential mutation is untouched.
+  assert.equal(store.markClaimsLearned(registered.source.id, [bounded]).length, 1);
+  assert.equal(store.recordRetrieval(registered.source.id, retrieval, [bounded]).state, 'new-content');
+  fs.rmSync(root, { recursive:true, force:true });
+});
+
+test('the revision a mutation is computed from is the one it must still find', () => {
+  const { root, store } = fixture();
+  assert.equal(store.currentSha256(), null, 'no file yet is no revision');
+  store.register('https://example.org/reference');
+  const revision = store.currentSha256();
+  assert.match(revision, /^[a-f0-9]{64}$/);
+  // An unchanged store accepts a write computed from its current revision.
+  const state = store.read();
+  state.sources[0].learnedClaimFingerprints = [];
+  store.write(state, revision);
+  assert.notEqual(store.currentSha256(), null);
+  fs.rmSync(root, { recursive:true, force:true });
+});

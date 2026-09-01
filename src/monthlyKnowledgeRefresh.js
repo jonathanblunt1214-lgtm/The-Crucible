@@ -46,23 +46,53 @@ class MonthlyKnowledgeRefreshStore {
     return structuredClone(envelope.payload);
   }
 
-  write(state) {
+  // The hash of the snapshot currently on disk, or null when there is no file yet. This is the
+  // revision every mutation is computed from.
+  currentSha256() {
+    if (!fs.existsSync(this.file)) return null;
+    const envelope = JSON.parse(fs.readFileSync(this.file, 'utf8'));
+    return typeof envelope.sha256 === 'string' ? envelope.sha256 : null;
+  }
+
+  write(state, expectedSha256) {
+    // An atomic rename stops a half-written file being read; it never stopped a lost update. Two
+    // mutations that each read the whole snapshot, change it and replace the file both succeed,
+    // and the later rename silently discards the earlier one - a registered source, a recorded
+    // revision or a learned fingerprint simply gone, with nothing reporting it. A write therefore
+    // refuses unless the file still holds exactly the snapshot the mutation was computed from.
+    // Detecting the conflict is the point; silently winning it was the bug.
+    if (expectedSha256 !== undefined && this.currentSha256() !== expectedSha256) {
+      throw new Error('Monthly refresh store changed while this update was being prepared; nothing was written, so re-read and retry.');
+    }
     const envelope = { payload:state, sha256:sha256(JSON.stringify(state)) };
     const temporary = `${this.file}.${process.pid}.${crypto.randomUUID()}.tmp`;
     fs.writeFileSync(temporary, `${JSON.stringify(envelope, null, 2)}\n`, { flag:'wx', mode:0o600 });
     fs.renameSync(temporary, this.file);
   }
 
+  // Read, change and replace as one checked step. The check narrows the window to the moment
+  // between comparing the revision and renaming; it does not remove it. Removing it entirely means
+  // holding the durable lock across the whole mutation, which is a new organ-to-organ connection
+  // and so belongs on the circulation bus rather than in a direct import - an architectural
+  // decision recorded in AI-HANDOFF.json rather than taken here.
+  transact(mutate) {
+    const expected = this.currentSha256();
+    const state = this.read();
+    const result = mutate(state);
+    this.write(state, expected);
+    return result;
+  }
+
   register(url) {
     const normalized = canonicalUrl(url);
-    const state = this.read();
-    const existing = state.sources.find((source) => source.url === normalized);
-    if (existing) return { created:false, source:structuredClone(existing) };
-    const registeredAt = this.now();
-    const source = { id:`source-${sha256(normalized).slice(0, 24)}`, url:normalized, registeredAt, lastCheckedAt:null, nextCheckAt:registeredAt, contentRevisions:[], learnedClaimFingerprints:[] };
-    state.sources.push(source);
-    this.write(state);
-    return { created:true, source:structuredClone(source) };
+    return this.transact((state) => {
+      const existing = state.sources.find((source) => source.url === normalized);
+      if (existing) return { created:false, source:structuredClone(existing), unchanged:true };
+      const registeredAt = this.now();
+      const source = { id:`source-${sha256(normalized).slice(0, 24)}`, url:normalized, registeredAt, lastCheckedAt:null, nextCheckAt:registeredAt, contentRevisions:[], learnedClaimFingerprints:[] };
+      state.sources.push(source);
+      return { created:true, source:structuredClone(source) };
+    });
   }
 
   due(at = this.now()) {
@@ -79,18 +109,15 @@ class MonthlyKnowledgeRefreshStore {
     if (!Number.isFinite(checkedAtMs)) throw new Error('Retrieval retrievedAt must be valid.');
     if (!Array.isArray(claims)) throw new Error('Extracted claims must be an array.');
 
-    const state = this.read();
+    const finalUrl = canonicalUrl(retrievalRecord.finalUrl);
+    return this.transact((state) => {
     const source = state.sources.find((item) => item.id === sourceId);
     if (!source) throw new Error('Logged source does not exist in this project.');
-    const finalUrl = canonicalUrl(retrievalRecord.finalUrl);
 
     source.lastCheckedAt = retrievalRecord.retrievedAt;
     source.nextCheckAt = new Date(checkedAtMs + MAX_REFRESH_INTERVAL_MS).toISOString();
     const seenContent = source.contentRevisions.some((revision) => revision.contentSha256.toLowerCase() === retrievalRecord.contentSha256.toLowerCase());
-    if (seenContent) {
-      this.write(state);
-      return { state:'duplicate-content', candidateClaims:[], nextCheckAt:source.nextCheckAt };
-    }
+    if (seenContent) return { state:'duplicate-content', candidateClaims:[], nextCheckAt:source.nextCheckAt };
 
     const known = new Set([...source.learnedClaimFingerprints, ...source.contentRevisions.flatMap((revision) => revision.candidateClaimFingerprints)]);
     const candidateClaims = [];
@@ -102,19 +129,19 @@ class MonthlyKnowledgeRefreshStore {
       candidateClaims.push({ ...structuredClone(claim), fingerprint, sourceId, contentSha256:retrievalRecord.contentSha256, classification:'Insufficient Evidence', state:'candidate-evidence' });
     }
     source.contentRevisions.push({ finalUrl, retrievedAt:retrievalRecord.retrievedAt, author:retrievalRecord.author, license:retrievalRecord.license, contentSha256:retrievalRecord.contentSha256.toLowerCase(), candidateClaimFingerprints:[...emitted] });
-    this.write(state);
     return { state:'new-content', candidateClaims, nextCheckAt:source.nextCheckAt };
+    });
   }
 
   markClaimsLearned(sourceId, claims) {
     if (!Array.isArray(claims)) throw new Error('Verified claims must be an array.');
-    const state = this.read();
-    const source = state.sources.find((item) => item.id === sourceId);
-    if (!source) throw new Error('Logged source does not exist in this project.');
     const fingerprints = claims.map(claimFingerprint);
-    source.learnedClaimFingerprints = [...new Set([...source.learnedClaimFingerprints, ...fingerprints])];
-    this.write(state);
-    return structuredClone(source.learnedClaimFingerprints);
+    return this.transact((state) => {
+      const source = state.sources.find((item) => item.id === sourceId);
+      if (!source) throw new Error('Logged source does not exist in this project.');
+      source.learnedClaimFingerprints = [...new Set([...source.learnedClaimFingerprints, ...fingerprints])];
+      return structuredClone(source.learnedClaimFingerprints);
+    });
   }
 }
 
