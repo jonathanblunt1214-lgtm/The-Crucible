@@ -12,6 +12,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/codeSecurityOrganism.test.js',
     'test/ciDiagnosticOrgan.test.js',
     'test/contradictionAudit.test.js',
+    'test/contradictionReopening.test.js',
     'test/documentFurniture.test.js',
     'test/durableLock.test.js',
     'test/soakGate.test.js',
