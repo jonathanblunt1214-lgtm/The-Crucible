@@ -68,11 +68,17 @@ function gatherIntel({ records, activeVersion, challengeClaim, options = {} }) {
     const candidate = record && record.candidate;
     if (!candidate) continue;
     const sameBoundary = candidate.claimBoundary === boundary || (record.claimScope || null) === boundary;
+    // The boundary gates every branch, not just the last one. These collections become
+    // independent-source counts, and those counts choose the audit's route and its leading
+    // resolutions - so evidence from another claim scope agreeing with one side would shift a
+    // verdict it was never about. A claim that reads the same under a different scope is a
+    // different claim.
+    if (!sameBoundary) continue;
     if (normalize(candidate.claim) === normalize(activeVersion.claim) || semanticallyCorroborates(candidate.claim, activeVersion.claim, options).corroborates) {
       supporting.push(record);
     } else if (normalize(candidate.claim) === normalize(challengeClaim) || semanticallyCorroborates(candidate.claim, challengeClaim, options).corroborates) {
       challenging.push(record);
-    } else if (sameBoundary) {
+    } else {
       // Held, not counted for either side: evidence about the same boundary that speaks to
       // neither claim is still context an owner should see before deciding anything.
       related.push(record);
