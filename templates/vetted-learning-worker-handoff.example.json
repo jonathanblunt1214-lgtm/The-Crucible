@@ -1,0 +1,18 @@
+{
+  "_comment": "Placeholder only. Every value below must be replaced by oversight-approved, non-secret configuration before this file is consumed by any code. Do not put secret values in this file.",
+  "contractVersion": "1.0-draft",
+  "artifactUri": "REPLACE_WITH_OVERSIGHT_ARTIFACT_URI",
+  "publisherKeyId": "REPLACE_WITH_OVERSIGHT_PUBLISHER_KEY_ID",
+  "verificationPublicKeySecretName": "REPLACE_WITH_SECRET_NAME_FOR_VERIFICATION_KEY",
+  "ciphertextAccessSecretName": "REPLACE_WITH_SECRET_NAME_FOR_ARTIFACT_ACCESS",
+  "expectedProjectId": "github:jonathanblunt1214-lgtm/The-Crucible",
+  "expectedRepository": "jonathanblunt1214-lgtm/The-Crucible",
+  "allowedRefs": [
+    "refs/heads/development"
+  ],
+  "plaintextDigestAlgorithm": "sha256",
+  "artifactVersion": "REPLACE_WITH_ARTIFACT_VERSION",
+  "expiresAt": "REPLACE_WITH_ISO8601_EXPIRY_OR_NULL",
+  "onValidationFailure": "fail-closed",
+  "allowRawIntakeFallback": false
+}
