@@ -78,10 +78,21 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
     if (!realLearning.learned) {
       const stopped = { schemaVersion:1, projectId, repository, ref, runId:String(runId), completedAt:at, restoredEncryptedState:restored,
         learnedFromRealCorpus:false, reason:realLearning.reason, corpus:realLearning.corpus,
+        // What the corpus does corroborate, and why any nominated pairing was not usable. A scope
+        // is never inferred, so the owner has to be able to see what there is to declare one for.
+        corroborated:realLearning.corroborated || [], pairedFailures:realLearning.pairedFailures || [],
         gates:[{id:'R4',state:'unsatisfied'},{id:'R5',state:'unsatisfied'},{id:'R6',state:'unsatisfied'},{id:'R7',state:'unsatisfied'},{id:'R8',state:'unsatisfied'}],
         authorizesPromotion:false };
       fs.mkdirSync(path.dirname(reportFile),{recursive:true});
       fs.writeFileSync(reportFile,`${JSON.stringify(stopped,null,2)}\n`,{mode:0o600});
+      // Print them to the run log too: the report is an artifact, and an owner cannot declare a
+      // scope for a claim they would have to download the run to read.
+      for (const [index,item] of (stopped.corroborated||[]).entries()) {
+        console.log(`[The Crucible] corroborated ${index+1}/${stopped.corroborated.length} (${item.agreement}, ${item.sourceCount} sources): ${item.claim}`);
+        console.log(`[The Crucible]   sources: ${(item.sourceIds||[]).join(' | ')}`);
+        if (item.agreement === 'semantic') for (const asserted of item.assertedAs||[]) console.log(`[The Crucible]   asserted as: ${asserted}`);
+      }
+      for (const failure of stopped.pairedFailures||[]) console.log(`[The Crucible] pairing not usable for "${failure.claim}": ${failure.reason}`);
       throw new Error(`Hosted learning proof stopped: ${realLearning.reason}`);
     }
   }
