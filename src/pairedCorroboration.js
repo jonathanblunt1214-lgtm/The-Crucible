@@ -24,6 +24,7 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { boundedAssertions } = require('./claimExtractionWorker');
 const { semanticallyCorroborates } = require('./semanticCorroboration');
+const { sourceIndex, independent } = require('./sourceIndependence');
 
 const normalize = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex');
@@ -112,9 +113,12 @@ function verifyPairedDeclaration({ bundle, bundleRoot, declaration, options = {}
     resolved.push({ sourceId: String(source.id), sentence: asserting.sentence, agreement: asserting.agreement, overlap: asserting.decision ? asserting.decision.overlap : 1, contentSha256: String(source.contentSha256 || '').toLowerCase() });
   }
 
-  if (resolved[0].sentence === resolved[1].sentence && found[0].contentSha256 === found[1].contentSha256) {
-    return unsatisfied('the two nominated sources hold identical content, so they are one document reached twice rather than two independent sources');
-  }
+  // A nomination cannot make two pages of one publisher, or two printings of one document,
+  // into independent sources. The owner chooses which pair to evaluate; what counts as two
+  // sources is not theirs to declare.
+  const index = sourceIndex(bundle);
+  const relation = independent(index.get(ids[0]), index.get(ids[1]));
+  if (!relation.independent) return unsatisfied(relation.reason);
 
   return {
     satisfied: true,
