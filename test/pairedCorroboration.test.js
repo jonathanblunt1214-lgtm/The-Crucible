@@ -243,7 +243,25 @@ test('a declared source path outside the corpus is refused rather than read as c
   for (const escape of ['../runner-secret.txt', 'sources/../../runner-secret.txt', path.join(root, 'runner-secret.txt'), '/etc/passwd']) {
     assert.throws(() => read(escape), /declares content outside the corpus/, `${escape} must be refused`);
   }
-  // A contained source still reads normally, absolute or relative.
-  assert.equal(read('sources/ok.html'), inside);
-  assert.equal(read(path.join(bundleRoot, 'sources', 'ok.html')), inside);
+  // A contained source still reads normally, absolute or relative, when its hash is recorded.
+  const hash = crypto.createHash('sha256').update(inside).digest('hex');
+  assert.equal(read('sources/ok.html', hash), inside);
+  assert.equal(read(path.join(bundleRoot, 'sources', 'ok.html'), hash), inside);
+});
+
+// Owner pairing reaches the corpus by source id. Without a recorded hash the bytes behind that id
+// are whatever happens to be on disk, so content with no hash cannot be corroboration at all - the
+// check is required, not merely applied when a hash happens to be present.
+test('a source with no recorded content hash cannot become corroboration', () => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'paired-hash-'));
+  const bundleRoot = path.join(root, 'bundle');
+  fs.mkdirSync(path.join(bundleRoot, 'sources'), { recursive: true });
+  const body = 'Bounded caches are invalidated on write.';
+  fs.writeFileSync(path.join(bundleRoot, 'sources', 'ok.html'), body);
+  const read = (contentSha256) => readSourceContent(bundleRoot, { id: 's1', durablePath: 'sources/ok.html', contentSha256 });
+  for (const missing of [undefined, null, '', '   ', 'not-a-hash', 'a'.repeat(63)]) {
+    assert.throws(() => read(missing), /no recorded content hash/, `${JSON.stringify(missing)} must not be accepted as a hash`);
+  }
+  assert.throws(() => read('b'.repeat(64)), /does not match the hash/);
+  assert.equal(read(crypto.createHash('sha256').update(body).digest('hex')), body);
 });

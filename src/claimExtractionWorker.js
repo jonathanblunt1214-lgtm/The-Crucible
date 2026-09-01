@@ -30,6 +30,20 @@ function boundedAssertions(text) {
   return results;
 }
 
+// A declared path is a claim about where content lives, not permission to read there. The queue can
+// arrive from a repository Crucible does not control - the hosted proof restores exactly such a one
+// - and extraction is the worst place for a tampered path to land: the file is read, shelled out to
+// a PDF extractor, and its sentences become candidate claims. So content must sit inside the corpus
+// this worker was pointed at, and anything resolving outside it is refused rather than read.
+function containedSourcePath(corpusRoot, source) {
+  const declared = String(source.durablePath || '').replaceAll('\\', '/');
+  if (!declared) throw new Error(`Source ${source.id} has no stored content path.`);
+  const root = path.resolve(corpusRoot);
+  const resolved = path.resolve(root, declared);
+  if (resolved !== root && !resolved.startsWith(`${root}${path.sep}`)) throw new Error(`Source ${source.id} declares content outside the trusted corpus root ${root}: ${declared}.`);
+  return resolved;
+}
+
 function defaultExtractText(source, pageStart, pageEnd, environment = process.env) {
   if (!source.durablePath || !fs.existsSync(source.durablePath)) throw new Error('Durable source content is missing.');
   if (source.mediaType === 'application/pdf') {
@@ -54,11 +68,14 @@ class AtomicClaimExtractionQueue {
 }
 
 class ClaimExtractionWorker {
-  constructor({ queueFile, projectId, learningRoot, extractText = defaultExtractText, now = () => new Date().toISOString(), maximumSources = 25, maximumDocuments = 9, pdfPagesPerBatch = 20 }) {
+  constructor({ queueFile, projectId, learningRoot, corpusRoot = null, extractText = defaultExtractText, now = () => new Date().toISOString(), maximumSources = 25, maximumDocuments = 9, pdfPagesPerBatch = 20 }) {
     if (!projectId || !learningRoot) throw new Error('Repository-bound projectId and learningRoot are required.');
     if (!Number.isSafeInteger(maximumSources) || maximumSources < 1 || maximumSources > 100) throw new Error('maximumSources must be between 1 and 100.');
     if (!Number.isSafeInteger(maximumDocuments) || maximumDocuments < 1 || maximumDocuments > maximumSources) throw new Error('maximumDocuments must be between 1 and maximumSources.');
     if (!Number.isSafeInteger(pdfPagesPerBatch) || pdfPagesPerBatch < 1 || pdfPagesPerBatch > 100) throw new Error('pdfPagesPerBatch must be between 1 and 100.');
+    // The trusted corpus root: the directory the queue itself lives in unless the caller names a
+    // different one. Every source path is resolved against it and may not leave it.
+    this.corpusRoot = path.resolve(corpusRoot || path.dirname(path.resolve(queueFile)));
     this.queue = new AtomicClaimExtractionQueue(queueFile, projectId); this.store = new DurableScientificLearningStore({ projectId, root:path.resolve(learningRoot) }); this.projectId = projectId; this.extractText = extractText; this.now = now; this.maximumSources = maximumSources; this.maximumDocuments = maximumDocuments; this.pdfPagesPerBatch = pdfPagesPerBatch;
   }
 
@@ -99,7 +116,7 @@ class ClaimExtractionWorker {
           if (priorWindow) {
             ids = [...priorWindow.candidateIds]; windowContentSha256 = priorWindow.windowContentSha256; comparison = 'unchanged-window-skipped';
           } else {
-            const text = this.extractText(source, pageStart, pageEnd); windowContentSha256 = sha256(Buffer.from(String(text), 'utf8')); const assertions = boundedAssertions(text); ids = []; const candidates = [];
+            const text = this.extractText({ ...source, durablePath: containedSourcePath(this.corpusRoot, source) }, pageStart, pageEnd); windowContentSha256 = sha256(Buffer.from(String(text), 'utf8')); const assertions = boundedAssertions(text); ids = []; const candidates = [];
             for (const assertion of assertions) {
               const boundary = source.mediaType === 'application/pdf' ? `${source.title || source.originalName || source.id}, SHA-256 ${source.contentSha256}, pages ${pageStart}-${pageEnd} only` : `${source.finalUrl || source.url || source.id}, SHA-256 ${source.contentSha256}, retrieved content only`;
               const candidate = this.candidate(source, assertion, boundary, startedAt); candidates.push(candidate); ids.push(candidate.id);
@@ -122,4 +139,4 @@ class ClaimExtractionWorker {
   }
 }
 
-module.exports = { cleanText, boundedAssertions, normalizedClaimSha256, defaultExtractText, AtomicClaimExtractionQueue, ClaimExtractionWorker };
+module.exports = { containedSourcePath, cleanText, boundedAssertions, normalizedClaimSha256, defaultExtractText, AtomicClaimExtractionQueue, ClaimExtractionWorker };

@@ -5,6 +5,7 @@ const fs = require('node:fs');
 const net = require('node:net');
 const path = require('node:path');
 const dns = require('node:dns').promises;
+const https = require('node:https');
 const { executableMagic, SUSPICIOUS_BINARY_EXTENSION } = require('./security');
 
 const DEFAULT_CONTENT_TYPES = Object.freeze(['text/html', 'application/xhtml+xml', 'text/plain', 'application/pdf', 'application/json']);
@@ -126,6 +127,48 @@ function parseGoogleSearchResults(html, { trustedDomains = [], trustedSuffixes =
   return found;
 }
 
+// Resolving once to check and then letting the HTTP client resolve again asks the same question
+// twice, and can get two answers: between them a second DNS reply points the socket at a private
+// address the guard never saw, and the guard is a formality. The connection is pinned to an address
+// the guard already approved. The request still carries the real hostname, so Host, SNI and
+// certificate validation are unchanged - only name resolution is fixed, which is the one part that
+// was free to change its mind.
+// A resolver that cannot ask anything. Whatever hostname it is handed, the only answers it can give
+// are the addresses the guard already approved, so the second resolution has nothing left to decide.
+function pinnedLookup(addresses) {
+  const approved = addresses.map((item) => ({ address: String(item.address), family: Number(item.family) || (net.isIPv6(String(item.address)) ? 6 : 4) }));
+  if (!approved.length) throw new Error('A pinned lookup needs at least one validated address.');
+  return (hostname, options, callback) => {
+    const done = typeof options === 'function' ? options : callback;
+    const settings = typeof options === 'function' ? {} : (options || {});
+    const wanted = settings.family ? Number(settings.family) : 0;
+    const entries = approved.filter((item) => !wanted || item.family === wanted);
+    if (!entries.length) { done(new Error('No validated address matches the requested address family.')); return; }
+    if (settings.all) { done(null, entries.map((item) => ({ ...item }))); return; }
+    done(null, entries[0].address, entries[0].family);
+  };
+}
+function pinnedHttpsRequest(addresses) {
+  const lookup = pinnedLookup(addresses);
+  return (url, init = {}) => new Promise((resolve, reject) => {
+    let target;
+    try { target = safeUrl(String(url)); } catch (error) { reject(error); return; }
+    const request = https.request(target, { method: init.method || 'GET', headers: init.headers || {}, lookup }, (message) => {
+      resolve({
+        status: message.statusCode,
+        ok: message.statusCode >= 200 && message.statusCode < 300,
+        url: target.toString(),
+        headers: { get: (name) => { const value = message.headers[String(name).toLowerCase()]; if (value === undefined) return null; return Array.isArray(value) ? value.join(', ') : String(value); } },
+        body: message,
+      });
+    });
+    request.on('error', reject);
+    const abort = () => request.destroy(new Error('Retrieval was aborted before it completed.'));
+    if (init.signal) { if (init.signal.aborted) abort(); else init.signal.addEventListener('abort', abort, { once: true }); }
+    request.end();
+  });
+}
+
 class RetrievalAuditStore {
   constructor(root) { this.root = path.resolve(root); fs.mkdirSync(this.root, { recursive:true }); this.file = path.join(this.root, 'retrieval-audit.json'); }
   read() { if (!fs.existsSync(this.file)) return { schemaVersion:1, records:[] }; return JSON.parse(fs.readFileSync(this.file, 'utf8')); }
@@ -137,7 +180,7 @@ class RetrievalAuditStore {
 }
 
 class SafeInformationRetriever {
-  constructor({ approvedUrls, approvedRedirectDomains = [], deniedDomains = [], auditStore, killSwitchFile, fetchImpl = globalThis.fetch, lookup = dns.lookup, now = () => new Date().toISOString(), maximumBytes = 20 * 1024 * 1024, maximumRedirects = 5, timeoutMs = 20_000, minimumIntervalMs = 1_000, allowedContentTypes = DEFAULT_CONTENT_TYPES }) {
+  constructor({ approvedUrls, approvedRedirectDomains = [], deniedDomains = [], auditStore, killSwitchFile, fetchImpl = null, lookup = dns.lookup, now = () => new Date().toISOString(), maximumBytes = 20 * 1024 * 1024, maximumRedirects = 5, timeoutMs = 20_000, minimumIntervalMs = 1_000, allowedContentTypes = DEFAULT_CONTENT_TYPES }) {
     if (!Array.isArray(approvedUrls) || !approvedUrls.length) throw new Error('At least one owner-approved URL is required.');
     if (!auditStore?.append) throw new Error('An auditable retrieval store is required.');
     this.approvedUrls = new Set(approvedUrls.map((item) => safeUrl(item).toString()));
@@ -150,6 +193,8 @@ class SafeInformationRetriever {
     if (this.deniedDomains.some((rule) => domainMatches(host, rule))) throw new Error('Target domain is denied.');
     const results = await this.lookup(host, { all:true, verbatim:true });
     if (!Array.isArray(results) || !results.length || results.some((item) => privateAddress(item.address))) throw new Error('Private, local, or unresolved network targets are forbidden.');
+    // Returned so the connection can be pinned to exactly what was approved here.
+    return results;
   }
   async retrieve(input) {
     const requested = safeUrl(input).toString(); const decisionAt = this.now();
@@ -165,11 +210,12 @@ class SafeInformationRetriever {
     const controller = new AbortController(); const timer = setTimeout(() => controller.abort(), this.timeoutMs);
     try {
       while (true) {
-        await this.validateNetworkTarget(current);
+        const validated = await this.validateNetworkTarget(current);
         const delay = Math.max(0, this.minimumIntervalMs - (Date.now() - this.lastRequestAt));
         if (delay) await new Promise((resolve) => setTimeout(resolve, delay));
         this.lastRequestAt = Date.now();
-        response = await this.fetchImpl(current, { method:'GET', redirect:'manual', credentials:'omit', referrerPolicy:'no-referrer', signal:controller.signal, headers:{ accept:this.allowedContentTypes.join(', '), 'user-agent':'The-Crucible-Evidence-Retriever/1.0' } });
+        const send = this.fetchImpl || pinnedHttpsRequest(validated);
+        response = await send(current, { method:'GET', redirect:'manual', credentials:'omit', referrerPolicy:'no-referrer', signal:controller.signal, headers:{ accept:this.allowedContentTypes.join(', '), 'user-agent':'The-Crucible-Evidence-Retriever/1.0' } });
         if (response.status < 300 || response.status >= 400) break;
         if (++redirects > this.maximumRedirects) throw new Error('Redirect limit exceeded.');
         const location = response.headers.get('location'); if (!location) throw new Error('Redirect has no location.');
@@ -196,4 +242,4 @@ class SafeInformationRetriever {
   }
 }
 
-module.exports = { DEFAULT_CONTENT_TYPES, INJECTION_PATTERNS, SOCIAL_MEDIA_DENYLIST, NEWS_AGENCY_DOMAINS, privateAddress, safeUrl, sanitizeHtml, parseGoogleSearchResults, RetrievalAuditStore, SafeInformationRetriever };
+module.exports = { DEFAULT_CONTENT_TYPES, pinnedLookup, pinnedHttpsRequest, INJECTION_PATTERNS, SOCIAL_MEDIA_DENYLIST, NEWS_AGENCY_DOMAINS, privateAddress, safeUrl, sanitizeHtml, parseGoogleSearchResults, RetrievalAuditStore, SafeInformationRetriever };

@@ -104,3 +104,36 @@ test('IPv4-mapped IPv6 addresses are judged by the IPv4 rules, not waved through
   // Native IPv6 private ranges keep working.
   for (const address of ['::1', '::', 'fc00::1', 'fd12::1', 'fe80::1']) assert.equal(privateAddress(address), true);
 });
+
+// The guard resolved the hostname and approved the answer; then the HTTP client resolved it again.
+// Two resolutions, two chances to answer differently, and the second one nobody checked. These pin
+// the rule that the connection can only ever go to an address the guard already saw.
+test('a pinned lookup can only ever answer with addresses the guard approved', () => {
+  const { pinnedLookup } = require('../src/safeInformationRetrieval');
+  const approved = [{ address:'93.184.216.34', family:4 }, { address:'2606:2800:220:1:248:1893:25c8:1946', family:6 }];
+  const lookup = pinnedLookup(approved);
+  // The hostname is ignored on purpose: there is nothing to ask, so there is nothing to re-answer.
+  for (const hostname of ['docs.example.test', 'evil.example', 'metadata.google.internal', '']) {
+    lookup(hostname, {}, (error, address, family) => { assert.equal(error, null); assert.equal(address, '93.184.216.34'); assert.equal(family, 4); });
+    lookup(hostname, { all:true }, (error, entries) => { assert.equal(error, null); assert.deepEqual(entries.map((item) => item.address), ['93.184.216.34', '2606:2800:220:1:248:1893:25c8:1946']); });
+  }
+  // A family the guard never approved is refused rather than resolved for.
+  pinnedLookup([{ address:'93.184.216.34', family:4 }])('docs.example.test', { family:6 }, (error) => { assert.match(String(error && error.message), /No validated address matches/); });
+  pinnedLookup([{ address:'93.184.216.34', family:4 }])('docs.example.test', { family:4 }, (error, address) => { assert.equal(error, null); assert.equal(address, '93.184.216.34'); });
+  // The legacy two-argument callback form is still a lookup, and still cannot ask anything.
+  lookup('docs.example.test', (error, address) => { assert.equal(error, null); assert.equal(address, '93.184.216.34'); });
+  assert.throws(() => pinnedLookup([]), /at least one validated address/);
+});
+
+test('a pinned request never resolves the hostname a second time', async () => {
+  const { pinnedHttpsRequest } = require('../src/safeInformationRetrieval');
+  // .invalid is reserved by RFC 2606 and resolves nowhere, so any client that asked DNS would fail
+  // with ENOTFOUND naming the host. Pinned, the socket goes straight to the approved address.
+  const error = await pinnedHttpsRequest([{ address:'127.0.0.1', family:4 }])('https://rebind.invalid/page').then(() => null, (reason) => reason);
+  assert.ok(error, 'the request must not succeed against a name that resolves nowhere');
+  assert.notEqual(error.code, 'ENOTFOUND'); assert.notEqual(error.code, 'EAI_AGAIN');
+  assert.doesNotMatch(String(error.message), /getaddrinfo|ENOTFOUND|rebind\.invalid/);
+  if (error.syscall === 'connect') assert.equal(error.address, '127.0.0.1', 'the socket went to the address the guard approved');
+  // A URL the guard would reject is still rejected here, so pinning cannot be used to skip safeUrl.
+  await assert.rejects(() => pinnedHttpsRequest([{ address:'127.0.0.1', family:4 }])('http://rebind.invalid/page'));
+});

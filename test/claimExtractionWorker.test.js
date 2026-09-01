@@ -19,3 +19,34 @@ test('document cap and PDF page window bounds fail closed',t=>{const {root,queue
 test('unchanged completed windows are compared and skipped without duplicate extraction',t=>{const source={...webSource(),mediaType:'application/pdf',pages:2};const {root,queueFile}=fixture(t,source);let calls=0;const worker=new ClaimExtractionWorker({queueFile,projectId:'github:owner/repo',learningRoot:root,pdfPagesPerBatch:2,extractText:()=>{calls+=1;return 'A compiler returns another representation after processing valid source code.';}});assert.equal(worker.run()[0].comparison,'new-window-extracted');const queue=JSON.parse(fs.readFileSync(queueFile,'utf8'));queue.documents[0].state='claim-extraction-forced-pending';queue.documents[0].claimExtraction.nextPage=1;fs.writeFileSync(queueFile,JSON.stringify(queue));assert.equal(worker.run()[0].comparison,'unchanged-window-skipped');assert.equal(calls,1);assert.equal(worker.store.read().candidateRecords.length,1);});
 test('a changed document hash restarts at page one while preserving prior revision custody',t=>{const source={...webSource(),mediaType:'application/pdf',pages:4};const {root,queueFile}=fixture(t,source);const windows=[];const worker=new ClaimExtractionWorker({queueFile,projectId:'github:owner/repo',learningRoot:root,pdfPagesPerBatch:2,extractText:(_source,start,end)=>{windows.push([start,end]);return `A compiler is tested for pages ${start} through ${end} and returns another representation.`;}});worker.run();const queue=JSON.parse(fs.readFileSync(queueFile,'utf8'));queue.documents[0].contentSha256='b'.repeat(64);fs.writeFileSync(queueFile,JSON.stringify(queue));worker.run();const changed=JSON.parse(fs.readFileSync(queueFile,'utf8')).documents[0];assert.deepEqual(windows,[[1,2],[1,2]]);assert.equal(changed.claimExtraction.previousRevisions.length,1);assert.equal(changed.claimExtraction.sourceContentSha256,'b'.repeat(64));});
 test('normalized claim comparison deduplicates formatting-only repetitions',()=>{assert.equal(normalizedClaimSha256(' A function   returns a value. '),normalizedClaimSha256('a function returns a value.'));});
+
+// Extraction is the worst place for a tampered path to land: the file is read, shelled out to a
+// PDF extractor, and its sentences become candidate claims. The queue can arrive from a repository
+// Crucible does not control, so a declared path is a claim about where content lives rather than
+// permission to read there.
+test('a source path outside the trusted corpus root is refused rather than extracted', () => {
+  const { containedSourcePath } = require('../src/claimExtractionWorker');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'extract-containment-'));
+  const corpus = path.join(root, 'corpus');
+  fs.mkdirSync(path.join(corpus, 'sources'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'runner-secret.txt'), 'a runner file that is none of the corpus business');
+
+  for (const escape of ['../runner-secret.txt', 'sources/../../runner-secret.txt', path.join(root, 'runner-secret.txt'), '/etc/passwd']) {
+    assert.throws(() => containedSourcePath(corpus, { id: 's1', durablePath: escape }), /outside the trusted corpus root/, `${escape} must be refused`);
+  }
+  assert.throws(() => containedSourcePath(corpus, { id: 's1', durablePath: '' }), /no stored content path/);
+  // Contained paths resolve normally, relative or absolute.
+  assert.equal(containedSourcePath(corpus, { id: 's1', durablePath: 'sources/a.txt' }), path.resolve(corpus, 'sources', 'a.txt'));
+  assert.equal(containedSourcePath(corpus, { id: 's1', durablePath: path.join(corpus, 'sources', 'a.txt') }), path.resolve(corpus, 'sources', 'a.txt'));
+});
+
+test('the trusted corpus root defaults to the directory the queue itself lives in', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'extract-root-'));
+  t.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  const queueFile = path.join(root, 'queue.json');
+  fs.writeFileSync(queueFile, JSON.stringify({ schemaVersion: 1, projectId: 'github:owner/repo', updatedAt: null, protocol: {}, documents: [], links: [] }));
+  const worker = new ClaimExtractionWorker({ queueFile, projectId: 'github:owner/repo', learningRoot: path.join(root, 'store') });
+  assert.equal(worker.corpusRoot, path.resolve(root));
+  const named = new ClaimExtractionWorker({ queueFile, projectId: 'github:owner/repo', learningRoot: path.join(root, 'store'), corpusRoot: path.join(root, 'elsewhere') });
+  assert.equal(named.corpusRoot, path.resolve(root, 'elsewhere'), 'a caller may name a different trusted root');
+});
