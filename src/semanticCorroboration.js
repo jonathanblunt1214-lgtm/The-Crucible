@@ -43,6 +43,36 @@ function stem(term) {
   return term;
 }
 
+// The names a claim commits to: proper nouns and code identifiers. Treated exactly like
+// numbers, and for the same reason.
+//
+// The real corpus proved this necessary. "Essential Javascript is a free book about JavaScript
+// programming language" and "Essential C# is a free book about C# programming language" scored
+// above the overlap threshold and were reported as one claim, because the only differing term
+// sat inside enough shared boilerplate to carry the score. They are not one claim. Neither are
+// a Bash book's disclaimer and a TypeScript book's, nor "Xamarin.Forms for macOS Succinctly"
+// and "Xamarin.Forms Succinctly". A substituted name changes the subject, and a test that
+// cannot see that will corroborate a template with itself.
+//
+// A sentence's first word is skipped: its capital is grammar, not a name.
+function claimEntities(claim) {
+  const entities = new Set();
+  for (const sentence of String(claim || '').split(/(?<=[.!?])\s+/)) {
+    const tokens = sentence.trim().split(/\s+/).filter(Boolean);
+    for (const [index, raw] of tokens.entries()) {
+      const token = raw.replace(/^[^A-Za-z0-9]+|[^A-Za-z0-9#+.]+$/g, '');
+      if (token.length < 2) continue;
+      const internalCapital = /[a-z][A-Z]/.test(token);
+      const codeMark = /[#+]/.test(token) || /[A-Za-z]\.[A-Za-z]/.test(token);
+      const initialCapital = /^[A-Z]/.test(token) && index > 0;
+      if (!internalCapital && !codeMark && !initialCapital) continue;
+      if (STOPWORDS.has(token.toLowerCase())) continue;
+      entities.add(token.toLowerCase());
+    }
+  }
+  return [...entities].sort();
+}
+
 function tokenize(claim) {
   return String(claim || '')
     .toLowerCase()
@@ -64,7 +94,7 @@ function claimFingerprint(claim) {
     .map((token) => token.replace(/^[.-]+|[.-]+$/g, ''))
     .filter((token) => token.length > 2 && !STOPWORDS.has(token) && !NEGATIONS.has(token) && !/^\d/.test(token))
     .map(stem);
-  return { negated: negationCount % 2 === 1, negationCount, numbers, terms: [...new Set(terms)].sort() };
+  return { negated: negationCount % 2 === 1, negationCount, numbers, entities: claimEntities(claim), terms: [...new Set(terms)].sort() };
 }
 
 const DEFAULT_MINIMUM_OVERLAP = 0.8;
@@ -81,6 +111,11 @@ function compareFingerprints(a, b, { minimumOverlap = DEFAULT_MINIMUM_OVERLAP, m
   }
   if (a.numbers.join(',') !== b.numbers.join(',')) {
     return { ...base, corroborates: false, reason: `the claims commit to different numbers (${a.numbers.join(', ') || 'none'} against ${b.numbers.join(', ') || 'none'})` };
+  }
+  if (a.entities.join(',') !== b.entities.join(',')) {
+    const onlyA = a.entities.filter((entity) => !b.entities.includes(entity));
+    const onlyB = b.entities.filter((entity) => !a.entities.includes(entity));
+    return { ...base, corroborates: false, reason: `the claims name different subjects (${onlyA.join(', ') || 'none'} against ${onlyB.join(', ') || 'none'}), so they are claims about different things however similar their wording` };
   }
   if (a.terms.length < minimumTerms || b.terms.length < minimumTerms) {
     return { ...base, corroborates: false, reason: `at least ${minimumTerms} content terms are required to judge sameness; found ${Math.min(a.terms.length, b.terms.length)}` };
@@ -107,7 +142,7 @@ function semanticallyCorroborates(claimA, claimB, options = {}) {
 // numbers. Bucketing on them lets a corpus-sized grouping skip comparisons that are already
 // decided, without changing a single outcome.
 function incompatibilityKey(fingerprint) {
-  return `${fingerprint.negated ? 'neg' : 'aff'}|${fingerprint.numbers.join(',')}`;
+  return `${fingerprint.negated ? 'neg' : 'aff'}|${fingerprint.numbers.join(',')}|${fingerprint.entities.join(',')}`;
 }
 
 // Groups candidate claims into sets that assert the same thing. Deterministic: candidates are
@@ -141,4 +176,4 @@ function groupCorroborating(entries, options = {}) {
   return groups.map(({ claim, members }) => ({ claim, members }));
 }
 
-module.exports = { STOPWORDS, NEGATIONS, DEFAULT_MINIMUM_OVERLAP, DEFAULT_MINIMUM_TERMS, claimFingerprint, compareFingerprints, semanticallyCorroborates, groupCorroborating };
+module.exports = { STOPWORDS, NEGATIONS, DEFAULT_MINIMUM_OVERLAP, DEFAULT_MINIMUM_TERMS, claimFingerprint, claimEntities, compareFingerprints, semanticallyCorroborates, groupCorroborating };

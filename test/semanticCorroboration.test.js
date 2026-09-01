@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { claimFingerprint, semanticallyCorroborates, groupCorroborating, DEFAULT_MINIMUM_OVERLAP } = require('../src/semanticCorroboration');
+const { claimFingerprint, claimEntities, semanticallyCorroborates, groupCorroborating, DEFAULT_MINIMUM_OVERLAP } = require('../src/semanticCorroboration');
 
 const MAP_A = 'The map method returns a new array and does not modify the original array.';
 const MAP_B = 'The map method returns a new array and does not change the original array.';
@@ -102,4 +102,36 @@ test('groups agreeing claims and keeps contradictions apart, in a stable order',
 
   assert.deepEqual(groupCorroborating(entries), groups, 'grouping is deterministic');
   assert.deepEqual(groupCorroborating([...entries].reverse()), groups, 'input order does not change the grouping');
+});
+
+// Found by running against the real corpus, not by imagining a case. All four of these were
+// reported as one claim and are not: the substituted name sat inside enough shared boilerplate
+// to carry the overlap score. A test that cannot see a changed subject corroborates a template
+// with itself.
+test('never corroborates claims that name different subjects', () => {
+  const cases = [
+    ['Essential Javascript - a free JavaScript programming book Essential Javascript is a free book about JavaScript programming language.',
+     'Essential C# - a free C# programming book Essential C# is a free book about C# programming language.', /javascript.*c#|c#.*javascript/],
+    ['This is an unofficial free book created for educational purposes and is not affiliated with official Bash group(s) or company(s).',
+     'This is an unofficial free book created for educational purposes and is not affiliated with official TypeScript group(s) or company(s).', /bash|typescript/],
+    ['My Dashboard Home Xamarin.Forms for macOS Succinctly Alessandro Del Sole This ebook is part of our premier ebook collection.',
+     'My Dashboard Home Xamarin.Forms Succinctly Alessandro Del Sole This ebook is part of our premier ebook collection.', /macos/],
+  ];
+  for (const [left, right, named] of cases) {
+    const decision = semanticallyCorroborates(left, right);
+    assert.equal(decision.corroborates, false, `must not corroborate: ${left}`);
+    assert.match(decision.reason, /name different subjects/);
+    assert.match(decision.reason.toLowerCase(), named, 'the reason names the subject that differs');
+  }
+
+  // The same sentence about the same subject is unaffected.
+  const same = 'The Bash shell expands an unquoted variable into separate words on whitespace.';
+  assert.equal(semanticallyCorroborates(same, 'A Bash shell expands the unquoted variable into separate words on whitespace.').corroborates, true);
+});
+
+test('a sentence-initial capital is grammar, not a named subject', () => {
+  assert.deepEqual(claimEntities('The array is returned.'), []);
+  assert.deepEqual(claimEntities('Calling map returns a JavaScript array.'), ['javascript']);
+  assert.ok(claimEntities('It uses Xamarin.Forms and C# together.').includes('c#'));
+  assert.ok(claimEntities('It uses Xamarin.Forms and C# together.').includes('xamarin.forms'));
 });
