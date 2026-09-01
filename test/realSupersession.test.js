@@ -49,8 +49,8 @@ function buildBundle(dir, documents) {
 const harnesses = () => {
   const execute = () => execFileSync(process.execPath, ['-e', PROOF], { stdio: 'ignore' });
   return {
-    experiment: { id: 'javascript-controlled-runner', run: async ({ candidate, hypothesis, testPlanSha256 }) => { execute(); return { schemaVersion: 1, candidateId: candidate.id, projectId: candidate.projectId, hypothesis, testedProperty: candidate.claim, experimentBoundary: candidate.claimBoundary, controls: ['identity reference control', 'empty-input control'], causalIsolation: { method: 'single-variable intervention on the mapped callback', result: 'only the returned array changes', correlationOnly: false }, negativeTests: ['the returned array is never the input reference'], regressionTests: ['dense-array mapping still yields expected values'], scopeProof: SCOPE, generalizationResult: 'not generalized beyond the experiment boundary', contradictionResult: 'none', completedAt: AT, testPlanSha256 }; } },
-    verifier: { id: 'javascript-independent-runner', run: async ({ candidate, experimentalProof, testPlanSha256 }) => { execute(); return { verifierId: 'javascript-independent-runner', independent: true, testedProperty: candidate.claim, experimentBoundary: experimentalProof.experimentBoundary, result: 'passed', verifiedAt: AT, testPlanSha256 }; } },
+    experiment: { id: 'javascript-controlled-runner', run: async ({ candidate, hypothesis, testPlanSha256, testPlan, claimScope }) => { execute(); return { schemaVersion: 1, candidateId: candidate.id, projectId: candidate.projectId, hypothesis, testedProperty: candidate.claim, experimentBoundary: (testPlan && testPlan.experimentBoundary) || claimScope || candidate.claimBoundary, controls: ['identity reference control', 'empty-input control'], causalIsolation: { method: 'single-variable intervention on the mapped callback', result: 'only the returned array changes', correlationOnly: false }, negativeTests: ['the returned array is never the input reference'], regressionTests: ['dense-array mapping still yields expected values'], scopeProof: SCOPE, generalizationResult: 'not generalized beyond the experiment boundary', contradictionResult: 'none', completedAt: AT, testPlanSha256 }; } },
+    verifier: { id: 'javascript-independent-runner', run: async ({ candidate, experimentalProof, testPlanSha256, testPlan }) => { execute(); return { verifierId: 'javascript-independent-runner', independent: true, testedProperty: candidate.claim, experimentBoundary: experimentalProof.experimentBoundary, result: 'passed', verifiedAt: AT, testPlanSha256 }; } },
   };
 };
 
@@ -99,15 +99,13 @@ test('R7 says it follows R4-R6 rather than manufacturing something to supersede'
   assert.equal(result.promotionAuthorized, false);
 });
 
-// The decisive finding about R7, established rather than asserted: a third real independent
-// source does re-test the claim and does verify, and still cannot supersede - because every
-// version's boundary is derived from whichever document asserted it, so no two documents ever
-// share one. `claimScope` was introduced for exactly this conflation but was only wired into
-// comparison; the pre-test plan still pins experimentBoundary to candidate.claimBoundary and
-// the post-test reasoner requires the result to match it. Until the declared scope reaches the
-// experiment boundary, R7 is structurally unprovable on real multi-source evidence, and the
-// run says so precisely instead of superseding a claim it invented for itself.
-test('a third real independent source verifies but cannot supersede while boundaries are provenance-derived', async (t) => {
+// R7, working. This test previously pinned the blocker: every version's boundary was derived
+// from whichever document asserted the claim, so no two documents ever shared one, a third real
+// source verified onto its own lineage instead of superseding, and both this suite and the
+// hosted proof had to strip the plan binding on exactly that path. The declared scope now
+// carries the tested boundary - a property of the claim rather than of the document - so two
+// independent sources can share it and a later one can supersede an earlier version.
+test('a third real independent source supersedes the promoted version within the declared scope', async (t) => {
   const dir = workspace(t);
   const { bundleRoot, learningRoot, bundle } = buildBundle(dir, [
     document('https://a.example/x', 'Author A', 'One.'),
@@ -119,20 +117,35 @@ test('a third real independent source verifies but cannot supersede while bounda
 
   const store = new DurableScientificLearningStore({ root: learningRoot, projectId: PROJECT });
   const before = store.read().knowledgeVersions.find((item) => item.status === 'active');
-  const { experiment, verifier } = directSupersessionHarnesses();
-  const result = await realSupersession({ store, available: store.read().candidateRecords, bundle, experiment, verifier, excludeSourceIds: learned.evaluations[0].sourceIds, now: () => AT });
+  assert.equal(before.boundary, SCOPE, 'the promoted version is bounded by the declared scope, not by its document');
 
-  assert.equal(result.satisfied, false, 'nothing is superseded, and nothing pretends to be');
-  assert.match(result.reason, /does not carry version 1 as its predecessor/);
-  assert.match(result.reason, /owner-declared scope rather than the source document's provenance/, 'the reason names the actual defect');
+  const { experiment, verifier } = directSupersessionHarnesses();
+  const result = await realSupersession({ store, available: store.read().candidateRecords, bundle, experiment, verifier, claimScope: SCOPE, excludeSourceIds: learned.evaluations[0].sourceIds, now: () => AT });
+
+  assert.equal(result.satisfied, true, result.reason);
+  assert.equal(result.supersededVersion, before.version);
+  assert.ok(result.newVersion > before.version, 'a further version was created');
+  assert.equal(result.rolledBackTo, before.version, 'and the prior version was restored');
+  assert.equal(result.supersededStillRecorded, true, 'the superseding version survives the rollback');
+  assert.ok(!result.independentOf.includes(result.furtherSourceId), 'the third source is not one of the two already behind the claim');
   assert.equal(result.promotionAuthorized, false);
 
-  // The third source was real, was found, and did verify. The blocker is the boundary, not the
-  // evidence - which is why the report must not read as "no further source exists".
   const payload = store.read();
-  assert.ok(payload.knowledgeVersions.length > 1, 'the further source produced its own verified version');
-  assert.equal(payload.knowledgeVersions.at(-1).previousVersion, null, 'on a separate lineage rather than superseding');
-  assert.notEqual(payload.knowledgeVersions.at(-1).boundary, before.boundary, 'because the two boundaries came from two different documents');
+  assert.equal(payload.activeVersion, before.version);
+  assert.ok(payload.knowledgeVersions.find((item) => item.version === before.version).rollback, 'the rollback is recorded on the restored version');
+});
+
+// Without a declared scope nothing changes: the provenance boundary still applies, so a second
+// document still starts its own lineage. The looser boundary is the owner's declaration, never
+// an inference.
+test('with no declared scope the provenance boundary still governs', async (t) => {
+  const dir = workspace(t);
+  const { learningRoot, bundle } = buildBundle(dir, [document('https://a.example/x', 'A', 'One.'), document('https://b.example/x', 'B', 'Two.')]);
+  const store = new DurableScientificLearningStore({ root: learningRoot, projectId: PROJECT });
+  const { experiment, verifier } = directSupersessionHarnesses();
+  const result = await realSupersession({ store, available: store.read().candidateRecords, bundle, experiment, verifier, now: () => AT });
+  assert.equal(result.satisfied, false);
+  assert.match(result.reason, /nothing to supersede/);
 });
 
 // The case that would matter most: a third source that is not actually a third source.

@@ -5,16 +5,19 @@ function hash(value){return crypto.createHash('sha256').update(JSON.stringify(va
 function base(stage,candidateId,at){return {schemaVersion:1,stage,candidateId,at,proofStageSatisfied:false,independentVerificationSatisfied:false,promotionAllowed:false};}
 class LogicalReasoningProblemSolver{
   constructor({id='deterministic-logic-problem-solver-v1'}={}){if(typeof id!=='string'||!id.trim())throw new Error('Reasoning identity is required.');this.id=id;}
-  plan({candidate,corroboratingCandidate,comparison,criticalReview,language,plannedAt}){
+  plan({candidate,corroboratingCandidate,comparison,criticalReview,language,plannedAt,claimScope=null}){
     if(!candidate||!corroboratingCandidate||!comparison||!criticalReview||!Number.isFinite(Date.parse(plannedAt)))throw new Error('Reasoning requires bounded inputs and a valid time.');
     const premises=[`source ${candidate.provenance.sourceId} asserts the bounded claim`,`source ${corroboratingCandidate.provenance.sourceId} independently asserts the bounded claim`,`active knowledge comparison route is ${comparison.route}`];
     const competingHypotheses=[`the claim holds inside ${candidate.claimBoundary}`,'the apparent result is caused by fixture or setup behavior','the behavior is version-specific outside the declared boundary','both sources repeat a shared upstream error'];
     const decomposedTests=['positive behavior under declared inputs','no-operation or irrelevant-operation control','negative and boundary-value behavior','regression behavior outside the tested operation','scope/version exclusion check'];
     const controls=['no-operation control','irrelevant-operation control','negative input','regression fixture','adjacent scope/version exclusion'];
     const ready=comparison.route==='new-claim-evaluation'&&criticalReview.route==='ready-for-controlled-testing';
-    const hypothesis=`Within ${candidate.claimBoundary}, controlled execution will show that ${candidate.claim}`;
-    const variables=variablesForLanguage(language,candidate);const testPlan=validateHypothesisTestPlan({schemaVersion:1,hypothesis,...variables,claimBoundary:candidate.claimBoundary,experimentBoundary:candidate.claimBoundary,generalizationBoundary:candidate.generalizationBoundary,createdAt:plannedAt},candidate);
-    const item={...base('pre-test',candidate.id,plannedAt),reasonerId:this.id,premises,competingHypotheses,decomposedTests,controls,testedProperty:candidate.claim,experimentBoundary:candidate.claimBoundary,hypothesis,testPlan,testPlanSha256:hypothesisTestPlanSha256(testPlan,candidate),route:ready?'ready-for-controlled-testing':'request-more-evidence-or-narrow-scope',classification:comparison.classification,nextAction:ready?'execute-designed-controls':criticalReview.nextAction};return Object.freeze({...item,reasoningSha256:hash(item)});
+    // Where the claim is tested: the owner-declared scope when there is one, otherwise the
+    // provenance boundary, which is exactly how this behaved before a scope could be declared.
+    const testedWithin=typeof claimScope==='string'&&claimScope.trim()?claimScope.trim().replace(/\s+/g,' '):candidate.claimBoundary;
+    const hypothesis=`Within ${testedWithin}, controlled execution will show that ${candidate.claim}`;
+    const variables=variablesForLanguage(language,candidate);const testPlan=validateHypothesisTestPlan({schemaVersion:1,hypothesis,...variables,claimBoundary:candidate.claimBoundary,experimentBoundary:testedWithin,generalizationBoundary:candidate.generalizationBoundary,createdAt:plannedAt},candidate,{claimScope});
+    const item={...base('pre-test',candidate.id,plannedAt),reasonerId:this.id,premises,competingHypotheses,decomposedTests,controls,testedProperty:candidate.claim,experimentBoundary:testedWithin,hypothesis,testPlan,testPlanSha256:hypothesisTestPlanSha256(testPlan,candidate,{claimScope}),route:ready?'ready-for-controlled-testing':'request-more-evidence-or-narrow-scope',classification:comparison.classification,nextAction:ready?'execute-designed-controls':criticalReview.nextAction};return Object.freeze({...item,reasoningSha256:hash(item)});
   }
   interpret({plan,result,error,interpretedAt}){
     if(!plan||!Number.isFinite(Date.parse(interpretedAt))||(!result&&!error))throw new Error('Post-test reasoning requires a plan and result or failure.');

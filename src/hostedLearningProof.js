@@ -16,14 +16,14 @@ const BOUNDARY = 'Node.js ordinary dense arrays of numbers';
 const GENERALIZATION = 'Does not cover sparse arrays, proxies, subclasses, or host objects.';
 const STATE_CONTEXT = 'github-hosted-learning-state-v1';
 
-function proof(candidate, hypothesis, at) {
-  return { schemaVersion:1, candidateId:candidate.id, projectId:candidate.projectId, hypothesis, testedProperty:candidate.claim, experimentBoundary:candidate.claimBoundary, controls:['output identity differs from input','input snapshot remains unchanged'], causalIsolation:{method:'single mapped operation with identity and mutation controls',result:'only the returned array differs',correlationOnly:false}, negativeTests:['empty input returns a distinct empty array'], regressionTests:['dense numeric mapping preserves input values'], scopeProof:BOUNDARY, generalizationResult:GENERALIZATION, contradictionResult:'none', completedAt:at };
+function proof(candidate, hypothesis, at, testPlan, claimScope) {
+  return { schemaVersion:1, candidateId:candidate.id, projectId:candidate.projectId, hypothesis, testedProperty:candidate.claim, experimentBoundary:(testPlan&&testPlan.experimentBoundary)||claimScope||candidate.claimBoundary, controls:['output identity differs from input','input snapshot remains unchanged'], causalIsolation:{method:'single mapped operation with identity and mutation controls',result:'only the returned array differs',correlationOnly:false}, negativeTests:['empty input returns a distinct empty array'], regressionTests:['dense numeric mapping preserves input values'], scopeProof:BOUNDARY, generalizationResult:GENERALIZATION, contradictionResult:'none', completedAt:at };
 }
 function harnesses(at) {
   const execute = () => { const input=[1,2,3]; const output=input.map((value)=>value*2); assert.notEqual(output,input); assert.deepEqual(input,[1,2,3]); assert.deepEqual(output,[2,4,6]); assert.deepEqual([].map((value)=>value),[]); };
   return {
-    experiment:{ id:'github-controlled-runner', run:async({candidate,hypothesis,testPlanSha256})=>{ execute(); return {...proof(candidate,hypothesis,at),testPlanSha256}; } },
-    verifier:{ id:'github-independent-runner', run:async({candidate,experimentalProof,testPlanSha256})=>{ execute(); return { verifierId:'github-independent-runner', independent:true, testedProperty:candidate.claim, experimentBoundary:experimentalProof.experimentBoundary, result:'passed', verifiedAt:at, testPlanSha256 }; } },
+    experiment:{ id:'github-controlled-runner', run:async({candidate,hypothesis,testPlanSha256,testPlan,claimScope})=>{ execute(); return {...proof(candidate,hypothesis,at,testPlan,claimScope),testPlanSha256}; } },
+    verifier:{ id:'github-independent-runner', run:async({candidate,experimentalProof,testPlanSha256, testPlan})=>{ execute(); return { verifierId:'github-independent-runner', independent:true, testedProperty:candidate.claim, experimentBoundary:experimentalProof.experimentBoundary, result:'passed', verifiedAt:at, testPlanSha256 }; } },
   };
 }
 function withoutPlanBinding(harness) {

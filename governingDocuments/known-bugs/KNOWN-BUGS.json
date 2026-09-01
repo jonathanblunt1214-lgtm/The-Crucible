@@ -1847,8 +1847,8 @@
         }
       ],
       "severity": "critical",
-      "status": "resolved",
-      "checked": true,
+      "status": "open",
+      "checked": false,
       "sourceCommit": "local",
       "categoryResults": [
         {
@@ -2041,7 +2041,7 @@
         "test/workflowLint.test.js"
       ],
       "lastFailure": {
-        "at": "2026-09-01T11:55:43.947Z",
+        "at": "2026-09-01T14:18:31.855Z",
         "exitStatus": 1
       },
       "checkedAt": "2026-09-01T11:59:59.365Z"
