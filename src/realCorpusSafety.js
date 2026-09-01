@@ -32,10 +32,19 @@ const EXECUTABLE_MAGIC = [
 const satisfied = (behaviour, evidence) => ({ behaviour, satisfied: true, evidence, proofStageSatisfied: false, promotionAuthorized: false });
 const unsatisfied = (behaviour, reason) => ({ behaviour, satisfied: false, reason, proofStageSatisfied: false, promotionAuthorized: false });
 
+// The restored queue comes from a repository Crucible does not control, so a declared path is a
+// claim about where content lives, not permission to read there. verifyRestored authenticates the
+// manifest and the file hashes; it does not confine these paths, and the hosted workflow calls
+// verify rather than hydrate - so containment is enforced here, before any read. A path that
+// resolves outside the corpus's own sources directory is refused rather than followed, whether it
+// climbs out with .. or simply names somewhere else absolutely: a safety proof that reads a runner
+// file outside the authenticated corpus proves nothing about the corpus.
 function sourceContentPath(bundleRoot, source) {
-  const declared = String(source.durablePath || '');
+  const declared = String(source.durablePath || '').replaceAll('\\', '/');
   if (!declared) return null;
-  const file = path.isAbsolute(declared) ? declared : path.join(bundleRoot, declared);
+  const sourcesRoot = path.resolve(bundleRoot, 'sources');
+  const file = path.resolve(path.isAbsolute(declared) ? declared : path.join(bundleRoot, declared));
+  if (file !== sourcesRoot && !file.startsWith(`${sourcesRoot}${path.sep}`)) return null;
   return fs.existsSync(file) ? file : null;
 }
 
