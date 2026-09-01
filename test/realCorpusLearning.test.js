@@ -185,3 +185,31 @@ test('only knowledge whose source is actually in the restored corpus counts as l
 
   assert.equal(hasRealCorpusKnowledge(real, null), false, 'with no restored corpus, nothing can be proven to come from it');
 });
+
+// The defect this replaced: agreement was exact string equality, so two independently written
+// documents essentially never matched and a 403-source corpus corroborated nothing at all.
+test('corroborates two real documents that assert one claim in different words', (t) => {
+  const dir = workspace(t);
+  const restated = 'The map method returns a new array and does not modify the original input.';
+  const { learningRoot } = buildBundle(dir, [
+    { url: 'https://example.edu/arrays', content: `Working with arrays in JavaScript.\n${CLAIM} Callers keep the original values for later work.` },
+    { url: 'https://example.org/reference', content: `A reference on iteration helpers.\n${restated} Chaining further calls stays predictable.` },
+  ]);
+  const store = new DurableScientificLearningStore({ root: learningRoot, projectId: PROJECT });
+
+  const found = corroboratedClaims(store).find((item) => item.claimKey.includes('map method returns a new array'));
+  assert.ok(found, 'differently worded assertions of one claim are corroboration');
+  assert.equal(found.agreement, 'semantic', 'the report never hides that this was a wording judgement');
+  assert.equal(new Set(found.sourceIds).size, 2);
+  assert.deepEqual([...found.assertedAs].sort(), [CLAIM, restated].sort(), 'each source keeps its own sentence');
+
+  // And the boundary that makes the looser test safe: a document asserting the opposite is
+  // never grouped with them, however much wording it shares.
+  const contradicting = workspace(t);
+  const { learningRoot: other } = buildBundle(contradicting, [
+    { url: 'https://example.edu/arrays', content: `Working with arrays in JavaScript.\n${CLAIM} Callers keep the original values for later work.` },
+    { url: 'https://example.org/contrary', content: `A contrary reference.\nThe map method returns a new array and does modify the original array. Callers should copy first.` },
+  ]);
+  const contrary = corroboratedClaims(new DurableScientificLearningStore({ root: other, projectId: PROJECT }));
+  assert.equal(contrary.length, 0, 'opposite claims are a contradiction, never corroboration');
+});
