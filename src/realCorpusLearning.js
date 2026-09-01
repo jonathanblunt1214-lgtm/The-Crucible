@@ -12,6 +12,7 @@
 // a gate that fails, because it is indistinguishable from one that succeeded.
 const fs = require('node:fs');
 const path = require('node:path');
+const crypto = require('node:crypto');
 const { DurableScientificLearningStore } = require('./scientificLearning');
 const { ControlledClaimEvaluationWorker } = require('./claimEvaluationWorker');
 const { ClaimComparisonLedger } = require('./claimComparison');
@@ -30,7 +31,10 @@ function readBundle(root) {
   const queueFile = path.join(root, 'source-queue.json');
   if (!fs.existsSync(queueFile)) throw new Error('The restored bundle has no source-queue.json.');
   const queue = JSON.parse(fs.readFileSync(queueFile, 'utf8'));
-  return { manifest, queue, sources: [...(queue.documents || []), ...(queue.links || [])] };
+  // The bundle also carries the owner's durable learning state, staged under its own basename.
+  // That is where the corpus's extracted candidates actually live.
+  const learningFile = manifest.learningFile ? path.join(root, manifest.learningFile) : null;
+  return { manifest, queue, sources: [...(queue.documents || []), ...(queue.links || [])], learningFile: learningFile && fs.existsSync(learningFile) ? learningFile : null };
 }
 
 // Every claim the real corpus asserts through two or more independently identified sources.
@@ -42,9 +46,10 @@ function readBundle(root) {
 // equality can only fire on duplicated text, which is the opposite of independent agreement.
 // Sameness is now the deterministic same-meaning test in semanticCorroboration, which still
 // refuses to cross a negation or a changed number however similar the wording.
-function corroboratedClaims(store, options = {}) {
+function corroboratedClaims(storeOrRecords, options = {}) {
+  const records = Array.isArray(storeOrRecords) ? storeOrRecords : storeOrRecords.read().candidateRecords;
   const entries = [];
-  for (const record of store.read().candidateRecords) {
+  for (const record of records) {
     if (record.state !== 'candidate') continue;
     if (!normalize(record.candidate.claim)) continue;
     entries.push({ id: record.candidate.id, claim: record.candidate.claim, sourceId: record.candidate.provenance.sourceId });
@@ -93,6 +98,38 @@ function readScopeDeclarations(file) {
   });
 }
 
+// The store the corpus's own candidates are in.
+//
+// The hosted proof restores two separate things: the persistent encrypted store it writes
+// promotions into, and the bundle, which carries the owner's durable learning state as staged
+// by hostedSourceBundle.stage(). The corpus's roughly 1,416 extracted candidates are in the
+// second one. Reading only the first meant corroboration was searching a store that holds
+// almost no extracted evidence, so it would have found nothing whatever sameness test was
+// used - the same shape of mistake as measuring gates against fixtures.
+function corpusCandidateStore(bundle, bundleRoot, projectId) {
+  if (!bundle || !bundle.learningFile) return null;
+  // The store names its own file from the project id. Only open the bundle root as a store when
+  // the staged learning file is that exact name, so a bundle from another project or an older
+  // layout is reported rather than silently read as an empty store.
+  const expected = `${crypto.createHash('sha256').update(projectId).digest('hex')}.learning.json`;
+  if (path.basename(bundle.learningFile) !== expected) return null;
+  return new DurableScientificLearningStore({ root: bundleRoot, projectId });
+}
+
+// Every candidate available to corroboration: the persistent store's and the corpus's, keyed by
+// candidate id so a candidate present in both is counted once.
+function allCandidateRecords(store, corpusStore) {
+  const byId = new Map();
+  for (const source of [corpusStore, store]) {
+    if (!source) continue;
+    for (const record of source.read().candidateRecords) {
+      if (record.state !== 'candidate') continue;
+      if (!byId.has(record.candidate.id)) byId.set(record.candidate.id, record);
+    }
+  }
+  return [...byId.values()];
+}
+
 // Choosing the one declaration to evaluate, by the two routes into corroboration.
 //
 // Route A is what the corpus found on its own: a declaration matching a claim that two
@@ -103,7 +140,7 @@ function readScopeDeclarations(file) {
 //
 // Either way the candidates carried forward are records the extraction worker already made
 // from real documents. Nothing here creates a candidate.
-function selectEvaluable({ store, corroborated, declarations, bundle, bundleRoot, options = {} }) {
+function selectEvaluable({ store, available, corroborated, declarations, bundle, bundleRoot, options = {} }) {
   const pairedFailures = [];
 
   for (const declaration of declarations) {
@@ -113,7 +150,7 @@ function selectEvaluable({ store, corroborated, declarations, bundle, bundleRoot
     if (match) return { ready: { ...match, declaration, route: 'corpus-corroborated' }, pairedFailures };
   }
 
-  const records = store.read().candidateRecords;
+  const records = available || store.read().candidateRecords;
   const candidateFor = (sourceId, sentence) => records.find((record) => record.state === 'candidate'
     && String(record.candidate.provenance.sourceId) === String(sourceId)
     && normalize(record.candidate.claim) === normalize(sentence));
@@ -186,18 +223,25 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
 
   const store = new DurableScientificLearningStore({ root: learningRoot, projectId });
   const before = store.read();
-  const corroborated = corroboratedClaims(store, corroborationOptions);
+  // Corroboration searches the corpus's own extracted candidates as well as the persistent
+  // store's; the persistent store holds only what previous runs promoted or ingested.
+  const corpusStore = corpusCandidateStore(bundle, bundleRoot, projectId);
+  const available = allCandidateRecords(store, corpusStore);
+  const corroborated = corroboratedClaims(available, corroborationOptions);
   const declarations = readScopeDeclarations(scopeDeclarationFile);
 
   const corpus = {
     sources: bundle.sources.length,
     documentsWithContent: bundle.manifest.sourceFiles ? bundle.manifest.sourceFiles.length : 0,
     candidateRecords: before.candidateRecords.length,
+    corpusCandidateRecords: corpusStore ? corpusStore.read().candidateRecords.length : 0,
+    corpusLearningStateRestored: Boolean(corpusStore),
+    candidatesAvailableForCorroboration: available.length,
     corroboratedClaims: corroborated.length,
     knowledgeVersionsBefore: before.knowledgeVersions.length,
   };
 
-  const selection = selectEvaluable({ store, corroborated, declarations, bundle, bundleRoot, options: corroborationOptions });
+  const selection = selectEvaluable({ store, available, corroborated, declarations, bundle, bundleRoot, options: corroborationOptions });
   const ready = selection.ready;
 
   if (!ready) {
@@ -213,6 +257,17 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
       reason = `${corroborated.length} corroborated claim(s) exist in the real corpus but none matches a declaration, and no declaration nominates a pairing the corpus supports`;
     }
     return { schemaVersion: 1, projectId, corpus, learned: false, reason, corroborated: corroborated.slice(0, 25), pairedFailures: selection.pairedFailures, gates: { R4: false, R5: false, R6: false }, promotionAuthorized: false };
+  }
+
+  // The two selected candidates may live only in the corpus's store. Evaluation happens in the
+  // persistent store, so take them into custody there first - by the same ingest path extraction
+  // uses, with provenance intact. Nothing is created here that the corpus did not already hold.
+  const ingestedFromCorpus = [];
+  for (const record of available) {
+    if (!ready.candidateIds.includes(record.candidate.id)) continue;
+    if (store.get(record.candidate.id)) continue;
+    store.ingest(record.candidate);
+    ingestedFromCorpus.push(record.candidate.id);
   }
 
   const { experiment, verifier } = harnessesFor(ready.declaration);
@@ -252,6 +307,7 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     // How this pair came to be treated as one claim, and the sentence each source actually
     // used. A wording judgement or an owner-nominated pairing is always visible in the report.
     corroborationRoute: ready.route,
+    ingestedFromCorpus,
     agreement: ready.agreement,
     ownerDeclaredAgreement: Boolean(ready.ownerDeclaredAgreement),
     assertedAs: ready.assertedAs,
@@ -267,4 +323,4 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
   };
 }
 
-module.exports = { readBundle, corroboratedClaims, readScopeDeclarations, selectEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };
+module.exports = { readBundle, corpusCandidateStore, allCandidateRecords, corroboratedClaims, readScopeDeclarations, selectEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };
