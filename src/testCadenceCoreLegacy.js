@@ -48,6 +48,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/hypothesisTestPlan.test.js',
     'test/languageExperimentRegistry.test.js',
     'test/languageHypothesisVariables.test.js',
+    'test/gradedOversightResponse.test.js',
     'test/organismCirculation.test.js',
     'test/oversightBrakeReach.test.js',
     'test/organismRuntime.test.js',

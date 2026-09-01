@@ -31,7 +31,7 @@ const SYSTEMS = Object.freeze({
   digestive: ['safeInformationRetrieval', 'automatedGoogleResearch', 'automatedGoogleResearchCli', 'monthlyKnowledgeRefresh', 'claimExtractionWorker', 'claimExtractionWorkerCli', 'documentFurniture', 'hostedSourceBundle', 'hostedMultiRepositoryIntegration', 'languageCatalog', 'intakePathways'],
   learning: ['scientificLearning', 'scientificLearningCli', 'learningCycle', 'learningExperience', 'claimComparison', 'claimEvaluationWorker', 'semanticCorroboration', 'pairedCorroboration', 'sourceIndependence', 'realCorpusLearning', 'realCorpusSafety', 'realSupersession', 'knowledgeLifecycle', 'hostedLearningProof', 'preSoakReadiness', 'preSoakReadinessCli', 'soakGate', 'soakRun', 'repairEvidence', 'hypothesisTestPlan', 'languageHypothesisVariables', 'concreteLanguageHarness', 'languageExperimentRegistry', 'contradictionAudit', 'contradictionReopening'],
   boundary: ['hostIsolation', 'externalAiFirewall', 'offlineGpuGate', 'durableLock'],
-  circulation: ['organismCirculation', 'organismRuntime', 'productionOrganism', 'oversightReflex', 'circulationLinkage'],
+  circulation: ['organismCirculation', 'organismRuntime', 'productionOrganism', 'oversightReflex', 'circulationLinkage', 'gradedOversightResponse'],
 });
 
 // Every organ that must have a handler on the bus before the organism may run. Circulation is
