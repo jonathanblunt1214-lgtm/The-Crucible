@@ -63,11 +63,18 @@ function metadataFromHtml(text) {
   return { author:content('author') || 'not declared', license:content('license') || 'not declared; verify source terms before redistribution' };
 }
 function sanitizeHtml(text) {
-  return String(text)
-    .replace(/<(script|style|template|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
-    .replace(/<form\b[^>]*>[\s\S]*?<\/form\s*>/gi, '')
-    .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-    .replace(/\s(?:srcdoc|formaction)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+  let previous;
+  let current = String(text);
+  do {
+    previous = current;
+    current = current
+      .replace(/<(script|style|template|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
+      .replace(/<form\b[^>]*>[\s\S]*?<\/form\s*>/gi, '')
+      .replace(/<\/?(?:script|style|template|noscript|form)\b[^>]*>/gi, '')
+      .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
+      .replace(/\s(?:srcdoc|formaction)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+  } while (current !== previous);
+  return current;
 }
 function suspiciousText(buffer, contentType) {
   if (!/text|html|json|xml/i.test(contentType)) return [];

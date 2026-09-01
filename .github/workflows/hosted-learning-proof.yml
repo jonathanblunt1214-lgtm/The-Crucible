@@ -36,12 +36,12 @@ jobs:
             hosted-learning-${{ github.repository_id }}-
       - name: Install locked dependencies
         run: npm ci
-      # The corpus has to be here, in this job. Restoring it in a separate workflow that then
-      # destroys its plaintext is why the proof previously fell back to sources built in code.
-      - name: Restore the real encrypted corpus from its private state repository
-        id: corpus
+      # The corpus has to be here, in this job, but Crucible may consume only the
+      # independently vetted custody published by Oversight. It never receives the
+      # raw intake key or access to the unvetted state repository.
+      - name: Restore independently vetted encrypted corpus
         env:
-          STATE_DEPLOY_KEY: ${{ secrets.CRUCIBLE_LEARNING_STATE_DEPLOY_KEY }}
+          STATE_DEPLOY_KEY: ${{ secrets.CRUCIBLE_VETTED_STATE_READ_KEY }}
         run: |
           test -n "$STATE_DEPLOY_KEY"
           mkdir -p "$RUNNER_TEMP/crucible-state-ssh" "$RUNNER_TEMP/crucible-source-restore"
@@ -49,31 +49,19 @@ jobs:
           chmod 600 "$RUNNER_TEMP/crucible-state-ssh/key"
           printf '%s\n' 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$RUNNER_TEMP/crucible-state-ssh/known_hosts"
           GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/crucible-state-ssh/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/crucible-state-ssh/known_hosts -o StrictHostKeyChecking=yes" \
-            git clone --depth 1 git@github.com:jonathanblunt1214-lgtm/Crucible-Learning-State.git \
+            git clone --depth 1 git@github.com:jonathanblunt1214-lgtm/Crucible-Vetted-Learning-State.git \
             "$RUNNER_TEMP/crucible-source-restore/ciphertext"
-          # Prefer oversight's vetted publication over the raw intake bundle. Material that came
-          # through the information gate and material that did not are different provenance, and
-          # the run has to record which one it actually read rather than reporting "corpus loaded".
-          root="$RUNNER_TEMP/crucible-source-restore/ciphertext"
-          if [ -f "$root/vetted/encrypted-chunks.json" ]; then
-            echo 'expected=oversight-vetted' >> "$GITHUB_OUTPUT"
-            root="$root/vetted"
-          else
-            echo 'expected=raw-intake' >> "$GITHUB_OUTPUT"
-          fi
-          echo "[The Crucible] corpus ciphertext: $root"
           node src/hostedSourceBundle.js join \
-            --input-root "$root" \
+            --input-root "$RUNNER_TEMP/crucible-source-restore/ciphertext" \
             --output "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc"
-      - name: Decrypt and verify every restored hash
+      - name: Decrypt vetted custody and verify every restored hash
         env:
-          # The vetted key is tried first, then the current intake key, then the outgoing one. A
-          # key rotation on either side is survivable while both are in circulation, and a bundle
-          # no key can open reports the diagnosis rather than a bare crypto error.
+          # Only vetted keys reach this runner. The outgoing one is set only while a rotation
+          # is in flight, so a rotated vetted key does not strand a corpus already published
+          # under the old one - and a bundle no key can open reports the diagnosis rather than
+          # a bare crypto error.
           CRUCIBLE_VETTED_BUNDLE_KEY: ${{ secrets.CRUCIBLE_VETTED_BUNDLE_KEY }}
-          CRUCIBLE_SOURCE_BUNDLE_KEY: ${{ secrets.CRUCIBLE_SOURCE_BUNDLE_KEY }}
-          CRUCIBLE_SOURCE_BUNDLE_KEY_PREVIOUS: ${{ secrets.CRUCIBLE_SOURCE_BUNDLE_KEY_PREVIOUS }}
-          EXPECTED_PROVENANCE: ${{ steps.corpus.outputs.expected }}
+          CRUCIBLE_VETTED_BUNDLE_KEY_PREVIOUS: ${{ secrets.CRUCIBLE_VETTED_BUNDLE_KEY_PREVIOUS }}
         run: |
           node src/hostedSourceBundle.js decrypt \
             --input "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc" \
@@ -81,11 +69,11 @@ jobs:
             --repository "$GITHUB_REPOSITORY" --ref "$GITHUB_REF" \
             > "$RUNNER_TEMP/crucible-source-restore/decrypt.json"
           provenance="$(node -e 'process.stdout.write(JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).provenance)' "$RUNNER_TEMP/crucible-source-restore/decrypt.json")"
-          echo "[The Crucible] corpus provenance: $provenance (expected $EXPECTED_PROVENANCE)"
-          # A bundle published as vetted must be readable only with the vetted key. If it opened
-          # with an intake key it did not come from oversight, whatever directory it was in.
-          if [ "$provenance" != "$EXPECTED_PROVENANCE" ]; then
-            echo "[The Crucible] The corpus was published as $EXPECTED_PROVENANCE but opened as $provenance; provenance is decided by the key that opened it, not by where it was filed." >&2
+          echo "[The Crucible] corpus provenance: $provenance"
+          # Provenance is decided by the key that opened the bundle, never by which repository it
+          # was filed in. Anything this job can read must have come through the information gate.
+          if [ "$provenance" != "oversight-vetted" ]; then
+            echo "[The Crucible] The restored corpus opened as $provenance; only independently vetted custody may reach the proof." >&2
             exit 1
           fi
           mkdir -p "$RUNNER_TEMP/crucible-source-restore/plaintext"

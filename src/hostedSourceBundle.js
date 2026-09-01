@@ -67,14 +67,16 @@ function stage({ sourceRoot, learningFile, stagingRoot, repository, ref }) {
 // preferred over the raw intake bundle, and the run records which one actually supplied the
 // corpus, because "vetted" and "not vetted" are different provenance and must never be collapsed
 // into "the corpus loaded".
+// A key ending in _PREVIOUS is the outgoing key of its family, set only while a rotation is in
+// flight. Encryption never uses one; only a read does, so a rotation cannot strand a corpus that
+// is already encrypted under the key being retired.
 const KEY_VARIABLES = Object.freeze([
   // Oversight's vetted, re-encrypted publication: material that passed the information gate.
   'CRUCIBLE_VETTED_BUNDLE_KEY',
-  // The raw intake bundle's key, current.
+  'CRUCIBLE_VETTED_BUNDLE_KEY_PREVIOUS',
+  // The raw intake bundle's key. The hosted proof is never given this: it reads vetted custody
+  // only. It stays here for the staging side, which is what writes the intake bundle.
   'CRUCIBLE_SOURCE_BUNDLE_KEY',
-  // The intake key as it stood before the most recent rotation. Set only while both are in
-  // circulation, so a rotation does not strand a corpus that is already encrypted under the old
-  // key. Encryption never uses it; only a read does.
   'CRUCIBLE_SOURCE_BUNDLE_KEY_PREVIOUS',
 ]);
 const ENCRYPTION_KEY_VARIABLE = 'CRUCIBLE_SOURCE_BUNDLE_KEY';
@@ -99,7 +101,7 @@ function candidateKeys(names = KEY_VARIABLES) {
 // Which gate the corpus came through. It is derived from the key that opened the bundle rather
 // than declared alongside it, because only oversight can write a bundle the vetted key reads, and
 // a provenance label that travels separately from the evidence is a label anyone can attach.
-const provenanceFor = (keyName) => (keyName === 'CRUCIBLE_VETTED_BUNDLE_KEY' ? 'oversight-vetted' : 'raw-intake');
+const provenanceFor = (keyName) => (String(keyName).startsWith('CRUCIBLE_VETTED_BUNDLE_KEY') ? 'oversight-vetted' : 'raw-intake');
 
 // The header is written in front of the ciphertext and is readable without any key. That is what
 // makes a failed decryption diagnosable at all: it says which project, repository and ref the

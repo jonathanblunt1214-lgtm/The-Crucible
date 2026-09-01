@@ -50,7 +50,7 @@ test('when no key opens the bundle the run says what is wrong, from the header, 
     assert.match(error.message,new RegExp(`written for project ${f.projectId.replace('/','\\/')} at owner\\/repo@refs\\/heads\\/development`));
     assert.match(error.message,new RegExp(header.plaintextSha256),'the header names the plaintext the bundle should produce');
     assert.match(error.message,/Tried in order: CRUCIBLE_SOURCE_BUNDLE_KEY\./);
-    assert.match(error.message,/Not set: CRUCIBLE_VETTED_BUNDLE_KEY, CRUCIBLE_SOURCE_BUNDLE_KEY_PREVIOUS\./);
+    assert.match(error.message,/Not set: CRUCIBLE_VETTED_BUNDLE_KEY, CRUCIBLE_VETTED_BUNDLE_KEY_PREVIOUS, CRUCIBLE_SOURCE_BUNDLE_KEY_PREVIOUS\./);
     assert.match(error.message,/fails the same way for a wrong key and for altered ciphertext/,'a wrong key and tampering are not distinguished, and the message does not pretend otherwise');
     assert.match(error.message,/cannot be recovered from the ciphertext/);
     return true;
@@ -77,6 +77,7 @@ test('the vetted bundle is preferred over raw intake, and which gate the corpus 
   assert.equal(opened.provenance,'oversight-vetted');
   assert.equal(candidateKeys().present.length,2);
   assert.equal(provenanceFor('CRUCIBLE_SOURCE_BUNDLE_KEY_PREVIOUS'),'raw-intake');
+  assert.equal(provenanceFor('CRUCIBLE_VETTED_BUNDLE_KEY_PREVIOUS'),'oversight-vetted','the outgoing vetted key still came from oversight');
 });
 
 test('the custody report records which gate the corpus came through, and refuses an invented label',()=>{
