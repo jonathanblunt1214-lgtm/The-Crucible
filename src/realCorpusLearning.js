@@ -18,6 +18,8 @@ const { ClaimComparisonLedger } = require('./claimComparison');
 const { CriticalClaimReviewer } = require('./criticalClaimReview');
 const { LogicalReasoningProblemSolver, ReasoningLedger } = require('./reasoningProblemSolving');
 const { CreativeDecisionAdaptationEngine, CognitiveStrategyLedger } = require('./creativeDecisionAdaptation');
+const { groupCorroborating, semanticallyCorroborates } = require('./semanticCorroboration');
+const { verifyPairedDeclaration } = require('./pairedCorroboration');
 
 const normalize = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
@@ -34,25 +36,35 @@ function readBundle(root) {
 // Every claim the real corpus asserts through two or more independently identified sources.
 // This is the only thing that can ever be corroborated: one document agreeing with itself is
 // not corroboration, and neither is the same document reached by two URLs.
-function corroboratedClaims(store) {
-  const byClaim = new Map();
+//
+// Agreement used to be exact string equality on the claim text. Extraction emits verbatim
+// sentences, so across 403 independently written sources that matched nothing at all - exact
+// equality can only fire on duplicated text, which is the opposite of independent agreement.
+// Sameness is now the deterministic same-meaning test in semanticCorroboration, which still
+// refuses to cross a negation or a changed number however similar the wording.
+function corroboratedClaims(store, options = {}) {
+  const entries = [];
   for (const record of store.read().candidateRecords) {
     if (record.state !== 'candidate') continue;
-    const key = normalize(record.candidate.claim);
-    if (!key) continue;
-    if (!byClaim.has(key)) byClaim.set(key, []);
-    byClaim.get(key).push(record);
+    if (!normalize(record.candidate.claim)) continue;
+    entries.push({ id: record.candidate.id, claim: record.candidate.claim, sourceId: record.candidate.provenance.sourceId });
   }
   const corroborated = [];
-  for (const [key, records] of byClaim) {
+  for (const group of groupCorroborating(entries, options)) {
     const bySource = new Map();
-    for (const record of records) {
-      const sourceId = record.candidate.provenance.sourceId;
-      if (!bySource.has(sourceId)) bySource.set(sourceId, record);
-    }
+    for (const member of group.members) if (!bySource.has(member.sourceId)) bySource.set(member.sourceId, member);
     if (bySource.size < 2) continue;
-    const picked = [...bySource.values()].sort((a, b) => (a.candidate.id < b.candidate.id ? -1 : 1));
-    corroborated.push({ claimKey: key, claim: picked[0].candidate.claim, sourceCount: bySource.size, candidateIds: picked.slice(0, 2).map((item) => item.candidate.id), sourceIds: picked.slice(0, 2).map((item) => item.candidate.provenance.sourceId) });
+    const picked = [...bySource.values()].sort((a, b) => (a.id < b.id ? -1 : 1)).slice(0, 2);
+    corroborated.push({
+      claimKey: normalize(group.claim),
+      claim: group.claim,
+      // How the two sources were found to agree, so a report never hides a wording judgement.
+      agreement: picked.some((member) => normalize(member.claim) !== normalize(group.claim)) ? 'semantic' : 'verbatim',
+      sourceCount: bySource.size,
+      candidateIds: picked.map((member) => member.id),
+      sourceIds: picked.map((member) => member.sourceId),
+      assertedAs: picked.map((member) => member.claim),
+    });
   }
   return corroborated.sort((a, b) => b.sourceCount - a.sourceCount || (a.claimKey < b.claimKey ? -1 : 1));
 }
@@ -70,8 +82,76 @@ function readScopeDeclarations(file) {
     for (const field of ['claim', 'claimScope', 'generalizationBoundary']) {
       if (typeof item?.[field] !== 'string' || !item[field].trim()) throw new Error(`declarations[${index}].${field} is required.`);
     }
+    // pairedSources is optional. When present it nominates the two sources the owner says
+    // assert this claim; the corpus still has to prove that it does, in pairedCorroboration.
+    if (item.pairedSources !== undefined) {
+      if (!Array.isArray(item.pairedSources) || item.pairedSources.length !== 2) throw new Error(`declarations[${index}].pairedSources must nominate exactly two source ids when present.`);
+      if (item.pairedSources.some((value) => typeof value !== 'string' || !value.trim())) throw new Error(`declarations[${index}].pairedSources entries must be non-empty source ids.`);
+      if (normalize(item.pairedSources[0]) === normalize(item.pairedSources[1])) throw new Error(`declarations[${index}].pairedSources must name two distinct sources.`);
+    }
     return { ...item, claimKey: normalize(item.claim) };
   });
+}
+
+// Choosing the one declaration to evaluate, by the two routes into corroboration.
+//
+// Route A is what the corpus found on its own: a declaration matching a claim that two
+// independently identified sources already assert. Route B is the owner-paired route, used
+// only when route A finds nothing for that declaration, and only after the corpus has proved
+// the pairing. Route A is tried first for every declaration so that a nominated pairing never
+// pre-empts agreement the corpus can demonstrate without being told where to look.
+//
+// Either way the candidates carried forward are records the extraction worker already made
+// from real documents. Nothing here creates a candidate.
+function selectEvaluable({ store, corroborated, declarations, bundle, bundleRoot, options = {} }) {
+  const pairedFailures = [];
+
+  for (const declaration of declarations) {
+    const match = corroborated.find((item) => item.claimKey === declaration.claimKey
+      || (item.assertedAs || []).some((claim) => normalize(claim) === declaration.claimKey)
+      || semanticallyCorroborates(declaration.claim, item.claim, options).corroborates);
+    if (match) return { ready: { ...match, declaration, route: 'corpus-corroborated' }, pairedFailures };
+  }
+
+  const records = store.read().candidateRecords;
+  const candidateFor = (sourceId, sentence) => records.find((record) => record.state === 'candidate'
+    && String(record.candidate.provenance.sourceId) === String(sourceId)
+    && normalize(record.candidate.claim) === normalize(sentence));
+
+  for (const declaration of declarations.filter((item) => Array.isArray(item.pairedSources))) {
+    const verified = verifyPairedDeclaration({ bundle, bundleRoot, declaration, options });
+    if (!verified.satisfied) {
+      pairedFailures.push({ claim: declaration.claim, pairedSources: declaration.pairedSources, reason: verified.reason });
+      continue;
+    }
+    const resolved = verified.sources.map((source) => ({ source, record: candidateFor(source.sourceId, source.sentence) }));
+    const missing = resolved.filter((item) => !item.record);
+    if (missing.length) {
+      pairedFailures.push({
+        claim: declaration.claim,
+        pairedSources: declaration.pairedSources,
+        reason: `source(s) ${missing.map((item) => item.source.sourceId).join(', ')} assert the claim but have no candidate record yet, so they have not been through claim extraction; run extraction over the corpus before pairing them`,
+      });
+      continue;
+    }
+    return {
+      ready: {
+        claimKey: normalize(resolved[0].record.candidate.claim),
+        claim: resolved[0].record.candidate.claim,
+        agreement: verified.sources.every((source) => source.agreement === 'verbatim') ? 'verbatim' : 'semantic',
+        sourceCount: 2,
+        candidateIds: resolved.map((item) => item.record.candidate.id),
+        sourceIds: resolved.map((item) => item.source.sourceId),
+        assertedAs: resolved.map((item) => item.record.candidate.claim),
+        declaration,
+        route: 'owner-paired',
+        ownerDeclaredAgreement: Boolean(verified.ownerDeclaredAgreement),
+      },
+      pairedFailures,
+    };
+  }
+
+  return { ready: null, pairedFailures };
 }
 
 // Whether the store's verified knowledge actually came from the real corpus.
@@ -100,13 +180,13 @@ function hasRealCorpusKnowledge(store, bundle) {
   });
 }
 
-async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeDeclarationFile, harnessesFor, now = () => new Date().toISOString() }) {
+async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeDeclarationFile, harnessesFor, corroborationOptions = {}, now = () => new Date().toISOString() }) {
   const bundle = readBundle(bundleRoot);
   if (bundle.manifest.projectId !== projectId) throw new Error(`The restored bundle belongs to ${bundle.manifest.projectId}, not ${projectId}.`);
 
   const store = new DurableScientificLearningStore({ root: learningRoot, projectId });
   const before = store.read();
-  const corroborated = corroboratedClaims(store);
+  const corroborated = corroboratedClaims(store, corroborationOptions);
   const declarations = readScopeDeclarations(scopeDeclarationFile);
 
   const corpus = {
@@ -117,15 +197,22 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     knowledgeVersionsBefore: before.knowledgeVersions.length,
   };
 
-  const usable = corroborated.map((item) => ({ ...item, declaration: declarations.find((entry) => entry.claimKey === item.claimKey) || null }));
-  const ready = usable.find((item) => item.declaration);
+  const selection = selectEvaluable({ store, corroborated, declarations, bundle, bundleRoot, options: corroborationOptions });
+  const ready = selection.ready;
 
   if (!ready) {
-    // Fail closed and say exactly which of the two reasons applies, so the next step is obvious.
-    const reason = corroborated.length === 0
-      ? 'the real corpus contains no claim asserted by two or more independently identified sources, so nothing in it can be corroborated yet'
-      : `${corroborated.length} corroborated claim(s) exist in the real corpus but none has an owner-declared scope, and a scope is never inferred`;
-    return { schemaVersion: 1, projectId, corpus, learned: false, reason, corroborated: corroborated.slice(0, 25), gates: { R4: false, R5: false, R6: false }, promotionAuthorized: false };
+    // Fail closed and say exactly which reason applies, so the next step is obvious.
+    let reason;
+    if (selection.pairedFailures.length) {
+      reason = `no declaration is usable yet; the owner-paired declaration(s) were not supported by the corpus: ${selection.pairedFailures.map((item) => `"${item.claim}" - ${item.reason}`).join('; ')}`;
+    } else if (corroborated.length === 0) {
+      reason = 'the real corpus contains no claim asserted by two or more independently identified sources, so nothing in it can be corroborated yet';
+    } else if (!declarations.length) {
+      reason = `${corroborated.length} corroborated claim(s) exist in the real corpus but none has an owner-declared scope, and a scope is never inferred`;
+    } else {
+      reason = `${corroborated.length} corroborated claim(s) exist in the real corpus but none matches a declaration, and no declaration nominates a pairing the corpus supports`;
+    }
+    return { schemaVersion: 1, projectId, corpus, learned: false, reason, corroborated: corroborated.slice(0, 25), pairedFailures: selection.pairedFailures, gates: { R4: false, R5: false, R6: false }, promotionAuthorized: false };
   }
 
   const { experiment, verifier } = harnessesFor(ready.declaration);
@@ -149,6 +236,7 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     corroboratingCandidateId: ready.candidateIds[1],
     language: ready.declaration.language || 'javascript',
     claimScope: ready.declaration.claimScope,
+    ownerDeclaredAgreement: Boolean(ready.ownerDeclaredAgreement),
   });
 
   const verified = evaluation.verifiedKnowledge;
@@ -161,6 +249,12 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     reason: verified ? null : `the controlled pipeline did not promote this claim: comparison routed ${evaluation.decision.route}, critical review routed ${evaluation.criticalReview.route}, and the record ended in state ${evaluation.record.state}`,
     claim: ready.claim,
     claimScope: ready.declaration.claimScope,
+    // How this pair came to be treated as one claim, and the sentence each source actually
+    // used. A wording judgement or an owner-nominated pairing is always visible in the report.
+    corroborationRoute: ready.route,
+    agreement: ready.agreement,
+    ownerDeclaredAgreement: Boolean(ready.ownerDeclaredAgreement),
+    assertedAs: ready.assertedAs,
     sourceIds: ready.sourceIds,
     candidateIds: ready.candidateIds,
     experimentExecutorId: experiment.id,
@@ -173,4 +267,4 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
   };
 }
 
-module.exports = { readBundle, corroboratedClaims, readScopeDeclarations, hasRealCorpusKnowledge, learnFromRealCorpus };
+module.exports = { readBundle, corroboratedClaims, readScopeDeclarations, selectEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };
