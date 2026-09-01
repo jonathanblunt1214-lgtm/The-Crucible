@@ -49,6 +49,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/languageExperimentRegistry.test.js',
     'test/languageHypothesisVariables.test.js',
     'test/organismCirculation.test.js',
+    'test/oversightBrakeReach.test.js',
     'test/organismRuntime.test.js',
     'test/productionOrganism.test.js',
     'test/organismHealth.test.js',
