@@ -98,3 +98,18 @@ test('one unsatisfied gate is enough to keep the soak held', () => {
     assert.equal(report.soak.state, 'held');
   }
 });
+
+// The report said ready and then could not start the soak it had just approved: the projection
+// dropped the observed population that startSoak freezes its window from, so the success path threw
+// a TypeError while the held path, which never reaches that line, looked fine.
+test('a ready pre-soak decision can actually start a soak', () => {
+  const { startSoak } = require('../src/soakRun');
+  const report = preSoakReadiness(everythingDone());
+  assert.equal(report.soak.state, 'ready');
+  assert.ok(Array.isArray(report.soak.observed), 'the decision carries the population it was made about');
+  const soak = startSoak({ readiness: report.soak, at: '2026-09-01T00:00:00.000Z', hours: 72 });
+  // One knowledge version plus one candidate record, frozen at the start.
+  assert.equal(soak.dataPoints.length, report.soak.observedDataPoints);
+  assert.deepEqual(soak.dataPoints.map((item) => item.id), report.soak.observed.map((item) => item.id));
+  assert.equal(soak.failed, false);
+});
