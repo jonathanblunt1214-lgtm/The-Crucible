@@ -28,7 +28,7 @@ const { quarantineFindings, quarantineNote } = require('./quarantine');
 const { auditAIConflictLedger } = require('./aiConflictLedger');
 const { categoryEnabled } = require('./suiteSelection');
 const { auditGlobalRepositoryGovernance } = require('./globalRepositoryGovernance');
-const { auditCirculationLinkage } = require('./circulationLinkage');
+const { auditCirculationLinkage, BASELINE_FILE } = require('./circulationLinkage');
 
 const action = process.argv[2] || 'run';
 const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
@@ -171,7 +171,10 @@ async function main() {
     return console.log('[The Crucible] Link is intact: THE-CRUCIBLE-DESIGN-BRIEF.md is present, or was never installed.');
   }
   if (action === 'circulation') {
-    const result = auditCirculationLinkage({ root: path.join(root, 'src') });
+    // The baseline is resolved against the same configured project root as the sources it
+    // measures. Rooting one at CRUCIBLE_PROJECT_ROOT and the other at the caller's working
+    // directory reports a missing baseline for a project that has one.
+    const result = auditCirculationLinkage({ root: path.join(root, 'src'), baselineFile: path.join(root, BASELINE_FILE) });
     if (!result.ok) { console.error(`[The Crucible] FAIL: ${result.reason}`); process.exitCode = 1; return; }
     return console.log(`[The Crucible] Fly-by-wire: ${result.reason}`);
   }
