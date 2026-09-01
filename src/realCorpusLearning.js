@@ -24,6 +24,7 @@ const { groupCorroborating, semanticallyCorroborates } = require('./semanticCorr
 const { verifyPairedDeclaration } = require('./pairedCorroboration');
 const { sourceIndex, independentSubset } = require('./sourceIndependence');
 const { documentFurniture } = require('./documentFurniture');
+const { intakePathways } = require('./intakePathways');
 
 const normalize = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
@@ -345,7 +346,7 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     } else {
       reason = `${corroborated.length} corroborated claim(s) exist in the real corpus but none matches a declaration, and no declaration nominates a pairing the corpus supports`;
     }
-    return { schemaVersion: 1, projectId, corpus, learned: false, reason, corroborated: corroborated.slice(0, 25), reviews, pairedFailures: selection.pairedFailures, evaluations: [], gates: { R4: false, R5: false, R6: false }, promotionAuthorized: false };
+    return { schemaVersion: 1, projectId, corpus, learned: false, reason, corroborated: corroborated.slice(0, 25), reviews, pairedFailures: selection.pairedFailures, evaluations: [], intake: intakePathways({ sources: bundle.sources, candidateRecords: available }), gates: { R4: false, R5: false, R6: false }, promotionAuthorized: false };
   }
 
   // Every usable declaration is carried through on its own. One may promote while another is

@@ -80,6 +80,14 @@ test('GitHub-hosted proof persists encrypted project-bound state and restores it
   for (const behaviour of first.safetyBehaviours) {
     assert.ok(first.safetyEvidence.includes(behaviour.behaviour) === behaviour.satisfied, 'nothing undemonstrated is listed as evidence');
   }
+  // Digestion's two pathways are reported separately, so an impeded intake is never read as an
+  // empty result from the learner.
+  assert.equal(first.intakePathways.learning.pathway, 'intake-to-learning');
+  assert.equal(first.intakePathways.diagnostics.pathway, 'intake-to-diagnostics');
+  assert.equal(first.intakePathways.diagnostics.isEvidence, false);
+  assert.ok(first.intakePathways.learning.usableCandidates >= 2, 'the real documents produced usable evidence');
+  assert.equal(first.intakePathways.blocked, null, 'nothing is blocked when digestion is healthy and produced evidence');
+
   assert.equal(first.outOfScopeRetrievalCount, 0);
   assert.doesNotMatch(fs.readFileSync(encrypted, 'utf8'), /The map method/, 'the claim never appears in the ciphertext');
 
