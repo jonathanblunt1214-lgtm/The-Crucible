@@ -155,3 +155,22 @@ test('recirculated sources are still collected, just last, oldest return first',
   assert.deepEqual(collectionOrder(['n-1'], pool).map((item) => item.id), ['n-1', 'r-early', 'r-late']);
   assert.deepEqual(collectionOrder([], []), []);
 });
+
+// A sweep is one hourly observation, so a data point can fail it once. The loop walked the raw
+// list, so one payload naming the same id three times spent all three thresholds at once and
+// recollected a point that had failed a single observation - and repeating it further trashed it.
+test('one sweep costs a data point at most one strike, however often the payload names it', () => {
+  const soak = begin(3);
+  const id = soak.dataPoints[1].id;
+  const once = recordSweep(soak, { at: at(HOUR), dataPointFailures: [id, id, id, id, id, id] });
+  const point = once.dataPoints.find((item) => item.id === id);
+  assert.equal(point.failures, 1);
+  assert.equal(point.phase, 'observing');
+  assert.deepEqual(once.recollectionPool, []);
+  assert.deepEqual(once.trash, []);
+  // Three separate observations still recollect it, which is what the threshold is counting.
+  let current = once;
+  for (let hour = 2; hour <= FAILURES_BEFORE_RECOLLECTION; hour += 1) current = recordSweep(current, { at: at(hour * HOUR), dataPointFailures: [id] });
+  assert.equal(current.dataPoints.find((item) => item.id === id).phase, 'recollected');
+  assert.equal(current.recollectionPool.length, 1);
+});

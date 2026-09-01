@@ -100,3 +100,34 @@ test('the wired recorder records a real repair and reports one that carried noth
   assert.equal(empty.recorded, false);
   assert.match(empty.reason, /no finding and plan/);
 });
+
+// The pathway had never recorded a single real repair. The actuator hands the outcome record and
+// the evidence as separate arguments, so the organism's candidate carried the record - state,
+// identity and an evidence hash - while the finding and plan stayed in the evidence it hashed and
+// dropped. The recorder looked for record.finding and record.plan, which never exist, so every
+// repair reported that it had observed nothing. The earlier tests missed it because they built the
+// candidate by hand in a shape no producer emits.
+test('a real organism repair reaches the learning store, not just a report that it observed nothing', async (t) => {
+  const { InMemoryCodeWorkspace, CodeAssistiveSecurityOrganism } = require('../src/codeSecurityOrganism');
+  const durable = store(t);
+  const outcomes = [];
+  const recorder = repairLearningRecorder({ store: durable, projectId: PROJECT, now: () => AT });
+  const workspace = new InMemoryCodeWorkspace({ 'index.html': '<a target="_blank">Help</a>' });
+  const organism = new CodeAssistiveSecurityOrganism({
+    projectId: PROJECT, workspace,
+    verifiers: { html: async ({ content }) => content.includes('rel="noopener noreferrer"') },
+    learningRecorder: async (candidate) => { outcomes.push(await recorder(candidate)); },
+  });
+  const finding = organism.scan().findings[0];
+  const plan = organism.plan(finding, { before: 'target="_blank"', after: 'target="_blank" rel="noopener noreferrer"' });
+
+  assert.equal((await organism.repair(finding, plan)).state, 'verified');
+  assert.equal(outcomes.length, 1);
+  assert.equal(outcomes[0].recorded, true, 'a verified repair is an observation and belongs in custody');
+  assert.equal(outcomes[0].outcome, 'succeeded');
+  assert.equal(durable.read().candidateRecords.length, 1);
+  // Evidence, never knowledge, however well the repair went.
+  assert.equal(outcomes[0].classification, 'Insufficient Evidence');
+  assert.equal(outcomes[0].promotionAuthorized, false);
+  assert.equal(outcomes[0].independentVerificationSatisfied, false);
+});

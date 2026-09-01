@@ -345,12 +345,20 @@ class AutonomousScientificLearner {
       record = this.store.update(record, this.now(), 'hypothesis');
     }
     if (record.hypothesis !== hypothesis) throw new Error('Resumed processing must use the persisted hypothesis.');
+    // The scope is declared once, when the hypothesis is recorded, and is a property of the record
+    // from then on rather than of whichever worker resumes it. Reading this.claimScope here let a
+    // restart test within a different boundary than the record is committed to, and the verified
+    // gate reads the persisted value, so the mismatch surfaced later and somewhere else. A restart
+    // that declares nothing inherits the recorded scope; one that declares a different scope for an
+    // already-scoped record is a contradiction and is refused, exactly as a different hypothesis is.
+    const claimScope = record.claimScope ?? null;
+    if (this.claimScope && this.claimScope !== claimScope) throw new Error('Resumed processing must use the claim scope the hypothesis was recorded under.');
     if (record.state === 'hypothesis') {
       // The executor is told the boundary it is being asked to test within, so that it can report
       // what it actually tested rather than having to infer it from provenance.
-      const result = await this.experimentExecutor.run(structuredClone({ candidate:record.candidate, hypothesis, claimScope:this.claimScope }));
+      const result = await this.experimentExecutor.run(structuredClone({ candidate:record.candidate, hypothesis, claimScope }));
       const experimentalProof = validateExperimentalProof(result);
-      if (experimentalProof.candidateId !== record.candidate.id || experimentalProof.projectId !== this.store.projectId || experimentalProof.hypothesis !== hypothesis || experimentalProof.testedProperty !== record.candidate.claim || experimentalProof.experimentBoundary !== (this.claimScope || record.candidate.claimBoundary)) throw new Error('Experiment proof identity, property, or boundary mismatch.');
+      if (experimentalProof.candidateId !== record.candidate.id || experimentalProof.projectId !== this.store.projectId || experimentalProof.hypothesis !== hypothesis || experimentalProof.testedProperty !== record.candidate.claim || experimentalProof.experimentBoundary !== (claimScope || record.candidate.claimBoundary)) throw new Error('Experiment proof identity, property, or boundary mismatch.');
       const gates = { ...record.gates, falsifiableHypothesis:true, controlledReproduction:true, controlTesting:true, negativeTesting:true, regressionTesting:true, deterministicScopeProof:true, claimBoundaryCheck:true, generalizationCheck:true };
       record = transition(record, 'experimented', { at:this.now(), reason:`controlled experiment completed by ${this.experimentExecutor.id}`, experimentalProof, gates });
       record = this.store.update(record, this.now(), 'experimented');
@@ -360,7 +368,7 @@ class AutonomousScientificLearner {
       record = this.store.update(record, this.now(), 'causally-proven');
     }
     if (record.state === 'causally-proven') {
-      const verification = await this.independentVerifier.run(structuredClone({ candidate:record.candidate, hypothesis, claimScope:this.claimScope, experimentalProof:record.experimentalProof, experimentExecutorId:this.experimentExecutor.id }));
+      const verification = await this.independentVerifier.run(structuredClone({ candidate:record.candidate, hypothesis, claimScope, experimentalProof:record.experimentalProof, experimentExecutorId:this.experimentExecutor.id }));
       if (verification?.verifierId === this.experimentExecutor.id || verification?.verifierId !== this.independentVerifier.id) throw new Error('Independent verifier identity mismatch.');
       record = transition(record, 'independently-verified', { at:this.now(), reason:`independent verification completed by ${this.independentVerifier.id}`, independentVerification:verification, gates:{ ...record.gates, independentVerification:true } });
       record = this.store.update(record, this.now(), 'independently-verified');

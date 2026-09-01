@@ -126,9 +126,15 @@ function recordRepairEvidence({ store, projectId, finding, plan, result, actorId
 function repairLearningRecorder({ store, projectId, now = () => new Date().toISOString() }) {
   return async (candidate) => {
     if (!candidate || candidate.promotable !== false) throw new Error('Only non-promotable repair feedback may be recorded as evidence.');
+    // The actuator hands the outcome record and the evidence separately, so the organism carries
+    // the finding and the plan on the candidate rather than on the record - which holds only
+    // state, identity and an evidence hash. Reading them from the record alone meant every real
+    // repair, verified or rolled back, reported that it had nothing to observe.
     const { record } = candidate;
-    if (!record || !record.finding || !record.plan) return { recorded: false, reason: 'the feedback carried no finding and plan to observe', promotionAuthorized: false };
-    return recordRepairEvidence({ store, projectId, finding: record.finding, plan: record.plan, result: record, now });
+    const finding = candidate.finding || (record && record.finding);
+    const plan = candidate.plan || (record && record.plan);
+    if (!record || !finding || !plan) return { recorded: false, reason: 'the feedback carried no finding and plan to observe', promotionAuthorized: false };
+    return recordRepairEvidence({ store, projectId, finding, plan, result: record, now });
   };
 }
 
