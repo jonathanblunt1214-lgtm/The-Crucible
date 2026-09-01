@@ -31,7 +31,25 @@ const INJECTION_PATTERNS = Object.freeze([
 function sha256(value) { return crypto.createHash('sha256').update(value).digest('hex'); }
 function normalizedHost(value) { return String(value || '').trim().toLowerCase().replace(/^\.+|\.+$/g, ''); }
 function domainMatches(host, rule) { const target = normalizedHost(rule); return host === target || host.endsWith(`.${target}`); }
+// An IPv4 address written as IPv6. ::ffff:169.254.169.254 is the cloud metadata endpoint and
+// ::ffff:127.0.0.1 is loopback, but neither matches any IPv6 private prefix, so without this both
+// were classified public and the network guard let them through. The address is normalised back to
+// IPv4 and judged by the IPv4 rules, which is what it actually is.
+function mappedIPv4(address) {
+  const value = String(address).toLowerCase();
+  const dotted = /^::(?:ffff:)?((?:\d{1,3}\.){3}\d{1,3})$/.exec(value);
+  if (dotted && net.isIPv4(dotted[1])) return dotted[1];
+  // The same address written as two hexadecimal groups rather than dotted quads.
+  const hex = /^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/.exec(value);
+  if (hex) {
+    const high = parseInt(hex[1], 16), low = parseInt(hex[2], 16);
+    return `${(high >> 8) & 255}.${high & 255}.${(low >> 8) & 255}.${low & 255}`;
+  }
+  return null;
+}
 function privateAddress(address) {
+  const mapped = net.isIPv6(address) ? mappedIPv4(address) : null;
+  if (mapped) return privateAddress(mapped);
   if (net.isIPv4(address)) {
     const octets = address.split('.').map(Number);
     return octets[0] === 10 || octets[0] === 127 || octets[0] === 0 ||
