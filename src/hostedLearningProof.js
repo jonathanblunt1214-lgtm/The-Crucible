@@ -86,7 +86,11 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
       fs.mkdirSync(path.dirname(reportFile),{recursive:true});
       fs.writeFileSync(reportFile,`${JSON.stringify(stopped,null,2)}\n`,{mode:0o600});
       // Print them to the run log too: the report is an artifact, and an owner cannot declare a
-      // scope for a claim they would have to download the run to read.
+      // scope for a claim they would have to download the run to read. The counts come first,
+      // because "did extraction produce anything" and "was anything promoted" are different
+      // questions and the reason line only answers the second.
+      const c = stopped.corpus || {};
+      console.log(`[The Crucible] corpus: ${c.sources} sources, ${c.documentsWithContent} with stored content; ${c.corpusCandidateRecords} candidate(s) in the corpus learning state, ${c.candidateRecords} in the persistent store, ${c.candidatesAvailableForCorroboration} available to corroboration; ${c.corroboratedClaims} corroborated; corpus learning state restored: ${c.corpusLearningStateRestored}.`);
       for (const [index,item] of (stopped.corroborated||[]).entries()) {
         console.log(`[The Crucible] corroborated ${index+1}/${stopped.corroborated.length} (${item.agreement}, ${item.sourceCount} sources): ${item.claim}`);
         console.log(`[The Crucible]   sources: ${(item.sourceIds||[]).join(' | ')}`);
