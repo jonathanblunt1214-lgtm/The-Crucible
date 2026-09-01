@@ -45,7 +45,12 @@ function readSourceContent(bundleRoot, source) {
   if (!fs.existsSync(resolved)) throw new Error(`Source ${source.id} has no restored content at ${declared}.`);
   const content = fs.readFileSync(resolved, 'utf8');
   const recorded = String(source.contentSha256 || '').toLowerCase();
-  if (recorded && sha256(content) !== recorded) throw new Error(`Source ${source.id} content does not match the hash the queue recorded.`);
+  // The hash is required, not merely checked when present. A pairing is the one place owner
+  // judgement reaches the corpus, and it reaches it by source id; without a recorded hash the
+  // bytes behind that id are whatever is on disk now, so unhashed content could become
+  // corroboration on nothing but a filename.
+  if (!/^[0-9a-f]{64}$/.test(recorded)) throw new Error(`Source ${source.id} has no recorded content hash, so its content cannot be corroboration.`);
+  if (sha256(content) !== recorded) throw new Error(`Source ${source.id} content does not match the hash the queue recorded.`);
   return content;
 }
 
