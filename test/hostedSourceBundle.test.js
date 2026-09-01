@@ -1,6 +1,6 @@
 'use strict';
 const test=require('node:test'); const assert=require('node:assert/strict'); const crypto=require('node:crypto'); const fs=require('node:fs'); const os=require('node:os'); const path=require('node:path');
-const {stage,encrypt,decrypt,verifyRestored,splitEncrypted,joinEncrypted}=require('../src/hostedSourceBundle');
+const {stage,encrypt,decrypt,verifyRestored,hydrateRestored,restageRestored,splitEncrypted,joinEncrypted}=require('../src/hostedSourceBundle');
 test('stages, encrypts, restores, and verifies a project-bound source queue without local paths',async()=>{
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'crucible-source-bundle-')); const sourceRoot=path.join(root,'local','sources'); const staging=path.join(root,'stage'); fs.mkdirSync(sourceRoot,{recursive:true});
   const content=Buffer.from('bounded untrusted source'); const digest=crypto.createHash('sha256').update(content).digest('hex'); const local=path.join(sourceRoot,`${digest}.html`); fs.writeFileSync(local,content);
@@ -9,5 +9,7 @@ test('stages, encrypts, restores, and verifies a project-bound source queue with
   const archive=path.join(root,'archive.bin'); fs.writeFileSync(archive,Buffer.from('archive payload'.repeat(300))); const encrypted=path.join(root,'bundle.enc'); const restoredArchive=path.join(root,'restored.bin'); process.env.CRUCIBLE_SOURCE_BUNDLE_KEY=crypto.randomBytes(32).toString('base64');
   await encrypt({input:archive,output:encrypted,projectId,repository:'owner/repo',ref:'refs/heads/development'}); assert.doesNotMatch(fs.readFileSync(encrypted).toString('latin1'),/archive payload/); await decrypt({input:encrypted,output:restoredArchive,repository:'owner/repo',ref:'refs/heads/development'}); assert.deepEqual(fs.readFileSync(restoredArchive),fs.readFileSync(archive));
   const report=verifyRestored({root:staging,repository:'owner/repo',ref:'refs/heads/development',reportFile:path.join(root,'report.json')}); assert.equal(report.sourceFiles,1); assert.equal(report.plaintextRetained,false); assert.equal(report.authorizesPromotion,false);
+  const hydrated=hydrateRestored({root:staging,repository:'owner/repo',ref:'refs/heads/development'});assert.equal(hydrated.sources,1);assert.equal(path.isAbsolute(JSON.parse(fs.readFileSync(hydrated.queueFile)).links[0].durablePath),true);
+  const restaged=restageRestored({root:staging,repository:'owner/repo',ref:'refs/heads/development'});assert.equal(restaged.queueSha256,crypto.createHash('sha256').update(fs.readFileSync(hydrated.queueFile)).digest('hex'));assert.match(JSON.parse(fs.readFileSync(hydrated.queueFile)).links[0].durablePath,/^sources\//);
   const chunks=path.join(root,'chunks'); const chunkManifest=splitEncrypted({input:encrypted,outputRoot:chunks,maximumBytes:1024}); assert.ok(chunkManifest.chunks.length>1); const joined=path.join(root,'joined.enc'); joinEncrypted({inputRoot:chunks,output:joined}); assert.deepEqual(fs.readFileSync(joined),fs.readFileSync(encrypted));
 });

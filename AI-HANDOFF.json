@@ -27,7 +27,7 @@
     "src/ciDiagnosticOrgan.js": "Dependency-free project-bound hosted CI failure capture, typed diagnosis, organism-health inhibition, and non-proof evidence reporting.",
     "src/hostedLearningProof.js": "GitHub-hosted, project-bound R4-R8 proof runner with encrypted restart-safe durable-state transport and no release authority.",
     "src/hostedSourceBundle.js": "Development-bound authenticated encryption, local-path scrubbing, content-hash manifesting, restore, and verification for owner training queues hosted on GitHub.",
-    ".github/workflows/hosted-source-bootstrap.yml": "Read-only GitHub runner custody proof for the encrypted owner queue; runner plaintext is destroyed and only a bounded hash report is retained.",
+    ".github/workflows/hosted-source-bootstrap.yml": "Read-only GitHub runner ciphertext custody proof; Crucible receives no decryption key and retains only a bounded hash report.",
     ".github/workflows/hosted-learning-proof.yml": "Development-only hourly/manual GitHub host for encrypted durable R4-R8 proof and retained bounded evidence.",
     "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
     "governingDocuments/scientific-learning-policy.md": "Permanent autonomous scientific-learning invariants, promotion boundary, project isolation, contradiction handling, rollback, and weekly transport policy.",
@@ -71,11 +71,20 @@
     "src/realSupersession.js": "R7 on real evidence. A further corpus source, independent of both already behind a promoted claim and asserting it verbatim, supersedes it and the prior version is restored with history intact. Fails closed with a precise reason rather than superseding a self-made candidate.",
     "src/documentFurniture.js": "Structural rejection of document furniture at extraction and at corroboration. Navigation runs, table-of-contents rows, fixed legal boilerplate, scraped heading duplication, and reader-addressed interface text are rejected by form, never by subject, source, or publisher. Ordinary prose that is merely untestable still passes: refusing that is the critical reviewer and hypothesis contract, not a wording filter.",
     "src/repairEvidence.js": "Joins the immune system to the learner. A defect found, repaired, and confirmed by a distinct verifier enters candidate custody as non-promotable experience evidence stating what the construct does, never what the repair did. A rolled-back repair is recorded as a failure; a repair that never ran observed nothing and is not evidence.",
-    "src/intakePathways.js": "Separates digestion two outputs. Candidate evidence goes to the learner and awaits proof; the health of digestion itself goes to the senses, is never a claim about the world, and can never be corroborated into knowledge. Names which pathway is blocked so an impeded intake is not read as an empty result."
+    "src/intakePathways.js": "Separates digestion two outputs. Candidate evidence goes to the learner and awaits proof; the health of digestion itself goes to the senses, is never a claim about the world, and can never be corroborated into knowledge. Names which pathway is blocked so an impeded intake is not read as an empty result.",
+    "src/hypothesisTestPlan.js": "Strict hash-bound falsifiable hypothesis and test-variable plan schema.",
+    "src/languageHypothesisVariables.js": "Governed language-specific independent, dependent, controlled, measurement, and falsification variable profiles.",
+    "src/languageExperimentRegistry.js": "Pinned trusted experiment registry requiring distinct executor and verifier identities.",
+    "src/concreteLanguageHarness.js": "Concrete content-addressed fixtures and separate executable compiler/parser adapters for every governed language.",
+    "src/organismCirculation.js": "Typed project-bound signal bus that routes work but cannot satisfy proof or promotion.",
+    "src/organismRuntime.js": "Durable heartbeat, deduplication, backpressure, fault isolation, throttling, recovery, and exact-boundary memory routing.",
+    "src/productionOrganism.js": "Production nervous, brain, immune, digestive, learning, and reporting pathways.",
+    "src/organismHealth.js": "Concise continuous organ health and exact missing-dependency view.",
+    "src/oversightReflex.js": "Independent signed STOP and dual-authorized CLEAR reflex bound to the exact organism state."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-01T01:15:00Z"
+    "lastActionAt": "2026-09-01T11:57:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",

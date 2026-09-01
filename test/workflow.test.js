@@ -77,6 +77,14 @@ test('agent boundaries document forbids touching anything installed to run the C
   assert.match(readme, /persist-credentials: false.*ephemeral runner/);
 });
 
+test('host isolation is a selectively permeable governed membrane, not a ban on interaction', () => {
+  const policy = fs.readFileSync(path.join(root, 'governingDocuments', 'host-isolation-policy.md'), 'utf8');
+  assert.match(policy, /selectively permeable cell membrane/i);
+  assert.match(policy, /Authenticated, typed, project-bound, size-bounded, purpose-bound, and audited signals/i);
+  assert.match(policy, /rejected or quarantined/i);
+  assert.match(policy, /grants neither assimilation nor proof authority/i);
+});
+
 test('connect workflow requires main and a development branch in its two-phase project bootstrap', () => {
   const workflow = fs.readFileSync(path.join(root, 'templates', 'connect-workflow.yml'), 'utf8');
   assert.match(workflow, /^on:\s*\n\s*workflow_dispatch:/m);
@@ -188,17 +196,17 @@ test('GitHub hosts encrypted restart-safe R4-R8 proof without production authori
   assert.doesNotMatch(workflow, /contents: write|pull-requests: write|issues: write/);
 });
 
-test('GitHub restores the owner queue only from authenticated ciphertext and retains no plaintext', () => {
+test('GitHub verifies owner queue ciphertext without receiving a decryption key or plaintext', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'hosted-source-bootstrap.yml'), 'utf8');
   assert.match(workflow, /branches:\s*\n\s*- development/);
-  assert.match(workflow, /CRUCIBLE_SOURCE_BUNDLE_KEY/);
   assert.match(workflow, /CRUCIBLE_LEARNING_STATE_DEPLOY_KEY/);
   assert.match(workflow, /git clone --depth 1 git@github\.com:jonathanblunt1214-lgtm\/Crucible-Learning-State\.git/);
   assert.match(workflow, /github\.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl/);
   assert.match(workflow, /node src\/hostedSourceBundle\.js join/);
-  assert.match(workflow, /node src\/hostedSourceBundle\.js decrypt/);
-  assert.match(workflow, /node src\/hostedSourceBundle\.js verify/);
-  assert.match(workflow, /Destroy runner plaintext[\s\S]*if: always\(\)/);
+  assert.match(workflow, /node src\/hostedSourceBundle\.js join/);
+  assert.match(workflow, /decrypted:false/);
+  assert.doesNotMatch(workflow, /CRUCIBLE_SOURCE_BUNDLE_KEY|hostedSourceBundle\.js decrypt|hostedSourceBundle\.js verify/);
+  assert.match(workflow, /Destroy runner ciphertext and credentials[\s\S]*if: always\(\)/);
   assert.doesNotMatch(workflow, /contents: write|pull-requests: write|issues: write/);
   assert.doesNotMatch(workflow, /CRUCIBLE_SOURCE_BOOTSTRAP_TOKEN|CRUCIBLE_SOURCE_BUNDLE_ASSET_API_URL/);
 });
