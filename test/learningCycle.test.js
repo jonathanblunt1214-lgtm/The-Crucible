@@ -32,14 +32,14 @@ function execute() {
 
 const experiment = {
   id: 'javascript-controlled-runner',
-  run: async ({ candidate, hypothesis, testPlanSha256 }) => {
+  run: async ({ candidate, hypothesis, testPlanSha256, testPlan }) => {
     execute();
-    return { schemaVersion: 1, candidateId: candidate.id, projectId: candidate.projectId, hypothesis, testedProperty: candidate.claim, experimentBoundary: candidate.claimBoundary, controls: ['identity reference control: output is not the input array', 'empty-input control: mapping an empty array yields an empty array'], causalIsolation: { method: 'single-variable intervention on the mapped callback', result: 'only the returned array changes; the input is unchanged', correlationOnly: false }, negativeTests: ['the returned array is never the same reference as the input'], regressionTests: ['existing dense-array mapping still yields the expected values'], scopeProof: 'executed only against ordinary dense arrays of numbers on this runtime', generalizationResult: 'not generalized beyond the experiment boundary', contradictionResult: 'none', completedAt: AT, testPlanSha256 };
+    return { schemaVersion: 1, candidateId: candidate.id, projectId: candidate.projectId, hypothesis, testedProperty: candidate.claim, experimentBoundary: (testPlan && testPlan.experimentBoundary) || candidate.claimBoundary, controls: ['identity reference control: output is not the input array', 'empty-input control: mapping an empty array yields an empty array'], causalIsolation: { method: 'single-variable intervention on the mapped callback', result: 'only the returned array changes; the input is unchanged', correlationOnly: false }, negativeTests: ['the returned array is never the same reference as the input'], regressionTests: ['existing dense-array mapping still yields the expected values'], scopeProof: 'executed only against ordinary dense arrays of numbers on this runtime', generalizationResult: 'not generalized beyond the experiment boundary', contradictionResult: 'none', completedAt: AT, testPlanSha256 };
   },
 };
 const verifier = {
   id: 'javascript-independent-runner',
-  run: async ({ candidate, experimentalProof, testPlanSha256 }) => {
+  run: async ({ candidate, experimentalProof, testPlanSha256, testPlan }) => {
     execute();
     return { verifierId: 'javascript-independent-runner', independent: true, testedProperty: candidate.claim, experimentBoundary: experimentalProof.experimentBoundary, result: 'passed', verifiedAt: AT, testPlanSha256 };
   },

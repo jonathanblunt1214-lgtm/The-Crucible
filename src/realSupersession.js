@@ -47,7 +47,7 @@ function findFurtherSource({ store, available, bundle, activeVersion, usedSource
 // corroborated it. The caller knows them exactly; where it does not, they are inferred from the
 // records that were actually used, because a candidate still sitting in candidate state was
 // never part of promoting anything and is a legitimate further look.
-async function realSupersession({ store, available, bundle, experiment, verifier, hypothesis, excludeSourceIds = [], now = () => new Date().toISOString() }) {
+async function realSupersession({ store, available, bundle, experiment, verifier, hypothesis, claimScope = null, excludeSourceIds = [], now = () => new Date().toISOString() }) {
   const payload = store.read();
   const active = payload.knowledgeVersions.filter((item) => item.status === 'active');
   if (!active.length) {
@@ -72,7 +72,9 @@ async function realSupersession({ store, available, bundle, experiment, verifier
 
   const at = now();
   if (!store.get(further.record.candidate.id)) store.ingest(further.record.candidate);
-  const learner = new AutonomousScientificLearner({ store, experimentExecutor: experiment, independentVerifier: verifier, now: () => at });
+  // The further source must be tested within the same boundary as the version it supersedes,
+  // which is the declared scope when the promoted version was evaluated under one.
+  const learner = new AutonomousScientificLearner({ store, experimentExecutor: experiment, independentVerifier: verifier, claimScope: claimScope || target.boundary, now: () => at });
   const record = await learner.process(further.record.candidate.id, hypothesis || `Re-test the promoted claim within its declared boundary using a further independent source.`);
   if (record.state !== 'verified') {
     return unsatisfied(`the further source did not pass the controlled pipeline, so it cannot supersede: its record ended in state ${record.state}`);

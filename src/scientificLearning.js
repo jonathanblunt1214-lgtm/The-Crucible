@@ -98,13 +98,15 @@ function makeCandidate(input) { return validateCandidate({ schemaVersion:1, clas
 
 function newRecord(candidate) {
   const value = validateCandidate(candidate);
-  return { schemaVersion:1, candidate:value, state:'candidate', hypothesis:null, gates:Object.fromEntries(REQUIRED_GATES.map((gate) => [gate, false])), experimentalProof:null, independentVerification:null, proof:null, history:[{ from:null, to:'candidate', at:value.createdAt, reason:'strictly validated candidate evidence ingested' }] };
+  return { schemaVersion:1, candidate:value, claimScope:null, state:'candidate', hypothesis:null, gates:Object.fromEntries(REQUIRED_GATES.map((gate) => [gate, false])), experimentalProof:null, independentVerification:null, proof:null, history:[{ from:null, to:'candidate', at:value.createdAt, reason:'strictly validated candidate evidence ingested' }] };
 }
 
-function transition(record, to, { at, reason, hypothesis, experimentalProof, independentVerification, gates } = {}) {
+function transition(record, to, { at, reason, hypothesis, experimentalProof, independentVerification, gates, claimScope } = {}) {
   object(record, 'record'); iso(at, 'transition.at'); text(reason, 'transition.reason');
   if (!STATES.includes(record.state) || !TRANSITIONS[record.state]?.includes(to)) throw new Error(`Forbidden learning transition ${record.state} -> ${to}.`);
   const next = structuredClone(record);
+  // Declared once, when the hypothesis is recorded, and never rewritten afterwards.
+  if (claimScope !== undefined && next.claimScope === null) next.claimScope = claimScope;
   if (gates) {
     exactKeys(gates, REQUIRED_GATES, 'transition.gates');
     for (const gate of REQUIRED_GATES) if (typeof gates[gate] !== 'boolean') throw new Error(`transition.gates.${gate} must be boolean.`);
@@ -131,7 +133,13 @@ function transition(record, to, { at, reason, hypothesis, experimentalProof, ind
     if (!next.experimentalProof || !next.independentVerification) throw new Error('Verified promotion requires proof from separate experiment and verification stages.');
     next.proof = validateProof({ ...next.experimentalProof, independentVerification:next.independentVerification });
     if (next.proof.candidateId !== next.candidate.id || next.proof.projectId !== next.candidate.projectId) throw new Error('Proof identity must match candidate identity.');
-    if (next.proof.experimentBoundary !== next.candidate.claimBoundary) throw new Error('Experimental results cannot exceed the candidate claim boundary.');
+    // The boundary the claim was tested within: the owner-declared scope when this record is
+    // being evaluated under one, otherwise the candidate's provenance boundary. The invariant is
+    // unchanged - results may never exceed the boundary the claim is claimed for - but the scope
+    // is a property of the claim rather than of the document that asserted it, which is what
+    // lets two independent sources share it and a later one supersede an earlier version.
+    const testedWithin = next.claimScope || next.candidate.claimBoundary;
+    if (next.proof.experimentBoundary !== testedWithin) throw new Error('Experimental results cannot exceed the boundary the claim was tested within.');
     if (next.proof.testedProperty !== next.candidate.claim) throw new Error('Verification proves only the exact tested claim.');
     if (next.proof.contradictionResult !== 'none') throw new Error('Contradictions require quarantine.');
   }
@@ -310,8 +318,18 @@ class DurableScientificLearningStore {
 }
 
 class AutonomousScientificLearner {
-  constructor({ store, experimentExecutor, independentVerifier, now = () => new Date().toISOString() }) {
+  // `claimScope` is the owner-declared boundary the claim was tested within. Absent, everything
+  // below behaves exactly as before and the candidate's provenance boundary is used.
+  //
+  // The proof must be conducted within the boundary the claim is claimed for - that invariant is
+  // unchanged. What changes is which field holds that boundary. `claimBoundary` is built by
+  // extraction from the source document, so two documents never share one; requiring the proof
+  // to match it means a second independent source re-testing the same claim always lands on a
+  // separate lineage and can never supersede the first. The declared scope is a property of the
+  // claim rather than of the document that asserted it, which is why two sources can share it.
+  constructor({ store, experimentExecutor, independentVerifier, claimScope = null, now = () => new Date().toISOString() }) {
     if (!(store instanceof DurableScientificLearningStore)) throw new Error('Autonomous learning requires a durable store.');
+    this.claimScope = typeof claimScope === 'string' && claimScope.trim() ? claimScope.trim().replace(/\s+/g, ' ') : null;
     for (const [label, executor] of [['experimentExecutor', experimentExecutor], ['independentVerifier', independentVerifier]]) {
       if (!executor || typeof executor.id !== 'string' || !executor.id || typeof executor.run !== 'function') throw new Error(`${label} requires a stable id and run function.`);
     }
@@ -323,14 +341,16 @@ class AutonomousScientificLearner {
     let record = this.store.get(candidateId); if (!record) throw new Error('Unknown candidate evidence.');
     if (['verified', 'quarantined', 'rejected'].includes(record.state)) return record;
     if (record.state === 'candidate') {
-      record = transition(record, 'hypothesis', { at:this.now(), reason:'autonomous learner recorded a falsifiable hypothesis', hypothesis });
+      record = transition(record, 'hypothesis', { at:this.now(), reason:'autonomous learner recorded a falsifiable hypothesis', hypothesis, claimScope:this.claimScope });
       record = this.store.update(record, this.now(), 'hypothesis');
     }
     if (record.hypothesis !== hypothesis) throw new Error('Resumed processing must use the persisted hypothesis.');
     if (record.state === 'hypothesis') {
-      const result = await this.experimentExecutor.run(structuredClone({ candidate:record.candidate, hypothesis }));
+      // The executor is told the boundary it is being asked to test within, so that it can report
+      // what it actually tested rather than having to infer it from provenance.
+      const result = await this.experimentExecutor.run(structuredClone({ candidate:record.candidate, hypothesis, claimScope:this.claimScope }));
       const experimentalProof = validateExperimentalProof(result);
-      if (experimentalProof.candidateId !== record.candidate.id || experimentalProof.projectId !== this.store.projectId || experimentalProof.hypothesis !== hypothesis || experimentalProof.testedProperty !== record.candidate.claim || experimentalProof.experimentBoundary !== record.candidate.claimBoundary) throw new Error('Experiment proof identity, property, or boundary mismatch.');
+      if (experimentalProof.candidateId !== record.candidate.id || experimentalProof.projectId !== this.store.projectId || experimentalProof.hypothesis !== hypothesis || experimentalProof.testedProperty !== record.candidate.claim || experimentalProof.experimentBoundary !== (this.claimScope || record.candidate.claimBoundary)) throw new Error('Experiment proof identity, property, or boundary mismatch.');
       const gates = { ...record.gates, falsifiableHypothesis:true, controlledReproduction:true, controlTesting:true, negativeTesting:true, regressionTesting:true, deterministicScopeProof:true, claimBoundaryCheck:true, generalizationCheck:true };
       record = transition(record, 'experimented', { at:this.now(), reason:`controlled experiment completed by ${this.experimentExecutor.id}`, experimentalProof, gates });
       record = this.store.update(record, this.now(), 'experimented');
@@ -340,7 +360,7 @@ class AutonomousScientificLearner {
       record = this.store.update(record, this.now(), 'causally-proven');
     }
     if (record.state === 'causally-proven') {
-      const verification = await this.independentVerifier.run(structuredClone({ candidate:record.candidate, hypothesis, experimentalProof:record.experimentalProof, experimentExecutorId:this.experimentExecutor.id }));
+      const verification = await this.independentVerifier.run(structuredClone({ candidate:record.candidate, hypothesis, claimScope:this.claimScope, experimentalProof:record.experimentalProof, experimentExecutorId:this.experimentExecutor.id }));
       if (verification?.verifierId === this.experimentExecutor.id || verification?.verifierId !== this.independentVerifier.id) throw new Error('Independent verifier identity mismatch.');
       record = transition(record, 'independently-verified', { at:this.now(), reason:`independent verification completed by ${this.independentVerifier.id}`, independentVerification:verification, gates:{ ...record.gates, independentVerification:true } });
       record = this.store.update(record, this.now(), 'independently-verified');
