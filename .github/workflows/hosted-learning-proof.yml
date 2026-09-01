@@ -36,11 +36,12 @@ jobs:
             hosted-learning-${{ github.repository_id }}-
       - name: Install locked dependencies
         run: npm ci
-      # The corpus has to be here, in this job. Restoring it in a separate workflow that then
-      # destroys its plaintext is why the proof previously fell back to sources built in code.
-      - name: Restore the real encrypted corpus from its private state repository
+      # The corpus has to be here, in this job, but Crucible may consume only the
+      # independently vetted custody published by Oversight. It never receives the
+      # raw intake key or access to the unvetted state repository.
+      - name: Restore independently vetted encrypted corpus
         env:
-          STATE_DEPLOY_KEY: ${{ secrets.CRUCIBLE_LEARNING_STATE_DEPLOY_KEY }}
+          STATE_DEPLOY_KEY: ${{ secrets.CRUCIBLE_VETTED_STATE_READ_KEY }}
         run: |
           test -n "$STATE_DEPLOY_KEY"
           mkdir -p "$RUNNER_TEMP/crucible-state-ssh" "$RUNNER_TEMP/crucible-source-restore"
@@ -48,14 +49,14 @@ jobs:
           chmod 600 "$RUNNER_TEMP/crucible-state-ssh/key"
           printf '%s\n' 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$RUNNER_TEMP/crucible-state-ssh/known_hosts"
           GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/crucible-state-ssh/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/crucible-state-ssh/known_hosts -o StrictHostKeyChecking=yes" \
-            git clone --depth 1 git@github.com:jonathanblunt1214-lgtm/Crucible-Learning-State.git \
+            git clone --depth 1 git@github.com:jonathanblunt1214-lgtm/Crucible-Vetted-Learning-State.git \
             "$RUNNER_TEMP/crucible-source-restore/ciphertext"
           node src/hostedSourceBundle.js join \
             --input-root "$RUNNER_TEMP/crucible-source-restore/ciphertext" \
             --output "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc"
-      - name: Decrypt and verify every restored hash
+      - name: Decrypt vetted custody and verify every restored hash
         env:
-          CRUCIBLE_SOURCE_BUNDLE_KEY: ${{ secrets.CRUCIBLE_SOURCE_BUNDLE_KEY }}
+          CRUCIBLE_SOURCE_BUNDLE_KEY: ${{ secrets.CRUCIBLE_VETTED_BUNDLE_KEY }}
         run: |
           node src/hostedSourceBundle.js decrypt \
             --input "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc" \

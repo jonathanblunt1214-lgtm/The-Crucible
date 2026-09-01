@@ -70,16 +70,11 @@ function sanitizeHtml(text) {
     current = current
       .replace(/<(script|style|template|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
       .replace(/<form\b[^>]*>[\s\S]*?<\/form\s*>/gi, '')
+      .replace(/<\/?(?:script|style|template|noscript|form)\b[^>]*>/gi, '')
       .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
       .replace(/\s(?:srcdoc|formaction)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
   } while (current !== previous);
   return current;
-      .replace(/<(script|style|template|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
-      .replace(/<form\b[^>]*>[\s\S]*?<\/form\s*>/gi, '')
-      .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-      .replace(/\s(?:srcdoc|formaction)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
-  } while (sanitized !== previous);
-  return sanitized;
 }
 function suspiciousText(buffer, contentType) {
   if (!/text|html|json|xml/i.test(contentType)) return [];

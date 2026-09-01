@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { parseGoogleSearchResults, RetrievalAuditStore, SafeInformationRetriever, privateAddress, safeUrl } = require('../src/safeInformationRetrieval');
+const { parseGoogleSearchResults, RetrievalAuditStore, SafeInformationRetriever, privateAddress, safeUrl, sanitizeHtml } = require('../src/safeInformationRetrieval');
 
 function headers(values = {}) { const map = new Map(Object.entries(values).map(([key, value]) => [key.toLowerCase(), String(value)])); return { get:(key) => map.get(key.toLowerCase()) || null }; }
 function response({ status = 200, url = 'https://docs.example.test/page', type = 'text/html', body = '<meta name="author" content="Example Author"><script>unsafe()</script><form action="/upload">private</form><p onclick="unsafe()">Safe evidence</p>', extraHeaders = {} } = {}) {
@@ -24,6 +24,13 @@ function fixture(t, overrides = {}) {
   });
   return { root, calls, retriever };
 }
+
+test('HTML sanitization reaches a fixed point for nested active content', () => {
+  const sanitized = sanitizeHtml('<script><script>unsafe()</script></script><form><form>private</form></form><p onclick="run()">Safe evidence</p>');
+  assert.doesNotMatch(sanitized, /<\/?(?:script|form)\b|onclick=/i);
+  assert.match(sanitized, /Safe evidence/);
+  assert.equal(sanitizeHtml(sanitized), sanitized);
+});
 
 test('Google discovery admits only positively trusted domains and rejects social, wiki, onion, Google, and unlisted results', () => {
   const html = [
