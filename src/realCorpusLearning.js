@@ -25,6 +25,7 @@ const { verifyPairedDeclaration } = require('./pairedCorroboration');
 const { sourceIndex, independentSubset } = require('./sourceIndependence');
 const { documentFurniture } = require('./documentFurniture');
 const { intakePathways } = require('./intakePathways');
+const { auditContradiction } = require('./contradictionAudit');
 
 const normalize = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
@@ -394,7 +395,29 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     }
 
     const verified = evaluation.verifiedKnowledge;
+
+    // A contradiction is audited, not just quarantined. When the controlled pipeline routes this
+    // claim against existing knowledge, the audit assembles everything in custody that bears on
+    // it, weighs each side by independent sources, enumerates how it could resolve, and proposes
+    // a reconciling perspective when the data itself grounds one. It decides nothing.
+    let contradictionAudit = null;
+    if (!verified && /contradiction|quarantine/i.test(String(evaluation.decision.route))) {
+      const active = store.activeKnowledge().find((item) => item.boundary === ready.declaration.claimScope || item.boundary === available.find((r) => r.candidate.id === ready.candidateIds[0])?.candidate.claimBoundary);
+      if (active) {
+        contradictionAudit = auditContradiction({
+          records: [...store.read().candidateRecords, ...available],
+          activeVersion: active,
+          challengeClaim: ready.claim,
+          bundle,
+          options: corroborationOptions,
+        });
+        console.log(`[The Crucible] contradiction audit: ${contradictionAudit.route}; leading: ${contradictionAudit.leadingResolutions.join(', ')}`);
+        if (contradictionAudit.perspective) console.log(`[The Crucible]   perspective: ${contradictionAudit.perspective.hypothesis}`);
+      }
+    }
+
     evaluations.push({
+      contradictionAudit,
       claim: ready.claim,
       claimScope: ready.declaration.claimScope,
       corroborationRoute: ready.route,
