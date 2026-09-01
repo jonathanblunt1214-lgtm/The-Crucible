@@ -89,7 +89,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-01T11:57:00Z"
+    "lastActionAt": "2026-09-01T15:15:00Z"
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -151,14 +151,14 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "Claude",
-    "objective": "Make the real corpus able to corroborate at all, by replacing exact string equality with a deterministic same-meaning test that is itself proven, and by adding an owner-paired route for agreement no wording test can derive - without loosening what proof requires.",
-    "currentPrompt": "do a combination of both: Option 2 (owner-paired) and Option 1 (semantic corroboration, deterministic and itself proven).",
+    "agent": "Codex",
+    "objective": "Complete the independently vetted-output connection so the GitHub-hosted real-corpus R4-R8 proof consumes only Oversight-approved ciphertext and can proceed toward soak readiness.",
+    "currentPrompt": "well then get this done The immediate blocker is the vetted-output connection. Once you authorize the exact secret distribution and read-only access stated earlier, that can be completed and the live R4-R8 proof can begin.",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "Claude",
-      "purpose": "Build both corroboration routes into the real-corpus learning path and the comparison layer, prove each adversarially, and record the result.",
-      "selectionReason": "Repository-focused implementation continuing the same real-corpus objective on owner instruction; the receiving plan already recorded regular/default and the task needs have not changed, so the mode is preserved rather than re-selected.",
+      "agent": "Codex",
+      "purpose": "Replace Crucible raw-corpus restoration with the independent Oversight-vetted custody path, verify authorized consumers, and run exact-tip hosted proof without granting release authority.",
+      "selectionReason": "The owner explicitly authorized the exact vetted-key distribution and read-only access needed to remove the recorded hosted-learning blocker.",
       "distinction": "Execution mode is separate from agent identity and workflow; diagnosis remains evidence processing, not proof or unattended repair authority."
     },
     "steps": [
@@ -197,11 +197,17 @@
       "[done] Extended the brake to every governed organ. A STOP halted the pump and left every organ reading healthy, so the health view disagreed with the organism state - and the health view is what a person is trusting when they are not watching. A STOP now inhibits each organ with the reason recorded on it, homeostasis can no longer recover an organism out of a stop, and a CLEAR restores each organ to what it was rather than laundering a degraded one into a healthy one.",
       "[corrected] One of three claimed gaps was wrong: intake was already closed under a stop, because submit refuses inside its own transaction. The redundant check was removed rather than left to drift from the original, and the claim was corrected rather than banked.",
       "[done] Repair before stop, and live organ health. An ordinary fault now gets exactly one bounded, reversible, independently verified repair attempt before a stop is requested. A critical finding - boundary breach, unauthorized promotion, evidence tampering, oversight evasion, cross-project leak - gets none, because waiting is itself the harm and nothing in the module can grant a window. An unverified repair counts as failed rather than pending, a repair that escapes its declared organ or boundary escalates however well it went, and a fault that returns escalates rather than buying another attempt. Crucible cannot mark its own repair verified: a verifier that is the organism verifies nothing. Live health now travels the bus as a typed observation carrying each organ state and its exact missing dependency, so oversight receives the organism condition rather than inspecting repository state for it.",
-      "[note] Oversight half - independent detection, independent verification of recovery, the email, and the STOP itself - lives outside this repository by design. Nothing built here substitutes for it, and the modules say so."
+      "[note] Oversight half - independent detection, independent verification of recovery, the email, and the STOP itself - lives outside this repository by design. Nothing built here substitutes for it, and the modules say so.",
+      "[done] Rotated the vetted-output encryption key under Oversight custody and distributed it only to Oversight, Learning-Worker, and The-Crucible's vetted proof; the raw intake key remains Oversight-only.",
+      "[done] Added a dedicated read-only deploy identity allowing The-Crucible to clone only Crucible-Vetted-Learning-State; it does not share Learning-Worker's identity and cannot write that repository.",
+      "[done] Oversight run 33524179971 independently authenticated the raw bundle, vetted it, republished ciphertext under the rotated vetted key, and completed without an emergency STOP.",
+      "[done] Learning-Worker run 33524558712 consumed and decrypted the rotated vetted output successfully, proving the independent gate-to-worker custody link.",
+      "[done] Reconciled concurrent development tip 452cc42 and repaired its incomplete CodeQL autofix, which had left a duplicate method chain after return and made 13 suites unloadable. Nested active-content sanitization now reaches a tested fixed point; known bug KB-local-80c744e635 passed its governed 620-test re-test.",
+      "[in progress] Rewire hosted-learning-proof.yml from Crucible-Learning-State plus CRUCIBLE_SOURCE_BUNDLE_KEY to Crucible-Vetted-Learning-State plus CRUCIBLE_VETTED_BUNDLE_KEY, run full exact-tip verification, push development, and inspect the live R4-R8 result."
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-09-01T13:20:00Z"
+    "lastUpdatedAt": "2026-09-01T15:15:00Z"
   },
   "handoffNotes": {
     "completed": [

@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
   "branch": "development",
-  "developmentSha": "5ed69f6dcc319f1050b45cfcf84d2108863d5f9a",
-  "updatedAt": "2026-09-01T09:40:00Z",
+  "developmentSha": "452cc42e2e144ea25b8db10e449a89f4a962fd68",
+  "updatedAt": "2026-09-01T15:15:00Z",
   "rollingTarget": "2026-09-14T16:00:00Z",
   "timezone": "America/New_York",
   "confidence": "medium",
@@ -22,7 +22,7 @@
     "R10": "pending",
     "R11": "pending"
   },
-  "blockingReason": "The hosted proof cannot reach the corpus. Every run since some time between 00:19 and 05:31 UTC on 2026-09-01 fails at restore with \"Unsupported state or unable to authenticate data\": the corpus ciphertext no longer authenticates against CRUCIBLE_SOURCE_BUNDLE_KEY. The parallel session reports rotating the intake key to an oversight-only key and re-encrypting the staged bundle at that time, so this repository holds a stale key. Until that is resolved no gate beyond R1 can be evidenced on real material, and the furniture rejection that unblocked corroboration is unverified against the real corpus. Behind it, the remaining blockers are unchanged: R7 needs the owner-declared scope to reach the experiment boundary, and R4-R6 need one declared scope for a claim that survives furniture rejection.",
+  "blockingReason": "The stale raw-key blocker is removed without giving Crucible continuing raw-intake access: independent Oversight run 33524179971 authenticated the raw bundle and republished vetted ciphertext under the rotated vetted-output key. The development workflow now consumes only Crucible-Vetted-Learning-State through a dedicated read-only identity. Exact-tip hosted R4-R8 re-proof is still required before those gates or R9 can advance; R4-R6 also require a declared scope for a claim that survives furniture rejection, and R9 remains held until R2-R8 are simultaneously green.",
   "history": [
     {
       "recordedAt": "2026-08-30T20:33:00Z",

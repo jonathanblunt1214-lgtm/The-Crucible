@@ -190,6 +190,10 @@ test('GitHub hosts encrypted restart-safe R4-R8 proof without production authori
   assert.match(workflow, /github\.ref == 'refs\/heads\/development'/);
   assert.match(workflow, /actions\/cache\/restore@0057852bfaa89a56745cba8c7296529d2fc39830/);
   assert.match(workflow, /CRUCIBLE_HOSTED_STORE_KEY: \$\{\{ secrets\.CRUCIBLE_HOSTED_STORE_KEY \}\}/);
+  assert.match(workflow, /CRUCIBLE_VETTED_STATE_READ_KEY/);
+  assert.match(workflow, /CRUCIBLE_VETTED_BUNDLE_KEY/);
+  assert.match(workflow, /Crucible-Vetted-Learning-State\.git/);
+  assert.doesNotMatch(workflow, /CRUCIBLE_LEARNING_STATE_DEPLOY_KEY|secrets\.CRUCIBLE_SOURCE_BUNDLE_KEY|Crucible-Learning-State\.git/);
   assert.match(workflow, /node src\/hostedLearningProof\.js/);
   assert.match(workflow, /actions\/cache\/save@0057852bfaa89a56745cba8c7296529d2fc39830/);
   assert.match(workflow, /retention-days: 90/);
