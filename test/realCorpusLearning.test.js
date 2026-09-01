@@ -7,7 +7,7 @@ const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const { ClaimExtractionWorker } = require('../src/claimExtractionWorker');
 const { DurableScientificLearningStore } = require('../src/scientificLearning');
-const { readBundle, corpusCandidateStore, corroboratedClaims, readScopeDeclarations, learnFromRealCorpus } = require('../src/realCorpusLearning');
+const { readBundle, corpusCandidateStore, corroboratedClaims, reviewCorroborated, readScopeDeclarations, learnFromRealCorpus } = require('../src/realCorpusLearning');
 
 const PROJECT = 'github:owner/repo';
 const AT = '2026-09-01T00:00:00.000Z';
@@ -257,4 +257,55 @@ test('corroborates candidates held in the corpus own learning state, not only th
   assert.equal(report.ingestedFromCorpus.length, 2, 'both candidates were taken into custody from the corpus, not invented');
   assert.deepEqual(report.gates, { R4: true, R5: true, R6: true });
   assert.equal(report.promotionAuthorized, false);
+});
+
+// "Use all of them" was not possible: a run evaluated the first usable declaration and stopped,
+// so declaring ten scopes tested one and left nine untouched with nothing in the report to say so.
+test('every declared claim is evaluated in its own right, not just the first', async (t) => {
+  const dir = workspace(t);
+  const second = 'The filter method returns a new array and does not modify the original array.';
+  const { bundleRoot, learningRoot } = buildBundle(dir, [
+    { url: 'https://example.edu/arrays', content: `Working with arrays.\n${CLAIM} Callers keep the original values for later work.\n${second} The predicate decides which elements survive.` },
+    { url: 'https://other.org/iteration', content: `A reference on iteration helpers.\n${CLAIM} Chaining further calls stays predictable.\n${second} Every retained element keeps its order.` },
+  ]);
+  const file = path.join(dir, 'two-scopes.json');
+  const shared = { claimScope: SCOPE, generalizationBoundary: 'Does not cover sparse arrays, proxies, subclasses, or host objects.', language: 'javascript' };
+  fs.writeFileSync(file, JSON.stringify({ declarations: [{ claim: CLAIM, ...shared }, { claim: second, ...shared }] }, null, 2));
+
+  const report = await learnFromRealCorpus({ bundleRoot, learningRoot, projectId: PROJECT, scopeDeclarationFile: file, harnessesFor, now: () => AT });
+  assert.equal(report.declarationsEvaluated, 2, 'both declarations were carried through');
+  assert.equal(new Set(report.evaluations.map((item) => item.claim)).size, 2, 'each declaration got its own outcome');
+  for (const evaluation of report.evaluations) {
+    assert.equal(evaluation.promotionAuthorized, false);
+    assert.ok(evaluation.learned === true || typeof evaluation.reason === 'string', 'every evaluation says what happened to it');
+  }
+  assert.ok(report.claimsPromoted >= 1, report.reason);
+});
+
+// Running every corroborated claim through the real reviewer needs no declaration and writes
+// nothing, so a stopped run can still say which claims could ever be tested.
+test('every corroborated claim gets a verdict from the real critical reviewer', (t) => {
+  const dir = workspace(t);
+  const ambiguous = 'It is usually written to provide a clear and concise explanation for beginner programmers.';
+  const { learningRoot } = buildBundle(dir, [
+    { url: 'https://example.edu/arrays', content: `Working with arrays.\n${CLAIM} Callers keep the original values.\n${ambiguous} More prose follows here.` },
+    { url: 'https://other.org/iteration', content: `A reference on iteration.\n${CLAIM} Chaining stays predictable.\n${ambiguous} More prose follows here.` },
+  ]);
+  const store = new DurableScientificLearningStore({ root: learningRoot, projectId: PROJECT });
+  const records = store.read().candidateRecords;
+  const corroborated = corroboratedClaims(records);
+  assert.ok(corroborated.length >= 2, 'both claims corroborate');
+
+  const reviews = reviewCorroborated(corroborated, records, { projectId: PROJECT, at: AT });
+  assert.equal(reviews.length, corroborated.length, 'no corroborated claim is left unreviewed');
+  for (const review of reviews) {
+    assert.equal(review.promotionAuthorized, false, 'reviewing never authorizes anything');
+    assert.equal(review.scopeDeclared, false, 'no scope was declared or invented to make this possible');
+  }
+  const flagged = reviews.find((review) => review.claim === ambiguous);
+  assert.equal(flagged.testable, false, 'the reviewer refuses a claim whose wording it cannot pin down');
+  assert.ok(flagged.ambiguities.length > 0);
+  assert.match(flagged.nextAction, /measurable terms/);
+
+  assert.equal(store.read().candidateRecords.length, records.length, 'the review pass wrote nothing');
 });

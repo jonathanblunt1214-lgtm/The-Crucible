@@ -59,7 +59,27 @@ test('GitHub-hosted proof persists encrypted project-bound state and restores it
   seedStore(firstRoot, queueFile);
   const first = await runHostedProof({ ...common, root: firstRoot, runId: '1' });
   assert.equal(first.restoredEncryptedState, false);
-  assert.deepEqual(first.gates.map((item) => item.state), ['satisfied', 'satisfied', 'satisfied', 'satisfied', 'satisfied']);
+  // R4-R6 are satisfied by learning from the real documents. R7 and R8 are reported as the
+  // readiness gate judges them against this corpus, not asserted: R7 previously superseded a
+  // candidate the proof built from its own hardcoded claim, and R8's retrieval cases ran
+  // against a stubbed fetch with three of the eight compared against themselves. A two-document
+  // corpus genuinely cannot demonstrate either, and the honest state is pending.
+  assert.deepEqual(first.gates.map((item) => item.state), ['satisfied', 'satisfied', 'satisfied', 'pending', 'pending']);
+  assert.equal(first.supersession.satisfied, false);
+  assert.match(first.supersession.reason, /no further source in the corpus/, 'R7 says what the corpus could not supply');
+  assert.equal(first.supersession.promotionAuthorized, false);
+
+  // Every safety behaviour carries evidence or a reason, and only demonstrated ones are
+  // reported as evidence to the gate.
+  assert.equal(first.safetyBehaviours.length, 8);
+  for (const behaviour of first.safetyBehaviours) assert.ok(behaviour.satisfied ? behaviour.evidence : behaviour.reason);
+  assert.ok(first.safetyEvidence.includes('kill-switch'), 'refusals are provable against a real retriever with its real fetch');
+  assert.ok(first.safetyEvidence.includes('blocked-source'));
+  assert.ok(first.safetyEvidence.includes('duplicate-claim'), 'one claim from two real documents is real deduplication evidence');
+  assert.ok(first.safetyUnsatisfied.some((item) => item.behaviour === 'contradiction-quarantine'));
+  for (const behaviour of first.safetyBehaviours) {
+    assert.ok(first.safetyEvidence.includes(behaviour.behaviour) === behaviour.satisfied, 'nothing undemonstrated is listed as evidence');
+  }
   assert.equal(first.outOfScopeRetrievalCount, 0);
   assert.doesNotMatch(fs.readFileSync(encrypted, 'utf8'), /The map method/, 'the claim never appears in the ciphertext');
 

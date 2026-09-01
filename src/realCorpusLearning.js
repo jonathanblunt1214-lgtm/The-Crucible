@@ -17,10 +17,12 @@ const { DurableScientificLearningStore } = require('./scientificLearning');
 const { ControlledClaimEvaluationWorker } = require('./claimEvaluationWorker');
 const { ClaimComparisonLedger } = require('./claimComparison');
 const { CriticalClaimReviewer } = require('./criticalClaimReview');
+const { routeThreeWayComparison } = require('./claimComparison');
 const { LogicalReasoningProblemSolver, ReasoningLedger } = require('./reasoningProblemSolving');
 const { CreativeDecisionAdaptationEngine, CognitiveStrategyLedger } = require('./creativeDecisionAdaptation');
 const { groupCorroborating, semanticallyCorroborates } = require('./semanticCorroboration');
 const { verifyPairedDeclaration } = require('./pairedCorroboration');
+const { sourceIndex, independentSubset } = require('./sourceIndependence');
 
 const normalize = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
@@ -48,24 +50,32 @@ function readBundle(root) {
 // refuses to cross a negation or a changed number however similar the wording.
 function corroboratedClaims(storeOrRecords, options = {}) {
   const records = Array.isArray(storeOrRecords) ? storeOrRecords : storeOrRecords.read().candidateRecords;
+  const index = options.sourceIndex || null;
   const entries = [];
   for (const record of records) {
     if (record.state !== 'candidate') continue;
     if (!normalize(record.candidate.claim)) continue;
-    entries.push({ id: record.candidate.id, claim: record.candidate.claim, sourceId: record.candidate.provenance.sourceId });
+    entries.push({ id: record.candidate.id, claim: record.candidate.claim, sourceId: record.candidate.provenance.sourceId, provenance: record.candidate.provenance });
   }
   const corroborated = [];
   for (const group of groupCorroborating(entries, options)) {
     const bySource = new Map();
     for (const member of group.members) if (!bySource.has(member.sourceId)) bySource.set(member.sourceId, member);
     if (bySource.size < 2) continue;
-    const picked = [...bySource.values()].sort((a, b) => (a.id < b.id ? -1 : 1)).slice(0, 2);
+    // Distinct source ids are not the same thing as independent sources. Two editions of one
+    // book, or two pages of one publisher, agree with themselves; counting that as
+    // corroboration is how a single mistaken document becomes two votes.
+    const { members: independentMembers, rejected } = independentSubset([...bySource.values()], index);
+    if (independentMembers.length < 2) continue;
+    const picked = independentMembers.sort((a, b) => (a.id < b.id ? -1 : 1)).slice(0, 2);
     corroborated.push({
       claimKey: normalize(group.claim),
       claim: group.claim,
       // How the two sources were found to agree, so a report never hides a wording judgement.
       agreement: picked.some((member) => normalize(member.claim) !== normalize(group.claim)) ? 'semantic' : 'verbatim',
-      sourceCount: bySource.size,
+      sourceCount: independentMembers.length,
+      sourceIdsSeen: bySource.size,
+      notIndependent: rejected,
       candidateIds: picked.map((member) => member.id),
       sourceIds: picked.map((member) => member.sourceId),
       assertedAs: picked.map((member) => member.claim),
@@ -130,6 +140,53 @@ function allCandidateRecords(store, corpusStore) {
   return [...byId.values()];
 }
 
+// Putting every corroborated claim through the real critical reviewer, without promoting any
+// of them and without declaring anything.
+//
+// A scope is the owner's to declare, and until one exists a claim cannot be evaluated. But the
+// comparison and the critical reviewer are pure functions over evidence already in custody, so
+// every corroborated claim can be run through them now and say for itself whether it is the
+// kind of assertion this pipeline could ever test. That is a real verdict from the system's own
+// reviewer rather than an opinion about the claim, and it costs nothing: nothing is written,
+// nothing is promoted, and no scope is invented to make it possible.
+function reviewCorroborated(corroborated, records, { declarations = [], reviewer = new CriticalClaimReviewer(), at = new Date().toISOString(), projectId } = {}) {
+  const byId = new Map(records.map((record) => [record.candidate.id, record.candidate]));
+  const reviews = [];
+  for (const item of corroborated) {
+    const a = byId.get(item.candidateIds[0]);
+    const b = byId.get(item.candidateIds[1]);
+    if (!a || !b) continue;
+    const declaration = declarations.find((entry) => entry.claimKey === item.claimKey) || null;
+    const claimScope = declaration ? declaration.claimScope : null;
+    const source = (candidate) => ({ sourceId: candidate.provenance.sourceId, claim: candidate.claim, claimBoundary: candidate.claimBoundary, generalizationBoundary: candidate.generalizationBoundary, claimScope });
+    let decision;
+    try {
+      decision = routeThreeWayComparison({ projectId: projectId || a.projectId, candidateId: a.id, sourceA: source(a), sourceB: source(b), activeKnowledge: [], comparedAt: at, ownerDeclaredAgreement: item.agreement === 'semantic' });
+    } catch (error) {
+      reviews.push({ claim: item.claim, testable: false, route: 'not-comparable', reason: error.message, scopeDeclared: Boolean(declaration) });
+      continue;
+    }
+    const review = reviewer.review({ candidate: a, corroboratingCandidate: b, comparison: decision, reviewedAt: at });
+    reviews.push({
+      claim: item.claim,
+      sourceCount: item.sourceCount,
+      agreement: item.agreement,
+      scopeDeclared: Boolean(declaration),
+      comparisonRoute: decision.route,
+      reviewRoute: review.route,
+      ambiguities: review.ambiguities,
+      causalLanguage: review.causalLanguage,
+      // The reviewer routes a claim to controlled testing only when nothing in its wording
+      // stops it. Anything else is the system saying this is not yet a testable assertion.
+      testable: review.route === 'ready-for-controlled-testing',
+      nextAction: review.nextAction,
+      proofStageSatisfied: false,
+      promotionAuthorized: false,
+    });
+  }
+  return reviews;
+}
+
 // Choosing the one declaration to evaluate, by the two routes into corroboration.
 //
 // Route A is what the corpus found on its own: a declaration matching a claim that two
@@ -141,13 +198,30 @@ function allCandidateRecords(store, corpusStore) {
 // Either way the candidates carried forward are records the extraction worker already made
 // from real documents. Nothing here creates a candidate.
 function selectEvaluable({ store, available, corroborated, declarations, bundle, bundleRoot, options = {} }) {
+  const all = selectAllEvaluable({ store, available, corroborated, declarations, bundle, bundleRoot, options });
+  return { ready: all.ready[0] || null, pairedFailures: all.pairedFailures };
+}
+
+// Every declaration the corpus can support, not only the first.
+//
+// A single run used to evaluate one claim and stop, so declaring ten scopes tested one of them
+// and left the other nine untouched with no way to tell from the report. Each usable
+// declaration is now carried through on its own, and each reports its own outcome: the
+// pipeline may promote one, quarantine another, and refuse a third in the same run, which is
+// what a governed pipeline judging ten different claims should look like.
+function selectAllEvaluable({ store, available, corroborated, declarations, bundle, bundleRoot, options = {} }) {
   const pairedFailures = [];
+  const ready = [];
+  const claimed = new Set();
 
   for (const declaration of declarations) {
     const match = corroborated.find((item) => item.claimKey === declaration.claimKey
       || (item.assertedAs || []).some((claim) => normalize(claim) === declaration.claimKey)
       || semanticallyCorroborates(declaration.claim, item.claim, options).corroborates);
-    if (match) return { ready: { ...match, declaration, route: 'corpus-corroborated' }, pairedFailures };
+    if (match && !claimed.has(match.candidateIds.join('|'))) {
+      claimed.add(match.candidateIds.join('|'));
+      ready.push({ ...match, declaration, route: 'corpus-corroborated' });
+    }
   }
 
   const records = available || store.read().candidateRecords;
@@ -155,7 +229,7 @@ function selectEvaluable({ store, available, corroborated, declarations, bundle,
     && String(record.candidate.provenance.sourceId) === String(sourceId)
     && normalize(record.candidate.claim) === normalize(sentence));
 
-  for (const declaration of declarations.filter((item) => Array.isArray(item.pairedSources))) {
+  for (const declaration of declarations.filter((item) => Array.isArray(item.pairedSources) && !ready.some((item2) => item2.declaration === item))) {
     const verified = verifyPairedDeclaration({ bundle, bundleRoot, declaration, options });
     if (!verified.satisfied) {
       pairedFailures.push({ claim: declaration.claim, pairedSources: declaration.pairedSources, reason: verified.reason });
@@ -171,8 +245,7 @@ function selectEvaluable({ store, available, corroborated, declarations, bundle,
       });
       continue;
     }
-    return {
-      ready: {
+    const candidate = {
         claimKey: normalize(resolved[0].record.candidate.claim),
         claim: resolved[0].record.candidate.claim,
         agreement: verified.sources.every((source) => source.agreement === 'verbatim') ? 'verbatim' : 'semantic',
@@ -183,12 +256,14 @@ function selectEvaluable({ store, available, corroborated, declarations, bundle,
         declaration,
         route: 'owner-paired',
         ownerDeclaredAgreement: Boolean(verified.ownerDeclaredAgreement),
-      },
-      pairedFailures,
     };
+    if (!claimed.has(candidate.candidateIds.join('|'))) {
+      claimed.add(candidate.candidateIds.join('|'));
+      ready.push(candidate);
+    }
   }
 
-  return { ready: null, pairedFailures };
+  return { ready, pairedFailures };
 }
 
 // Whether the store's verified knowledge actually came from the real corpus.
@@ -227,7 +302,7 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
   // store's; the persistent store holds only what previous runs promoted or ingested.
   const corpusStore = corpusCandidateStore(bundle, bundleRoot, projectId);
   const available = allCandidateRecords(store, corpusStore);
-  const corroborated = corroboratedClaims(available, corroborationOptions);
+  const corroborated = corroboratedClaims(available, { ...corroborationOptions, sourceIndex: sourceIndex(bundle) });
   const declarations = readScopeDeclarations(scopeDeclarationFile);
 
   const corpus = {
@@ -241,10 +316,10 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     knowledgeVersionsBefore: before.knowledgeVersions.length,
   };
 
-  const selection = selectEvaluable({ store, available, corroborated, declarations, bundle, bundleRoot, options: corroborationOptions });
-  const ready = selection.ready;
+  const selection = selectAllEvaluable({ store, available, corroborated, declarations, bundle, bundleRoot, options: corroborationOptions });
+  const reviews = reviewCorroborated(corroborated, available, { declarations, at: now(), projectId });
 
-  if (!ready) {
+  if (!selection.ready.length) {
     // Fail closed and say exactly which reason applies, so the next step is obvious.
     let reason;
     if (selection.pairedFailures.length) {
@@ -256,71 +331,105 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     } else {
       reason = `${corroborated.length} corroborated claim(s) exist in the real corpus but none matches a declaration, and no declaration nominates a pairing the corpus supports`;
     }
-    return { schemaVersion: 1, projectId, corpus, learned: false, reason, corroborated: corroborated.slice(0, 25), pairedFailures: selection.pairedFailures, gates: { R4: false, R5: false, R6: false }, promotionAuthorized: false };
+    return { schemaVersion: 1, projectId, corpus, learned: false, reason, corroborated: corroborated.slice(0, 25), reviews, pairedFailures: selection.pairedFailures, evaluations: [], gates: { R4: false, R5: false, R6: false }, promotionAuthorized: false };
   }
 
-  // The two selected candidates may live only in the corpus's store. Evaluation happens in the
-  // persistent store, so take them into custody there first - by the same ingest path extraction
-  // uses, with provenance intact. Nothing is created here that the corpus did not already hold.
-  const ingestedFromCorpus = [];
-  for (const record of available) {
-    if (!ready.candidateIds.includes(record.candidate.id)) continue;
-    if (store.get(record.candidate.id)) continue;
-    store.ingest(record.candidate);
-    ingestedFromCorpus.push(record.candidate.id);
+  // Every usable declaration is carried through on its own. One may promote while another is
+  // quarantined and a third is refused; each says which, and none decides for the others.
+  const evaluations = [];
+  for (const ready of selection.ready) {
+    const { experiment, verifier } = harnessesFor(ready.declaration);
+    if (!experiment?.id || !verifier?.id || experiment.id === verifier.id) throw new Error('Independent verification requires distinct experiment and verifier identities.');
+
+    const ingestedFromCorpus = [];
+    for (const record of available) {
+      if (!ready.candidateIds.includes(record.candidate.id)) continue;
+      if (store.get(record.candidate.id)) continue;
+      store.ingest(record.candidate);
+      ingestedFromCorpus.push(record.candidate.id);
+    }
+
+    const worker = new ControlledClaimEvaluationWorker({
+      store,
+      comparisonLedger: new ClaimComparisonLedger({ root: learningRoot, projectId }),
+      criticalReviewer: new CriticalClaimReviewer(),
+      reasoningProblemSolver: new LogicalReasoningProblemSolver(),
+      reasoningLedger: new ReasoningLedger({ root: learningRoot, projectId }),
+      strategyEngine: new CreativeDecisionAdaptationEngine(),
+      strategyLedger: new CognitiveStrategyLedger({ root: learningRoot, projectId }),
+      experimentHarnesses: { [ready.declaration.language || 'javascript']: experiment },
+      verifierHarnesses: { [ready.declaration.language || 'javascript']: verifier },
+      now,
+    });
+
+    let evaluation;
+    try {
+      evaluation = await worker.process({
+        candidateId: ready.candidateIds[0],
+        corroboratingCandidateId: ready.candidateIds[1],
+        language: ready.declaration.language || 'javascript',
+        claimScope: ready.declaration.claimScope,
+        ownerDeclaredAgreement: Boolean(ready.ownerDeclaredAgreement),
+      });
+    } catch (error) {
+      // One claim failing its controlled test is a result about that claim, not a reason to
+      // abandon the others.
+      evaluations.push({ claim: ready.claim, claimScope: ready.declaration.claimScope, corroborationRoute: ready.route, sourceIds: ready.sourceIds, candidateIds: ready.candidateIds, ingestedFromCorpus, learned: false, reason: `the controlled pipeline stopped on this claim: ${error.message}`, verifiedVersion: null, promotionAuthorized: false });
+      continue;
+    }
+
+    const verified = evaluation.verifiedKnowledge;
+    evaluations.push({
+      claim: ready.claim,
+      claimScope: ready.declaration.claimScope,
+      corroborationRoute: ready.route,
+      agreement: ready.agreement,
+      ownerDeclaredAgreement: Boolean(ready.ownerDeclaredAgreement),
+      assertedAs: ready.assertedAs,
+      sourceIds: ready.sourceIds,
+      candidateIds: ready.candidateIds,
+      ingestedFromCorpus,
+      experimentExecutorId: experiment.id,
+      independentVerifierId: verifier.id,
+      learned: Boolean(verified),
+      reason: verified ? null : `the controlled pipeline did not promote this claim: comparison routed ${evaluation.decision.route}, critical review routed ${evaluation.criticalReview.route}, and the record ended in state ${evaluation.record.state}`,
+      verifiedVersion: verified ? verified.version : null,
+      retrievedWithinScope: verified ? store.retrieve({ boundary: verified.boundary }).map((item) => item.version) : [],
+      promotionAuthorized: false,
+    });
   }
 
-  const { experiment, verifier } = harnessesFor(ready.declaration);
-  if (!experiment?.id || !verifier?.id || experiment.id === verifier.id) throw new Error('Independent verification requires distinct experiment and verifier identities.');
-
-  const worker = new ControlledClaimEvaluationWorker({
-    store,
-    comparisonLedger: new ClaimComparisonLedger({ root: learningRoot, projectId }),
-    criticalReviewer: new CriticalClaimReviewer(),
-    reasoningProblemSolver: new LogicalReasoningProblemSolver(),
-    reasoningLedger: new ReasoningLedger({ root: learningRoot, projectId }),
-    strategyEngine: new CreativeDecisionAdaptationEngine(),
-    strategyLedger: new CognitiveStrategyLedger({ root: learningRoot, projectId }),
-    experimentHarnesses: { [ready.declaration.language || 'javascript']: experiment },
-    verifierHarnesses: { [ready.declaration.language || 'javascript']: verifier },
-    now,
-  });
-
-  const evaluation = await worker.process({
-    candidateId: ready.candidateIds[0],
-    corroboratingCandidateId: ready.candidateIds[1],
-    language: ready.declaration.language || 'javascript',
-    claimScope: ready.declaration.claimScope,
-    ownerDeclaredAgreement: Boolean(ready.ownerDeclaredAgreement),
-  });
-
-  const verified = evaluation.verifiedKnowledge;
+  const promoted = evaluations.filter((item) => item.learned);
   const after = store.read();
+  const first = promoted[0] || null;
   return {
     schemaVersion: 1,
     projectId,
     corpus,
-    learned: Boolean(verified),
-    reason: verified ? null : `the controlled pipeline did not promote this claim: comparison routed ${evaluation.decision.route}, critical review routed ${evaluation.criticalReview.route}, and the record ended in state ${evaluation.record.state}`,
-    claim: ready.claim,
-    claimScope: ready.declaration.claimScope,
-    // How this pair came to be treated as one claim, and the sentence each source actually
-    // used. A wording judgement or an owner-nominated pairing is always visible in the report.
-    corroborationRoute: ready.route,
-    ingestedFromCorpus,
-    agreement: ready.agreement,
-    ownerDeclaredAgreement: Boolean(ready.ownerDeclaredAgreement),
-    assertedAs: ready.assertedAs,
-    sourceIds: ready.sourceIds,
-    candidateIds: ready.candidateIds,
-    experimentExecutorId: experiment.id,
-    independentVerifierId: verifier.id,
-    verifiedVersion: verified ? verified.version : null,
-    retrievedWithinScope: verified ? store.retrieve({ boundary: verified.boundary }).map((item) => item.version) : [],
+    reviews,
+    // Each declaration's own outcome, so a run that promotes one claim and refuses four says so.
+    evaluations,
+    declarationsEvaluated: evaluations.length,
+    claimsPromoted: promoted.length,
+    learned: promoted.length > 0,
+    reason: promoted.length ? null : `no declared claim was promoted: ${evaluations.map((item) => `"${item.claim.slice(0, 60)}" - ${item.reason}`).join('; ')}`,
+    claim: first ? first.claim : null,
+    claimScope: first ? first.claimScope : null,
+    corroborationRoute: first ? first.corroborationRoute : null,
+    agreement: first ? first.agreement : null,
+    ownerDeclaredAgreement: first ? Boolean(first.ownerDeclaredAgreement) : false,
+    assertedAs: first ? first.assertedAs : null,
+    ingestedFromCorpus: first ? first.ingestedFromCorpus : [],
+    sourceIds: first ? first.sourceIds : null,
+    candidateIds: first ? first.candidateIds : null,
+    experimentExecutorId: first ? first.experimentExecutorId : null,
+    independentVerifierId: first ? first.independentVerifierId : null,
+    verifiedVersion: first ? first.verifiedVersion : null,
+    retrievedWithinScope: first ? first.retrievedWithinScope : [],
     knowledgeVersionsAfter: after.knowledgeVersions.length,
-    gates: { R4: true, R5: Boolean(verified), R6: Boolean(verified) && store.retrieve({ boundary: verified.boundary }).length > 0 },
+    gates: { R4: evaluations.length > 0, R5: promoted.length > 0, R6: promoted.length > 0 && Boolean(first) && first.retrievedWithinScope.length > 0 },
     promotionAuthorized: false,
   };
 }
 
-module.exports = { readBundle, corpusCandidateStore, allCandidateRecords, corroboratedClaims, readScopeDeclarations, selectEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };
+module.exports = { readBundle, corpusCandidateStore, allCandidateRecords, corroboratedClaims, reviewCorroborated, readScopeDeclarations, selectEvaluable, selectAllEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };
