@@ -60,6 +60,8 @@ jobs:
           CRUCIBLE_BASE_SHA: ${{ github.event.before || github.event.pull_request.base.sha }}
           CRUCIBLE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: npm run validate
+      - name: Enforce fly-by-wire on every push, not only when someone remembers to look
+        run: npm run audit:circulation
       - run: npm run audit:clutter
       - run: npm run audit:privacy
       - run: npm run audit:security
