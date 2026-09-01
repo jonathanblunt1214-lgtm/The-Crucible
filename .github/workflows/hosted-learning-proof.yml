@@ -39,6 +39,7 @@ jobs:
       # The corpus has to be here, in this job. Restoring it in a separate workflow that then
       # destroys its plaintext is why the proof previously fell back to sources built in code.
       - name: Restore the real encrypted corpus from its private state repository
+        id: corpus
         env:
           STATE_DEPLOY_KEY: ${{ secrets.CRUCIBLE_LEARNING_STATE_DEPLOY_KEY }}
         run: |
@@ -50,23 +51,50 @@ jobs:
           GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/crucible-state-ssh/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/crucible-state-ssh/known_hosts -o StrictHostKeyChecking=yes" \
             git clone --depth 1 git@github.com:jonathanblunt1214-lgtm/Crucible-Learning-State.git \
             "$RUNNER_TEMP/crucible-source-restore/ciphertext"
+          # Prefer oversight's vetted publication over the raw intake bundle. Material that came
+          # through the information gate and material that did not are different provenance, and
+          # the run has to record which one it actually read rather than reporting "corpus loaded".
+          root="$RUNNER_TEMP/crucible-source-restore/ciphertext"
+          if [ -f "$root/vetted/encrypted-chunks.json" ]; then
+            echo 'expected=oversight-vetted' >> "$GITHUB_OUTPUT"
+            root="$root/vetted"
+          else
+            echo 'expected=raw-intake' >> "$GITHUB_OUTPUT"
+          fi
+          echo "[The Crucible] corpus ciphertext: $root"
           node src/hostedSourceBundle.js join \
-            --input-root "$RUNNER_TEMP/crucible-source-restore/ciphertext" \
+            --input-root "$root" \
             --output "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc"
       - name: Decrypt and verify every restored hash
         env:
+          # The vetted key is tried first, then the current intake key, then the outgoing one. A
+          # key rotation on either side is survivable while both are in circulation, and a bundle
+          # no key can open reports the diagnosis rather than a bare crypto error.
+          CRUCIBLE_VETTED_BUNDLE_KEY: ${{ secrets.CRUCIBLE_VETTED_BUNDLE_KEY }}
           CRUCIBLE_SOURCE_BUNDLE_KEY: ${{ secrets.CRUCIBLE_SOURCE_BUNDLE_KEY }}
+          CRUCIBLE_SOURCE_BUNDLE_KEY_PREVIOUS: ${{ secrets.CRUCIBLE_SOURCE_BUNDLE_KEY_PREVIOUS }}
+          EXPECTED_PROVENANCE: ${{ steps.corpus.outputs.expected }}
         run: |
           node src/hostedSourceBundle.js decrypt \
             --input "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc" \
             --output "$RUNNER_TEMP/crucible-source-restore/source-bundle.tar.gz" \
-            --repository "$GITHUB_REPOSITORY" --ref "$GITHUB_REF"
+            --repository "$GITHUB_REPOSITORY" --ref "$GITHUB_REF" \
+            > "$RUNNER_TEMP/crucible-source-restore/decrypt.json"
+          provenance="$(node -e 'process.stdout.write(JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).provenance)' "$RUNNER_TEMP/crucible-source-restore/decrypt.json")"
+          echo "[The Crucible] corpus provenance: $provenance (expected $EXPECTED_PROVENANCE)"
+          # A bundle published as vetted must be readable only with the vetted key. If it opened
+          # with an intake key it did not come from oversight, whatever directory it was in.
+          if [ "$provenance" != "$EXPECTED_PROVENANCE" ]; then
+            echo "[The Crucible] The corpus was published as $EXPECTED_PROVENANCE but opened as $provenance; provenance is decided by the key that opened it, not by where it was filed." >&2
+            exit 1
+          fi
           mkdir -p "$RUNNER_TEMP/crucible-source-restore/plaintext"
           tar -xzf "$RUNNER_TEMP/crucible-source-restore/source-bundle.tar.gz" \
             -C "$RUNNER_TEMP/crucible-source-restore/plaintext"
           node src/hostedSourceBundle.js verify \
             --root "$RUNNER_TEMP/crucible-source-restore/plaintext" \
             --repository "$GITHUB_REPOSITORY" --ref "$GITHUB_REF" \
+            --provenance "$provenance" \
             --report hosted-learning-proof/corpus-custody.json
       - name: Run project-bound durable R4-R8 proof on the real corpus
         env:
@@ -91,6 +119,7 @@ jobs:
           name: hosted-learning-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             hosted-learning-proof/report.json
+            hosted-learning-proof/corpus-custody.json
             .hosted-learning-cache/store.envelope.json
           if-no-files-found: error
           retention-days: 90
