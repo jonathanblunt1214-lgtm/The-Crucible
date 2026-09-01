@@ -56,18 +56,33 @@ jobs:
             --output "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc"
       - name: Decrypt vetted custody and verify every restored hash
         env:
-          CRUCIBLE_SOURCE_BUNDLE_KEY: ${{ secrets.CRUCIBLE_VETTED_BUNDLE_KEY }}
+          # Only vetted keys reach this runner. The outgoing one is set only while a rotation
+          # is in flight, so a rotated vetted key does not strand a corpus already published
+          # under the old one - and a bundle no key can open reports the diagnosis rather than
+          # a bare crypto error.
+          CRUCIBLE_VETTED_BUNDLE_KEY: ${{ secrets.CRUCIBLE_VETTED_BUNDLE_KEY }}
+          CRUCIBLE_VETTED_BUNDLE_KEY_PREVIOUS: ${{ secrets.CRUCIBLE_VETTED_BUNDLE_KEY_PREVIOUS }}
         run: |
           node src/hostedSourceBundle.js decrypt \
             --input "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc" \
             --output "$RUNNER_TEMP/crucible-source-restore/source-bundle.tar.gz" \
-            --repository "$GITHUB_REPOSITORY" --ref "$GITHUB_REF"
+            --repository "$GITHUB_REPOSITORY" --ref "$GITHUB_REF" \
+            > "$RUNNER_TEMP/crucible-source-restore/decrypt.json"
+          provenance="$(node -e 'process.stdout.write(JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).provenance)' "$RUNNER_TEMP/crucible-source-restore/decrypt.json")"
+          echo "[The Crucible] corpus provenance: $provenance"
+          # Provenance is decided by the key that opened the bundle, never by which repository it
+          # was filed in. Anything this job can read must have come through the information gate.
+          if [ "$provenance" != "oversight-vetted" ]; then
+            echo "[The Crucible] The restored corpus opened as $provenance; only independently vetted custody may reach the proof." >&2
+            exit 1
+          fi
           mkdir -p "$RUNNER_TEMP/crucible-source-restore/plaintext"
           tar -xzf "$RUNNER_TEMP/crucible-source-restore/source-bundle.tar.gz" \
             -C "$RUNNER_TEMP/crucible-source-restore/plaintext"
           node src/hostedSourceBundle.js verify \
             --root "$RUNNER_TEMP/crucible-source-restore/plaintext" \
             --repository "$GITHUB_REPOSITORY" --ref "$GITHUB_REF" \
+            --provenance "$provenance" \
             --report hosted-learning-proof/corpus-custody.json
       - name: Run project-bound durable R4-R8 proof on the real corpus
         env:
@@ -92,6 +107,7 @@ jobs:
           name: hosted-learning-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             hosted-learning-proof/report.json
+            hosted-learning-proof/corpus-custody.json
             .hosted-learning-cache/store.envelope.json
           if-no-files-found: error
           retention-days: 90

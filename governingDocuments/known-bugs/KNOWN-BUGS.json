@@ -2559,6 +2559,55 @@
       "checkedAt": "2026-09-01T16:50:54.054Z"
     },
     {
+      "id": "KB-local-82134041a2",
+      "foundAt": "2026-09-01T18:34:39.694Z",
+      "retests": [],
+      "severity": "high",
+      "status": "open",
+      "checked": false,
+      "sourceCommit": "local",
+      "categoryResults": [
+        {
+          "category": "code",
+          "severity": "high",
+          "status": "failed",
+          "tests": [
+            "test/hostedLearningProof.test.js",
+            "test/hostedSourceBundle.test.js",
+            "test/pairedCorroboration.test.js",
+            "test/realCorpusLearning.test.js"
+          ]
+        },
+        {
+          "category": "maintenance",
+          "severity": "low",
+          "status": "failed",
+          "tests": [
+            "test/handoffPolicy.test.js",
+            "test/testCadence.test.js",
+            "test/workflow.test.js"
+          ]
+        }
+      ],
+      "mainCategories": [
+        "maintenance",
+        "code"
+      ],
+      "tests": [
+        "test/handoffPolicy.test.js",
+        "test/hostedLearningProof.test.js",
+        "test/hostedSourceBundle.test.js",
+        "test/pairedCorroboration.test.js",
+        "test/realCorpusLearning.test.js",
+        "test/testCadence.test.js",
+        "test/workflow.test.js"
+      ],
+      "lastFailure": {
+        "at": "2026-09-01T18:34:54.085Z",
+        "exitStatus": 1
+      }
+    },
+    {
       "id": "KB-local-e27b0d5527",
       "foundAt": "2026-08-28T01:40:03.107Z",
       "retests": [

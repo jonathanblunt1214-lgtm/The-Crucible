@@ -2,6 +2,48 @@
   "schemaVersion": 1,
   "conflicts": [
     {
+      "id": "corpus-key-raw-intake-fallback",
+      "status": "open",
+      "detectedAt": "2026-09-01",
+      "contestedAction": "Whether the hosted proof may fall back to the raw intake corpus bundle when oversight's vetted publication is unavailable.",
+      "rationaleSummary": "Both agents worked the same blocker concurrently. Every hosted run since roughly 05:30 UTC had died at corpus restore with 'Unsupported state or unable to authenticate data', which reproduces locally as decrypting with a key other than the one that encrypted. On the owner's instruction to 'do both', Claude built a vetted-first restore that fell back to the raw intake bundle and recorded which route supplied the corpus, so a missing vetted publication would not stop learning. Codex, in the same window, removed Crucible's access to raw intake altogether: the proof clones Crucible-Vetted-Learning-State with CRUCIBLE_VETTED_STATE_READ_KEY, decrypts with CRUCIBLE_VETTED_BUNDLE_KEY, and a test asserts the intake key and the unvetted repository do not appear in the workflow at all. The two cannot both hold: a fallback that reads unvetted material is exactly what Codex's boundary forbids.",
+      "authorizesPromotion": false,
+      "evidence": [
+        "Every hosted run since roughly 05:30 UTC on 2026-09-01 failed at corpus restore with 'Unsupported state or unable to authenticate data'. Reproduced locally: encrypting a file with one 32-byte key and decrypting it with another produces that exact message, so the ciphertext was intact and the key no longer matched.",
+        "Claude's resolution, committed at 501b36d: an ordered key list tried vetted then intake then the outgoing intake key, a header-based diagnosis, corpus provenance derived from the key that opened the bundle, and a workflow that probed for a vetted/ directory and otherwise read the raw intake bundle.",
+        "Codex's resolution, committed at 40059c2: .github/workflows/hosted-learning-proof.yml clones Crucible-Vetted-Learning-State with CRUCIBLE_VETTED_STATE_READ_KEY and decrypts with CRUCIBLE_VETTED_BUNDLE_KEY; test/workflow.test.js asserts doesNotMatch(/CRUCIBLE_LEARNING_STATE_DEPLOY_KEY|secrets\\.CRUCIBLE_SOURCE_BUNDLE_KEY|Crucible-Learning-State\\.git/).",
+        "The two are not reconcilable as written: Codex's test fails against any workflow that keeps a raw-intake route, which is precisely what Claude's fallback is."
+      ],
+      "sides": [
+        {
+          "source": "Owner instruction, this session",
+          "instruction": "'do both and tell me where to find the key' - implement the rotated intake key and the vetted-ciphertext consumption, so the hosted run is unblocked either way."
+        },
+        {
+          "source": "Claude, development commit 501b36d",
+          "instruction": "Prefer oversight's vetted publication, fall back to the raw intake bundle when none exists, and record which route supplied the corpus, so a missing vetted publication does not stop learning."
+        },
+        {
+          "source": "Codex, development commit 40059c2",
+          "instruction": "Crucible may consume only independently vetted custody. It never receives the raw intake key or access to the unvetted state repository, and a test enforces their absence from the workflow."
+        }
+      ],
+      "alternatives": [
+        "Keep the fallback: read vetted custody when it exists and the raw intake bundle otherwise, so the proof keeps running while oversight's publication is being set up. Fastest to green, but it leaves Crucible holding the intake key and able to learn from material that never passed the information gate.",
+        "Keep Codex's boundary and drop the fallback: Crucible reads vetted custody only, and a run with no vetted publication stops. Slower to green, but stopping is the behaviour the information gate is for.",
+        "Keep both routes but require an owner-signed declaration to take the raw path. Preserves the escape hatch under authorisation, at the cost of a new signing surface and a second thing that can be misused under time pressure."
+      ],
+      "proposedResolution": {
+        "proposal": "Keep Codex's boundary and drop the raw-intake fallback. Crucible reads only Crucible-Vetted-Learning-State and only with the vetted key family; a run with no vetted publication fails closed rather than reading unvetted material. Claude's work was rebased onto that boundary rather than discarded: the ordered key list now covers the vetted family, so a rotated vetted key does not strand a corpus already published under the outgoing one; the header-based diagnosis remains, because a run should say what is wrong whichever family it is using; and corpus provenance is still derived from the key that opened the bundle and cross-checked, so anything that is not oversight-vetted fails the run.",
+        "rationaleSummary": "Codex's is the stricter reading and it removes a standing authority rather than adding one, which is the direction that needs no owner authorisation to take. The owner's 'do both' was given before Codex's boundary existed and described a fallback whose premise - that Crucible should hold the intake key at all - Codex's change removes. The cost is stated rather than hidden: if oversight publishes nothing, the hosted proof stops instead of learning, and stopping is correct. Claude's two contributions that do not depend on the raw path survive intact, so nothing was lost except the fallback itself.",
+        "appliedInCode": "Yes. The merge on development keeps Codex's vetted-only boundary; Claude's rotation-survivable key list, header diagnosis and provenance recording were rebased onto it. Code cannot sit in two states while a decision is pending, and the stricter of the two is the safe one to sit in.",
+        "whyThisIsNotResolved": "The owner instructed 'do both', and this delivers one and a half: the vetted route in full, the key-rotation half of the intake route, and no raw-intake fallback at all. Only the owner can say whether that is acceptable, because only the owner can weigh a hosted proof that stops when oversight publishes nothing against a Crucible that can read unvetted material. No agent may settle that by having pushed last.",
+        "whatClearsIt": "One decision from the owner: either confirm the vetted-only boundary, and this record closes as resolved; or direct that the raw-intake fallback be restored, in which case Codex's assertion in test/workflow.test.js that the intake key is absent from the workflow has to be revisited with it.",
+        "proposedBy": "Claude",
+        "proposedAt": "2026-09-01"
+      }
+    },
+    {
       "id": "hosted-learning-gates-passed-on-fixtures",
       "status": "resolved",
       "detectedAt": "2026-08-31",

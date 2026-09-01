@@ -62,11 +62,56 @@ function stage({ sourceRoot, learningFile, stagingRoot, repository, ref }) {
   return manifest;
 }
 
-function keyFromEnvironment() {
-  const value = process.env.CRUCIBLE_SOURCE_BUNDLE_KEY || '';
+// The keys a restore may be read with, in the order they are tried. Order is a governance
+// statement rather than a convenience: material that came through oversight's information gate is
+// preferred over the raw intake bundle, and the run records which one actually supplied the
+// corpus, because "vetted" and "not vetted" are different provenance and must never be collapsed
+// into "the corpus loaded".
+// A key ending in _PREVIOUS is the outgoing key of its family, set only while a rotation is in
+// flight. Encryption never uses one; only a read does, so a rotation cannot strand a corpus that
+// is already encrypted under the key being retired.
+const KEY_VARIABLES = Object.freeze([
+  // Oversight's vetted, re-encrypted publication: material that passed the information gate.
+  'CRUCIBLE_VETTED_BUNDLE_KEY',
+  'CRUCIBLE_VETTED_BUNDLE_KEY_PREVIOUS',
+  // The raw intake bundle's key. The hosted proof is never given this: it reads vetted custody
+  // only. It stays here for the staging side, which is what writes the intake bundle.
+  'CRUCIBLE_SOURCE_BUNDLE_KEY',
+  'CRUCIBLE_SOURCE_BUNDLE_KEY_PREVIOUS',
+]);
+const ENCRYPTION_KEY_VARIABLE = 'CRUCIBLE_SOURCE_BUNDLE_KEY';
+
+function keyFromEnvironment(name = ENCRYPTION_KEY_VARIABLE) {
+  const value = process.env[name] || '';
   const key = Buffer.from(value, 'base64');
-  if (key.length !== 32) throw new Error('CRUCIBLE_SOURCE_BUNDLE_KEY must be a base64-encoded 32-byte key.');
+  if (key.length !== 32) throw new Error(`${name} must be a base64-encoded 32-byte key.`);
   return key;
+}
+
+function candidateKeys(names = KEY_VARIABLES) {
+  const present = [], absent = [];
+  for (const name of names) {
+    if (!(process.env[name] || '')) { absent.push(name); continue; }
+    present.push({ name, key: keyFromEnvironment(name) });
+  }
+  if (!present.length) throw new Error(`No source-bundle key is set. One of ${names.join(', ')} must hold a base64-encoded 32-byte key.`);
+  return { present, absent };
+}
+
+// Which gate the corpus came through. It is derived from the key that opened the bundle rather
+// than declared alongside it, because only oversight can write a bundle the vetted key reads, and
+// a provenance label that travels separately from the evidence is a label anyone can attach.
+const provenanceFor = (keyName) => (String(keyName).startsWith('CRUCIBLE_VETTED_BUNDLE_KEY') ? 'oversight-vetted' : 'raw-intake');
+
+// The header is written in front of the ciphertext and is readable without any key. That is what
+// makes a failed decryption diagnosable at all: it says which project, repository and ref the
+// bundle was written for, and what the plaintext should hash to.
+function readHeader(input) {
+  const fd = fs.openSync(input, 'r'); const probe = Buffer.alloc(8192); const count = fs.readSync(fd, probe, 0, probe.length, 0); fs.closeSync(fd);
+  const newline = probe.subarray(0, count).indexOf(10); if (newline < 0) throw new Error('Encrypted source bundle header is missing.');
+  const encoded = probe.subarray(0, newline + 1); const header = JSON.parse(encoded.toString('utf8'));
+  if (header.magic !== MAGIC || header.algorithm !== 'aes-256-gcm') throw new Error('Encrypted source bundle format is invalid.');
+  return { header, encoded };
 }
 
 async function encrypt({ input, output, projectId, repository, ref }) {
@@ -74,28 +119,49 @@ async function encrypt({ input, output, projectId, repository, ref }) {
   const iv = crypto.randomBytes(12);
   const header = { magic:MAGIC, schemaVersion:1, algorithm:'aes-256-gcm', projectId, repository, ref, iv:iv.toString('base64'), plaintextSha256:sha256File(input), plaintextBytes:fs.statSync(input).size };
   const encoded = Buffer.from(`${JSON.stringify(header)}\n`);
-  const cipher = crypto.createCipheriv('aes-256-gcm', keyFromEnvironment(), iv); cipher.setAAD(encoded);
+  const cipher = crypto.createCipheriv('aes-256-gcm', keyFromEnvironment(ENCRYPTION_KEY_VARIABLE), iv); cipher.setAAD(encoded);
   const handle = fs.openSync(output, 'wx', 0o600); fs.writeSync(handle, encoded); fs.closeSync(handle);
   await pipeline(fs.createReadStream(input), cipher, fs.createWriteStream(output, { flags:'a', mode:0o600 }));
   fs.appendFileSync(output, cipher.getAuthTag());
   return header;
 }
 
-async function decrypt({ input, output, repository, ref }) {
-  const fd = fs.openSync(input, 'r'); const probe = Buffer.alloc(8192); const count = fs.readSync(fd, probe, 0, probe.length, 0); fs.closeSync(fd);
-  const newline = probe.subarray(0, count).indexOf(10); if (newline < 0) throw new Error('Encrypted source bundle header is missing.');
-  const encoded = probe.subarray(0, newline + 1); const header = JSON.parse(encoded.toString('utf8'));
-  if (header.magic !== MAGIC || header.algorithm !== 'aes-256-gcm') throw new Error('Encrypted source bundle format is invalid.');
+async function decrypt({ input, output, repository, ref, keyNames = KEY_VARIABLES }) {
+  const { header, encoded } = readHeader(input);
   validateIdentity(header.projectId, repository, ref);
   const size = fs.statSync(input).size; if (size <= encoded.length + TAG_BYTES) throw new Error('Encrypted source bundle is truncated.');
   const tag = Buffer.alloc(TAG_BYTES); const tagFd = fs.openSync(input, 'r'); fs.readSync(tagFd, tag, 0, TAG_BYTES, size - TAG_BYTES); fs.closeSync(tagFd);
-  const decipher = crypto.createDecipheriv('aes-256-gcm', keyFromEnvironment(), Buffer.from(header.iv, 'base64')); decipher.setAAD(encoded); decipher.setAuthTag(tag);
-  await pipeline(fs.createReadStream(input,{start:encoded.length,end:size-TAG_BYTES-1}),decipher,fs.createWriteStream(output,{flags:'wx',mode:0o600}));
-  if (fs.statSync(output).size !== header.plaintextBytes || sha256File(output) !== header.plaintextSha256) throw new Error('Decrypted source bundle hash or size does not match its authenticated header.');
-  return header;
+  const { present, absent } = candidateKeys(keyNames);
+  const attempts = [];
+  for (const candidate of present) {
+    const staging = `${output}.${process.pid}.${crypto.randomUUID()}.attempt`;
+    try {
+      const decipher = crypto.createDecipheriv('aes-256-gcm', candidate.key, Buffer.from(header.iv, 'base64')); decipher.setAAD(encoded); decipher.setAuthTag(tag);
+      await pipeline(fs.createReadStream(input,{start:encoded.length,end:size-TAG_BYTES-1}),decipher,fs.createWriteStream(staging,{flags:'wx',mode:0o600}));
+      if (fs.statSync(staging).size !== header.plaintextBytes || sha256File(staging) !== header.plaintextSha256) throw new Error('decrypted content does not match the size and hash its header commits to');
+      fs.renameSync(staging, output);
+      return { ...header, decryptedWith: candidate.name, provenance: provenanceFor(candidate.name), keysTried: attempts.map((item) => item.name).concat(candidate.name) };
+    } catch (error) {
+      // A failed attempt leaves nothing behind: a half-written plaintext is still plaintext.
+      try { fs.rmSync(staging, { force: true }); } catch { /* the staging file was never created */ }
+      attempts.push({ name: candidate.name, message: String(error.message || error) });
+    }
+  }
+  // What follows is the whole point of trying more than one key: a run that dies here should say
+  // what is actually wrong. AES-GCM cannot distinguish a wrong key from altered ciphertext - both
+  // fail authentication identically - so this states both readings rather than picking one, and
+  // gives the header, which needs no key to read, as the evidence for judging between them.
+  throw new Error([
+    `No configured key could authenticate the encrypted source bundle at ${input}.`,
+    `Its header, which is readable without any key, says it was written for project ${header.projectId} at ${header.repository}@${header.ref}: ${header.plaintextBytes} plaintext bytes, sha256 ${header.plaintextSha256}.`,
+    `Tried in order: ${attempts.map((item) => item.name).join(', ')}.${absent.length ? ` Not set: ${absent.join(', ')}.` : ''}`,
+    'AES-GCM fails the same way for a wrong key and for altered ciphertext, so this is one of two things. If a key was rotated, this repository is holding a stale secret and no longer has the key the bundle was written with: set the current key, and keep the outgoing one in CRUCIBLE_SOURCE_BUNDLE_KEY_PREVIOUS while both are in circulation. If no key was rotated, treat the ciphertext as suspect and do not retry with more keys.',
+    'A key cannot be recovered from the ciphertext. If no copy of the key that wrote this bundle exists anywhere, the corpus has to be re-encrypted under a new one.',
+  ].join(' '));
 }
 
-function verifyRestored({ root, repository, ref, reportFile }) {
+function verifyRestored({ root, repository, ref, reportFile, provenance = 'raw-intake' }) {
+  if (!['oversight-vetted','raw-intake'].includes(provenance)) throw new Error(`Corpus provenance must be recorded as oversight-vetted or raw-intake, not ${provenance}.`);
   const manifest = JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8'));
   validateIdentity(manifest.projectId, repository, ref);
   if (sha256File(path.join(root,'source-queue.json')) !== manifest.queueSha256) throw new Error('Restored queue hash mismatch.');
@@ -103,7 +169,7 @@ function verifyRestored({ root, repository, ref, reportFile }) {
   for (const source of manifest.sourceFiles) if (sha256File(path.join(root,'sources',source.name)) !== source.sha256) throw new Error(`Restored source hash mismatch: ${source.name}`);
   const queue=JSON.parse(fs.readFileSync(path.join(root,'source-queue.json'),'utf8'));
   const states={}; for(const item of [...queue.documents,...queue.links]) states[item.state]=(states[item.state]||0)+1;
-  const report={schemaVersion:1,projectId:manifest.projectId,repository,ref,verifiedAt:new Date().toISOString(),queueSha256:manifest.queueSha256,learningSha256:manifest.learningSha256,sourceFiles:manifest.sourceFiles.length,sourceBytes:manifest.sourceFiles.reduce((sum,item)=>sum+item.bytes,0),documents:queue.documents.length,links:queue.links.length,states,plaintextRetained:false,authorizesPromotion:false};
+  const report={schemaVersion:1,projectId:manifest.projectId,repository,ref,verifiedAt:new Date().toISOString(),corpusProvenance:provenance,vetted:provenance==='oversight-vetted',queueSha256:manifest.queueSha256,learningSha256:manifest.learningSha256,sourceFiles:manifest.sourceFiles.length,sourceBytes:manifest.sourceFiles.reduce((sum,item)=>sum+item.bytes,0),documents:queue.documents.length,links:queue.links.length,states,plaintextRetained:false,authorizesPromotion:false};
   fs.mkdirSync(path.dirname(reportFile),{recursive:true}); fs.writeFileSync(reportFile,`${JSON.stringify(report,null,2)}\n`,{mode:0o600}); return report;
 }
 
@@ -152,14 +218,16 @@ async function main() {
   const [command,...args]=process.argv.slice(2); const value=(name)=>{const i=args.indexOf(name);if(i<0||!args[i+1])throw new Error(`${name} is required.`);return args[i+1];};
   if(command==='stage') return console.log(JSON.stringify(stage({sourceRoot:value('--source-root'),learningFile:value('--learning-file'),stagingRoot:value('--staging-root'),repository:value('--repository'),ref:value('--ref')})));
   if(command==='encrypt') return console.log(JSON.stringify(await encrypt({input:value('--input'),output:value('--output'),projectId:value('--project-id'),repository:value('--repository'),ref:value('--ref')})));
-  if(command==='decrypt') return console.log(JSON.stringify(await decrypt({input:value('--input'),output:value('--output'),repository:value('--repository'),ref:value('--ref')})));
-  if(command==='verify') return console.log(JSON.stringify(verifyRestored({root:value('--root'),repository:value('--repository'),ref:value('--ref'),reportFile:value('--report')})));
+  const optional=(name)=>{const i=args.indexOf(name);return i<0||!args[i+1]?null:args[i+1];};
+  if(command==='header') return console.log(JSON.stringify(readHeader(value('--input')).header));
+  if(command==='decrypt'){const keys=optional('--keys');return console.log(JSON.stringify(await decrypt({input:value('--input'),output:value('--output'),repository:value('--repository'),ref:value('--ref'),...(keys?{keyNames:keys.split(',').map((item)=>item.trim()).filter(Boolean)}:{})})));}
+  if(command==='verify') return console.log(JSON.stringify(verifyRestored({root:value('--root'),repository:value('--repository'),ref:value('--ref'),reportFile:value('--report'),...(optional('--provenance')?{provenance:optional('--provenance')}:{})})));
   if(command==='hydrate') return console.log(JSON.stringify(hydrateRestored({root:value('--root'),repository:value('--repository'),ref:value('--ref')})));
   if(command==='restage') return console.log(JSON.stringify(restageRestored({root:value('--root'),repository:value('--repository'),ref:value('--ref')})));
   if(command==='split') return console.log(JSON.stringify(splitEncrypted({input:value('--input'),outputRoot:value('--output-root')})));
   if(command==='join') return console.log(JSON.stringify(joinEncrypted({inputRoot:value('--input-root'),output:value('--output')})));
-  throw new Error('Usage: hostedSourceBundle.js stage|encrypt|decrypt|verify|hydrate|restage|split|join ...');
+  throw new Error('Usage: hostedSourceBundle.js stage|encrypt|decrypt|verify|hydrate|restage|split|join|header ...');
 }
 
 if(require.main===module)main().catch((error)=>{console.error(`[The Crucible] Hosted source bundle failed: ${error.message}`);process.exitCode=1;});
-module.exports={MAGIC,sha256File,stage,encrypt,decrypt,verifyRestored,hydrateRestored,restageRestored,splitEncrypted,joinEncrypted};
+module.exports={MAGIC,KEY_VARIABLES,ENCRYPTION_KEY_VARIABLE,keyFromEnvironment,candidateKeys,readHeader,provenanceFor,sha256File,stage,encrypt,decrypt,verifyRestored,hydrateRestored,restageRestored,splitEncrypted,joinEncrypted};

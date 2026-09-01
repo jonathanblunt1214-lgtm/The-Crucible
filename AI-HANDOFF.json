@@ -151,14 +151,14 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "Codex",
-    "objective": "Complete the independently vetted-output connection so the GitHub-hosted real-corpus R4-R8 proof consumes only Oversight-approved ciphertext and can proceed toward soak readiness.",
-    "currentPrompt": "well then get this done The immediate blocker is the vetted-output connection. Once you authorize the exact secret distribution and read-only access stated earlier, that can be completed and the live R4-R8 proof can begin.",
+    "agent": "Claude",
+    "objective": "Make the enforcement rules that were written down but never executed actually run - the fly-by-wire linkage ratchet on every push and every recurring verification, and the recurrence escalation in the graded oversight response, which had no durable history to read - and unblock the hosted corpus restore. Codex's concurrent objective, carried in the steps below rather than lost: complete the independently vetted-output connection so the hosted real-corpus R4-R8 proof consumes only Oversight-approved ciphertext.",
+    "currentPrompt": "recurring enforcement is not implemented yet fix it",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "Codex",
-      "purpose": "Replace Crucible raw-corpus restoration with the independent Oversight-vetted custody path, verify authorized consumers, and run exact-tip hosted proof without granting release authority.",
-      "selectionReason": "The owner explicitly authorized the exact vetted-key distribution and read-only access needed to remove the recorded hosted-learning blocker.",
+      "agent": "Claude",
+      "purpose": "Run the declared-but-unexecuted enforcement on a real cadence, give the corpus restore a rotation-survivable key path and a named diagnosis, and merge Codex's concurrent vetted-custody boundary without overwriting it.",
+      "selectionReason": "Repository-focused implementation on owner instruction; the receiving plan already recorded regular/default and the task needs have not changed, so the mode is preserved rather than re-selected.",
       "distinction": "Execution mode is separate from agent identity and workflow; diagnosis remains evidence processing, not proof or unattended repair authority."
     },
     "steps": [
@@ -203,7 +203,16 @@
       "[done] Oversight run 33524179971 independently authenticated the raw bundle, vetted it, republished ciphertext under the rotated vetted key, and completed without an emergency STOP.",
       "[done] Learning-Worker run 33524558712 consumed and decrypted the rotated vetted output successfully, proving the independent gate-to-worker custody link.",
       "[done] Reconciled concurrent development tip 452cc42 and repaired its incomplete CodeQL autofix, which had left a duplicate method chain after return and made 13 suites unloadable. Nested active-content sanitization now reaches a tested fixed point; known bug KB-local-80c744e635 passed its governed 620-test re-test.",
-      "[in progress] Rewire hosted-learning-proof.yml from Crucible-Learning-State plus CRUCIBLE_SOURCE_BUNDLE_KEY to Crucible-Vetted-Learning-State plus CRUCIBLE_VETTED_BUNDLE_KEY, run full exact-tip verification, push development, and inspect the live R4-R8 result."
+      "[in progress] Rewire hosted-learning-proof.yml from Crucible-Learning-State plus CRUCIBLE_SOURCE_BUNDLE_KEY to Crucible-Vetted-Learning-State plus CRUCIBLE_VETTED_BUNDLE_KEY, run full exact-tip verification, push development, and inspect the live R4-R8 result.",
+      "[done, Claude] Establish which enforcement was declared and which was executed: audit:circulation is listed in the every-push AUDIT_CADENCE table, but the every-push CI step runs testCadence.js scheduled-tests, which executes tests only and never reads that table. It was therefore enforced once a day through the daily diagnostics tier and on no push.",
+      "[done, Claude] Run the ratchet where a cable could otherwise land: every push and pull request in self-test.yml, every fifteen-minute canonical snapshot before a tree is preserved, and internal-recovery before a recovered tree is promoted.",
+      "[done, Claude] Establish that assessFinding's recurrence and unverified-repair escalations were unreachable in the running system, because history defaulted to none and nothing in src/ ever supplied it.",
+      "[done, Claude] Build src/findingLedger.js: an append-only, hash-chained, findingId-keyed record. A missing ledger is no history; a rewritten, truncated or unreadable one refuses to answer rather than reporting a clean past.",
+      "[done, Claude] Wire it into DurableOrganismRuntime at the point of quarantine: record the fault, judge it against the history as it stood before this occurrence, and append the outcome as attempted-and-unverified, because a repair the organism checked itself is not a verified repair. A recurrence stands in the health view as a STOP requested of independent oversight, and homeostasis may not requeue work whose fault has escalated.",
+      "[done, Claude] Give the restore a rotation-survivable key list and a real diagnosis. A decrypt tries the vetted key, the outgoing vetted key, then the intake pair, and when none opens the bundle it reports what the header says - project, repository, ref, expected plaintext size and hash, which variables were tried and which were unset - while stating plainly that AES-GCM cannot distinguish a wrong key from altered ciphertext.",
+      "[done, Claude] Record corpus provenance from the key that opened the bundle rather than from where it was filed, and fail the hosted run on anything that is not oversight-vetted. Being vetted is provenance and nothing more: the custody report still carries authorizesPromotion: false.",
+      "[resolved, Claude+Codex] Conflict ai-2026-09-01-corpus-key-fallback: Claude implemented a vetted-first restore that fell back to the raw intake bundle; Codex concurrently removed Crucible's access to raw intake entirely. Codex's boundary is the stricter and was kept. Claude's rotation list, header diagnosis and provenance recording were rebased onto it, restricted to the vetted key family.",
+      "[pending, owner] The hosted run stays blocked until CRUCIBLE_VETTED_BUNDLE_KEY on The-Crucible holds the key the published vetted bundle was actually written with. GitHub Actions secrets cannot be read back, so if no copy of that key exists outside a secret store, the corpus must be re-encrypted under a new one; no key can be recovered from ciphertext."
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
