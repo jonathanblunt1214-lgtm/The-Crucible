@@ -23,6 +23,7 @@ const { CreativeDecisionAdaptationEngine, CognitiveStrategyLedger } = require('.
 const { groupCorroborating, semanticallyCorroborates } = require('./semanticCorroboration');
 const { verifyPairedDeclaration } = require('./pairedCorroboration');
 const { sourceIndex, independentSubset } = require('./sourceIndependence');
+const { documentFurniture } = require('./documentFurniture');
 
 const normalize = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
@@ -52,9 +53,19 @@ function corroboratedClaims(storeOrRecords, options = {}) {
   const records = Array.isArray(storeOrRecords) ? storeOrRecords : storeOrRecords.read().candidateRecords;
   const index = options.sourceIndex || null;
   const entries = [];
+  const furnitureExcluded = [];
   for (const record of records) {
     if (record.state !== 'candidate') continue;
     if (!normalize(record.candidate.claim)) continue;
+    // Also applied here, not only at extraction. Candidates already in custody were extracted
+    // before furniture was rejected, and re-extracting the corpus to reach them would mean
+    // rewriting encrypted state that is in the middle of an independent custody path. Reading
+    // past them costs nothing and destroys nothing, and new extraction never adds more.
+    const furniture = documentFurniture(record.candidate.claim);
+    if (furniture.furniture) {
+      furnitureExcluded.push({ candidateId: record.candidate.id, reason: furniture.reasons[0] });
+      continue;
+    }
     entries.push({ id: record.candidate.id, claim: record.candidate.claim, sourceId: record.candidate.provenance.sourceId, provenance: record.candidate.provenance });
   }
   const corroborated = [];
@@ -81,7 +92,9 @@ function corroboratedClaims(storeOrRecords, options = {}) {
       assertedAs: picked.map((member) => member.claim),
     });
   }
-  return corroborated.sort((a, b) => b.sourceCount - a.sourceCount || (a.claimKey < b.claimKey ? -1 : 1));
+  const sorted = corroborated.sort((a, b) => b.sourceCount - a.sourceCount || (a.claimKey < b.claimKey ? -1 : 1));
+  Object.defineProperty(sorted, 'furnitureExcluded', { value: furnitureExcluded, enumerable: false });
+  return sorted;
 }
 
 // The owner declares the scope a claim was tested within, plus the two harnesses. No scope is
@@ -313,6 +326,7 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     corpusLearningStateRestored: Boolean(corpusStore),
     candidatesAvailableForCorroboration: available.length,
     corroboratedClaims: corroborated.length,
+    furnitureExcludedFromCorroboration: (corroborated.furnitureExcluded || []).length,
     knowledgeVersionsBefore: before.knowledgeVersions.length,
   };
 

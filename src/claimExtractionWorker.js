@@ -5,6 +5,7 @@ const { spawnSync } = require('node:child_process');
 const { DurableScientificLearningStore } = require('./scientificLearning');
 const { acquireDurableLock } = require('./durableLock');
 const { INJECTION_PATTERNS } = require('./safeInformationRetrieval');
+const { documentFurniture } = require('./documentFurniture');
 
 function sha256(value) { return crypto.createHash('sha256').update(value).digest('hex'); }
 function normalizedClaimSha256(value) { return sha256(cleanText(value).toLowerCase()); }
@@ -18,6 +19,11 @@ function boundedAssertions(text) {
   for (const sentence of candidates) {
     if (INJECTION_PATTERNS.some((pattern) => pattern.test(sentence))) continue;
     if (!/\b(?:is|are|uses?|requires?|returns?|creates?|provides?|supports?|allows?|can|must|should)\b/i.test(sentence)) continue;
+    // A verb is not enough. "You are one step away from downloading ebooks" and "Footer
+    // navigation Terms Privacy Security Status Community Docs Contact" both pass the verb
+    // test, and furniture like that is exactly the text that repeats across independently
+    // retrieved documents - so on the real corpus it was the only thing that corroborated.
+    if (documentFurniture(sentence).furniture) continue;
     const fingerprint = sha256(sentence.toLowerCase()); if (seen.has(fingerprint)) continue;
     seen.add(fingerprint); results.push(sentence);
   }
