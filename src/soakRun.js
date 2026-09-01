@@ -95,7 +95,10 @@ function recordSweep(soak, { at, dataPointFailures = [], storeFailures = [] } = 
     next.failed = true; // Not a data-point fault, so not recycled: the soak itself is void.
   }
 
-  for (const id of dataPointFailures) {
+  // One sweep is one observation, so a data point can fail it once. Iterating the raw list let a
+  // single payload naming the same id repeatedly spend several thresholds at once and recollect or
+  // trash a point that had failed one observation.
+  for (const id of new Set(dataPointFailures)) {
     const point = next.dataPoints.find((item) => item.id === id);
     if (!point || point.phase === 'trash') continue;
     const outcome = applyDataPointFailure(point, at);

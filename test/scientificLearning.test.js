@@ -262,3 +262,34 @@ test('coordinate awaits its extraction worker, so an async extractor is counted 
   assert.equal(events.at(-1).promotionAuthorized, false);
   assert.equal(events.at(-1).proofStageSatisfied, false);
 });
+
+// The scope is declared once, when the hypothesis is recorded. A worker that restarts and resumes
+// the record was reading its own constructor value instead, so a plain restart with nothing declared
+// tested within the candidate's provenance boundary rather than the scope the record is committed
+// to - and the verified gate reads the persisted value, so the mismatch surfaced later, elsewhere.
+test('a resumed learner tests within the scope the record was hypothesised under, not its own', async (t) => {
+  const SCOPE = 'node-22/linux/scoped-boundary';
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-learning-')); t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const store = new DurableScientificLearningStore({ root, projectId:'project-a' }); store.ingest(candidate());
+  // Recorded under an owner-declared scope, then the worker that declared it goes away.
+  store.update(transition(store.get('c-1'), 'hypothesis', { at, reason:'declared under an owner scope', hypothesis:proof().hypothesis, claimScope:SCOPE }), at, 'hypothesis');
+  assert.equal(store.get('c-1').claimScope, SCOPE);
+
+  const seen = [];
+  const experimentExecutor = { id:'experiment-runner-1', run:async ({ claimScope }) => { seen.push(['experiment', claimScope]); return experimentalProof({ experimentBoundary:SCOPE }); } };
+  const independentVerifier = { id:'independent-runner-2', run:async ({ claimScope }) => { seen.push(['verify', claimScope]); return verification({ experimentBoundary:SCOPE }); } };
+  // A fresh worker with no scope of its own - the ordinary restart.
+  const resumed = new AutonomousScientificLearner({ store, experimentExecutor, independentVerifier, now:() => at });
+  assert.equal(resumed.claimScope, null);
+  assert.equal((await resumed.process('c-1', proof().hypothesis)).state, 'verified');
+  assert.deepEqual(seen, [['experiment', SCOPE], ['verify', SCOPE]], 'both stages were told the recorded scope');
+  assert.equal(store.get('c-1').proof.experimentBoundary, SCOPE);
+
+  // Declaring a different scope for an already-scoped record is a contradiction, refused the same
+  // way a different hypothesis is, rather than quietly retested within the wrong boundary.
+  const other = new DurableScientificLearningStore({ root:fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-learning-')), projectId:'project-a' });
+  other.ingest(candidate());
+  other.update(transition(other.get('c-1'), 'hypothesis', { at, reason:'declared under an owner scope', hypothesis:proof().hypothesis, claimScope:SCOPE }), at, 'hypothesis');
+  const conflicting = new AutonomousScientificLearner({ store:other, experimentExecutor, independentVerifier, claimScope:'node-22/windows/somewhere-else', now:() => at });
+  await assert.rejects(() => conflicting.process('c-1', proof().hypothesis), /claim scope the hypothesis was recorded under/);
+});
