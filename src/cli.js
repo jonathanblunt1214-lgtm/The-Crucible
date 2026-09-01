@@ -28,12 +28,13 @@ const { quarantineFindings, quarantineNote } = require('./quarantine');
 const { auditAIConflictLedger } = require('./aiConflictLedger');
 const { categoryEnabled } = require('./suiteSelection');
 const { auditGlobalRepositoryGovernance } = require('./globalRepositoryGovernance');
+const { auditCirculationLinkage } = require('./circulationLinkage');
 
 const action = process.argv[2] || 'run';
 const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
 let activeConfig = null;
 const ACTION_CATEGORIES = Object.freeze({
-  'core-ref':'repository', precheck:'quality', clutter:'hygiene', privacy:'privacy', security:'security',
+  'core-ref':'repository', circulation:'repository', precheck:'quality', clutter:'hygiene', privacy:'privacy', security:'security',
   'github-security':'repository', authenticity:'quality', collisions:'repository', maintain:'hygiene', 'workflow-lint':'hygiene', reproducibility:'quality',
 });
 
@@ -168,6 +169,11 @@ async function main() {
   if (action === 'design-brief') {
     designBriefGate(root);
     return console.log('[The Crucible] Link is intact: THE-CRUCIBLE-DESIGN-BRIEF.md is present, or was never installed.');
+  }
+  if (action === 'circulation') {
+    const result = auditCirculationLinkage({ root: path.join(root, 'src') });
+    if (!result.ok) { console.error(`[The Crucible] FAIL: ${result.reason}`); process.exitCode = 1; return; }
+    return console.log(`[The Crucible] Fly-by-wire: ${result.reason}`);
   }
   if (action === 'core-ref') {
     const result = await coreRefGate();
