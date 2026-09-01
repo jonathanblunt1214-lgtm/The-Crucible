@@ -1,5 +1,5 @@
 'use strict';
-const crypto=require('node:crypto');const {DurableOrganismRuntime}=require('./organismRuntime');
+const crypto=require('node:crypto');const {DurableOrganismRuntime}=require('./organismRuntime');const {assertFlyByWire}=require('./circulationLinkage');
 const id=(prefix,value)=>`${prefix}-${crypto.createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0,24)}`;
 function signal({type,sourceOrgan,targetOrgan,boundary,payload}){return{id:id(`${sourceOrgan}-to-${targetOrgan}`,{type,boundary,payload}),type,sourceOrgan,targetOrgan,boundary,payload};}
 function createProductionOrganism({projectId,root,learningStore,oversightReflex,diagnosticPlanner,repairActuator,experienceRecorder,reporter,digestiveWorker,now}){
@@ -11,6 +11,9 @@ function createProductionOrganism({projectId,root,learningStore,oversightReflex,
     learning:async({payload,envelope})=>{const recorded=await experienceRecorder.record({...payload,projectId,claimBoundary:envelope.boundary,classification:'Insufficient Evidence'});return{recorded,proofStageSatisfied:false,promotionAuthorized:false};},
     reporting:async({payload,envelope})=>({reported:await reporter.report({...payload,projectId,boundary:envelope.boundary}),proofStageSatisfied:false,promotionAuthorized:false}),
   };
+  // Fly-by-wire: the organism will not start with a severed wire, because a signal to an
+  // organ with no handler never arrives and nothing reports its absence.
+  assertFlyByWire(organs);
   return new DurableOrganismRuntime({projectId,root,organs,learningStore,oversightReflex,now});
 }
 function submitNervousObservation(runtime,{observationId,boundary,finding,changeBaseSha256}){return runtime.submit(signal({type:'observation',sourceOrgan:'nervous-system',targetOrgan:'brain',boundary,payload:{observationId,finding,changeBaseSha256}}));}

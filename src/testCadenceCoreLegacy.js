@@ -11,6 +11,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/code-check.test.js',
     'test/codeSecurityOrganism.test.js',
     'test/ciDiagnosticOrgan.test.js',
+    'test/circulationLinkage.test.js',
     'test/contradictionAudit.test.js',
     'test/contradictionReopening.test.js',
     'test/documentFurniture.test.js',
@@ -99,7 +100,9 @@ const TEST_CADENCE = {
   'test/globalRepositoryGovernance.test.js': 'weekly',
 };
 const AUDIT_CADENCE = {
-  'every-push': ['validate', 'audit:commit', 'precheck', 'audit:clutter', 'audit:privacy', 'audit:security', 'lint:workflows', 'docs:check', 'audit:ai-conflict-governance', 'audit:design-brief', 'audit:governance'],
+  // audit:circulation runs on every push: fly-by-wire is only mandatory if the ratchet is
+  // checked before a new organ-to-organ cable can land, not after.
+  'every-push': ['validate', 'audit:commit', 'precheck', 'audit:clutter', 'audit:privacy', 'audit:security', 'audit:circulation', 'lint:workflows', 'docs:check', 'audit:ai-conflict-governance', 'audit:design-brief', 'audit:governance'],
   daily: ['audit:core-ref', 'audit:authenticity', 'audit:github-security'],
   weekly: ['audit:reproducibility', 'maintain', 'audit:collisions'],
   monthly: [],

@@ -53,7 +53,8 @@
     "cadence:daily": "node src/testCadence.js daily",
     "cadence:weekly": "node src/testCadence.js weekly",
     "cadence:monthly": "node src/testCadence.js monthly",
-    "cadence:on-error": "node src/testCadence.js on-error"
+    "cadence:on-error": "node src/testCadence.js on-error",
+    "audit:circulation": "node src/cli.js circulation"
   },
   "engines": {
     "node": ">=20"
