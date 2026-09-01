@@ -94,3 +94,29 @@ test('the custody report records which gate the corpus came through, and refuses
   assert.equal(report.authorizesPromotion,false,'passing the information gate is not authority to promote anything');
   assert.throws(()=>verifyRestored({...identity,reportFile:path.join(root,'r3.json'),provenance:'trust-me'}),/must be recorded as oversight-vetted or raw-intake/);
 });
+
+// The chunk manifest is read from a repository Crucible does not control, and every name in it is
+// used to stat, hash and read a file - all before the AES-GCM tag is checked, so the ciphertext's
+// own authentication cannot prevent the read.
+test('a chunk name that is not a plain filename in its own directory is refused before any read', () => {
+  const { chunkFile } = require('../src/hostedSourceBundle');
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'chunk-containment-'));
+  const outside = path.join(root, 'secret.txt');
+  fs.writeFileSync(outside, 'a runner file that is none of the corpus business');
+  const inputRoot = path.join(root, 'ciphertext');
+  fs.mkdirSync(inputRoot);
+  fs.writeFileSync(path.join(inputRoot, 'source-bundle.part-0000.enc'), 'ciphertext');
+
+  for (const escape of ['../secret.txt', 'nested/../../secret.txt', outside, '/etc/passwd', '..', './x', 'a\\b']) {
+    assert.throws(() => chunkFile(inputRoot, escape), /not a plain filename|escapes its input directory/, `${escape} must be refused`);
+  }
+  assert.equal(chunkFile(inputRoot, 'source-bundle.part-0000.enc'), path.resolve(inputRoot, 'source-bundle.part-0000.enc'));
+
+  // And the refusal happens through join, before the chunk is opened at all.
+  fs.writeFileSync(path.join(inputRoot, 'encrypted-chunks.json'), JSON.stringify({
+    schemaVersion: 1, format: 'CRUCIBLE-SOURCE-BUNDLE-V1', encryptedSha256: 'a'.repeat(64), encryptedBytes: 9,
+    chunks: [{ name: '../secret.txt', bytes: 9, sha256: 'b'.repeat(64) }],
+  }));
+  assert.throws(() => joinEncrypted({ inputRoot, output: path.join(root, 'joined.enc') }), /not a plain filename/);
+  assert.equal(fs.existsSync(path.join(root, 'joined.enc')), false, 'nothing is written for a manifest that names a file outside its directory');
+});

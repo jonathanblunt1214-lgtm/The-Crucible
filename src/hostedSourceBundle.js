@@ -207,9 +207,26 @@ function splitEncrypted({ input, outputRoot, maximumBytes = 80 * 1024 * 1024 }) 
   const manifest={schemaVersion:1,format:MAGIC,encryptedSha256:sha256File(input),encryptedBytes:fs.statSync(input).size,chunks};fs.writeFileSync(path.join(outputRoot,'encrypted-chunks.json'),`${JSON.stringify(manifest,null,2)}\n`,{flag:'wx',mode:0o600});return manifest;
 }
 
+// A chunk name is a filename, not a path. The manifest is read from a repository Crucible does not
+// control, and every name in it is used to stat, hash and read a file - all of which happen before
+// the AES-GCM tag is ever checked, so the ciphertext's own authentication is too late to prevent
+// the read. A name that is not a plain filename in this directory is refused rather than resolved.
+const CHUNK_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
+function chunkFile(inputRoot, name) {
+  const declared = String(name || '');
+  if (!CHUNK_NAME.test(declared) || declared.includes('..')) throw new Error(`Encrypted chunk name is not a plain filename: ${JSON.stringify(declared)}.`);
+  const root = path.resolve(inputRoot);
+  const file = path.resolve(root, declared);
+  if (path.dirname(file) !== root) throw new Error(`Encrypted chunk name escapes its input directory: ${JSON.stringify(declared)}.`);
+  return file;
+}
+
 function joinEncrypted({ inputRoot, output }) {
-  const manifest=JSON.parse(fs.readFileSync(path.join(inputRoot,'encrypted-chunks.json'),'utf8'));const handle=fs.openSync(output,'wx',0o600);
-  try{for(const chunk of manifest.chunks){const file=path.join(inputRoot,chunk.name);if(fs.statSync(file).size!==chunk.bytes||sha256File(file)!==chunk.sha256)throw new Error(`Encrypted chunk failed custody verification: ${chunk.name}`);fs.writeSync(handle,fs.readFileSync(file));}}
+  const manifest=JSON.parse(fs.readFileSync(path.join(inputRoot,'encrypted-chunks.json'),'utf8'));
+  if(!Array.isArray(manifest.chunks)||!manifest.chunks.length)throw new Error('Encrypted chunk manifest lists no chunks.');
+  const files=manifest.chunks.map((chunk)=>chunkFile(inputRoot,chunk.name));
+  const handle=fs.openSync(output,'wx',0o600);
+  try{manifest.chunks.forEach((chunk,index)=>{const file=files[index];if(fs.statSync(file).size!==chunk.bytes||sha256File(file)!==chunk.sha256)throw new Error(`Encrypted chunk failed custody verification: ${chunk.name}`);fs.writeSync(handle,fs.readFileSync(file));});}
   finally{fs.closeSync(handle);}
   if(fs.statSync(output).size!==manifest.encryptedBytes||sha256File(output)!==manifest.encryptedSha256)throw new Error('Reassembled encrypted bundle does not match its manifest.');return manifest;
 }
@@ -230,4 +247,4 @@ async function main() {
 }
 
 if(require.main===module)main().catch((error)=>{console.error(`[The Crucible] Hosted source bundle failed: ${error.message}`);process.exitCode=1;});
-module.exports={MAGIC,KEY_VARIABLES,ENCRYPTION_KEY_VARIABLE,keyFromEnvironment,candidateKeys,readHeader,provenanceFor,sha256File,stage,encrypt,decrypt,verifyRestored,hydrateRestored,restageRestored,splitEncrypted,joinEncrypted};
+module.exports={MAGIC,CHUNK_NAME,chunkFile,KEY_VARIABLES,ENCRYPTION_KEY_VARIABLE,keyFromEnvironment,candidateKeys,readHeader,provenanceFor,sha256File,stage,encrypt,decrypt,verifyRestored,hydrateRestored,restageRestored,splitEncrypted,joinEncrypted};
