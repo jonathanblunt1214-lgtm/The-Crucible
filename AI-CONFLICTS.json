@@ -3,6 +3,9 @@
   "conflicts": [
     {
       "id": "hosted-learning-gates-passed-on-fixtures",
+      "timestamp": "2026-08-31T00:00:00Z",
+      "type": "gate-status-vs-evidence",
+      "description": "Codex recorded release gates R4-R8 as passed on the strength of a hosted proof that built its own sources in code; Claude contested that the gates could be passed on evidence the proof generated for itself. The owner ruled that the hosted proof be wired to the real restored corpus with the synthetic fallback removed.",
       "status": "resolved",
       "detectedAt": "2026-08-31",
       "contestedAction": "Recording R4 through R8 as passed in governingDocuments/scientific-learning-release-status.json on the basis of a hosted proof whose sources were constructed in code rather than read from the real corpus.",
