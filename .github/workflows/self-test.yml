@@ -96,6 +96,9 @@ jobs:
         run: node src/testCadence.js on-error self-test-failure
       - name: Diagnose the exact hosted failure without dependencies or repair authority
         if: failure()
+        # Diagnosis may never decide this job's result. AGENTS.md requires every on-error step to
+        # be additive, and a diagnostic that fails would replace the real failure with its own.
+        continue-on-error: true
         env:
           CRUCIBLE_PROJECT_ID: github:${{ github.repository }}
           CRUCIBLE_CI_JOB: The Crucible (${{ matrix.os }}, Node ${{ matrix.node }})
@@ -103,6 +106,9 @@ jobs:
         run: node src/ciDiagnosticOrgan.js diagnose-local "${{ runner.temp }}/crucible-npm-ci.log"
       - name: Preserve the typed CI diagnosis
         if: failure()
+        # This one matters most: it uploads with if-no-files-found: error, so when the diagnosis
+        # step above produced nothing the upload would fail the job and hide what actually broke.
+        continue-on-error: true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: crucible-ci-diagnosis-${{ matrix.os }}-${{ matrix.node }}-${{ github.run_id }}-${{ github.run_attempt }}
