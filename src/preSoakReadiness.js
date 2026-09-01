@@ -101,7 +101,9 @@ function preSoakReadiness({ payload = {}, queue = {}, research = {}, combinedSaf
     satisfied: satisfied.map((item) => item.id),
     outstanding: outstanding.map((item) => item.id),
     gatesGreen,
-    soak: { state: soak.state, dataPoints: soak.dataPoints, observedDataPoints: soak.observedDataPoints, heldDataPoints: soak.heldDataPoints, blockers: soak.blockers },
+    // observed is the frozen population startSoak works from, so it travels with the decision.
+    // Without it the report could read ready and then fail to start the soak it had just approved.
+    soak: { state: soak.state, dataPoints: soak.dataPoints, observedDataPoints: soak.observedDataPoints, heldDataPoints: soak.heldDataPoints, observed: soak.observed, blockers: soak.blockers },
     // Reporting only. This function decides nothing and authorizes nothing.
     authorizesPromotion: false,
   };
