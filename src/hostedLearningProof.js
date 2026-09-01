@@ -10,6 +10,7 @@ const { preSoakReadiness } = require('./preSoakReadiness');
 const { learnFromRealCorpus, hasRealCorpusKnowledge, readBundle, corpusCandidateStore, allCandidateRecords } = require('./realCorpusLearning');
 const { realCorpusSafety } = require('./realCorpusSafety');
 const { realSupersession } = require('./realSupersession');
+const { intakePathways } = require('./intakePathways');
 
 const BOUNDARY = 'Node.js ordinary dense arrays of numbers';
 const GENERALIZATION = 'Does not cover sparse arrays, proxies, subclasses, or host objects.';
@@ -74,6 +75,15 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
       // scope for a claim they would have to download the run to read. The counts come first,
       // because "did extraction produce anything" and "was anything promoted" are different
       // questions and the reason line only answers the second.
+      // Digestion's two pathways, reported separately. "Nothing corroborated" and "digestion
+      // stopped three steps earlier" are different findings, and this repository has already
+      // spent runs mistaking the second for the first.
+      const pathways = realLearning.intake || intakePathways({ sources: (restoredBundle && restoredBundle.sources) || [], candidateRecords: [] });
+      stopped.intakePathways = pathways;
+      console.log(`[The Crucible] intake -> learning: ${pathways.learning.usableCandidates} usable candidate(s) from ${pathways.learning.distinctSources} source(s); ${pathways.learning.excludedAsFurniture} excluded as document furniture.`);
+      console.log(`[The Crucible] intake -> diagnostics: ${pathways.diagnostics.healthy ? 'digestion healthy' : pathways.diagnostics.signals.map((item) => item.signal).join(', ')}`);
+      for (const signal of pathways.diagnostics.signals) console.log(`[The Crucible]   ${signal.signal}: ${signal.detail}`);
+      if (pathways.blocked) console.log(`[The Crucible] blocked pathway: ${pathways.blocked}`);
       const c = stopped.corpus || {};
       console.log(`[The Crucible] corpus: ${c.sources} sources, ${c.documentsWithContent} with stored content; ${c.corpusCandidateRecords} candidate(s) in the corpus learning state, ${c.candidateRecords} in the persistent store, ${c.candidatesAvailableForCorroboration} available to corroboration; ${c.furnitureExcludedFromCorroboration} excluded as document furniture; ${c.corroboratedClaims} corroborated; corpus learning state restored: ${c.corpusLearningStateRestored}.`);
       for (const review of (realLearning.reviews || []).slice(0, 25)) console.log(`[The Crucible] review: ${review.testable ? 'testable' : `not testable (${review.reviewRoute})`} - ${String(review.claim).slice(0, 150)}`);
@@ -133,7 +143,7 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   for (const gate of gateStates) if (gate.state !== 'satisfied') console.log(`[The Crucible] ${gate.id} ${gate.state}: ${gate.detail}`);
 
   persist(store,encryptedFile,masterKey,binding);
-  const report={schemaVersion:1,projectId,repository,ref,runId:String(runId),completedAt:at,restoredEncryptedState:restored,revision:payload.revision,candidateRecords:payload.candidateRecords.length,knowledgeVersions:payload.knowledgeVersions.length,activeVersion:payload.activeVersion,activeBoundary:(payload.knowledgeVersions.find((item)=>item.version===payload.activeVersion)||{}).boundary||null,outOfScopeRetrievalCount:store.retrieve({boundary:'outside hosted proof boundary'}).length,gates:gateStates,safetyEvidence:safety,safetyBehaviours:safetyResult.behaviours,safetyUnsatisfied:safetyResult.unsatisfied,supersession,encryptedStateSha256:sha(fs.readFileSync(encryptedFile)),authorizesPromotion:false};
+  const report={schemaVersion:1,projectId,repository,ref,runId:String(runId),completedAt:at,restoredEncryptedState:restored,revision:payload.revision,candidateRecords:payload.candidateRecords.length,knowledgeVersions:payload.knowledgeVersions.length,activeVersion:payload.activeVersion,activeBoundary:(payload.knowledgeVersions.find((item)=>item.version===payload.activeVersion)||{}).boundary||null,outOfScopeRetrievalCount:store.retrieve({boundary:'outside hosted proof boundary'}).length,gates:gateStates,intakePathways:intakePathways({sources:(restoredBundle&&restoredBundle.sources)||[],candidateRecords:[...everyRecord.values()]}),safetyEvidence:safety,safetyBehaviours:safetyResult.behaviours,safetyUnsatisfied:safetyResult.unsatisfied,supersession,encryptedStateSha256:sha(fs.readFileSync(encryptedFile)),authorizesPromotion:false};
   fs.mkdirSync(path.dirname(reportFile),{recursive:true}); fs.writeFileSync(reportFile,`${JSON.stringify(report,null,2)}\n`,{mode:0o600}); return report;
 }
 
