@@ -263,7 +263,12 @@ test('corroborates candidates held in the corpus own learning state, not only th
 // so declaring ten scopes tested one and left nine untouched with nothing in the report to say so.
 test('every declared claim is evaluated in its own right, not just the first', async (t) => {
   const dir = workspace(t);
-  const second = 'The filter method returns a new array and does not modify the original array.';
+  // Deliberately a different subject, not a near-neighbour of CLAIM. This test is about whether
+  // every declaration is evaluated, so its fixture must not depend on where the sameness threshold
+  // happens to sit - at 0.74 the old second claim ('the filter method...') merges with CLAIM at
+  // overlap 0.75, which is a real property of the threshold and is pinned in
+  // test/semanticCorroboration.test.js rather than hidden here.
+  const second = 'The sort method orders elements in place and returns a reference to the same array.';
   const { bundleRoot, learningRoot } = buildBundle(dir, [
     { url: 'https://example.edu/arrays', content: `Working with arrays.\n${CLAIM} Callers keep the original values for later work.\n${second} The predicate decides which elements survive.` },
     { url: 'https://other.org/iteration', content: `A reference on iteration helpers.\n${CLAIM} Chaining further calls stays predictable.\n${second} Every retained element keeps its order.` },

@@ -97,7 +97,18 @@ function claimFingerprint(claim) {
   return { negated: negationCount % 2 === 1, negationCount, numbers, entities: claimEntities(claim), terms: [...new Set(terms)].sort() };
 }
 
-const DEFAULT_MINIMUM_OVERLAP = 0.8;
+// The owner's decision on what counts as the same claim: "if it's over 74% similar I say it's the
+// same". Recorded as theirs rather than inferred, because it is a judgement about sameness and not
+// a fact the machine can establish about itself.
+//
+// It replaces 0.8, which was calibrated for near-duplicate text - the very thing corroboration
+// exists to exclude. What it does not do is unblock the current corpus, and that is worth saying
+// plainly next to the number so nobody later reads the change as having fixed something it did
+// not. Measured on the real corpus, the count of claim groups reaching two distinct source ids is
+// 4 at every threshold from 0.8 down to 0.5, and all four are then refused at independence as one
+// publisher agreeing with itself. Lowering this bar changes which claims are grouped; it does not
+// create an independent second source for any of them.
+const DEFAULT_MINIMUM_OVERLAP = 0.74;
 const DEFAULT_MINIMUM_TERMS = 4;
 
 // Whether two fingerprints may be treated as the same claim. Separated from the text entry
