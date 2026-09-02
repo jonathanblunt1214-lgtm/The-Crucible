@@ -109,18 +109,22 @@ test('groups agreeing claims and keeps contradictions apart, in a stable order',
 // to carry the overlap score. A test that cannot see a changed subject corroborates a template
 // with itself.
 test('never corroborates claims that name different subjects', () => {
+  // Each of these is still refused, and now each says which of the two things went wrong: a name
+  // swapped for another in the same slot, or one skeleton filled twice. Asserting the exact reason
+  // is stricter than asserting a shared one, because it would catch a refusal made for the wrong
+  // cause - which is how the earlier rule refused every genuine agreement as well.
   const cases = [
     ['Essential Javascript - a free JavaScript programming book Essential Javascript is a free book about JavaScript programming language.',
-     'Essential C# - a free C# programming book Essential C# is a free book about C# programming language.', /javascript.*c#|c#.*javascript/],
+     'Essential C# - a free C# programming book Essential C# is a free book about C# programming language.', /name different subjects/, /javascript.*c#|c#.*javascript/],
     ['This is an unofficial free book created for educational purposes and is not affiliated with official Bash group(s) or company(s).',
-     'This is an unofficial free book created for educational purposes and is not affiliated with official TypeScript group(s) or company(s).', /bash|typescript/],
+     'This is an unofficial free book created for educational purposes and is not affiliated with official TypeScript group(s) or company(s).', /name different subjects/, /bash|typescript/],
     ['My Dashboard Home Xamarin.Forms for macOS Succinctly Alessandro Del Sole This ebook is part of our premier ebook collection.',
-     'My Dashboard Home Xamarin.Forms Succinctly Alessandro Del Sole This ebook is part of our premier ebook collection.', /macos/],
+     'My Dashboard Home Xamarin.Forms Succinctly Alessandro Del Sole This ebook is part of our premier ebook collection.', /one template filled differently/, /macos/],
   ];
-  for (const [left, right, named] of cases) {
+  for (const [left, right, why, named] of cases) {
     const decision = semanticallyCorroborates(left, right);
     assert.equal(decision.corroborates, false, `must not corroborate: ${left}`);
-    assert.match(decision.reason, /name different subjects/);
+    assert.match(decision.reason, why);
     assert.match(decision.reason.toLowerCase(), named, 'the reason names the subject that differs');
   }
 
@@ -134,4 +138,44 @@ test('a sentence-initial capital is grammar, not a named subject', () => {
   assert.deepEqual(claimEntities('Calling map returns a JavaScript array.'), ['javascript']);
   assert.ok(claimEntities('It uses Xamarin.Forms and C# together.').includes('c#'));
   assert.ok(claimEntities('It uses Xamarin.Forms and C# together.').includes('xamarin.forms'));
+});
+
+// The rule that made independent agreement impossible by construction. Names had to match
+// exactly, so one document mentioning the language or protocol it was talking about and another
+// not mentioning it were "claims about different things" - and the reason it gave, "different
+// subjects (tcp against none)", was not even true. Naming nothing extra is not naming a different
+// subject. These pairs must now reach the wording judgement instead of being refused before it.
+test('a one-sided name difference is context, not a different subject', () => {
+  const pairs = [
+    ['A TCP connection is established using a three-way handshake.',
+     'TCP establishes a connection using a three-way handshake.'],
+    ['The HTTP 404 status code indicates that the server cannot find the requested resource.',
+     'HTTP 404 indicates the server cannot find the requested resource.'],
+    ['Git stores each commit as a snapshot of the entire repository tree.',
+     'In Git, every commit is stored as a snapshot of the whole repository tree.'],
+  ];
+  for (const [left, right] of pairs) {
+    const decision = semanticallyCorroborates(left, right);
+    assert.doesNotMatch(decision.reason, /name different subjects/, `refused for the wrong cause: ${left}`);
+    assert.doesNotMatch(decision.reason, /one template filled differently/, `these differ in wording, not only in a name: ${left}`);
+    // Whether they corroborate is the overlap threshold's call, and that is a separate question.
+    assert.match(decision.reason, /content-term overlap/);
+  }
+});
+
+// Bucketing decided which claims ever meet to be compared. While names were an absolute refusal
+// they belonged in that key; now that a one-sided difference can still corroborate, leaving them
+// there would silently prevent the comparison that decides the outcome.
+test('grouping compares claims that mention different names', () => {
+  // One document names the shell it is describing and the other does not, and they word the
+  // action differently. Under the old rule these were placed in different buckets by the name
+  // alone and never compared, so the wording judgement below could not run at all.
+  const entries = [
+    { id: 'a', claim: 'The Bash shell expands an unquoted shell variable into separate words on whitespace before the command runs inside the current interactive login environment.', sourceId: 's-1' },
+    { id: 'b', claim: 'A shell splits the unquoted shell variable into separate words on whitespace before a command runs inside the current interactive login environment.', sourceId: 's-2' },
+  ];
+  const groups = groupCorroborating(entries);
+  const together = groups.find((group) => group.members.length === 2);
+  assert.ok(together, 'claims that agree must be compared rather than bucketed apart by a name');
+  assert.equal(groups.length, 1);
 });
