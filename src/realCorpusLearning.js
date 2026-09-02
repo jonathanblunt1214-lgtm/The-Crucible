@@ -20,7 +20,7 @@ const { CriticalClaimReviewer } = require('./criticalClaimReview');
 const { routeThreeWayComparison } = require('./claimComparison');
 const { LogicalReasoningProblemSolver, ReasoningLedger } = require('./reasoningProblemSolving');
 const { CreativeDecisionAdaptationEngine, CognitiveStrategyLedger } = require('./creativeDecisionAdaptation');
-const { groupCorroborating, semanticallyCorroborates } = require('./semanticCorroboration');
+const { groupCorroborating, semanticallyCorroborates, DEFAULT_MINIMUM_OVERLAP } = require('./semanticCorroboration');
 const { verifyPairedDeclaration } = require('./pairedCorroboration');
 const { sourceIndex, independentSubset } = require('./sourceIndependence');
 const { documentFurniture } = require('./documentFurniture');
@@ -52,6 +52,33 @@ function readBundle(root) {
 // equality can only fire on duplicated text, which is the opposite of independent agreement.
 // Sameness is now the deterministic same-meaning test in semanticCorroboration, which still
 // refuses to cross a negation or a changed number however similar the wording.
+// What the corpus would corroborate at other sameness thresholds.
+//
+// A run that reports "0 corroborated" says nothing about why. Zero is the right answer when no
+// two independent sources assert the same claim, and it is also what a threshold calibrated for
+// near-duplicate text produces on a corpus of independently written prose - and those two look
+// identical from outside. This measures which one is true, by running the real corroboration
+// path unchanged at each threshold and reporting what it yields.
+//
+// It decides nothing and changes nothing. It reports only, so the threshold stays a judgement
+// made deliberately on real numbers rather than one nobody ever saw the effect of.
+function corroborationSensitivity(records, options = {}, thresholds = [0.8, 0.7, 0.6, 0.5]) {
+  const configured = options.minimumOverlap === undefined ? DEFAULT_MINIMUM_OVERLAP : options.minimumOverlap;
+  const measured = [];
+  for (const minimumOverlap of [...new Set([configured, ...thresholds])].sort((a, b) => b - a)) {
+    const found = corroboratedClaims(records, { ...options, minimumOverlap });
+    measured.push({
+      minimumOverlap,
+      configured: minimumOverlap === configured,
+      corroboratedClaims: found.length,
+      // Named so a reader can see whether a lower threshold buys real agreement or just
+      // reshuffles boilerplate that the furniture and template rules did not catch.
+      examples: found.slice(0, 3).map((item) => ({ claim: item.claim, agreement: item.agreement, sourceIds: item.sourceIds })),
+    });
+  }
+  return { schemaVersion: 1, configuredMinimumOverlap: configured, measured, decidesNothing: true, promotionAuthorized: false };
+}
+
 function corroboratedClaims(storeOrRecords, options = {}) {
   const records = Array.isArray(storeOrRecords) ? storeOrRecords : storeOrRecords.read().candidateRecords;
   const index = options.sourceIndex || null;
@@ -330,6 +357,12 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     candidatesAvailableForCorroboration: available.length,
     corroboratedClaims: corroborated.length,
     furnitureExcludedFromCorroboration: (corroborated.furnitureExcluded || []).length,
+    // Measured, not assumed: what the same corroboration path yields at other sameness
+    // thresholds. Zero corroborated claims can mean the corpus genuinely contains no agreement,
+    // or that the threshold is calibrated for near-duplicate text and independently written
+    // prose cannot reach it. These two are indistinguishable from a single count, and the
+    // difference decides whether the corpus can teach anything at all.
+    corroborationSensitivity: corroborationSensitivity(available, { ...corroborationOptions, sourceIndex: sourceIndex(bundle) }),
     knowledgeVersionsBefore: before.knowledgeVersions.length,
   };
 
@@ -487,4 +520,4 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
   };
 }
 
-module.exports = { readBundle, corpusCandidateStore, allCandidateRecords, corroboratedClaims, reviewCorroborated, readScopeDeclarations, selectEvaluable, selectAllEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };
+module.exports = { readBundle, corpusCandidateStore, allCandidateRecords, corroboratedClaims, corroborationSensitivity, reviewCorroborated, readScopeDeclarations, selectEvaluable, selectAllEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };

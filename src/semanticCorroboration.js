@@ -112,10 +112,27 @@ function compareFingerprints(a, b, { minimumOverlap = DEFAULT_MINIMUM_OVERLAP, m
   if (a.numbers.join(',') !== b.numbers.join(',')) {
     return { ...base, corroborates: false, reason: `the claims commit to different numbers (${a.numbers.join(', ') || 'none'} against ${b.numbers.join(', ') || 'none'})` };
   }
-  if (a.entities.join(',') !== b.entities.join(',')) {
-    const onlyA = a.entities.filter((entity) => !b.entities.includes(entity));
-    const onlyB = b.entities.filter((entity) => !a.entities.includes(entity));
-    return { ...base, corroborates: false, reason: `the claims name different subjects (${onlyA.join(', ') || 'none'} against ${onlyB.join(', ') || 'none'}), so they are claims about different things however similar their wording` };
+  // Names are checked in two ways, because two different things can go wrong with them and
+  // requiring the name sets to be equal confused them into one rule that refused everything.
+  //
+  // A SUBSTITUTED subject: each side names something the other lacks. "Essential Javascript is
+  // a free book about JavaScript" against "Essential C# is a free book about C#" - one name has
+  // been swapped for another in the same slot, and they are claims about different things.
+  //
+  // A TEMPLATE SLOT: the difference runs one way only and is the *only* difference between the
+  // two claims. "Xamarin.Forms Succinctly" against "Xamarin.Forms for macOS Succinctly" is one
+  // document skeleton with a slot filled differently, not two documents that happen to agree.
+  //
+  // What equality also refused, and should not have, is a one-sided name difference in claims
+  // that are worded differently as well: one document writing "TCP establishes a connection
+  // using a three-way handshake" and another "A TCP connection is established using a three-way
+  // handshake" are the same assertion. Refusing those made independent agreement impossible by
+  // construction, and the reason it gave - "different subjects (tcp against none)" - was not
+  // even true: naming nothing extra is not naming a different subject.
+  const onlyA = a.entities.filter((entity) => !b.entities.includes(entity));
+  const onlyB = b.entities.filter((entity) => !a.entities.includes(entity));
+  if (onlyA.length && onlyB.length) {
+    return { ...base, corroborates: false, reason: `the claims name different subjects (${onlyA.join(', ')} against ${onlyB.join(', ')}), so they are claims about different things however similar their wording` };
   }
   if (a.terms.length < minimumTerms || b.terms.length < minimumTerms) {
     return { ...base, corroborates: false, reason: `at least ${minimumTerms} content terms are required to judge sameness; found ${Math.min(a.terms.length, b.terms.length)}` };
@@ -126,6 +143,19 @@ function compareFingerprints(a, b, { minimumOverlap = DEFAULT_MINIMUM_OVERLAP, m
   const shared = [...setA].filter((term) => setB.has(term)).sort();
   const union = new Set([...setA, ...setB]);
   const overlap = shared.length / union.size;
+
+  // The template slot. Two claims whose only difference is a name one of them carries are one
+  // skeleton filled twice, not two documents agreeing: independently written sentences about the
+  // same fact differ in wording as well as names. Checked here rather than above because it needs
+  // the content terms to know that the name is the sole difference.
+  const differingTerms = [...union].filter((term) => !setA.has(term) || !setB.has(term));
+  const differingNames = [...onlyA, ...onlyB];
+  // Content terms are stemmed and names are not, so they have to be brought to the same footing
+  // before they can be compared: the entity "macOS" appears among the terms as "maco".
+  const differingNameStems = new Set(differingNames.map(stem));
+  if (differingNames.length && differingTerms.every((term) => differingNameStems.has(term))) {
+    return { ...base, corroborates: false, overlap, sharedTerms: shared, reason: `the claims are identical apart from the name ${differingNames.join(', ')}, so they are one template filled differently rather than two sources agreeing` };
+  }
   if (overlap < minimumOverlap) {
     return { ...base, corroborates: false, overlap, sharedTerms: shared, reason: `content-term overlap ${overlap.toFixed(2)} is below the ${minimumOverlap} threshold` };
   }
@@ -142,7 +172,10 @@ function semanticallyCorroborates(claimA, claimB, options = {}) {
 // numbers. Bucketing on them lets a corpus-sized grouping skip comparisons that are already
 // decided, without changing a single outcome.
 function incompatibilityKey(fingerprint) {
-  return `${fingerprint.negated ? 'neg' : 'aff'}|${fingerprint.numbers.join(',')}|${fingerprint.entities.join(',')}`;
+  // Only polarity and numbers belong here. Names were in this key while they were an absolute
+  // refusal; now that a one-sided name difference can still corroborate, bucketing on them would
+  // stop the very comparisons that decide the outcome - claims would never meet to be judged.
+  return `${fingerprint.negated ? 'neg' : 'aff'}|${fingerprint.numbers.join(',')}`;
 }
 
 // Groups candidate claims into sets that assert the same thing. Deterministic: candidates are

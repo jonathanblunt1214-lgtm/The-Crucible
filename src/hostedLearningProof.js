@@ -89,6 +89,13 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
       if (pathways.blocked) console.log(`[The Crucible] blocked pathway: ${pathways.blocked}`);
       const c = stopped.corpus || {};
       console.log(`[The Crucible] corpus: ${c.sources} sources, ${c.documentsWithContent} with stored content; ${c.corpusCandidateRecords} candidate(s) in the corpus learning state, ${c.candidateRecords} in the persistent store, ${c.candidatesAvailableForCorroboration} available to corroboration; ${c.furnitureExcludedFromCorroboration} excluded as document furniture; ${c.corroboratedClaims} corroborated; corpus learning state restored: ${c.corpusLearningStateRestored}.`);
+      // Says whether zero corroborated claims is the corpus or the threshold. Reporting only.
+      if (c.corroborationSensitivity) {
+        const line = c.corroborationSensitivity.measured
+          .map((m) => `${m.minimumOverlap}${m.configured ? ' (configured)' : ''}: ${m.corroboratedClaims}`)
+          .join('; ');
+        console.log(`[The Crucible] corroboration at each sameness threshold - ${line}. This decides nothing and authorizes nothing; the configured threshold is unchanged.`);
+      }
       for (const review of (realLearning.reviews || []).slice(0, 25)) console.log(`[The Crucible] review: ${review.testable ? 'testable' : `not testable (${review.reviewRoute})`} - ${String(review.claim).slice(0, 150)}`);
       for (const [index,item] of (stopped.corroborated||[]).entries()) {
         console.log(`[The Crucible] corroborated ${index+1}/${stopped.corroborated.length} (${item.agreement}, ${item.sourceCount} sources): ${item.claim}`);
