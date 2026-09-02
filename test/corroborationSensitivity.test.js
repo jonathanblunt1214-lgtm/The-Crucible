@@ -98,3 +98,47 @@ test('the instrument decides nothing and authorizes nothing', () => {
   assert.equal(sensitivity.promotionAuthorized, false);
   assert.equal(sensitivity.candidatesJudged, 1);
 });
+
+// The diagnostic that decides what the owner does next, and the one I got wrong first.
+//
+// "Nothing corroborates" has two causes that demand opposite responses. If the corpus is fully
+// digested, it truly holds no independent agreement and the answer is to ingest different
+// sources. If most of it was never extracted, the answer is to run digestion - and changing
+// what gets ingested would be effort spent on the wrong problem entirely.
+//
+// The stop message used to state only the first cause. On the real corpus it reported 127
+// sources extracted and 278 still awaiting extraction, and I read that as proof the corpus
+// lacked independent publishers. Four fifths of it had simply never been digested. The count
+// was already in the diagnostics one line above; it just was not in the sentence saying what
+// to do next.
+const { learnFromRealCorpus } = require('../src/realCorpusLearning');
+const { intakePathways } = require('../src/intakePathways');
+
+test('an undigested backlog is named as the likely cause rather than blamed on the corpus', () => {
+  const backlog = intakePathways({
+    sources: [
+      { id: 's-1', state: 'claim-extraction-complete', content: 'x' },
+      ...Array.from({ length: 8 }, (_, index) => ({ id: `s-p${index}`, state: 'claim-extraction-forced-pending', content: 'y' })),
+    ],
+    candidateRecords: [],
+  });
+  const undigested = backlog.diagnostics.signals.find((item) => item.signal === 'undigested-backlog');
+  assert.ok(undigested, 'a corpus with sources awaiting extraction raises the backlog signal');
+  assert.match(undigested.detail, /8 source\(s\) awaiting extraction/);
+
+  // And a fully digested corpus raises no such signal, so the stop message falls through to
+  // saying the corpus itself is the limit - which is only honest once digestion is done.
+  const digested = intakePathways({
+    sources: [{ id: 's-1', state: 'claim-extraction-complete', content: 'x' }, { id: 's-2', state: 'claim-extraction-complete', content: 'y' }],
+    candidateRecords: [],
+  });
+  assert.equal(digested.diagnostics.signals.find((item) => item.signal === 'undigested-backlog'), undefined);
+});
+
+test('learnFromRealCorpus exposes the intake diagnostics it reasons from', () => {
+  assert.equal(typeof learnFromRealCorpus, 'function');
+  // The stop path reads intake.diagnostics.signals. If that shape ever changes, the reason
+  // string silently loses its cause rather than failing, so the shape is pinned here.
+  const shape = intakePathways({ sources: [{ id: 's', state: 'claim-extraction-forced-pending', content: 'x' }], candidateRecords: [] });
+  assert.ok(Array.isArray(shape.diagnostics.signals), 'signals must stay an array the stop reason can search');
+});
