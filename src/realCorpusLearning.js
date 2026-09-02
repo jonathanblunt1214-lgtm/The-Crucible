@@ -124,7 +124,7 @@ function corroborationFunnel(entries, options = {}) {
 // What the corpus would corroborate at other sameness thresholds, and where it loses what it
 // does not corroborate. Runs the real corroboration path unchanged at each threshold, so the
 // configured row is the same number the report states.
-function corroborationSensitivity(records, options = {}, thresholds = [0.8, 0.7, 0.6, 0.5]) {
+function corroborationSensitivity(records, options = {}, thresholds = [0.8, 0.74, 0.7, 0.6, 0.5]) {
   const configured = options.minimumOverlap === undefined ? DEFAULT_MINIMUM_OVERLAP : options.minimumOverlap;
   const { entries } = corroborationEntries(records);
   const measured = [];

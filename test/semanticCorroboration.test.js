@@ -179,3 +179,32 @@ test('grouping compares claims that mention different names', () => {
   assert.ok(together, 'claims that agree must be compared rather than bucketed apart by a name');
   assert.equal(groups.length, 1);
 });
+
+// The owner set the sameness threshold to 0.74: "if it's over 74% similar I say it's the same".
+// This test does not argue with that. It pins what the number costs, so the cost is visible in the
+// suite rather than discovered later by something depending on it.
+//
+// At 0.74, two claims about DIFFERENT array methods merge into one:
+//   "The map method returns a new array and does not modify the original array."
+//   "The filter method returns a new array and does not modify the original array."
+// They score 0.75. Every content term but the method name is shared, and a bare lowercase method
+// name is not a named entity - claimEntities looks for proper nouns and code identifiers, so
+// "map" and "filter" are ordinary content terms and the entity rule never sees a substituted
+// subject. At 0.8 these stayed apart; at 0.74 they do not.
+//
+// If this merge is later judged wrong, the fix is NOT to move the threshold back - that is the
+// owner's number. It is to make a claim's subject method name a committed term, the way numbers
+// and proper nouns already are, so the two are refused on subject rather than on wording.
+test('at the configured threshold, claims differing only by a lowercase method name merge', () => {
+  const mapClaim = 'The map method returns a new array and does not modify the original array.';
+  const filterClaim = 'The filter method returns a new array and does not modify the original array.';
+  const decision = semanticallyCorroborates(mapClaim, filterClaim);
+
+  assert.equal(DEFAULT_MINIMUM_OVERLAP, 0.74, 'the configured threshold is the owner’s 0.74');
+  assert.ok(decision.overlap >= 0.74 && decision.overlap < 0.8, `expected an overlap between the old and new thresholds, got ${decision.overlap}`);
+  assert.equal(decision.corroborates, true, 'this is what 0.74 admits, recorded rather than hidden');
+
+  // And the reason it is not caught: neither method name registers as a named subject.
+  assert.deepEqual(claimEntities(mapClaim), [], 'a bare lowercase method name is not an entity');
+  assert.deepEqual(claimEntities(filterClaim), [], 'so the substituted-subject rule never sees this pair');
+});
