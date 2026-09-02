@@ -52,36 +52,12 @@ function readBundle(root) {
 // equality can only fire on duplicated text, which is the opposite of independent agreement.
 // Sameness is now the deterministic same-meaning test in semanticCorroboration, which still
 // refuses to cross a negation or a changed number however similar the wording.
-// What the corpus would corroborate at other sameness thresholds.
-//
-// A run that reports "0 corroborated" says nothing about why. Zero is the right answer when no
-// two independent sources assert the same claim, and it is also what a threshold calibrated for
-// near-duplicate text produces on a corpus of independently written prose - and those two look
-// identical from outside. This measures which one is true, by running the real corroboration
-// path unchanged at each threshold and reporting what it yields.
-//
-// It decides nothing and changes nothing. It reports only, so the threshold stays a judgement
-// made deliberately on real numbers rather than one nobody ever saw the effect of.
-function corroborationSensitivity(records, options = {}, thresholds = [0.8, 0.7, 0.6, 0.5]) {
-  const configured = options.minimumOverlap === undefined ? DEFAULT_MINIMUM_OVERLAP : options.minimumOverlap;
-  const measured = [];
-  for (const minimumOverlap of [...new Set([configured, ...thresholds])].sort((a, b) => b - a)) {
-    const found = corroboratedClaims(records, { ...options, minimumOverlap });
-    measured.push({
-      minimumOverlap,
-      configured: minimumOverlap === configured,
-      corroboratedClaims: found.length,
-      // Named so a reader can see whether a lower threshold buys real agreement or just
-      // reshuffles boilerplate that the furniture and template rules did not catch.
-      examples: found.slice(0, 3).map((item) => ({ claim: item.claim, agreement: item.agreement, sourceIds: item.sourceIds })),
-    });
-  }
-  return { schemaVersion: 1, configuredMinimumOverlap: configured, measured, decidesNothing: true, promotionAuthorized: false };
-}
-
-function corroboratedClaims(storeOrRecords, options = {}) {
+// The population corroboration judges, built once and shared. Extracted from corroboratedClaims
+// so the sensitivity instrument below measures the exact set the real path measures: a second
+// copy of this loop would be free to drift, and an instrument that quietly measures a different
+// population than the thing it reports on is worse than no instrument.
+function corroborationEntries(storeOrRecords) {
   const records = Array.isArray(storeOrRecords) ? storeOrRecords : storeOrRecords.read().candidateRecords;
-  const index = options.sourceIndex || null;
   const entries = [];
   const furnitureExcluded = [];
   for (const record of records) {
@@ -98,6 +74,75 @@ function corroboratedClaims(storeOrRecords, options = {}) {
     }
     entries.push({ id: record.candidate.id, claim: record.candidate.claim, sourceId: record.candidate.provenance.sourceId, provenance: record.candidate.provenance });
   }
+  return { entries, furnitureExcluded };
+}
+
+// Where the corpus loses its corroboration, stage by stage.
+//
+// A run that reports "0 corroborated" says nothing about why, and the first version of this
+// instrument reported only that endpoint at four thresholds. It came back 0, 0, 0, 0 - which
+// looks like an answer and is not one, because corroboration passes candidates through four
+// filters in series and any one of them alone produces that same zero:
+//
+//   1. grouping        - do any two claims read as the same claim at all?
+//   2. distinct source - or is a group one document agreeing with its own repeated text?
+//   3. independence    - or two ids that resolve to one publisher, author, or byte-identical page?
+//   4. the pair itself  - two mutually independent members survive.
+//
+// Lowering the sameness threshold can only ever help stage 1. If the corpus dies at stage 3 -
+// 403 sources that are largely one publisher's ebook library would do exactly that - then every
+// threshold reads zero and the wording rule was never the blockage. Reporting the funnel is what
+// separates those, and it is the difference between measuring the system and confirming a guess.
+//
+// It decides nothing and changes nothing. It reports only.
+function corroborationFunnel(entries, options = {}) {
+  const index = options.sourceIndex || null;
+  const groups = groupCorroborating(entries, options);
+  const funnel = { groups: groups.length, groupsAgreeing: 0, groupsWithTwoSourceIds: 0, groupsWithTwoIndependentSources: 0 };
+  const lostToOneSource = [];
+  const lostToDependence = [];
+  for (const group of groups) {
+    if (group.members.length < 2) continue;
+    funnel.groupsAgreeing += 1;
+    const bySource = new Map();
+    for (const member of group.members) if (!bySource.has(member.sourceId)) bySource.set(member.sourceId, member);
+    if (bySource.size < 2) {
+      if (lostToOneSource.length < 3) lostToOneSource.push({ claim: group.claim, members: group.members.length, sourceId: String(group.members[0].sourceId) });
+      continue;
+    }
+    funnel.groupsWithTwoSourceIds += 1;
+    const { members, rejected } = independentSubset([...bySource.values()], index);
+    if (members.length < 2) {
+      if (lostToDependence.length < 3) lostToDependence.push({ claim: group.claim, sourceIdsSeen: bySource.size, reason: rejected.length ? rejected[0].reason : 'no independent pair remained' });
+      continue;
+    }
+    funnel.groupsWithTwoIndependentSources += 1;
+  }
+  return { ...funnel, lostToOneSource, lostToDependence };
+}
+
+// What the corpus would corroborate at other sameness thresholds, and where it loses what it
+// does not corroborate. Runs the real corroboration path unchanged at each threshold, so the
+// configured row is the same number the report states.
+function corroborationSensitivity(records, options = {}, thresholds = [0.8, 0.7, 0.6, 0.5]) {
+  const configured = options.minimumOverlap === undefined ? DEFAULT_MINIMUM_OVERLAP : options.minimumOverlap;
+  const { entries } = corroborationEntries(records);
+  const measured = [];
+  for (const minimumOverlap of [...new Set([configured, ...thresholds])].sort((a, b) => b - a)) {
+    const stages = corroborationFunnel(entries, { ...options, minimumOverlap });
+    measured.push({
+      minimumOverlap,
+      configured: minimumOverlap === configured,
+      corroboratedClaims: stages.groupsWithTwoIndependentSources,
+      stages,
+    });
+  }
+  return { schemaVersion: 2, configuredMinimumOverlap: configured, candidatesJudged: entries.length, measured, decidesNothing: true, promotionAuthorized: false };
+}
+
+function corroboratedClaims(storeOrRecords, options = {}) {
+  const index = options.sourceIndex || null;
+  const { entries, furnitureExcluded } = corroborationEntries(storeOrRecords);
   const corroborated = [];
   for (const group of groupCorroborating(entries, options)) {
     const bySource = new Map();
@@ -520,4 +565,4 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
   };
 }
 
-module.exports = { readBundle, corpusCandidateStore, allCandidateRecords, corroboratedClaims, corroborationSensitivity, reviewCorroborated, readScopeDeclarations, selectEvaluable, selectAllEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };
+module.exports = { readBundle, corpusCandidateStore, allCandidateRecords, corroborationEntries, corroboratedClaims, corroborationFunnel, corroborationSensitivity, reviewCorroborated, readScopeDeclarations, selectEvaluable, selectAllEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };
