@@ -1,6 +1,7 @@
 'use strict';
 
 const assert = require('node:assert/strict');
+const { crucibleError, UNCODED } = require('./failureCodes');
 const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -112,7 +113,11 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
         if (item.agreement === 'semantic') for (const asserted of item.assertedAs||[]) console.log(`[The Crucible]   asserted as: ${asserted}`);
       }
       for (const failure of stopped.pairedFailures||[]) console.log(`[The Crucible] pairing not usable for "${failure.claim}": ${failure.reason}`);
-      throw new Error(`Hosted learning proof stopped: ${realLearning.reason}`);
+      // The most frequently red check in this repository, and until now its failure carried no
+      // code at all: a reader got a paragraph of prose and had to work out from it whether the
+      // blockage was digestion, corpus composition, or a missing owner declaration. Those
+      // demand opposite responses. The code comes from the branch that chose the reason.
+      throw crucibleError(realLearning.stopCode || UNCODED, `Hosted learning proof stopped: ${realLearning.reason}`);
     }
   }
   // R7 on real evidence: a further independent corpus source re-tests the promoted claim,

@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "recordedAt": "2026-09-02",
-  "uncodedThrowSites": 584,
-  "codedThrowSites": 20,
+  "uncodedThrowSites": 583,
+  "codedThrowSites": 22,
   "rule": "This number may fall and may never rise. A new failure path must carry a code from src/failureCodes.js so it can be diagnosed by lookup instead of by guessing at its wording. Lower it whenever throw sites are coded; never raise it.",
   "byFile": {
     "apiGuard.js": 4,
@@ -36,7 +36,7 @@
     "governingDecision.js": 1,
     "gradedOversightResponse.js": 4,
     "hostIsolation.js": 7,
-    "hostedLearningProof.js": 7,
+    "hostedLearningProof.js": 6,
     "hostedMultiRepositoryIntegration.js": 3,
     "hostedSourceBundle.js": 29,
     "hypothesisTestPlan.js": 9,
