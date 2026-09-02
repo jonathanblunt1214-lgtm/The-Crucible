@@ -2900,6 +2900,63 @@
       }
     },
     {
+      "id": "KB-local-46da607aa5",
+      "foundAt": "2026-09-02T14:57:17.400Z",
+      "retests": [],
+      "severity": "high",
+      "status": "open",
+      "checked": false,
+      "sourceCommit": "local",
+      "categoryResults": [
+        {
+          "category": "code",
+          "severity": "high",
+          "status": "failed",
+          "tests": [
+            "test/corroborationSensitivity.test.js",
+            "test/hostedLearningProof.test.js",
+            "test/pairedCorroboration.test.js",
+            "test/realCorpusLearning.test.js",
+            "test/realCorpusSafety.test.js",
+            "test/realSupersession.test.js",
+            "test/semanticCorroboration.test.js",
+            "test/sourceIndependence.test.js"
+          ]
+        },
+        {
+          "category": "maintenance",
+          "severity": "low",
+          "status": "failed",
+          "tests": [
+            "test/handoffPolicy.test.js",
+            "test/testCadence.test.js",
+            "test/workflow.test.js"
+          ]
+        }
+      ],
+      "mainCategories": [
+        "code",
+        "maintenance"
+      ],
+      "tests": [
+        "test/corroborationSensitivity.test.js",
+        "test/handoffPolicy.test.js",
+        "test/hostedLearningProof.test.js",
+        "test/pairedCorroboration.test.js",
+        "test/realCorpusLearning.test.js",
+        "test/realCorpusSafety.test.js",
+        "test/realSupersession.test.js",
+        "test/semanticCorroboration.test.js",
+        "test/sourceIndependence.test.js",
+        "test/testCadence.test.js",
+        "test/workflow.test.js"
+      ],
+      "lastFailure": {
+        "at": "2026-09-02T14:57:36.978Z",
+        "exitStatus": 1
+      }
+    },
+    {
       "id": "KB-local-e27b0d5527",
       "foundAt": "2026-08-28T01:40:03.107Z",
       "retests": [

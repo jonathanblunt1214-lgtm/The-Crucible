@@ -91,10 +91,19 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
       console.log(`[The Crucible] corpus: ${c.sources} sources, ${c.documentsWithContent} with stored content; ${c.corpusCandidateRecords} candidate(s) in the corpus learning state, ${c.candidateRecords} in the persistent store, ${c.candidatesAvailableForCorroboration} available to corroboration; ${c.furnitureExcludedFromCorroboration} excluded as document furniture; ${c.corroboratedClaims} corroborated; corpus learning state restored: ${c.corpusLearningStateRestored}.`);
       // Says whether zero corroborated claims is the corpus or the threshold. Reporting only.
       if (c.corroborationSensitivity) {
-        const line = c.corroborationSensitivity.measured
+        const s = c.corroborationSensitivity;
+        const line = s.measured
           .map((m) => `${m.minimumOverlap}${m.configured ? ' (configured)' : ''}: ${m.corroboratedClaims}`)
           .join('; ');
         console.log(`[The Crucible] corroboration at each sameness threshold - ${line}. This decides nothing and authorizes nothing; the configured threshold is unchanged.`);
+        // The endpoint alone cannot say why a run corroborates nothing: four filters run in
+        // series and each one alone produces the same zero. These name the stage that loses it.
+        for (const m of s.measured) {
+          const g = m.stages;
+          console.log(`[The Crucible]   at ${m.minimumOverlap}: ${s.candidatesJudged} candidate(s) -> ${g.groups} group(s) -> ${g.groupsAgreeing} with two or more claims -> ${g.groupsWithTwoSourceIds} with two source ids -> ${g.groupsWithTwoIndependentSources} with two independent sources.`);
+          for (const lost of g.lostToOneSource) console.log(`[The Crucible]     agreed but one source (${lost.sourceId}, ${lost.members} claims): ${String(lost.claim).slice(0, 120)}`);
+          for (const lost of g.lostToDependence) console.log(`[The Crucible]     agreed across ${lost.sourceIdsSeen} source ids but not independent - ${lost.reason}: ${String(lost.claim).slice(0, 120)}`);
+        }
       }
       for (const review of (realLearning.reviews || []).slice(0, 25)) console.log(`[The Crucible] review: ${review.testable ? 'testable' : `not testable (${review.reviewRoute})`} - ${String(review.claim).slice(0, 150)}`);
       for (const [index,item] of (stopped.corroborated||[]).entries()) {
