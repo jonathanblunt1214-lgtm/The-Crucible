@@ -148,3 +148,26 @@ test('a diagnosis reaches the immune system carrying the remedy and the tests th
   assert.equal(repairableByImmuneSystem('CRU-0015'), false);
   assert.match(remedyFor('CRU-0015').forbidden, /Never close or exclude the other pull request/);
 });
+
+// The repository's most frequently red check. Its four stop branches demand opposite responses -
+// run digestion, ingest different sources, declare a scope, reconcile the declarations - and
+// until each carried its own code a reader had to work out which from a paragraph of prose. This
+// pins that the branch and the code stay together; deriving the code by matching the reason text
+// would reintroduce exactly the pattern-matching the registry replaced.
+test('each hosted-proof stop carries a code that says which blockage it is', () => {
+  const digestion = describeCode('CRU-0023');
+  const composition = describeCode('CRU-0024');
+  assert.match(digestion.meaning, /digestion rather than the corpus/);
+  assert.match(composition.meaning, /genuinely contains no claim/);
+  assert.notEqual(digestion.next, composition.next, 'the two causes must not propose the same action');
+
+  // The owner's standing constraint, carried where a future repair will meet it.
+  assert.match(digestion.remedy.forbidden, /Never restrict the corpus/);
+  assert.match(composition.remedy.forbidden, /Never lower the sameness threshold/);
+
+  // None of these is the immune system's to act on: what the corpus should contain, and what a
+  // claim's scope is, are the owner's decisions.
+  for (const code of ['CRU-0023', 'CRU-0024', 'CRU-0025', 'CRU-0026']) {
+    assert.equal(repairableByImmuneSystem(code), false, `${code} must escalate rather than self-repair`);
+  }
+});

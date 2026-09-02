@@ -277,6 +277,7 @@
   },
   "handoffNotes": {
     "completed": [
+      "Coded the four hosted-proof stop branches (CRU-0023 digestion backlog, CRU-0024 corpus composition, CRU-0025 no owner-declared scope, CRU-0026 no matching declaration). All four are owner-decision remedies. The 2026-09-02 hosted run confirmed the blockage is still digestion: 278 sources awaiting extraction, 109 retrieval-blocked, 1 held in extraction, and 4 claim groups reaching two source ids at every threshold from 0.8 to 0.5, all four refused at independence as one publisher agreeing with itself.",
       "Diagnosed the 2026-09-02 macos-latest/Node 22 Self-Test failure by hand: the failing step was 'Run verification and bounded workload' (npm run run), not the collision audit that the on-error diagnostic reported. Established that Native semantic analysis (windows-latest) has failed on all seven runs it has ever had, across commits predating this session, so it is pre-existing rather than caused by 6c6789a.",
       "Inspected the literal development tip a9002e41412ff48403fc864ab279a328212b2e01 and confirmed AI-CONFLICTS.json contains no open conflicts.",
       "Confirmed the extraction worker is implemented in src/claimExtractionWorker.js and is directly invoked by src/automatedGoogleResearchCli.js; the earlier disconnected-worker description is obsolete.",
@@ -406,6 +407,9 @@
       "Declare a scope for one claim the real corpus now corroborates, or nominate a pairing for one it asserts in words the wording test cannot relate; until then the proof still fails closed by design.",
       "Reject document chrome at extraction - navigation, disclaimers, cookie and download-gate text, browser-upgrade notices, newsletter copy. The verb filter in boundedAssertions passes all of it, and it is precisely the text that repeats across independently retrieved documents, so it is what survives to corroborate. Until this lands, corroboration will keep finding boilerplate no matter how sound the sameness test is.",
       "R11 is release authorization, not a learning prerequisite: it authorizes promotion of an exact SHA to main and is never inferred. Learning happens at R4-R6, entirely behind it."
+    ],
+    "open": [
+      "CodeQL reports 4 new high-severity alerts on PR #19. The check output carries no detail text and the GitHub tools available to this session expose no code-scanning-alerts reader, so the alerts could not be enumerated here. They are listed at https://github.com/jonathanblunt1214-lgtm/The-Crucible/security/code-scanning?query=pr%3A19+tool%3ACodeQL+is%3Aopen and need an owner or a session with code-scanning read access to triage."
     ]
   }
 }
