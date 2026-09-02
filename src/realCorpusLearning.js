@@ -429,19 +429,36 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
   const selection = selectAllEvaluable({ store, available, corroborated, declarations, bundle, bundleRoot, options: corroborationOptions });
   const reviews = reviewCorroborated(corroborated, available, { declarations, at: now(), projectId });
 
+  const intake = intakePathways({ sources: bundle.sources, candidateRecords: available });
+
   if (!selection.ready.length) {
     // Fail closed and say exactly which reason applies, so the next step is obvious.
     let reason;
     if (selection.pairedFailures.length) {
       reason = `no declaration is usable yet; the owner-paired declaration(s) were not supported by the corpus: ${selection.pairedFailures.map((item) => `"${item.claim}" - ${item.reason}`).join('; ')}`;
     } else if (corroborated.length === 0) {
-      reason = 'the real corpus contains no claim asserted by two or more independently identified sources, so nothing in it can be corroborated yet';
+      // "Nothing corroborates" has two very different causes and they demand opposite responses.
+      // If the corpus is fully digested, it genuinely contains no independent agreement and the
+      // answer is to ingest different sources. If most of it has never been extracted, the
+      // answer is to run digestion, and changing what gets ingested would be work spent on the
+      // wrong problem.
+      //
+      // This message used to state only the first. It cost a real wrong conclusion: a run
+      // reporting 127 sources extracted and 278 still awaiting extraction was read as evidence
+      // that the corpus lacked independent publishers, when four fifths of it had simply never
+      // been digested. The undigested count was in the diagnostics all along, one line above
+      // in the same report - it just was not in the sentence that says what to do next.
+      const undigested = intake.diagnostics.signals.find((item) => item.signal === 'undigested-backlog');
+      const extracted = new Set(available.map((record) => record.candidate.provenance.sourceId)).size;
+      reason = undigested
+        ? `nothing can be corroborated yet, and digestion is the likely cause rather than the corpus: ${undigested.detail}, while only ${extracted} source(s) have produced any candidate. Corroboration needs two independent sources to have been extracted, so drain the extraction backlog before concluding anything about what the corpus contains or changing what is ingested`
+        : 'the real corpus contains no claim asserted by two or more independently identified sources, and every source has been digested, so this is the corpus rather than the pipeline';
     } else if (!declarations.length) {
       reason = `${corroborated.length} corroborated claim(s) exist in the real corpus but none has an owner-declared scope, and a scope is never inferred`;
     } else {
       reason = `${corroborated.length} corroborated claim(s) exist in the real corpus but none matches a declaration, and no declaration nominates a pairing the corpus supports`;
     }
-    return { schemaVersion: 1, projectId, corpus, learned: false, reason, corroborated: corroborated.slice(0, 25), reviews, pairedFailures: selection.pairedFailures, evaluations: [], reopenedContradictions: reopened, intake: intakePathways({ sources: bundle.sources, candidateRecords: available }), gates: { R4: false, R5: false, R6: false }, promotionAuthorized: false };
+    return { schemaVersion: 1, projectId, corpus, learned: false, reason, corroborated: corroborated.slice(0, 25), reviews, pairedFailures: selection.pairedFailures, evaluations: [], reopenedContradictions: reopened, intake, gates: { R4: false, R5: false, R6: false }, promotionAuthorized: false };
   }
 
   // Every usable declaration is carried through on its own. One may promote while another is
