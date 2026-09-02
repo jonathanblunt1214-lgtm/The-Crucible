@@ -449,9 +449,14 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
       // been digested. The undigested count was in the diagnostics all along, one line above
       // in the same report - it just was not in the sentence that says what to do next.
       const undigested = intake.diagnostics.signals.find((item) => item.signal === 'undigested-backlog');
+      // Counted over `available` - the records corroboration actually judges - and said so in
+      // the message, because the intake line printed just above counts sources behind the
+      // furniture-excluded subset and reports a slightly smaller number. Two adjacent counts
+      // that look like they disagree is the same class of mistake this whole message exists to
+      // undo, so each one states which population it is counting.
       const extracted = new Set(available.map((record) => record.candidate.provenance.sourceId)).size;
       reason = undigested
-        ? `nothing can be corroborated yet, and digestion is the likely cause rather than the corpus: ${undigested.detail}, while only ${extracted} source(s) have produced any candidate. Corroboration needs two independent sources to have been extracted, so drain the extraction backlog before concluding anything about what the corpus contains or changing what is ingested`
+        ? `nothing can be corroborated yet, and digestion is the likely cause rather than the corpus: ${undigested.detail}, while only ${extracted} source(s) have produced any candidate still available to corroboration. Corroboration needs two independent sources to have been extracted, so drain the extraction backlog before concluding anything about what the corpus contains or changing what is ingested`
         : 'the real corpus contains no claim asserted by two or more independently identified sources, and every source has been digested, so this is the corpus rather than the pipeline';
     } else if (!declarations.length) {
       reason = `${corroborated.length} corroborated claim(s) exist in the real corpus but none has an owner-declared scope, and a scope is never inferred`;
