@@ -180,6 +180,7 @@
       "distinction": "Execution mode is separate from agent identity and workflow; diagnosis remains evidence processing, not proof or unattended repair authority."
     },
     "steps": [
+      "[done] Failure codes: every Crucible failure carries a CRU-#### code from the closed registry in src/failureCodes.js, and every code carries a remedy (kind automatic/guided/owner-decision, the exact command where one exists, the existing tests that prove a repair, and the fix that is forbidden because it would only hide the symptom). The diagnostic organ classifies by code rather than by pattern-matching prose, is a governed organ between brain and immune, and never returns an empty diagnosis: an uncoded failure comes back as CRU-0000 naming the coverage gap and the log it was classified against. 21 throw sites coded, 584 recorded in governingDocuments/failure-code-baseline.json as a baseline that may only fall, enforced by npm run audit:failure-codes on every push.",
       "[done] Option 1, semantic corroboration: a deterministic, dependency-free same-meaning test in src/semanticCorroboration.js that reduces a claim to polarity, committed numbers, and stemmed content terms, and accepts paraphrase only above a term-overlap threshold. It must refuse to cross a negation or a changed number however similar the wording, must be symmetric and repeatable, and must never report proof, independent verification, or promotion.",
       "[done] Prove that test before anything depends on it: the near-identical opposite pair, the double negative, differing numbers, sentences too short to judge, genuine paraphrase, unrelated same-polarity prose, symmetry and determinism, and stable grouping.",
       "[done] Wire the proven test into corroboratedClaims in src/realCorpusLearning.js, grouping candidates by meaning rather than by identical text, and report how each pair was found to agree so a wording judgement is never hidden.",
@@ -276,6 +277,7 @@
   },
   "handoffNotes": {
     "completed": [
+      "Diagnosed the 2026-09-02 macos-latest/Node 22 Self-Test failure by hand: the failing step was 'Run verification and bounded workload' (npm run run), not the collision audit that the on-error diagnostic reported. Established that Native semantic analysis (windows-latest) has failed on all seven runs it has ever had, across commits predating this session, so it is pre-existing rather than caused by 6c6789a.",
       "Inspected the literal development tip a9002e41412ff48403fc864ab279a328212b2e01 and confirmed AI-CONFLICTS.json contains no open conflicts.",
       "Confirmed the extraction worker is implemented in src/claimExtractionWorker.js and is directly invoked by src/automatedGoogleResearchCli.js; the earlier disconnected-worker description is obsolete.",
       "Confirmed repository custody records prior live extraction throughput from 393 to 288 forced web sources and all seven PDFs advancing to page 11; the backlog was not proven fully drained.",

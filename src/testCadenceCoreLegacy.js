@@ -15,6 +15,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/contradictionAudit.test.js',
     'test/contradictionReopening.test.js',
     'test/documentFurniture.test.js',
+    'test/failureCodes.test.js',
     'test/findingLedger.test.js',
     'test/durableLock.test.js',
     'test/soakGate.test.js',
