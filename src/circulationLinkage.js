@@ -26,7 +26,7 @@ const path = require('node:path');
 // system nobody is enforcing.
 const SYSTEMS = Object.freeze({
   brain: ['governingDecision', 'learningGovernance', 'learningOrchestrator', 'globalPolicy', 'globalRepositoryGovernance', 'injectedGovernance', 'injectedGovernanceReconcile', 'handoffPolicy', 'aiConflictLedger', 'aiConflictResolution', 'reasoningProblemSolving', 'creativeDecisionAdaptation', 'criticalClaimReview', 'repositoryOperation', 'requiredCheckBoundary', 'ecosystem', 'config', 'configureSuite', 'suiteSelection', 'folderTopology'],
-  nerves: ['testCadence', 'testCadenceCore', 'testCadenceCoreLegacy', 'testCadencePolicy', 'testFeatureClassifier', 'testRunGovernance', 'ciDiagnosticOrgan', 'precheck', 'code-check', 'report', 'failureIssue', 'snapshot', 'runner', 'cli', 'maintenance', 'organismHealth'],
+  nerves: ['testCadence', 'testCadenceCore', 'testCadenceCoreLegacy', 'testCadencePolicy', 'testFeatureClassifier', 'testRunGovernance', 'testingOrgan', 'ciDiagnosticOrgan', 'precheck', 'code-check', 'report', 'failureIssue', 'snapshot', 'runner', 'cli', 'maintenance', 'organismHealth'],
   immune: ['security', 'malwareScan', 'quarantine', 'privacy', 'clutter', 'collisions', 'commit', 'dependencies', 'exceptions', 'syntax', 'integrity', 'reproducibility', 'apiGuard', 'githubRepoSecurity', 'workflowLint', 'docSync', 'designBriefGate', 'coreRefIntegrity', 'referenceBranchIntegrity', 'injectionMonitor', 'repair', 'codeSecurityOrganism', 'semanticAnalysis', 'installGitHooks', 'authenticity'],
   digestive: ['safeInformationRetrieval', 'automatedGoogleResearch', 'automatedGoogleResearchCli', 'monthlyKnowledgeRefresh', 'claimExtractionWorker', 'claimExtractionWorkerCli', 'documentFurniture', 'hostedSourceBundle', 'hostedMultiRepositoryIntegration', 'languageCatalog', 'intakePathways'],
   learning: ['scientificLearning', 'scientificLearningCli', 'learningCycle', 'learningExperience', 'claimComparison', 'claimEvaluationWorker', 'semanticCorroboration', 'pairedCorroboration', 'sourceIndependence', 'realCorpusLearning', 'realCorpusSafety', 'realSupersession', 'knowledgeLifecycle', 'hostedLearningProof', 'preSoakReadiness', 'preSoakReadinessCli', 'soakGate', 'soakRun', 'repairEvidence', 'hypothesisTestPlan', 'languageHypothesisVariables', 'concreteLanguageHarness', 'languageExperimentRegistry', 'contradictionAudit', 'contradictionReopening'],
@@ -37,7 +37,13 @@ const SYSTEMS = Object.freeze({
 // Every organ that must have a handler on the bus before the organism may run. Circulation is
 // not an organ that talks to itself, and boundary limits are enforced in place rather than
 // signalled, so neither appears here.
-const GOVERNED_ORGANS = Object.freeze(['brain', 'immune', 'digestive', 'learning', 'reporting']);
+//
+// `testing` is here so the immune system can ask for tests to be run. It is a governed organ
+// rather than a direct import because a direct one would be a new organ-to-organ edge the
+// ratchet refuses - and because the bus is what makes the request typed, bounded, and unable
+// to satisfy proof. Listing it here means an organism that forgets to wire it will not start,
+// rather than silently dropping every test request into a severed wire.
+const GOVERNED_ORGANS = Object.freeze(['brain', 'immune', 'digestive', 'learning', 'reporting', 'testing']);
 
 const BASELINE_FILE = 'governingDocuments/circulation-linkage-baseline.json';
 
