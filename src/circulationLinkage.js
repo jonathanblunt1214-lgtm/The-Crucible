@@ -31,7 +31,12 @@ const SYSTEMS = Object.freeze({
   digestive: ['safeInformationRetrieval', 'automatedGoogleResearch', 'automatedGoogleResearchCli', 'monthlyKnowledgeRefresh', 'claimExtractionWorker', 'claimExtractionWorkerCli', 'documentFurniture', 'hostedSourceBundle', 'hostedMultiRepositoryIntegration', 'languageCatalog', 'intakePathways'],
   learning: ['scientificLearning', 'scientificLearningCli', 'learningCycle', 'learningExperience', 'claimComparison', 'claimEvaluationWorker', 'semanticCorroboration', 'pairedCorroboration', 'sourceIndependence', 'realCorpusLearning', 'realCorpusSafety', 'realSupersession', 'knowledgeLifecycle', 'hostedLearningProof', 'preSoakReadiness', 'preSoakReadinessCli', 'soakGate', 'soakRun', 'repairEvidence', 'hypothesisTestPlan', 'languageHypothesisVariables', 'concreteLanguageHarness', 'languageExperimentRegistry', 'contradictionAudit', 'contradictionReopening', 'pipelineTracer'],
   boundary: ['hostIsolation', 'externalAiFirewall', 'offlineGpuGate', 'durableLock'],
-  circulation: ['organismCirculation', 'organismRuntime', 'productionOrganism', 'oversightReflex', 'circulationLinkage', 'gradedOversightResponse', 'findingLedger'],
+  // `failureCodes` belongs here rather than to any organ. It is the shared vocabulary every
+  // organ speaks - what a failure is, and what the fix for it is - which is chemistry the blood
+  // carries, not an organ of its own. Placing it in circulation is also the only placement that
+  // works: an edge to circulation is the wire rather than the cable, so every organ may look a
+  // code up without that becoming a new direct organ-to-organ connection.
+  circulation: ['organismCirculation', 'organismRuntime', 'productionOrganism', 'oversightReflex', 'circulationLinkage', 'gradedOversightResponse', 'findingLedger', 'failureCodes'],
 });
 
 // Every organ that must have a handler on the bus before the organism may run. Circulation is
@@ -43,7 +48,18 @@ const SYSTEMS = Object.freeze({
 // ratchet refuses - and because the bus is what makes the request typed, bounded, and unable
 // to satisfy proof. Listing it here means an organism that forgets to wire it will not start,
 // rather than silently dropping every test request into a severed wire.
-const GOVERNED_ORGANS = Object.freeze(['brain', 'immune', 'digestive', 'learning', 'reporting', 'testing']);
+// `diagnostics` is here because the owner placed it: the diagnostic organ is the link between
+// the brain and the immune system. A diagnosis that only ever reached a CI artifact was a sense
+// organ wired to nothing - the brain could not ask for one and the immune system never received
+// one, so every diagnosis was read by a person and retyped as an instruction.
+//
+// On the bus it closes the loop the rest of this file exists to make possible: the brain asks
+// for a diagnosis, the diagnostic organ answers with a failure code, and the code carries the
+// remedy the immune system acts on - including the existing tests that would prove the repair,
+// which it sends to the testing organ. Direct because it is one continuous path, and over
+// circulation because a direct import would be a new cable and, more importantly, because the
+// bus is what keeps a diagnosis from quietly becoming permission to repair.
+const GOVERNED_ORGANS = Object.freeze(['brain', 'immune', 'digestive', 'learning', 'reporting', 'testing', 'diagnostics']);
 
 const BASELINE_FILE = 'governingDocuments/circulation-linkage-baseline.json';
 

@@ -55,6 +55,7 @@
     "cadence:monthly": "node src/testCadence.js monthly",
     "cadence:on-error": "node src/testCadence.js on-error",
     "audit:circulation": "node src/cli.js circulation",
+    "audit:failure-codes": "node src/cli.js failure-codes",
     "trace:pipeline": "node src/pipelineTracer.js"
   },
   "engines": {
