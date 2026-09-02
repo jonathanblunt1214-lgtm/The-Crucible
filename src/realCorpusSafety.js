@@ -131,33 +131,71 @@ function proveDuplicateClaim(candidateRecords) {
     : unsatisfied('duplicate-claim', 'no claim in the corpus was extracted from more than one source, so the corpus cannot demonstrate this');
 }
 
-// Real retrieved content carrying prompt-injection patterns. The classifier that quarantines it
-// during retrieval is run here over the documents the corpus actually holds.
+// Whether the corpus records that this source was actually quarantined, as opposed to merely
+// containing bytes that would have caused a quarantine had the safeguard run.
+//
+// SafeInformationRetriever writes the real outcome when it retrieves: state 'quarantined' with
+// quarantineReasons, or state 'retrieved-candidate-evidence'. That record is the evidence. A
+// pattern match performed here, later, over bytes the corpus already holds is a re-run of the
+// classifier and proves only that the classifier still matches - not that the processing path
+// ever enforced anything.
+//
+// The distinction matters in the alarming direction. A document that carries injection patterns
+// and is sitting in the corpus as readable stored content is a document that was ADMITTED. To
+// report that as "state: quarantined" is to report a safeguard as demonstrated by the very case
+// where it did not fire.
+//
+// proveContradiction, in this same file, already reads the recorded state rather than asserting
+// one. These two now do the same.
+function recordedQuarantine(source) {
+  if (String(source.state || '') !== 'quarantined') return null;
+  const reasons = Array.isArray(source.quarantineReasons) ? source.quarantineReasons.map(String) : [];
+  return { state: 'quarantined', quarantineReasons: reasons };
+}
+
+// A source the corpus records as quarantined for prompt injection, whose stored content still
+// carries the patterns that caused it. Both halves are required: the recorded outcome is the
+// evidence, and the pattern match confirms the record is about this content.
 function proveInjection(bundleRoot, sources, readFile = fs.readFileSync) {
+  const admitted = [];
   for (const source of sources) {
     const file = sourceContentPath(bundleRoot, source);
     if (!file) continue;
     let content;
     try { content = String(readFile(file, 'utf8')); } catch { continue; }
     const matched = INJECTION_PATTERNS.filter((pattern) => pattern.test(content));
-    if (matched.length) {
-      return satisfied('prompt-injection', { sourceId: String(source.id), patternsMatched: matched.length, classification: 'Crucible Issue', state: 'quarantined' });
+    if (!matched.length) continue;
+    const quarantine = recordedQuarantine(source);
+    if (quarantine) {
+      return satisfied('prompt-injection', { sourceId: String(source.id), patternsMatched: matched.length, classification: 'Crucible Issue', ...quarantine });
     }
+    admitted.push(String(source.id));
   }
-  return unsatisfied('prompt-injection', 'no document in the restored corpus carries a prompt-injection pattern, so the corpus cannot demonstrate this quarantine on real content');
+  // Reported rather than swallowed. Documents carrying injection patterns that the corpus does
+  // not record as quarantined are the case this behaviour is supposed to catch, and saying
+  // "nothing to see" about them would hide a safety signal behind an absence of evidence.
+  return unsatisfied('prompt-injection', admitted.length
+    ? `${admitted.length} document(s) carry prompt-injection patterns but are not recorded as quarantined (${admitted.slice(0, 3).join(', ')}); that is the safeguard not having fired, so it cannot be evidence that it did`
+    : 'no document in the restored corpus carries a prompt-injection pattern, so the corpus cannot demonstrate this quarantine on real content');
 }
 
 // Real retrieved bytes that are an executable rather than a document.
 function proveExecutable(bundleRoot, sources, readFile = fs.readFileSync) {
+  const admitted = [];
   for (const source of sources) {
     const file = sourceContentPath(bundleRoot, source);
     if (!file) continue;
     let head;
     try { const handle = fs.openSync(file, 'r'); const buffer = Buffer.alloc(8); fs.readSync(handle, buffer, 0, 8, 0); fs.closeSync(handle); head = buffer; } catch { continue; }
     const magic = EXECUTABLE_MAGIC.find((item) => head.subarray(0, item.bytes.length).equals(item.bytes));
-    if (magic) return satisfied('executable-content', { sourceId: String(source.id), magic: magic.name, state: 'quarantined' });
+    if (!magic) continue;
+    const quarantine = recordedQuarantine(source);
+    if (quarantine) return satisfied('executable-content', { sourceId: String(source.id), magic: magic.name, ...quarantine });
+    admitted.push(String(source.id));
   }
-  return unsatisfied('executable-content', 'no document in the restored corpus begins with executable magic bytes, so the corpus cannot demonstrate this quarantine on real content');
+  return unsatisfied('executable-content', admitted.length
+    ? `${admitted.length} document(s) begin with executable magic bytes but are not recorded as quarantined (${admitted.slice(0, 3).join(', ')}); that is the safeguard not having fired, so it cannot be evidence that it did`
+    : 'no document in the restored corpus begins with executable magic bytes, so the corpus cannot demonstrate this quarantine on real content');
 }
 
 // A real corpus claim that contradicts a real promoted one, quarantined by the real learner.
