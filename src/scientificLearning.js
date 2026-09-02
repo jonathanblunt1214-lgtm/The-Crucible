@@ -98,7 +98,7 @@ function makeCandidate(input) { return validateCandidate({ schemaVersion:1, clas
 
 function newRecord(candidate) {
   const value = validateCandidate(candidate);
-  return { schemaVersion:1, candidate:value, claimScope:null, state:'candidate', hypothesis:null, gates:Object.fromEntries(REQUIRED_GATES.map((gate) => [gate, false])), experimentalProof:null, independentVerification:null, proof:null, history:[{ from:null, to:'candidate', at:value.createdAt, reason:'strictly validated candidate evidence ingested' }] };
+  return { schemaVersion:1, candidate:value, recordRevision:0, claimScope:null, state:'candidate', hypothesis:null, gates:Object.fromEntries(REQUIRED_GATES.map((gate) => [gate, false])), experimentalProof:null, independentVerification:null, proof:null, history:[{ from:null, to:'candidate', at:value.createdAt, reason:'strictly validated candidate evidence ingested' }] };
 }
 
 function transition(record, to, { at, reason, hypothesis, experimentalProof, independentVerification, gates, claimScope } = {}) {
@@ -277,11 +277,39 @@ class DurableScientificLearningStore {
     const payload = this.read(); return payload.candidateRecords.filter((item) => accepted.includes(item.candidate.id)).map((item) => structuredClone(item));
   }
   get(id) { const record = this.read().candidateRecords.find((item) => item.candidate.id === id); return record ? structuredClone(record) : null; }
+  // The record a caller holds, located in current state and proven not to have moved since the
+  // caller read it.
+  //
+  // transact already refuses if the STORE revision changes between its own read and its own
+  // write, but that window is microseconds wide and is not where records are lost. A learner
+  // reads a record, awaits an experiment executor or an independent verifier - seconds, in a
+  // separate process - and only then writes back the copy it has been holding. A second learner
+  // that advanced the same record in that gap is simply overwritten, and because the store
+  // revision it checks did change and was re-read, nothing reports it.
+  //
+  // A store-wide revision cannot fix this: it moves whenever any unrelated record is touched, so
+  // checking it would fail every genuinely concurrent learner. The conflict is per record, so the
+  // guard is per record. Callers need no change at all - `record` is always the value the previous
+  // get or update returned, so it already carries the revision it was read at.
+  //
+  // Records written before this field existed read as revision 0 on both sides and pass, then are
+  // stamped on their first update.
+  currentRecord(next, record, intent) {
+    const index = next.candidateRecords.findIndex((item) => item.candidate.id === record.candidate.id);
+    if (index < 0 || record.candidate.projectId !== this.projectId) throw new Error('Unknown or cross-project learning record.');
+    const stored = next.candidateRecords[index];
+    const storedRevision = stored.recordRevision ?? 0;
+    const heldRevision = record.recordRevision ?? 0;
+    if (storedRevision !== heldRevision) {
+      throw new Error(`Learning record ${record.candidate.id} advanced from revision ${heldRevision} to ${storedRevision} while this ${intent} was being prepared; refusing to overwrite newer progress with a stale snapshot. Re-read the record and retry.`);
+    }
+    return { index, stored, revision: storedRevision };
+  }
   update(record, at, action = 'update') {
     const payload = this.transact((next) => {
-      const index = next.candidateRecords.findIndex((item) => item.candidate.id === record.candidate.id);
-      if (index < 0 || record.candidate.projectId !== this.projectId) throw new Error('Unknown or cross-project learning record.');
-      next.candidateRecords[index] = structuredClone(record); return next;
+      const { index, revision } = this.currentRecord(next, record, 'update');
+      next.candidateRecords[index] = { ...structuredClone(record), recordRevision: revision + 1 };
+      return next;
     }, { at, action:`candidate:${record.candidate.id}:${action}` });
     return structuredClone(payload.candidateRecords.find((item) => item.candidate.id === record.candidate.id));
   }
@@ -289,6 +317,10 @@ class DurableScientificLearningStore {
   commit(record, at) {
     const payload = this.transact((next) => {
       if (record.state !== 'verified' || record.candidate.projectId !== this.projectId) throw new Error('Only same-project verified records may enter knowledge.');
+      // Promotion is the worst place to act on a stale snapshot: a record quarantined for
+      // contradiction while this caller held its copy would still be committed, because the
+      // 'verified' being read is the caller's memory rather than what the store holds now.
+      this.currentRecord(next, record, 'knowledge commit');
       const prior = next.knowledgeVersions.findLast((item) => item.status === 'active' && item.claim === record.candidate.claim && item.boundary === record.proof.experimentBoundary);
       const previous = prior?.version || null;
       if (prior) prior.status = 'superseded';

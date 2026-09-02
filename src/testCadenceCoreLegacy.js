@@ -53,6 +53,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/gradedOversightResponse.test.js',
     'test/organismCirculation.test.js',
     'test/testingOrgan.test.js',
+    'test/learningRecordConcurrency.test.js',
     'test/oversightBrakeReach.test.js',
     'test/organismRuntime.test.js',
     'test/productionOrganism.test.js',
