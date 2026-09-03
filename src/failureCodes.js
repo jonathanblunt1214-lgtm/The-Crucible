@@ -311,12 +311,17 @@ const FAILURE_CODES = Object.freeze({
     code: 'CRU-0023',
     category: 'learning-blockage',
     meaning: 'The hosted learning proof stopped because nothing could be corroborated, and the cause is digestion rather than the corpus: most sources have never been extracted, so corroboration has not yet been given two independent sources to compare.',
-    next: 'Drain the extraction backlog and re-run the proof. Do not draw any conclusion about what the corpus contains, and do not change what is ingested, until digestion has caught up.',
+    next: 'The backlog has to be drained where the corpus is authored, which is not here. The Crucible holds a READ key to the vetted corpus (CRUCIBLE_VETTED_STATE_READ_KEY), clones it fresh on every hourly proof, and destroys the plaintext at the end of the job; it pushes to no state repository at all. Extraction run inside this repository would write into a directory deleted minutes later. Drain it in Oversight/Learning-Worker, where results can be published as new vetted custody, then let the next hourly proof read the advanced corpus.',
     remedy: {
       kind: 'owner-decision',
-      command: 'npm run learning:extract',
-      verifyWith: { tests: ['test/intakePathways.test.js'] },
-      forbidden: 'Never restrict the corpus to sources where identical claim text is expected in order to make corroboration succeed; that is the opposite of the system this repository is. And never read this stop as evidence about corpus composition - it is a statement about digestion.',
+      // Deliberately null. This said `npm run learning:extract` when the code was first written,
+      // which was wrong in a way worth recording: the command exists and runs, but in THIS
+      // repository it has nothing durable to write to, so following the remedy would have looked
+      // like action and changed nothing. A remedy naming a command that cannot work is the same
+      // defect as a failure with no code - it sends a reader somewhere that does not fix it.
+      command: null,
+      verifyWith: { tests: ['test/intakePathways.test.js', 'test/workflow.test.js'] },
+      forbidden: 'Never restrict the corpus to sources where identical claim text is expected in order to make corroboration succeed; that is the opposite of the system this repository is. Never read this stop as evidence about corpus composition - it is a statement about digestion. And never give this repository write access to a state repository in order to drain the backlog locally: the read-only boundary is what keeps Crucible a consumer of independently vetted custody rather than an author of its own evidence.',
     },
   },
   'CRU-0024': {
