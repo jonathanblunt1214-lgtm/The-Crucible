@@ -439,3 +439,39 @@ test('the cadence registry itself is documented in AGENTS.md, including the no-i
   assert.match(agents, /never\s+changes what the required Self-Test workflow runs\s+on every\s+push/i);
   assert.match(agents, /On-error triggers may never fix or repair anything unattended/i);
 });
+
+// The boundary the CRU-0023 remedy rests on, and until now enforced only by convention.
+//
+// The Crucible consumes independently vetted custody; it does not author it. Both state
+// repositories are cloned and neither is ever pushed to, which is why the extraction backlog
+// cannot be drained from inside this repository - extraction here would write into a runner
+// directory the job then destroys. The existing tests assert key separation and the absence of
+// `contents: write`, but `contents: write` governs GITHUB_TOKEN, not a deploy key: a workflow
+// could add `git push` over an SSH deploy key to a state repository and no test would object.
+//
+// If this ever has to change it is a governance decision about what Crucible is, and whoever
+// makes it should have to delete this test to do so.
+test('no workflow pushes to a learning state repository, so Crucible stays a consumer of vetted custody', () => {
+  const workflowDir = path.join(root, '.github', 'workflows');
+  const stateRepositories = /Crucible-Vetted-Learning-State|Crucible-Learning-State/;
+  const offenders = [];
+  for (const file of fs.readdirSync(workflowDir).filter((name) => /\.ya?ml$/i.test(name))) {
+    const text = fs.readFileSync(path.join(workflowDir, file), 'utf8');
+    if (!stateRepositories.test(text)) continue;
+    for (const [index, line] of text.split(/\r?\n/).entries()) {
+      if (/git\s+push/.test(line)) offenders.push(`${file}:${index + 1}: ${line.trim()}`);
+    }
+    // Every reference to a state repository must be a clone.
+    assert.match(text, /git clone --depth 1 git@github\.com:jonathanblunt1214-lgtm\/Crucible-(Vetted-)?Learning-State\.git/, `${file} reaches a state repository other than by cloning it`);
+  }
+  assert.deepEqual(offenders, [], `a workflow that reaches a state repository must never push to one:\n${offenders.join('\n')}`);
+});
+
+// The corpus reaches the proof under a read key and the plaintext does not outlive the job.
+// Both are load-bearing for "the backlog cannot be drained here".
+test('the hosted proof reads the corpus under a read key and destroys the plaintext', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'hosted-learning-proof.yml'), 'utf8');
+  assert.match(workflow, /STATE_DEPLOY_KEY: \$\{\{ secrets\.CRUCIBLE_VETTED_STATE_READ_KEY \}\}/);
+  assert.match(workflow, /Destroy runner plaintext[\s\S]*if: always\(\)[\s\S]*rm -rf/);
+  assert.doesNotMatch(workflow, /git\s+push/);
+});
