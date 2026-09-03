@@ -49,7 +49,7 @@
       "timestamp": "2026-09-03T00:00:00Z",
       "type": "governance-rule-vs-enforcement",
       "description": "AGENTS.md required on-error diagnosis to be additive so it could never alter a Self-Test job's true pass/fail result, but two on-error Self-Test steps ran without continue-on-error: true. The artifact-upload step also used if-no-files-found: error, allowing a missing diagnostic report to replace the actual underlying failure with an artifact failure.",
-      "status": "active",
+      "status": "open",
       "detectedAt": "2026-09-03",
       "contestedAction": "Allowing on-error diagnostic steps in .github/workflows/self-test.yml to fail the Self-Test job, while the conflict ledger was expected to provide a complete, machine-readable account of the issue.",
       "rationaleSummary": "The governing rule says diagnosis must be additive and must never change the job's pass/fail result. A diagnostic step without continue-on-error: true can fail after the original failure, and an artifact upload configured with if-no-files-found: error can replace the original cause with an artifact error. Those behaviors conflict directly with the stated governance boundary.",

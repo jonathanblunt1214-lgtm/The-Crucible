@@ -83,6 +83,7 @@ jobs:
         run: npm run run
       - name: Save quarantined flagged files
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: the-crucible-quarantine-${{ matrix.os }}-${{ matrix.node }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -91,6 +92,7 @@ jobs:
           retention-days: 90
       - name: Save governed known-bug results
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: the-crucible-known-bugs-${{ matrix.os }}-${{ matrix.node }}-${{ github.run_id }}-${{ github.run_attempt }}

@@ -119,9 +119,14 @@ function workflowLintGate(root) {
   const result = auditWorkflowPermissions(root, extraDirs);
   if (result.findings.length) {
     const details = result.findings.map((item) => `- ${item.path}:${item.line}: ${item.type}`).join('\n');
-    // Two different defects reach here and they have different fixes: an unrecognized key is
-    // deleted, an unavailable context is moved. The code says which.
-    throw crucibleError(result.findings.some((item) => item.context) ? 'CRU-0027' : 'CRU-0008', `GitHub rejects this workflow file as invalid:\n${details}\nAn unrecognized key does not just fail to grant access - GitHub rejects the entire workflow file as invalid, so every job in it stops running. Valid keys are: ${[...VALID_PERMISSION_KEYS].sort().join(', ')}.`);
+    // Three different defects reach here and they have different fixes: an unrecognized key is
+    // deleted, an unavailable context is moved, a non-additive on-error step gains
+    // continue-on-error. The code says which, so the immune system is not left guessing.
+    const rules = new Set(result.findings.map((item) => item.rule));
+    if (rules.has('on-error-additive') && rules.size === 1) {
+      throw crucibleError('CRU-0028', `On-error diagnosis may never decide a job's own result:\n${details}\nAGENTS.md requires every if: failure() step to be additive, so the job still fails on the step that really failed.`);
+    }
+    throw crucibleError(rules.has('job-env-context') ? 'CRU-0027' : 'CRU-0008', `GitHub rejects this workflow file as invalid:\n${details}\nAn unrecognized key does not just fail to grant access - GitHub rejects the entire workflow file as invalid, so every job in it stops running. Valid keys are: ${[...VALID_PERMISSION_KEYS].sort().join(', ')}.`);
   }
   return result;
 }
