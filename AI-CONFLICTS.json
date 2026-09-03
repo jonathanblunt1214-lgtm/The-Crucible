@@ -42,6 +42,42 @@
         "rationaleSummary": "The infrastructure Codex built is sound and was kept; only the fixture basis for the gate claims was replaced. Joining the real corpus to evaluation also required fixing a structural defect that had made real learning impossible: routeThreeWayComparison decided shared scope by comparing claimBoundary, which extraction builds from the source document, so two independent real sources never matched and every real pair routed to bounded-scope-or-version-update instead of new-claim-evaluation. An optional claimScope now carries the declared tested scope separately from provenance, is never inferred, and leaves candidates without one behaving exactly as before. R7's supersession and R8's safety cases remain fixture-based and are recorded as such rather than claimed as real.",
         "decidedBy": "repository-owner",
         "decidedAt": "2026-08-31"
+
+        {
+  "id": "stable-kebab-case-conflict-id",
+  "timestamp": "2026-09-03T13:22:00Z",
+  "type": "remedy-vs-architecture",
+  "description": "Short plain-language description of the incompatible claims and the affected governed system.",
+  "status": "active",
+  "detectedAt": "2026-09-03",
+  "contestedAction": "The specific claimed action, status, proposed repair, or asserted conclusion under dispute.",
+  "rationaleSummary": "Why the claims cannot both be correct, stated with the exact technical and governance boundary involved.",
+  "evidence": [
+    "Exact SHA, file, symbol, workflow run, review identifier, or quoted structured-record field that supports the finding.",
+    "A second independent record that establishes the incompatible state."
+  ],
+  "sides": [
+    {
+      "source": "Actor, exact SHA, workflow run, or governing document",
+      "instruction": "The claim, action, or requirement asserted by that source."
+    },
+    {
+      "source": "Conflicting actor, exact SHA, workflow run, or governing document",
+      "instruction": "The incompatible claim, action, or requirement."
+    }
+  ],
+  "alternatives": [
+    "Conservative option that withdraws an unsupported claim or blocks the unsafe action.",
+    "Repair option that reconciles the system with governing evidence.",
+    "Optional owner-decision alternative, including its constraints."
+  ],
+  "resolution": {
+    "decision": "Pending repository-owner decision.",
+    "rationaleSummary": "No resolution has been authorized. The conflict remains active and blocks any dependent completion or green claim.",
+    "decidedBy": null,
+    "decidedAt": null
+  }
+}
       }
     }
   ]
