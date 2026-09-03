@@ -1,5 +1,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
+const { validateDeliberation } = require('./multiAiDeliberation');
+const { coordinationGate } = require('./coordinationGate');
+const { scopesOverlap } = require('./mutationClaims');
 const LEDGER_PATH = 'AI-CONFLICTS.json';
 const ID_PATTERN = /^[a-z0-9][a-z0-9._-]{2,79}$/;
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -29,6 +32,17 @@ function auditAIConflictLedger(root) {
     if (!Array.isArray(conflict.alternatives) || conflict.alternatives.length < 2 || conflict.alternatives.some((item) => typeof item !== 'string' || !item.trim())) findings.push(finding('AI conflict disclosure incomplete', `${label}.alternatives must preserve at least two considered options.`));
     if (!Array.isArray(conflict.sides) || conflict.sides.length < 2) findings.push(finding('AI conflict record invalid', `${label}.sides must preserve at least two conflicting directions.`));
     else for (const [sideIndex, side] of conflict.sides.entries()) if (!side || typeof side.source !== 'string' || !side.source.trim() || typeof side.instruction !== 'string' || !side.instruction.trim()) findings.push(finding('AI conflict record invalid', `${label}.sides[${sideIndex}] requires source and instruction.`));
+    // Multi-AI deliberation lives on the conflict record itself - there is deliberately no
+    // AI-DELIBERATION.json, because a disagreement and the discussion settling it are one object
+    // and two files would drift apart. The block is optional so records predating multi-AI
+    // coordination keep validating, but it is validated in full whenever present.
+    for (const message of validateDeliberation(conflict.deliberation, `${label}.deliberation`)) findings.push(finding('AI deliberation record invalid', message));
+    // A conflict may name the exact scope it freezes. Freezing only the contested mutation is
+    // what lets every other scope, and all read-only work, keep moving during a disagreement.
+    if (conflict.contestedScope !== undefined) {
+      const scope = conflict.contestedScope;
+      if (!scope || typeof scope !== 'object' || Array.isArray(scope) || !scopesOverlap(scope, scope)) findings.push(finding('AI conflict record invalid', `${label}.contestedScope must name at least one path or code region that the conflict freezes.`));
+    }
     if (conflict.status === 'open') findings.push(finding('Unresolved AI conflict', `${conflict.id || label}: ${conflict.contestedAction || 'contested mutation'}`));
     if (conflict.status === 'resolved') {
       const resolution = conflict.resolution;
@@ -37,4 +51,10 @@ function auditAIConflictLedger(root) {
   }
   return { files:1, conflicts:ledger.conflicts.length, findings };
 }
-module.exports = { LEDGER_PATH, auditAIConflictLedger };
+// `coordinationGate` is implemented in its own module and re-exported here, rather than imported
+// straight into cli.js. Multi-AI coordination IS AI governance - mutation ownership, deliberation
+// and accountability are three views of the same property this ledger exists to protect - and
+// this module is already the brain's AI-governance surface for the command line. Routing through
+// it carries more over the existing cable instead of running a second one between the same two
+// organs, which is exactly what the fly-by-wire ratchet in circulationLinkage.js forbids.
+module.exports = { LEDGER_PATH, auditAIConflictLedger, coordinationGate };

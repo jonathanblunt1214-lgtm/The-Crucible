@@ -65,6 +65,8 @@ const TEST_MAIN_CATEGORIES = {
   ],
   security: [
     'test/automatedGoogleResearch.test.js',
+    'test/aiProviderAdapters.test.js',
+    'test/aiProviderRegistry.test.js',
     'test/apiGuard.test.js',
     'test/authenticity.test.js',
     'test/coreRefIntegrity.test.js',
@@ -88,7 +90,9 @@ const TEST_MAIN_CATEGORIES = {
   ],
   maintenance: [
     'test/aiConflictLedger.test.js',
+    'test/aiHandoffContinuation.test.js',
     'test/aiConflictResolution.test.js',
+    'test/devlogAccountability.test.js',
     'test/collisions.test.js',
     'test/designBriefGate.test.js',
     'test/docSync.test.js',
@@ -98,6 +102,9 @@ const TEST_MAIN_CATEGORIES = {
     'test/handoffPolicy.test.js',
     'test/injectedBranchRelationships.test.js',
     'test/injectedGovernanceAdaptive.test.js',
+    'test/multiAiDeliberation.test.js',
+    'test/multiAiOrchestrator.test.js',
+    'test/mutationClaims.test.js',
     'test/testCadence.test.js',
     'test/workflow.test.js',
     'test/workflowLint.test.js',
@@ -110,7 +117,7 @@ const TEST_CADENCE = {
 const AUDIT_CADENCE = {
   // audit:circulation runs on every push: fly-by-wire is only mandatory if the ratchet is
   // checked before a new organ-to-organ cable can land, not after.
-  'every-push': ['validate', 'audit:commit', 'precheck', 'audit:clutter', 'audit:privacy', 'audit:security', 'audit:circulation', 'lint:workflows', 'docs:check', 'audit:ai-conflict-governance', 'audit:design-brief', 'audit:governance'],
+  'every-push': ['validate', 'audit:commit', 'precheck', 'audit:clutter', 'audit:privacy', 'audit:security', 'audit:circulation', 'lint:workflows', 'docs:check', 'audit:ai-conflict-governance', 'audit:coordination', 'audit:design-brief', 'audit:governance'],
   daily: ['audit:core-ref', 'audit:authenticity', 'audit:github-security'],
   weekly: ['audit:reproducibility', 'maintain', 'audit:collisions'],
   monthly: [],
