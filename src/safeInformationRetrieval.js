@@ -87,8 +87,8 @@ function sanitizeHtml(text) {
   do {
     previous = current;
     current = current
-      .replace(/<(script|style|template|noscript)\b[^>]*>[\s\S]*?<\/\1\s*>/gi, '')
-      .replace(/<form\b[^>]*>[\s\S]*?<\/form\s*>/gi, '')
+      .replace(/<(script|style|template|noscript)\b[^>]*>[\s\S]*?<\/\1\b[^>]*>/gi, '')
+      .replace(/<form\b[^>]*>[\s\S]*?<\/form\b[^>]*>/gi, '')
       .replace(/<\/?(?:script|style|template|noscript|form)\b[^>]*>/gi, '')
       .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
       .replace(/\s(?:srcdoc|formaction)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');

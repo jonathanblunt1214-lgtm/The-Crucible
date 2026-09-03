@@ -137,3 +137,17 @@ test('a pinned request never resolves the hostname a second time', async () => {
   // A URL the guard would reject is still rejected here, so pinning cannot be used to skip safeUrl.
   await assert.rejects(() => pinnedHttpsRequest([{ address:'127.0.0.1', family:4 }])('http://rebind.invalid/page'));
 });
+
+// An end tag may carry junk a parser ignores: `</script foo=bar>` closes a script exactly as
+// `</script>` does. The block matcher originally accepted only `\s*` before the `>`, so a tag
+// with anything else left the block unmatched and its body survived as text.
+test('script, style and form blocks are stripped even when the end tag carries junk', () => {
+  for (const tag of ['script', 'style', 'form']) {
+    for (const close of [`</${tag}>`, `</${tag} >`, `</${tag}\t\n bar>`, `</${tag} foo=bar>`, `</${tag.toUpperCase()}   x>`]) {
+      const cleaned = sanitizeHtml(`<p>Real prose.</p><${tag}>POISON_BODY${close}`);
+      assert.ok(!cleaned.includes('POISON_BODY'), `${tag} body survived ${JSON.stringify(close)}`);
+    }
+  }
+  // The fixpoint loop that defeats nested-tag evasion must survive the widening.
+  assert.ok(!/<script/i.test(sanitizeHtml('<scr<script>ipt>alert(1)</script>')));
+});
