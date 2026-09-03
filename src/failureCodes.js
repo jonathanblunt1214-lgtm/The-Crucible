@@ -355,6 +355,18 @@ const FAILURE_CODES = Object.freeze({
       forbidden: 'Never relax the requirement that a nominated pairing be supported by the stored document; that would let a declaration put words into a source.',
     },
   },
+  'CRU-0027': {
+    code: 'CRU-0027',
+    category: 'workflow-validity',
+    meaning: 'A workflow references a context where that context does not exist - most often runner, env or steps inside a job-level env block. GitHub rejects the whole file rather than substituting a value, so the run is created with zero jobs and reports a bare failure with nothing in it.',
+    next: 'Move the expression to a step, where the context exists, or use an ordinary environment variable the runner sets (RUNNER_TEMP rather than runner.temp). A run with zero jobs is the signature of this defect.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run lint:workflows',
+      verifyWith: { tests: ['test/workflowLint.test.js'] },
+      forbidden: 'Never delete the offending line to make the file parse; the value is one the job actually needs, so removing it silently changes what the job does.',
+    },
+  },
   'CRU-0022': {
     code: 'CRU-0022',
     category: 'diagnosis-coverage',
@@ -445,6 +457,27 @@ function codesInText(text) {
   return seen;
 }
 
+// Where a failing process records its coded failure, and where the diagnostic organ looks for it.
+// Defined once, in code, for a reason that cost a whole CI matrix: this path was first written
+// into the self-test workflow as `${{ runner.temp }}/crucible-failure.log` in a job-level `env:`
+// block, where the `runner` context does not exist. GitHub rejected the file outright rather than
+// substituting an empty string, so two commits produced runs with zero jobs.
+//
+// `RUNNER_TEMP` is an ordinary environment variable the runner sets, available to any process,
+// with none of that fragility - and it is the same rule `npmCiLogPath` already uses, so the two
+// logs land beside each other. `CRUCIBLE_FAILURE_LOG` therefore takes a plain "1" to opt in, or
+// an explicit path when a caller wants to choose one.
+function failureLogPath(environment = process.env) {
+  return path.join(environment.RUNNER_TEMP || process.cwd(), 'crucible-failure.log');
+}
+
+// Null when recording is off, so a caller can simply skip.
+function resolveFailureLog(environment = process.env) {
+  const configured = String(environment.CRUCIBLE_FAILURE_LOG || '').trim();
+  if (!configured) return null;
+  return /^(1|true|yes)$/i.test(configured) ? failureLogPath(environment) : configured;
+}
+
 const BASELINE_FILE = 'governingDocuments/failure-code-baseline.json';
 
 // A throw site is coded when it throws through `crucibleError`. Counting the uncoded ones is
@@ -508,6 +541,6 @@ function auditFailureCodes({ root = 'src', baselineFile = BASELINE_FILE } = {}) 
 module.exports = {
   UNCODED, CODE_PATTERN, FAILURE_CODES, BASELINE_FILE,
   crucibleError, failureCode, describeCode, codesInText,
-  remedyFor, testRequestFor, repairableByImmuneSystem,
+  remedyFor, testRequestFor, repairableByImmuneSystem, failureLogPath, resolveFailureLog,
   coverageReport, readBaseline, auditFailureCodes,
 };

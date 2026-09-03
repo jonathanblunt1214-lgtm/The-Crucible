@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "recordedAt": "2026-09-02",
+  "recordedAt": "2026-09-03",
   "uncodedThrowSites": 583,
   "codedThrowSites": 22,
   "rule": "This number may fall and may never rise. A new failure path must carry a code from src/failureCodes.js so it can be diagnosed by lookup instead of by guessing at its wording. Lower it whenever throw sites are coded; never raise it.",

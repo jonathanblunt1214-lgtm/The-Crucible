@@ -30,7 +30,7 @@ const { auditAIConflictLedger } = require('./aiConflictLedger');
 const { categoryEnabled } = require('./suiteSelection');
 const { auditGlobalRepositoryGovernance } = require('./globalRepositoryGovernance');
 const { auditCirculationLinkage, BASELINE_FILE } = require('./circulationLinkage');
-const { crucibleError, failureCode, describeCode, auditFailureCodes, UNCODED } = require('./failureCodes');
+const { crucibleError, failureCode, describeCode, auditFailureCodes, UNCODED, resolveFailureLog } = require('./failureCodes');
 
 const action = process.argv[2] || 'run';
 const root = path.resolve(process.env.CRUCIBLE_PROJECT_ROOT || process.cwd());
@@ -119,7 +119,9 @@ function workflowLintGate(root) {
   const result = auditWorkflowPermissions(root, extraDirs);
   if (result.findings.length) {
     const details = result.findings.map((item) => `- ${item.path}:${item.line}: ${item.type}`).join('\n');
-    throw crucibleError('CRU-0008', `Unrecognized GitHub Actions permissions key(s) found:\n${details}\nAn unrecognized key does not just fail to grant access - GitHub rejects the entire workflow file as invalid, so every job in it stops running. Valid keys are: ${[...VALID_PERMISSION_KEYS].sort().join(', ')}.`);
+    // Two different defects reach here and they have different fixes: an unrecognized key is
+    // deleted, an unavailable context is moved. The code says which.
+    throw crucibleError(result.findings.some((item) => item.context) ? 'CRU-0027' : 'CRU-0008', `GitHub rejects this workflow file as invalid:\n${details}\nAn unrecognized key does not just fail to grant access - GitHub rejects the entire workflow file as invalid, so every job in it stops running. Valid keys are: ${[...VALID_PERMISSION_KEYS].sort().join(', ')}.`);
   }
   return result;
 }
@@ -291,7 +293,7 @@ async function main() {
 // it entirely: no pipefail, no PowerShell redirection differences, and it works for any Crucible
 // invocation rather than only the ones a workflow remembered to wrap.
 function recordCodedFailure(error) {
-  const file = process.env.CRUCIBLE_FAILURE_LOG;
+  const file = resolveFailureLog();
   if (!file) return;
   const code = failureCode(error) || UNCODED;
   const known = describeCode(code);

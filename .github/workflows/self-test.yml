@@ -29,11 +29,11 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ github.token }}
       CRUCIBLE_SECURITY_READ_TOKEN: ${{ secrets.SECURITY_READ_TOKEN }}
-      # Where a failing Crucible process records its own coded failure. The diagnostic step
-      # below reads this alongside the install log, because the install log cannot contain a
-      # failure that happened fourteen steps later - which is exactly how a red job came back
-      # with an empty diagnoses array on 2026-09-02.
-      CRUCIBLE_FAILURE_LOG: ${{ runner.temp }}/crucible-failure.log
+      # Opt in to recording coded failures; the path is resolved in code from RUNNER_TEMP.
+      # It was written here as ${{ runner.temp }}/... at first, which GitHub rejects outright -
+      # the runner context does not exist in a job-level env block - taking the whole matrix
+      # down with zero jobs. npm run lint:workflows now refuses that shape.
+      CRUCIBLE_FAILURE_LOG: "1"
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
