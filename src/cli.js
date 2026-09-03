@@ -26,7 +26,7 @@ const { publishFailureIssue } = require('./failureIssue');
 const { auditDocSync, syncReadme } = require('./docSync');
 const { auditMalware } = require('./malwareScan');
 const { quarantineFindings, quarantineNote } = require('./quarantine');
-const { auditAIConflictLedger } = require('./aiConflictLedger');
+const { auditAIConflictLedger, coordinationGate } = require('./aiConflictLedger');
 const { categoryEnabled } = require('./suiteSelection');
 const { auditGlobalRepositoryGovernance } = require('./globalRepositoryGovernance');
 const { auditCirculationLinkage, BASELINE_FILE } = require('./circulationLinkage');
@@ -251,10 +251,14 @@ async function main() {
     if (!result.ok) throw crucibleError(result.code, result.reason);
     return console.log(`[The Crucible] Failure-code coverage: ${result.reason}`);
   }
+  if (action === 'coordination') {
+    const result = coordinationGate(root);
+    return console.log(`[The Crucible] Multi-AI coordination passed ${result.claims} mutation claim(s), ${result.active} active, ${result.accountable} accounted for in DEVLOG.md.`);
+  }
   if (action !== 'run') throw crucibleError('CRU-0016', `Unknown action: ${action}`);
   const snapshot = stagedSnapshot(root);
   const selected = config.suite.categories;
-  if (categoryEnabled(config.suite, 'governance')) { designBriefGate(root); governanceGate(root, config, snapshot); }
+  if (categoryEnabled(config.suite, 'governance')) { designBriefGate(root); governanceGate(root, config, snapshot); coordinationGate(root); }
   if (categoryEnabled(config.suite, 'repository') || categoryEnabled(config.suite, 'resilience')) { await coreRefGate(); await githubSecurityGate(config); }
   if (categoryEnabled(config.suite, 'quality')) await precheckGate(root, config);
   if (categoryEnabled(config.suite, 'privacy')) {
@@ -328,4 +332,4 @@ main()
     process.exitCode = 1;
   });
 
-module.exports = { securityGate, githubSecurityGate, authenticityGate, commitGate, precheckGate, designBriefGate, coreRefGate, governanceGate };
+module.exports = { securityGate, githubSecurityGate, authenticityGate, commitGate, precheckGate, designBriefGate, coreRefGate, governanceGate, coordinationGate };

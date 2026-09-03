@@ -1,4 +1,5 @@
 const { spawnSync } = require('node:child_process');
+const { auditMutationClaims } = require('./mutationClaims');
 
 const SHA_PATTERN = /^[0-9a-f]{40}$/i;
 
@@ -27,6 +28,14 @@ function validateHandoffPlan(plan) {
   if (typeof executionMode.distinction !== 'string' || !/agent/i.test(executionMode.distinction) || !/workflow/i.test(executionMode.distinction)) return { ok:false, message:'AI-HANDOFF.json activePlan.executionMode.distinction must explain that execution mode is separate from agent identity and workflow.' };
   if (!['active', 'handoff-ready', 'complete'].includes(active.status)) return { ok:false, message:'AI-HANDOFF.json activePlan.status must be active, handoff-ready, or complete.' };
   if (!Array.isArray(active.steps) || !active.steps.length || active.steps.some((step) => typeof step !== 'string' || !step.trim())) return { ok:false, message:'AI-HANDOFF.json activePlan.steps must contain the ordered development plan.' };
+  // Exclusive mutation ownership. The claims are optional so a single-agent project need not
+  // carry them, but the moment they exist they are validated in full: an unchecked claim list is
+  // worse than none, because it looks like a lock and holds nothing.
+  if (plan.mutationClaims !== undefined) {
+    if (!Array.isArray(plan.mutationClaims)) return { ok:false, message:'AI-HANDOFF.json mutationClaims must be an array of exclusive mutation claims.' };
+    const audit = auditMutationClaims(plan.mutationClaims);
+    if (audit.findings.length) return { ok:false, message:`AI-HANDOFF.json mutationClaims: ${audit.findings.map((item) => item.detail).join(' ')}` };
+  }
   const notes = plan.handoffNotes;
   if (!notes || typeof notes !== 'object') return { ok:false, message:'AI-HANDOFF.json requires handoffNotes.' };
   for (const field of ['completed', 'verification', 'remaining']) if (!Array.isArray(notes[field]) || notes[field].some((item) => typeof item !== 'string' || !item.trim())) return { ok:false, message:`AI-HANDOFF.json handoffNotes.${field} must be an array of non-empty strings.` };
