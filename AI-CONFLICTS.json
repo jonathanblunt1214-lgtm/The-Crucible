@@ -54,10 +54,15 @@
       "contestedAction": "Allowing on-error diagnostic steps in .github/workflows/self-test.yml to fail the Self-Test job, while the conflict ledger was expected to provide a complete, machine-readable account of the issue.",
       "rationaleSummary": "The governing rule says diagnosis must be additive and must never change the job's pass/fail result. A diagnostic step without continue-on-error: true can fail after the original failure, and an artifact upload configured with if-no-files-found: error can replace the original cause with an artifact error. Those behaviors conflict directly with the stated governance boundary.",
       "evidence": [
-        "AGENTS.md states that on-error diagnosis is additive and can never change the job's own pass/fail result.",
-        ".github/workflows/self-test.yml contained failure-triggered diagnostic steps without continue-on-error: true.",
+        "AGENTS.md states that on-error diagnosis is additive and can never change the job's own pass/fail result: 'wired as an additive `if: failure()`, `continue-on-error: true` step at the end of the Self-Test job, so it can never change that job's own pass/fail result.'",
+        ".github/workflows/self-test.yml contained failure-triggered steps without continue-on-error: true.",
         "The diagnostic artifact-upload step used if-no-files-found: error, meaning a missing report could fail the job and obscure the originating failure.",
-        "Repository records describe a repair followed by full-system proof reported as 632/632 passing, but the exact repair SHA and exact hosted verification run must be recorded before closure."
+        "Repair SHA 87de153. The audit at that commit found SIX non-additive on-error steps, not the two the original entry described: self-test.yml 'Save quarantined flagged files' and 'Save governed known-bug results', and the-crucible.yml 'Diagnose opted-in project failure without repair or proof authority', 'Preserve opted-in project diagnosis', 'Create or update the Crucible failure issue', and 'Save quarantined flagged files'. The four in the-crucible.yml matter beyond this repository: it is the reusable workflow opted-in projects consume, so a non-additive step there would replace a consumer project's real failure with our diagnostic's.",
+        "Workflow diff at 87de153: exactly one line, 'continue-on-error: true', added after the 'if: failure()' of each of the six steps. Two lines in .github/workflows/self-test.yml, four in .github/workflows/the-crucible.yml, no other workflow change.",
+        "The class had already recurred before this entry was written: three on-error steps in self-test.yml were made additive in an earlier session while two others in the same file were missed. The repair therefore adds the rule to src/workflowLint.js as 'on-error-additive' with failure code CRU-0028, so a future non-additive step is refused at the gate rather than discovered after it has hidden a failure.",
+        "Verification, by the repository's own standard of reverting one file at a time: reverting src/workflowLint.js alone with the tests in place fails 'an on-error step that can decide the job result is refused'; restoring it passes. Reverting the two workflow files alone with the linter in place fails 'every workflow in this repository keeps on-error diagnosis additive' and the gate reports CRU-0028 naming all six steps; restoring them passes. Full suite 713/713 at 87de153, with lint:workflows, audit:failure-codes, audit:circulation, audit:clutter and docs:check all passing.",
+        "Hosted verification run on 87de153 is still outstanding at the time this evidence was written; local proof alone has never satisfied this repository's closure standard, and CI cannot go green while this conflict is open, since an open conflict is itself a CRU-0010 failure.",
+        "conflicts[1].status was recorded as 'active', which src/aiConflictLedger.js does not accept - it validates against 'open' or 'resolved'. The gate could not read the record at all, so it reported an invalid entry rather than an unresolved conflict. Corrected to 'open' in 87de153; the meaning is unchanged and matches this entry's own prose that the conflict 'remains active'."
       ],
       "sides": [
         {
@@ -76,7 +81,7 @@
       ],
       "resolution": {
         "decision": "Pending repository-owner confirmation after the development SHA is checked for the workflow repair, ledger update, and exact hosted verification evidence.",
-        "rationaleSummary": "The repair is described as complete, but this conflict remains active until the record names the exact repair SHA, workflow diff, and verification run proving diagnostics cannot override the true failure.",
+        "rationaleSummary": "The repair is complete and verified locally at SHA 87de153, which names the exact workflow diff and the reverting proof above; it also found four more affected steps than this entry originally described, all in the reusable workflow shipped to opted-in projects. This conflict nonetheless remains open, because closing it is the repository owner's decision and no agent may record itself as having made it. What remains for closure: the owner's ruling, and a hosted Self-Test run green on a SHA carrying this repair - which cannot happen until the ruling lands, since an open conflict fails CRU-0010 by design.",
         "decidedBy": null,
         "decidedAt": null
       }
