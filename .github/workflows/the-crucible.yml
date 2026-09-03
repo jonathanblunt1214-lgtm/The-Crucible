@@ -200,6 +200,7 @@ jobs:
         run: node .the-crucible-runtime/src/cli.js maintain
       - name: Diagnose opted-in project failure without repair or proof authority
         if: failure()
+        continue-on-error: true
         env:
           CRUCIBLE_PROJECT_ID: github:${{ github.repository }}
           CRUCIBLE_DIAGNOSTIC_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
@@ -208,6 +209,7 @@ jobs:
         run: node .the-crucible-runtime/src/ciDiagnosticOrgan.js diagnose-local "${{ github.workspace }}/.the-crucible-report.json"
       - name: Preserve opted-in project diagnosis
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: the-crucible-ci-diagnosis-${{ github.run_id }}-${{ github.run_attempt }}
@@ -216,6 +218,7 @@ jobs:
           retention-days: 90
       - name: Create or update the Crucible failure issue
         if: failure()
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ github.token }}
           CRUCIBLE_PROJECT_ROOT: ${{ github.workspace }}
@@ -223,6 +226,7 @@ jobs:
         run: node .the-crucible-runtime/src/cli.js failure-issue
       - name: Save quarantined flagged files
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: the-crucible-quarantine-${{ github.run_id }}-${{ github.run_attempt }}

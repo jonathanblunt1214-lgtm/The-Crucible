@@ -372,6 +372,18 @@ const FAILURE_CODES = Object.freeze({
       forbidden: 'Never delete the offending line to make the file parse; the value is one the job actually needs, so removing it silently changes what the job does.',
     },
   },
+  'CRU-0028': {
+    code: 'CRU-0028',
+    category: 'workflow-validity',
+    meaning: 'A step that runs on failure() is missing continue-on-error: true, so a diagnostic added to explain a failure is allowed to become the failure. The upload variants are the sharpest case: with if-no-files-found: error, a report that was never written because the run died early is reported as the cause instead of whatever actually died.',
+    next: 'Add continue-on-error: true to the on-error step. AGENTS.md requires on-error diagnosis to be additive and to never change that job\'s own pass/fail result; the job still fails, on the step that really failed.',
+    remedy: {
+      kind: 'automatic',
+      command: 'npm run lint:workflows',
+      verifyWith: { tests: ['test/workflowLint.test.js'] },
+      forbidden: 'Never drop the if: failure() condition or loosen if-no-files-found to make the step stop failing; that removes the diagnosis instead of making it additive, and the point is to keep the evidence while keeping it out of the verdict.',
+    },
+  },
   'CRU-0022': {
     code: 'CRU-0022',
     category: 'diagnosis-coverage',
