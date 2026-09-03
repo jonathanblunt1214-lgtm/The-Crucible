@@ -10,7 +10,7 @@ const { documentFurniture } = require('./documentFurniture');
 function sha256(value) { return crypto.createHash('sha256').update(value).digest('hex'); }
 function normalizedClaimSha256(value) { return sha256(cleanText(value).toLowerCase()); }
 function cleanText(value) {
-  return String(value || '').replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, ' ').replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, ' ').replace(/<form\b[^>]*>[\s\S]*?<\/form\s*>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&(?:nbsp|#160);/gi, ' ').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/&amp;/gi, '&').replace(/\s+/g, ' ').trim();
+  return String(value || '').replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, ' ').replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, ' ').replace(/<form\b[^>]*>[\s\S]*?<\/form\b[^>]*>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&(?:nbsp|#160);/gi, ' ').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/&amp;/gi, '&').replace(/\s+/g, ' ').trim();
 }
 
 function boundedAssertions(text) {
