@@ -6,3 +6,4 @@ dist/
 .the-crucible-quarantine/
 tools/roslynSemanticAnalyzer/bin/
 tools/roslynSemanticAnalyzer/obj/
+sarif-results/
