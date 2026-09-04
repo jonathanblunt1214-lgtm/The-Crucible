@@ -317,6 +317,12 @@ test('GitHub checks every development change and main PR for a current DEVLOG ha
   assert.match(workflow, /HANDOFF_HEAD_SHA:/);
   assert.match(workflow, /npm run audit:handoff/);
   assert.match(workflow, /takeover-ready AI development plan/);
+  assert.match(workflow, /archive-pruned-devlog:/);
+  assert.match(workflow, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/development'/);
+  assert.match(workflow, /permissions:\s*\n\s*contents: write/);
+  assert.match(workflow, /DEVLOG_BASE_SHA: \$\{\{ github\.event\.before \}\}/);
+  assert.match(workflow, /DEVLOG_HEAD_SHA: \$\{\{ github\.sha \}\}/);
+  assert.match(workflow, /node src\/devlogPruneArchive\.js/);
 });
 
 test('governingDocuments must be rechecked at the start of every session, same or different agent, after any 10+ minute gap', () => {

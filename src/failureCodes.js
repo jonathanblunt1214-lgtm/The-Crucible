@@ -492,6 +492,18 @@ const FAILURE_CODES = Object.freeze({
       forbidden: 'Never start over because reading the handover looked slower than redoing the work. Overwriting a predecessor\'s completed work is the failure this exists to prevent.',
     },
   },
+  'CRU-0038': {
+    code: 'CRU-0038',
+    category: 'governance',
+    meaning: 'Automatic DEVLOG prune synchronization could not prove the exact development range or append a one-file-only Devlog-Pruned commit to Archive.',
+    next: 'Inspect the exact base and head SHAs, confirm Archive can be fetched and written through the standing Devlog-Pruned exception, then rerun the AI handoff policy job. The development commit remains intact; never replace or rewrite it to hide an archive failure.',
+    remedy: {
+      kind: 'automatic',
+      command: 'npm run audit:handoff',
+      verifyWith: { tests: ['test/devlogPruneArchive.test.js', 'test/handoffPolicy.test.js'] },
+      forbidden: 'Never force-push or rebase Archive, never touch an Archive path other than Devlog-Pruned, and never omit a failed snapshot merely to make the handoff job green.',
+    },
+  },
   'CRU-0022': {
     code: 'CRU-0022',
     category: 'diagnosis-coverage',
