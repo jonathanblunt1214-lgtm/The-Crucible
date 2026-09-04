@@ -1,0 +1,683 @@
+'use strict';
+// Every failure carries a code, and a code is a lookup rather than a guess.
+//
+// The owner's instruction, after one too many reports that said nothing: "every error and
+// failure must have a diagnosable error code". This module is what makes that true, and what
+// keeps it true.
+//
+// What was wrong. `ciDiagnosticOrgan` classified failures by running five hand-written regular
+// expressions over whatever log text it was handed. That has two failure modes and CI hit both
+// on 2026-09-02: a failure whose wording no rule anticipated came back `unclassifiedFailure:
+// true` with an empty `diagnoses` array, and - worse - the organ was handed the *install* log
+// while the failure was four steps later, so it was asked to explain a failure it had never
+// been shown. Either way the report told a reader nothing they did not already know, and the
+// diagnosis had to be done by hand from raw CI logs.
+//
+// Pattern-matching prose is the wrong instrument. It infers identity from wording, so rewording
+// a message silently reclassifies it, and any error nobody wrote a rule for is invisible
+// forever. A code is the opposite: the throw site declares what went wrong, the registry says
+// what it means and what to do, and the classification survives rewording, translation, and the
+// trip through a child process's stdout.
+//
+// WHAT A CODE IS NOT. It is not a severity, not a promise the failure is understood, and never
+// an authority to repair. `describeCode` returns meaning and next action; deciding anything is
+// somebody else's job.
+//
+// This module lives in `circulation` deliberately. It is shared vocabulary that every organ
+// speaks - the chemistry the blood carries rather than an organ of its own - and the linkage
+// ratchet exempts edges to circulation for exactly that reason. Putting it anywhere else would
+// make every import of it a new cross-organ cable.
+const fs = require('node:fs');
+const path = require('node:path');
+
+// The code that means "this failure path has not been given a code yet". It exists because the
+// owner's rule admits no exceptions: an uncoded failure still has to arrive as something a
+// reader can act on. `CRU-0000` is a finding about the codebase - a named gap with a named
+// remedy - rather than the shrug that `unclassifiedFailure: true` was.
+const UNCODED = 'CRU-0000';
+
+// A code is `CRU-` followed by four digits. Fixed width so it can be found in a log by shape
+// rather than by knowing the list, and stable across any rewording of the message it carries.
+const CODE_PATTERN = /CRU-\d{4}/g;
+
+// The registry. Each entry says what happened and what to do about it, in the words a person
+// reading a red CI job needs. `category` groups codes for reporting; it is not a severity.
+const FAILURE_CODES = Object.freeze({
+  [UNCODED]: {
+    code: UNCODED,
+    category: 'diagnosis-coverage',
+    meaning: 'A failure occurred on a path that has not been assigned a failure code, so the diagnostic organ can name that the gap exists but not what went wrong.',
+    next: 'Read the failure message quoted in the report, give that throw site a code from this registry (or add one), and record the lower uncoded baseline. Never widen a pattern rule to cover it.',
+    remedy: {
+      kind: 'owner-decision',
+      command: null,
+      verifyWith: { mainCategory: 'utility' },
+      forbidden: 'Never widen a diagnostic pattern rule to absorb it; that hides the gap instead of closing it.',
+    },
+  },
+  'CRU-0001': {
+    code: 'CRU-0001',
+    category: 'governance',
+    meaning: 'The Crucible design-brief link is severed: THE-CRUCIBLE-DESIGN-BRIEF.md was installed and then deleted.',
+    next: 'Restore the design brief from the canonical source and commit it. Nothing else runs until the link is intact.',
+    remedy: {
+      kind: 'owner-decision',
+      command: null,
+      verifyWith: { tests: ['test/designBriefGate.test.js'] },
+      forbidden: 'Never re-create the brief from memory or stub it to clear the gate; it must come from the canonical source.',
+    },
+  },
+  'CRU-0002': {
+    code: 'CRU-0002',
+    category: 'repository-integrity',
+    meaning: 'The pinned Crucible commit failed integrity verification.',
+    next: 'Compare the pinned ref against the canonical branch and resolve the mismatch; do not repoint the pin to make the check pass.',
+    remedy: {
+      kind: 'owner-decision',
+      command: null,
+      verifyWith: { tests: ['test/coreRefIntegrity.test.js'] },
+      forbidden: 'Never repoint the pin at whatever the working tree happens to be; that makes the check agree with the drift.',
+    },
+  },
+  'CRU-0003': {
+    code: 'CRU-0003',
+    category: 'quality',
+    meaning: 'The pre-check gate found required actions that have not been taken.',
+    next: 'Work the actions listed in the pre-check report, then rerun it.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run precheck',
+      verifyWith: { mainCategory: 'code' },
+      forbidden: 'Never mark a pre-check action done without doing it.',
+    },
+  },
+  'CRU-0004': {
+    code: 'CRU-0004',
+    category: 'commit-hygiene',
+    meaning: 'The Commit Gate found issues in the staged commit.',
+    next: 'Fix the listed issues, or run npm run fix:commit for the mechanical ones, then restage.',
+    remedy: {
+      kind: 'automatic',
+      command: 'npm run fix:commit',
+      verifyWith: { tests: ['test/commit.test.js'] },
+      forbidden: "Never amend the gate's rules to admit the commit as written.",
+    },
+  },
+  'CRU-0005': {
+    code: 'CRU-0005',
+    category: 'dependency-policy',
+    meaning: 'The dependency policy audit rejected the declared dependency set.',
+    next: 'Bring the dependency declarations back inside policy; never relax the policy to admit them.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run audit:security',
+      verifyWith: { tests: ['test/security.test.js'] },
+      forbidden: 'Never relax the dependency policy to admit a dependency it rejected.',
+    },
+  },
+  'CRU-0006': {
+    code: 'CRU-0006',
+    category: 'repository-security',
+    meaning: 'GitHub repository security settings do not satisfy the required configuration.',
+    next: 'Apply the fixes named in the report; see "GitHub repository security settings gate" in README.md.',
+    remedy: {
+      kind: 'owner-decision',
+      command: 'npm run audit:github-security',
+      verifyWith: { tests: ['test/globalRepositoryGovernance.test.js'] },
+      forbidden: 'Never disable a required repository setting, and never mark the gate skipped, to get past it.',
+    },
+  },
+  'CRU-0007': {
+    code: 'CRU-0007',
+    category: 'governance',
+    meaning: 'The global repository governance gate failed against the recorded manifest.',
+    next: 'Resolve each named repository finding, or update the manifest through the governed path if the estate genuinely changed.',
+    remedy: {
+      kind: 'owner-decision',
+      command: 'npm run audit:github-security',
+      verifyWith: { tests: ['test/globalRepositoryGovernance.test.js'] },
+      forbidden: 'Never edit the manifest to match a drifted estate unless the estate genuinely changed by decision.',
+    },
+  },
+  'CRU-0008': {
+    code: 'CRU-0008',
+    category: 'workflow-validity',
+    meaning: 'A workflow declares an unrecognized GitHub Actions permissions key, which makes GitHub reject the entire workflow file so every job in it stops running.',
+    next: 'Replace the key with a valid one from the documented set. This is a hard syntax failure, not a policy preference.',
+    remedy: {
+      kind: 'automatic',
+      command: 'npm run lint:workflows',
+      verifyWith: { tests: ['test/workflowLint.test.js'] },
+      forbidden: 'Never delete the whole permissions block to silence it; that grants the default, which is broader.',
+    },
+  },
+  'CRU-0009': {
+    code: 'CRU-0009',
+    category: 'governance',
+    meaning: 'Configuration governance forbids the requested configuration change (the Security Gate may not be disabled).',
+    next: 'Leave the Security Gate enabled. If it is failing, fix what it found.',
+    remedy: {
+      kind: 'owner-decision',
+      command: null,
+      verifyWith: { tests: ['test/config.test.js'] },
+      forbidden: 'Never disable the Security Gate. If it is failing, the finding is the work.',
+    },
+  },
+  'CRU-0010': {
+    code: 'CRU-0010',
+    category: 'ai-conflict',
+    meaning: 'AI conflict governance found unresolved or malformed conflict custody.',
+    next: 'Record the conflict and its resolution in AI-CONFLICTS.json through the governed path.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run audit:ai-conflict',
+      verifyWith: { tests: ['test/aiConflictLedger.test.js'] },
+      forbidden: 'Never delete a conflict entry to clear the ledger; an unrecorded conflict is an unresolved one.',
+    },
+  },
+  'CRU-0011': {
+    code: 'CRU-0011',
+    category: 'governance',
+    meaning: 'Exception governance found an exception that is not declared, has expired, or does not match its declared scope.',
+    next: 'Declare, re-scope, or remove the exception. An undeclared exception is a rule nobody agreed to.',
+    remedy: {
+      kind: 'owner-decision',
+      command: null,
+      verifyWith: { mainCategory: 'security' },
+      forbidden: "Never broaden an exception's scope to cover what it was found not to cover.",
+    },
+  },
+  'CRU-0012': {
+    code: 'CRU-0012',
+    category: 'documentation',
+    meaning: 'README.md is out of date with respect to the generated documentation surface.',
+    next: 'Run npm run docs:sync, review the diff, and commit it.',
+    remedy: {
+      kind: 'automatic',
+      command: 'npm run docs:sync',
+      verifyWith: { tests: ['test/docSync.test.js'] },
+      forbidden: 'Never hand-edit README.md to match; regenerate it so the generator stays the source of truth.',
+    },
+  },
+  'CRU-0013': {
+    code: 'CRU-0013',
+    category: 'privacy',
+    meaning: 'Personal identifiers were detected in tracked or staged content.',
+    next: 'Review the sanitized working files, stage the cleaned content, and commit again. The original staged content stays blocked.',
+    remedy: {
+      kind: 'automatic',
+      command: 'npm run scrub:privacy',
+      verifyWith: { tests: ['test/privacy.test.js'] },
+      forbidden: 'Never add the identifier to an allow-list to clear the audit.',
+    },
+  },
+  'CRU-0014': {
+    code: 'CRU-0014',
+    category: 'hygiene',
+    meaning: 'The clutter audit found files that do not belong in the tracked tree.',
+    next: 'Remove or relocate each listed path. Do not add it to an ignore list to silence the audit.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run audit:clutter',
+      verifyWith: { mainCategory: 'maintenance' },
+      forbidden: 'Never add the path to an ignore list to silence the audit.',
+    },
+  },
+  'CRU-0015': {
+    code: 'CRU-0015',
+    category: 'repository-collision',
+    meaning: 'Another open pull request changes the same lines of the same files as this one, so one of them will not merge cleanly.',
+    next: 'Coordinate with the overlapping pull request, rebase or separate the shared changes, then rerun collision checking.',
+    remedy: {
+      kind: 'owner-decision',
+      command: 'npm run audit:collisions',
+      verifyWith: { tests: ['test/collisions.test.js'] },
+      forbidden: 'Never close or exclude the other pull request to clear the overlap; the overlap is real until the changes are separated.',
+    },
+  },
+  'CRU-0016': {
+    code: 'CRU-0016',
+    category: 'ci-harness',
+    meaning: 'The command-line interface was asked to perform an action it does not implement.',
+    next: 'Check the action name against the documented set in README.md.',
+    remedy: {
+      kind: 'guided',
+      command: null,
+      verifyWith: { mainCategory: 'utility' },
+      forbidden: 'Never add an alias for a mistyped action; fix the caller.',
+    },
+  },
+  'CRU-0017': {
+    code: 'CRU-0017',
+    category: 'artifact-security',
+    meaning: 'The generated-artifact security scan found unsafe content in produced artifacts, which were quarantined.',
+    next: 'Inspect the quarantined artifacts, fix what generated them, and rerun. Never release the quarantine to get green.',
+    remedy: {
+      kind: 'owner-decision',
+      command: null,
+      verifyWith: { tests: ['test/security.test.js'] },
+      forbidden: 'Never release the quarantine or exclude the artifact path to get green.',
+    },
+  },
+  'CRU-0018': {
+    code: 'CRU-0018',
+    category: 'workload',
+    meaning: 'A verification command in the bounded workload exited non-zero or was killed by a signal.',
+    next: 'Read the captured child output quoted with this code: it names the command, the worker and cycle, and the exit status. Diagnose that command, not the harness that ran it.',
+    remedy: {
+      kind: 'guided',
+      command: null,
+      verifyWith: { mainCategory: 'code' },
+      forbidden: 'Never skip, disable, or quarantine the failing verification command.',
+    },
+  },
+  'CRU-0019': {
+    code: 'CRU-0019',
+    category: 'workload',
+    meaning: 'A verification command exceeded its configured timeout and was terminated.',
+    next: 'Establish whether the command hung or is genuinely slower than the budget; raise the budget only with evidence, never to hide a hang.',
+    remedy: {
+      kind: 'guided',
+      command: null,
+      verifyWith: { mainCategory: 'code' },
+      forbidden: 'Never raise the timeout budget without evidence that the command is genuinely slower rather than hung.',
+    },
+  },
+  'CRU-0020': {
+    code: 'CRU-0020',
+    category: 'workload',
+    meaning: 'A verification command could not be started at all.',
+    next: 'Resolve the missing executable or unreadable working directory named in the message.',
+    remedy: {
+      kind: 'guided',
+      command: null,
+      verifyWith: { mainCategory: 'utility' },
+      forbidden: 'Never drop the command from the workload because it will not start.',
+    },
+  },
+  'CRU-0021': {
+    code: 'CRU-0021',
+    category: 'workload',
+    meaning: 'The bounded workload finished but a required artifact was not produced.',
+    next: 'Find out why the producing command did not write it; a missing artifact is a silent failure of the step that owed it.',
+    remedy: {
+      kind: 'guided',
+      command: null,
+      verifyWith: { mainCategory: 'utility' },
+      forbidden: 'Never remove the artifact from the required list to make the check pass.',
+    },
+  },
+  'CRU-0023': {
+    code: 'CRU-0023',
+    category: 'learning-blockage',
+    meaning: 'The hosted learning proof stopped because nothing could be corroborated, and the cause is digestion rather than the corpus: most sources have never been extracted, so corroboration has not yet been given two independent sources to compare.',
+    next: 'The backlog has to be drained where the corpus is authored, which is not here. The Crucible holds a READ key to the vetted corpus (CRUCIBLE_VETTED_STATE_READ_KEY), clones it fresh on every hourly proof, and destroys the plaintext at the end of the job; it pushes to no state repository at all. Extraction run inside this repository would write into a directory deleted minutes later. Drain it in Oversight/Learning-Worker, where results can be published as new vetted custody, then let the next hourly proof read the advanced corpus.',
+    remedy: {
+      kind: 'owner-decision',
+      // Deliberately null. This said `npm run learning:extract` when the code was first written,
+      // which was wrong in a way worth recording: the command exists and runs, but in THIS
+      // repository it has nothing durable to write to, so following the remedy would have looked
+      // like action and changed nothing. A remedy naming a command that cannot work is the same
+      // defect as a failure with no code - it sends a reader somewhere that does not fix it.
+      command: null,
+      verifyWith: { tests: ['test/intakePathways.test.js', 'test/workflow.test.js'] },
+      forbidden: 'Never restrict the corpus to sources where identical claim text is expected in order to make corroboration succeed; that is the opposite of the system this repository is. Never read this stop as evidence about corpus composition - it is a statement about digestion. And never give this repository write access to a state repository in order to drain the backlog locally: the read-only boundary is what keeps Crucible a consumer of independently vetted custody rather than an author of its own evidence.',
+    },
+  },
+  'CRU-0024': {
+    code: 'CRU-0024',
+    category: 'learning-blockage',
+    meaning: 'The hosted learning proof stopped because the corpus genuinely contains no claim asserted by two or more independently identified sources. Every source has been digested, so this is the corpus rather than the pipeline.',
+    next: 'Ingest sources that are independent of the publishers already present. This is an owner decision about what the corpus should contain, and the funnel in the same report names which publishers currently agree only with themselves.',
+    remedy: {
+      kind: 'owner-decision',
+      command: null,
+      verifyWith: { tests: ['test/corroborationSensitivity.test.js'] },
+      forbidden: 'Never lower the sameness threshold, weaken source independence, or narrow the corpus to sources expected to share wording, to make this stop go away. Each would manufacture agreement rather than find it.',
+    },
+  },
+  'CRU-0025': {
+    code: 'CRU-0025',
+    category: 'learning-blockage',
+    meaning: 'Corroborated claims exist in the real corpus but none carries an owner-declared scope, and a scope is never inferred.',
+    next: 'The owner declares the scope a claim is tested within, in governingDocuments/learning-scope-declarations.json. Until one exists for a corroborated claim, the proof correctly refuses to proceed.',
+    remedy: {
+      kind: 'owner-decision',
+      command: null,
+      verifyWith: { tests: ['test/realCorpusLearning.test.js'] },
+      forbidden: 'Never infer a scope from the claim text or from the source it came from. An inferred scope is the machine deciding what its own proof means.',
+    },
+  },
+  'CRU-0026': {
+    code: 'CRU-0026',
+    category: 'learning-blockage',
+    meaning: 'Corroborated claims exist and declarations exist, but no declaration matches a corroborated claim and no declaration nominates a pairing the corpus supports.',
+    next: 'Reconcile the declarations against what the corpus actually corroborates; the report lists both. A nominated pairing must be one the corpus can prove each document really contains.',
+    remedy: {
+      kind: 'owner-decision',
+      command: null,
+      verifyWith: { tests: ['test/pairedCorroboration.test.js'] },
+      forbidden: 'Never relax the requirement that a nominated pairing be supported by the stored document; that would let a declaration put words into a source.',
+    },
+  },
+  'CRU-0027': {
+    code: 'CRU-0027',
+    category: 'workflow-validity',
+    meaning: 'A workflow references a context where that context does not exist - most often runner, env or steps inside a job-level env block. GitHub rejects the whole file rather than substituting a value, so the run is created with zero jobs and reports a bare failure with nothing in it.',
+    next: 'Move the expression to a step, where the context exists, or use an ordinary environment variable the runner sets (RUNNER_TEMP rather than runner.temp). A run with zero jobs is the signature of this defect.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run lint:workflows',
+      verifyWith: { tests: ['test/workflowLint.test.js'] },
+      forbidden: 'Never delete the offending line to make the file parse; the value is one the job actually needs, so removing it silently changes what the job does.',
+    },
+  },
+  'CRU-0028': {
+    code: 'CRU-0028',
+    category: 'workflow-validity',
+    meaning: 'A step that runs on failure() is missing continue-on-error: true, so a diagnostic added to explain a failure is allowed to become the failure. The upload variants are the sharpest case: with if-no-files-found: error, a report that was never written because the run died early is reported as the cause instead of whatever actually died.',
+    next: 'Add continue-on-error: true to the on-error step. AGENTS.md requires on-error diagnosis to be additive and to never change that job\'s own pass/fail result; the job still fails, on the step that really failed.',
+    remedy: {
+      kind: 'automatic',
+      command: 'npm run lint:workflows',
+      verifyWith: { tests: ['test/workflowLint.test.js'] },
+      forbidden: 'Never drop the if: failure() condition or loosen if-no-files-found to make the step stop failing; that removes the diagnosis instead of making it additive, and the point is to keep the evidence while keeping it out of the verdict.',
+    },
+  },
+  'CRU-0029': {
+    code: 'CRU-0029',
+    category: 'ai-conflict',
+    meaning: 'Two AI agents hold overlapping exclusive mutation claims, or a claim was recorded that cannot be held. Several AIs may work one project; they may not write the same scope at once, because the result is a merge nobody authorised rather than a decision somebody made.',
+    next: 'Keep one canonical mutation stream per scope. Release the older claim, request an explicit handoff, or narrow the new claim so the scopes do not overlap. Reading, testing, reviewing and proposing against a claimed scope stay allowed throughout.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run audit:coordination',
+      verifyWith: { tests: ['test/mutationClaims.test.js'] },
+      forbidden: 'Never resolve an overlap by widening a scope, deleting the other agent\'s claim, or marking it released on its owner\'s behalf. Ownership changes only by explicit release or handoff.',
+    },
+  },
+  'CRU-0030': {
+    code: 'CRU-0030',
+    category: 'ai-conflict',
+    meaning: 'An agent attempted to mutate a scope exclusively claimed by another agent.',
+    next: 'Read, test, review, critique and propose against the scope freely - all of that is allowed. To change it, wait for the owner to release the claim or hand it off; the current owner may implement your accepted proposal.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run audit:coordination',
+      verifyWith: { tests: ['test/mutationClaims.test.js'] },
+      forbidden: 'Never take ownership because your argument was the stronger one. Winning a technical disagreement does not transfer the right to write the file.',
+    },
+  },
+  'CRU-0031': {
+    code: 'CRU-0031',
+    category: 'ai-conflict',
+    meaning: 'A mutation was attempted against a scope frozen by an unresolved conflict in AI-CONFLICTS.json.',
+    next: 'Leave the contested scope alone until the owner rules. Only the contested mutation is frozen: unrelated scopes, and read-only investigation, testing and review anywhere, continue normally.',
+    remedy: {
+      kind: 'owner-decision',
+      command: 'npm run audit:ai-conflict-governance',
+      verifyWith: { tests: ['test/multiAiDeliberation.test.js'] },
+      forbidden: 'Never widen a freeze into a general work stoppage, and never lift one by editing the conflict record. Only the repository owner resolves a conflict.',
+    },
+  },
+  'CRU-0032': {
+    code: 'CRU-0032',
+    category: 'ai-conflict',
+    meaning: 'Model agreement was treated as authority: a corroboration outcome was marked owner-approved, or an AI was the only reviewer of its own material change. Cross-model agreement is correlated, not independent - the models share training data and share failure modes.',
+    next: 'Record the outcome as evidence and leave approval to the repository owner in AI-CONFLICTS.json resolution.decidedBy. Get at least one other provider to review, test or respond before putting a material change forward.',
+    remedy: {
+      kind: 'owner-decision',
+      command: 'npm run audit:coordination',
+      verifyWith: { tests: ['test/multiAiDeliberation.test.js'] },
+      forbidden: 'Never let consensus, partial agreement, or a passing test stand in for owner approval, and never review your own material change alone.',
+    },
+  },
+  'CRU-0033': {
+    code: 'CRU-0033',
+    category: 'artifact-security',
+    meaning: 'A provider credential was missing where one was required, or a credential value reached a governance artifact, prompt, or log. A committed credential is compromised the moment it is written.',
+    next: 'Supply credentials only through environment variables or repository secrets. Remove any credential from AI-HANDOFF.json, AI-CONFLICTS.json, DEVLOG.md, source, and prompts, and rotate the key.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run audit:coordination',
+      verifyWith: { tests: ['test/aiProviderRegistry.test.js'] },
+      forbidden: 'Never commit a credential to make a run work, and never redact one in place and treat that as sufficient - the value stays in Git history and must be rotated.',
+    },
+  },
+  'CRU-0034': {
+    code: 'CRU-0034',
+    category: 'ai-conflict',
+    meaning: 'A multi-provider task was distributed or corroborated without the identity, prompt, or coverage needed to interpret the result.',
+    next: 'Give the task a taskId and a prompt, register at least one adapter, and keep every provider failure in the result. A provider that could not be reached is unknown, not agreeing.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run audit:coordination',
+      verifyWith: { tests: ['test/multiAiOrchestrator.test.js'] },
+      forbidden: 'Never drop a failed provider from the record to make coverage look complete, and never merge responses into a single answer with no author.',
+    },
+  },
+  'CRU-0035': {
+    code: 'CRU-0035',
+    category: 'governance',
+    meaning: 'A material AI action is missing from the permanent record, or a DEVLOG entry records future intent rather than what happened.',
+    next: 'Record what was actually done in DEVLOG.md - provider, task, role, files, tests, results, and whether the repository changed. Future intent belongs in AI-HANDOFF.json.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run audit:coordination',
+      verifyWith: { tests: ['test/devlogAccountability.test.js'] },
+      forbidden: 'Never satisfy this by writing a plan into DEVLOG.md. Nothing that has not happened can be wrong, which is what makes it useless as a record.',
+    },
+  },
+  'CRU-0036': {
+    code: 'CRU-0036',
+    category: 'ci-harness',
+    meaning: 'A governed AI provider could not be called, rejected the request, or returned something unusable. The provider is unreachable or misconfigured; it is not agreeing and it is not disagreeing.',
+    next: 'Check the provider credential and model environment variables and the endpoint. Treat the provider as absent from the result: a provider that did not answer lowers coverage rather than being dropped from the tally.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run audit:coordination',
+      verifyWith: { tests: ['test/aiProviderAdapters.test.js'] },
+      forbidden: 'Never substitute a canned response for an unreachable provider. A fake answer is indistinguishable from a real one downstream and silently becomes evidence.',
+    },
+  },
+  'CRU-0037': {
+    code: 'CRU-0037',
+    category: 'governance',
+    meaning: 'An agent began work without reading the governed state it is continuing from: Git state, AI-HANDOFF.json, AI-CONFLICTS.json, DEVLOG.md, and the governance gates.',
+    next: 'Run the continuation inspection first. Resume from the last confirmed good point rather than restarting, and never overwrite work another agent already completed.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run handoff:continue',
+      verifyWith: { tests: ['test/aiHandoffContinuation.test.js'] },
+      forbidden: 'Never start over because reading the handover looked slower than redoing the work. Overwriting a predecessor\'s completed work is the failure this exists to prevent.',
+    },
+  },
+  'CRU-0038': {
+    code: 'CRU-0038',
+    category: 'governance',
+    meaning: 'Automatic DEVLOG prune synchronization could not prove the exact development range or append a one-file-only Devlog-Pruned commit to Archive.',
+    next: 'Inspect the exact base and head SHAs, confirm Archive can be fetched and written through the standing Devlog-Pruned exception, then rerun the AI handoff policy job. The development commit remains intact; never replace or rewrite it to hide an archive failure.',
+    remedy: {
+      kind: 'automatic',
+      command: 'npm run audit:handoff',
+      verifyWith: { tests: ['test/devlogPruneArchive.test.js', 'test/handoffPolicy.test.js'] },
+      forbidden: 'Never force-push or rebase Archive, never touch an Archive path other than Devlog-Pruned, and never omit a failed snapshot merely to make the handoff job green.',
+    },
+  },
+  'CRU-0022': {
+    code: 'CRU-0022',
+    category: 'diagnosis-coverage',
+    meaning: 'The failure-code coverage ratchet found more uncoded throw sites than the recorded baseline allows.',
+    next: 'Give the new throw sites codes. The baseline may only fall; raising it would let the diagnosable surface shrink again.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run audit:failure-codes',
+      verifyWith: { tests: ['test/failureCodes.test.js'] },
+      forbidden: 'Never raise the uncoded baseline. It may only fall.',
+    },
+  },
+});
+
+// Build an error that carries its code. The code is also written into the message text, because
+// an error frequently has to survive a trip it cannot carry properties across: `runner.js`
+// captures a child process's stdout and stderr as a string, and CI keeps only the log. A code
+// in the text is still recoverable at the far end; a property is not.
+function crucibleError(code, message, extra = {}) {
+  if (!FAILURE_CODES[code]) throw new Error(`Unknown failure code ${code}. Add it to the registry in src/failureCodes.js before throwing it, so a reader can look it up.`);
+  const error = new Error(`[${code}] ${message}`);
+  error.crucibleCode = code;
+  Object.assign(error, extra);
+  return error;
+}
+
+// Recover the code from an error, wherever it survived: the property first, then the message
+// text for an error that crossed a process boundary.
+function failureCode(error) {
+  if (!error) return null;
+  if (error.crucibleCode && FAILURE_CODES[error.crucibleCode]) return error.crucibleCode;
+  const found = String(error.message || error).match(/CRU-\d{4}/);
+  return found && FAILURE_CODES[found[0]] ? found[0] : null;
+}
+
+function describeCode(code) {
+  return FAILURE_CODES[code] || null;
+}
+
+// The half the immune system uses.
+//
+// A code that only names a failure still leaves the repair to be worked out from prose, which is
+// the same guessing one layer up. So every code carries a remedy the immune system can act on
+// without reading English:
+//
+//   kind       'automatic'      a mechanical fix exists and the immune system may apply it
+//              'guided'         the command reproduces the finding; the change itself is judgement
+//              'owner-decision' not the immune system's to make, and it must escalate instead
+//   command    the exact repository command, or null when no command applies
+//   verifyWith a testing work-request in the shape `selectRequestedTests` accepts, so the proof
+//              of a repair is existing tests run through the bus rather than a claim
+//   forbidden  the fix that would make the symptom disappear without fixing anything, named so
+//              that taking it has to be a deliberate act
+//
+// `kind` is the load-bearing field. The repair selection policy in AI-HANDOFF.json requires the
+// correct fix rather than the one that silences the symptom, and 'owner-decision' is how a code
+// says out loud that no correct fix is available to an automaton. A remedy is still not
+// authority: it says what to do, never that it may be promoted, and R11 is untouched by any of
+// it.
+function remedyFor(code) {
+  const known = FAILURE_CODES[code];
+  return known ? known.remedy : null;
+}
+
+// The work-request the immune system should send to the testing organ to prove a repair for this
+// code. Returned as its own function because this is the join between the two halves: a code
+// names the failure, and this names the existing tests that would show it fixed.
+function testRequestFor(code) {
+  const remedy = remedyFor(code);
+  return remedy ? { ...remedy.verifyWith } : null;
+}
+
+// Codes the immune system may act on unaided, and codes it must escalate. Kept as a query rather
+// than left to each caller's reading of `kind`, so "may I repair this?" has one answer.
+function repairableByImmuneSystem(code) {
+  const remedy = remedyFor(code);
+  return Boolean(remedy && remedy.kind !== 'owner-decision');
+}
+
+// Every code present in a body of text, in the order first seen and without duplicates. This is
+// how the diagnostic organ classifies a log: by what the failure declared itself to be, not by
+// what its wording resembles.
+function codesInText(text) {
+  const seen = [];
+  for (const match of String(text || '').matchAll(CODE_PATTERN)) {
+    if (FAILURE_CODES[match[0]] && !seen.includes(match[0])) seen.push(match[0]);
+  }
+  return seen;
+}
+
+// Where a failing process records its coded failure, and where the diagnostic organ looks for it.
+// Defined once, in code, for a reason that cost a whole CI matrix: this path was first written
+// into the self-test workflow as `${{ runner.temp }}/crucible-failure.log` in a job-level `env:`
+// block, where the `runner` context does not exist. GitHub rejected the file outright rather than
+// substituting an empty string, so two commits produced runs with zero jobs.
+//
+// `RUNNER_TEMP` is an ordinary environment variable the runner sets, available to any process,
+// with none of that fragility - and it is the same rule `npmCiLogPath` already uses, so the two
+// logs land beside each other. `CRUCIBLE_FAILURE_LOG` therefore takes a plain "1" to opt in, or
+// an explicit path when a caller wants to choose one.
+function failureLogPath(environment = process.env) {
+  return path.join(environment.RUNNER_TEMP || process.cwd(), 'crucible-failure.log');
+}
+
+// Null when recording is off, so a caller can simply skip.
+function resolveFailureLog(environment = process.env) {
+  const configured = String(environment.CRUCIBLE_FAILURE_LOG || '').trim();
+  if (!configured) return null;
+  return /^(1|true|yes)$/i.test(configured) ? failureLogPath(environment) : configured;
+}
+
+const BASELINE_FILE = 'governingDocuments/failure-code-baseline.json';
+
+// A throw site is coded when it throws through `crucibleError`. Counting the uncoded ones is
+// what turns "every failure has a code" from an intention into something with a number attached.
+//
+// The registry module itself is excluded: the guard inside `crucibleError` has to throw when
+// handed an unknown code, and it cannot do that through itself.
+function coverageReport(root = 'src') {
+  const files = fs.readdirSync(root).filter((file) => file.endsWith('.js') && file !== 'failureCodes.js').sort();
+  const byFile = {};
+  let uncoded = 0;
+  let coded = 0;
+  for (const file of files) {
+    const source = fs.readFileSync(path.join(root, file), 'utf8');
+    const bare = (source.match(/throw new Error\(/g) || []).length;
+    const carried = (source.match(/throw crucibleError\(/g) || []).length;
+    coded += carried;
+    if (bare) { byFile[file] = bare; uncoded += bare; }
+  }
+  return { uncoded, coded, byFile, files: files.length };
+}
+
+function readBaseline(file = BASELINE_FILE) {
+  if (!fs.existsSync(file)) return null;
+  return JSON.parse(fs.readFileSync(file, 'utf8'));
+}
+
+// The ratchet, in the shape this repository already uses for circulation linkage: the count of
+// uncoded throw sites may fall and may never rise. Six hundred throw sites are not going to
+// grow codes in one commit, and pretending otherwise would be the dishonest version of this
+// change. What this guarantees instead is that the diagnosable surface only ever grows.
+function auditFailureCodes({ root = 'src', baselineFile = BASELINE_FILE } = {}) {
+  const report = coverageReport(root);
+  const baseline = readBaseline(baselineFile);
+  if (!baseline) {
+    return { ok: false, code: 'CRU-0022', reason: `No failure-code baseline at ${baselineFile}; coverage cannot be ratcheted without one.`, report };
+  }
+  if (report.uncoded > baseline.uncodedThrowSites) {
+    const grew = Object.entries(report.byFile)
+      .filter(([file, count]) => count > (baseline.byFile[file] || 0))
+      .map(([file, count]) => `${file} ${baseline.byFile[file] || 0} -> ${count}`);
+    return {
+      ok: false,
+      code: 'CRU-0022',
+      reason: `Uncoded throw sites rose from ${baseline.uncodedThrowSites} to ${report.uncoded}. A new failure path must carry a code so it can be diagnosed rather than guessed at: ${grew.join('; ')}.`,
+      report,
+      baseline,
+    };
+  }
+  return {
+    ok: true,
+    reason: report.uncoded < baseline.uncodedThrowSites
+      ? `Uncoded throw sites fell from ${baseline.uncodedThrowSites} to ${report.uncoded}; record the lower baseline so the ratchet cannot slacken again.`
+      : `${report.uncoded} throw site(s) remain uncoded and none were added; ${report.coded} carry a failure code.`,
+    tightened: report.uncoded < baseline.uncodedThrowSites,
+    report,
+    baseline,
+  };
+}
+
+module.exports = {
+  UNCODED, CODE_PATTERN, FAILURE_CODES, BASELINE_FILE,
+  crucibleError, failureCode, describeCode, codesInText,
+  remedyFor, testRequestFor, repairableByImmuneSystem, failureLogPath, resolveFailureLog,
+  coverageReport, readBaseline, auditFailureCodes,
+};

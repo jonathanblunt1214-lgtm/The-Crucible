@@ -15,6 +15,78 @@ Follow `ai-conflict-resolution.md` for conflicts between agents, instructions, p
 Record the conflict in `AI-CONFLICTS.json` immediately. The ledger and `.github/workflows/ai-conflict-governance.yml` are permanent Crucible governance files: never delete, bypass, disable, or exclude them.
 Before implementation, the starting AI must replace the placeholder in `AI-HANDOFF.json` with a takeover-ready development plan. Keep it and the repository's human-readable development log current together so another AI can continue without private chat history. Never delete, bypass, or weaken the AI handoff workflow.
 
+## Discussion is shared; mutation is exclusive
+
+Several AIs may work one project at the same time. They may not change the
+same code at the same time: two providers writing one scope produce a merge,
+not a decision, and the merge silently picks a winner nobody authorised.
+
+- Exclusive mutation claims live in `AI-HANDOFF.json` under `mutationClaims`.
+  A claim records `taskId`, `owner`, `scope`, `purpose`, `status`,
+  `acquiredAt`, and `handedOffTo`/`releasedAt` once either applies.
+- Any AI may read, test, review, critique and propose changes to a claimed
+  scope. Exactly one may mutate it, and only while holding an active claim.
+- Overlap is structural, not textual: claiming a directory locks every file
+  beneath it, and a line region inside an already-claimed file is covered.
+  `src/mutationClaims.js` enforces this; `npm run audit:coordination` fails
+  the build if two active claims overlap.
+- Ownership changes only by explicit release or handoff. **Winning a technical
+  argument does not transfer it.** The current owner may implement another
+  AI's accepted proposal.
+- One canonical mutation stream per claimed scope. Other providers act as
+  reviewers, investigators, testers or proposal sources until ownership moves.
+- An unresolved conflict freezes only the scope named in that conflict's
+  `contestedScope`. Unrelated scopes, and read-only work anywhere, continue.
+
+## Deliberation belongs in AI-CONFLICTS.json
+
+There is no `AI-DELIBERATION.json` and none is required. A disagreement and
+the discussion that settles it are one object; two files drift, and the one a
+gate reads is never the one an agent wrote. Each conflict record may carry a
+`deliberation` block holding competing proposals, each AI's position, the
+evidence behind it, other AIs' responses, and a corroboration outcome - one of
+`consensus`, `partial-agreement`, `unresolved-conflict`, `insufficient-evidence`
+or `test-verified`.
+
+Cross-model agreement is evidence, never proof: the models share training data
+and share failure modes, so their agreement is correlated rather than
+independent. No AI may declare its own work approved, and no AI may be the only
+reviewer of its own material change. Tests, security checks, governance checks,
+integrity checks and the repository owner all outrank model consensus. Owner
+approval exists only as `resolution.decidedBy: "repository-owner"`.
+
+If evidence, tests and corroboration cannot settle a disagreement, preserve
+every position and escalate to the owner. Never silently choose a side, and
+never hide the disagreement.
+
+## Provider credentials
+
+Governed providers are OpenAI, Anthropic Claude, Perplexity and NVIDIA NIM.
+Credentials come only from environment variables or repository secrets
+(`OPENAI_API_KEY`, `ANTHROPIC_API_KEY`, `PERPLEXITY_API_KEY`,
+`NVIDIA_NIM_API_KEY`). Never write one into source, a committed prompt,
+`AI-HANDOFF.json`, `AI-CONFLICTS.json`, `DEVLOG.md`, or a workflow log. A
+committed credential is compromised the moment it is written: remove it *and*
+rotate the key. `npm run audit:coordination` fails on a credential found in any
+governance artifact.
+
+A provider that could not be reached is recorded as failed, never dropped. An
+unreachable provider is unknown, not agreeing - so partial coverage lowers the
+outcome to `insufficient-evidence` rather than reporting agreement among
+whichever providers happened to answer.
+
+## Past, future, and disagreement each have one home
+
+- `AI-HANDOFF.json` - future intent: the plan, current step, assignments,
+  next actions, blockers, and exclusive mutation claims.
+- `DEVLOG.md` - past fact: what each AI actually did. Never a plan; nothing
+  that has not happened can be wrong, which is what makes a plan useless as a
+  record. Every material action records provider, model and agent where
+  available, taskId, timestamp, role, action, files examined and changed,
+  tests run, results, commits, evidence, disagreements, whether repository
+  state changed, and handoff state.
+- `AI-CONFLICTS.json` - disagreement and cross-AI deliberation.
+
 ## This is not a two-way link
 
 The Crucible is a diagnostic and security suite, totally separate from this

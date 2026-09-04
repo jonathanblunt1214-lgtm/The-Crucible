@@ -1,0 +1,48 @@
+name: Verify encrypted training queue custody
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - development
+    paths:
+      - .github/workflows/hosted-source-bootstrap.yml
+      - src/hostedSourceBundle.js
+
+permissions:
+  contents: read
+
+jobs:
+  ciphertext-custody:
+    name: Verify ciphertext without decrypting
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+      - name: Read encrypted queue from its private state repository
+        env:
+          STATE_DEPLOY_KEY: ${{ secrets.CRUCIBLE_LEARNING_STATE_DEPLOY_KEY }}
+        run: |
+          test -n "$STATE_DEPLOY_KEY"
+          mkdir -p "$RUNNER_TEMP/crucible-state-ssh" "$RUNNER_TEMP/crucible-ciphertext" hosted-source-bootstrap
+          printf '%s\n' "$STATE_DEPLOY_KEY" > "$RUNNER_TEMP/crucible-state-ssh/key"
+          chmod 600 "$RUNNER_TEMP/crucible-state-ssh/key"
+          printf '%s\n' 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$RUNNER_TEMP/crucible-state-ssh/known_hosts"
+          GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/crucible-state-ssh/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/crucible-state-ssh/known_hosts -o StrictHostKeyChecking=yes" \
+            git clone --depth 1 git@github.com:jonathanblunt1214-lgtm/Crucible-Learning-State.git "$RUNNER_TEMP/crucible-ciphertext/state"
+          node src/hostedSourceBundle.js join --input-root "$RUNNER_TEMP/crucible-ciphertext/state" --output "$RUNNER_TEMP/crucible-ciphertext/source-bundle.enc"
+          node -e "const fs=require('fs'),c=require('crypto');const f=process.argv[1],b=fs.readFileSync(f);console.log(JSON.stringify({schemaVersion:1,repository:process.env.GITHUB_REPOSITORY,ref:process.env.GITHUB_REF,ciphertextBytes:b.length,ciphertextSha256:c.createHash('sha256').update(b).digest('hex'),decrypted:false,authorizesPromotion:false}))" "$RUNNER_TEMP/crucible-ciphertext/source-bundle.enc" > hosted-source-bootstrap/report.json
+      - name: Destroy runner ciphertext and credentials
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/crucible-ciphertext" "$RUNNER_TEMP/crucible-state-ssh"
+      - name: Retain bounded ciphertext report only
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hosted-source-ciphertext-${{ github.run_id }}
+          path: hosted-source-bootstrap/report.json
+          if-no-files-found: error
+          retention-days: 90

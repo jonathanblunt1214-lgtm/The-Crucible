@@ -6,6 +6,14 @@
 # for why the executable bit matters here).
 set -e
 
+# Git exports repository-local environment into hooks. The tests below create
+# isolated repositories, so remove only those inherited bindings before npm
+# starts; otherwise their Git commands can mutate or lock the repository that
+# is currently being pushed.
+for crucible_git_var in $(git rev-parse --local-env-vars); do
+  unset "$crucible_git_var"
+done
+
 echo "[The Crucible] Running local pre-push verification..."
 npm run lint:workflows
 npm run docs:check

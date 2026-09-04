@@ -26,3 +26,33 @@ This is an auditable decision record, not private chain-of-thought. The Crucible
 ## Required-check example
 
 A request to make a workflow check required conflicts with a rule that the production branch cannot be modified implicitly when that workflow exists only on development. Preserve both goals: allow development reporting, block required-check activation, and use `required-check-rollout.md` after explicit OWNER promotion. Do not solve the conflict by weakening protection, skipping development, or silently touching production.
+
+## Multi-AI deliberation, corroboration, and mutation ownership
+
+Record the disagreement in `AI-CONFLICTS.json`. Do not create a separate
+deliberation file - `AI-DELIBERATION.json` does not exist and is not required.
+
+Each conflict record may carry a `deliberation` block:
+
+- `proposals[]` - competing implementations, each with `provider` and `evidence`.
+- `positions[]` - each AI's stance on the open technical question.
+- `responses[]` - other AIs answering a proposal, with `stance` one of
+  `corroborates`, `disputes`, `partial`, `abstains`.
+- `corroboration` - the outcome: `consensus`, `partial-agreement`,
+  `unresolved-conflict`, `insufficient-evidence`, or `test-verified`, with a
+  `rationaleSummary`. `unresolved-conflict` must set `escalatedToOwner: true`.
+
+`consensus` requires at least two independent positions, and no AI may set
+`ownerApproved`. Cross-model agreement is evidence, not proof.
+
+Add `contestedScope` naming the paths or code regions the conflict freezes.
+The freeze is narrow on purpose: only the contested mutation stops. Read-only
+investigation, testing and review continue everywhere, and unrelated scopes
+keep moving.
+
+Mutation ownership is separate from the argument. It lives in
+`AI-HANDOFF.json` `mutationClaims` and changes only by explicit release or
+handoff. An AI whose proposal is accepted has not thereby acquired the right to
+write the file; the current owner may implement it. Run
+`npm run audit:coordination` to check ownership, DEVLOG accountability, and
+that no provider credential has reached a governance artifact.

@@ -15,6 +15,19 @@
     "audit:core-ref": "node src/cli.js core-ref",
     "audit:reference-branches": "node src/referenceBranchIntegrity.js",
     "test:scientific-learning": "node --test test/scientificLearning.test.js",
+    "test:safe-retrieval": "node --test test/safeInformationRetrieval.test.js",
+    "test:automated-google-research": "node --test test/automatedGoogleResearch.test.js",
+    "learning:google-research": "node src/automatedGoogleResearchCli.js run",
+    "learning:google-research-readiness": "node src/automatedGoogleResearchCli.js readiness",
+    "learning:extract": "node src/claimExtractionWorkerCli.js run",
+    "learning:extract-readiness": "node src/claimExtractionWorkerCli.js readiness",
+    "test:monthly-learning-refresh": "node --test test/monthlyKnowledgeRefresh.test.js",
+    "learning:readiness": "node src/scientificLearningCli.js readiness",
+    "learning:ingest": "node src/scientificLearningCli.js ingest",
+    "learning:status": "node src/scientificLearningCli.js status",
+    "learning:pre-soak": "node src/preSoakReadinessCli.js report",
+    "learning:retrieve": "node src/scientificLearningCli.js retrieve",
+    "learning:compare": "node src/scientificLearningCli.js compare",
     "repair:reference-branches": "node src/referenceBranchIntegrity.js repair",
     "audit:privacy": "node src/cli.js privacy",
     "audit:security": "node src/cli.js security",
@@ -23,6 +36,11 @@
     "audit:handoff": "node src/handoffPolicy.js",
     "audit:ai-conflict": "node src/aiConflictResolution.js",
     "audit:ai-conflict-governance": "node src/cli.js ai-conflicts",
+    "audit:coordination": "node src/cli.js coordination",
+    "handoff:continue": "node src/coordinationCli.js continue",
+    "coordination:claims": "node src/coordinationCli.js claims",
+    "coordination:providers": "node src/coordinationCli.js providers",
+    "coordination:consult": "node src/coordinationCli.js consult",
     "audit:required-check": "node src/requiredCheckBoundary.js",
     "audit:commit": "node src/cli.js commit",
     "precheck": "node src/cli.js precheck",
@@ -40,10 +58,25 @@
     "cadence:daily": "node src/testCadence.js daily",
     "cadence:weekly": "node src/testCadence.js weekly",
     "cadence:monthly": "node src/testCadence.js monthly",
-    "cadence:on-error": "node src/testCadence.js on-error"
+    "cadence:on-error": "node src/testCadence.js on-error",
+    "audit:circulation": "node src/cli.js circulation",
+    "audit:failure-codes": "node src/cli.js failure-codes",
+    "trace:pipeline": "node src/pipelineTracer.js"
   },
   "engines": {
     "node": ">=20"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "devDependencies": {
+    "parse5": "^8.0.0",
+    "postcss": "^8.5.23",
+    "pyright": "^1.1.413",
+    "tree-sitter": "^0.25.1",
+    "tree-sitter-bash": "^0.25.1",
+    "typescript": "^5.9.2"
+  },
+  "allowScripts": {
+    "tree-sitter@0.25.1": true,
+    "tree-sitter-bash@0.25.1": true
+  }
 }

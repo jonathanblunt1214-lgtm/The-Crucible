@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
+  "branch": "development",
+  "developmentSha": "452cc42e2e144ea25b8db10e449a89f4a962fd68",
+  "updatedAt": "2026-09-01T15:15:00Z",
+  "rollingTarget": "2026-09-14T16:00:00Z",
+  "timezone": "America/New_York",
+  "confidence": "medium",
+  "releaseAuthorized": false,
+  "promotionPerformed": false,
+  "gates": {
+    "R1": "passed",
+    "R2": "restart-proof-passed; live backlog drain unverified from this host",
+    "R3": "pending",
+    "R4": "pending-hosted-reproof-on-real-corpus; corroboration now fires (19 claims at 9600b4c, fewer once source independence and named-subject rejection apply) but every corroborated claim is document chrome, because chrome is what repeats across independently retrieved documents and extraction accepts it as a bounded assertion.",
+    "R5": "pending-hosted-reproof-on-real-corpus; machinery proven locally against real extracted candidates",
+    "R6": "pending-hosted-reproof-on-real-corpus; retrieval proven locally within a real source boundary",
+    "R7": "unblocked; awaiting hosted re-proof. Supersession now works on real multi-source evidence: the owner-declared claimScope carries the tested boundary through the plan, the reasoner, the worker, the learner and the state machine, so two independent sources can share a boundary and a third can supersede an earlier version, with rollback restoring it and history intact. Proven locally on three independent documents. Without a declared scope the provenance boundary still governs, so the looser boundary is always an owner declaration and never an inference.",
+    "R8": "no-longer-fixture-based; awaiting hosted count on the real corpus. The stubbed fetch and the three self-comparing tautologies are gone. Kill switch and blocked source are proven against a real retriever with its real fetch, since the refusal precedes any socket; duplicate URL, content and claim are measured on the corpus; injection and executable quarantine run over real stored bytes; contradiction-quarantine follows R4-R6 and says so. A behaviour the corpus cannot demonstrate is reported unsatisfied and is never passed to the gate as evidence.",
+    "R9": "held; soak band 72-96 continuous hours, observation ceiling 1000 data points, and the soak does not start while the data cannot exhibit the failures it checks",
+    "R10": "pending",
+    "R11": "pending"
+  },
+  "blockingReason": "The stale raw-key blocker is removed without giving Crucible continuing raw-intake access: independent Oversight run 33524179971 authenticated the raw bundle and republished vetted ciphertext under the rotated vetted-output key. The development workflow now consumes only Crucible-Vetted-Learning-State through a dedicated read-only identity. Exact-tip hosted R4-R8 re-proof is still required before those gates or R9 can advance; R4-R6 also require a declared scope for a claim that survives furniture rejection, and R9 remains held until R2-R8 are simultaneously green.",
+  "history": [
+    {
+      "recordedAt": "2026-08-30T20:33:00Z",
+      "priorTarget": null,
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Initial low-confidence forecast; mandatory extraction, live-cycle, rollback, 72-hour soak, exact-tip CI, and owner-authorization gates remain."
+    },
+    {
+      "recordedAt": "2026-08-30T21:13:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Extraction throughput is now measurable: forced web sources fell from 393 to 288 and all seven PDFs advanced to page 11. Confidence increased to medium; remaining live-cycle and soak gates keep the target unchanged."
+    },
+    {
+      "recordedAt": "2026-08-31T17:49:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Gate change without a date change: R2 restart proof passed via a live SIGKILL recovery cycle now permanently covered by test/durableLock.test.js, and exact tip 492c8fe1d5944b41088a839e5aefdfb8c02aef19 is hosted-green across all nine Self-Test jobs, CodeQL, and every governance workflow. R3-R8 still require live retrieval and the operator durable store, and the mandatory 72-hour soak has not started, so the target does not move earlier."
+    },
+    {
+      "recordedAt": "2026-08-31T18:45:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Owner decision, not a forecast recalculation: the mandatory soak is raised from 72 to 96 continuous hours, and the durable-lock staleness floor is set to 30 seconds with 60 seconds as the ceiling no agent may exceed without the owner saying so. The target does not move, because R3-R8 remain unproven and their completion, not the soak length, is what currently bounds the date; the extra 24 hours is absorbed well inside the existing forecast."
+    },
+    {
+      "recordedAt": "2026-08-31T19:00:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Owner clarification superseding the earlier same-day entry: the soak is a 72-96 hour band, not a single 96-hour duration. 72 is a hard floor rather than a default, the duration is chosen from evidence before the clock starts and never revised downward mid-soak, and forecasting continues to use 96. The target does not move, because R3-R8 remain unproven and their completion, not the soak length, is what bounds the date."
+    },
+    {
+      "recordedAt": "2026-08-31T19:30:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Owner decision closing the R9 definition gap: an observation ceiling of 1000 data points, and an explicit hold rather than a vacuous run when the current data would return no result. The target does not move; if anything this makes the dependency on R5 and R7 explicit, since verified knowledge versions and supersessions are what make a soak observable at all."
+    },
+    {
+      "recordedAt": "2026-08-31T22:09:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Hosted evidence changed R4-R8 to passed without changing the forecast: run 33444444978 at exact development SHA 5ed69f6dcc319f1050b45cfcf84d2108863d5f9a passed twice, and execution two restored the authenticated encrypted state from execution one. R2 live backlog evidence and R3 live discovery remain open, so R9 remains held and the target does not move earlier."
+    },
+    {
+      "recordedAt": "2026-09-01T00:10:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Gate correction under the owner decision of 2026-08-31 to build a real learning machine. R4-R8 had been recorded passed on a hosted proof that built its sources in code and never read the restored corpus. R4-R6 are now wired to the real corpus with no fallback and are pending hosted re-proof; R7 and R8 are recorded as fixture-based. The target does not move: the corrected gates are no further from completion than the real work was before, only more accurately described."
+    }
+  ]
+}

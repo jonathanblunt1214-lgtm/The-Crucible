@@ -25,6 +25,9 @@ test('reusable workflow is read-only and uses the exact caller-supplied core ref
   assert.match(workflow, /Pre-check changed commit and code[\s\S]*cli\.js precheck/);
   assert.match(workflow, /cli\.js design-brief[\s\S]*cli\.js core-ref[\s\S]*cli\.js validate/);
   assert.match(workflow, /Scan the checked-out Crucible engine code for malicious patterns[\s\S]*CRUCIBLE_PROJECT_ROOT: \$\{\{ github\.workspace \}\}\/\.the-crucible-runtime[\s\S]*cli\.js security/);
+  assert.match(workflow, /Diagnose opted-in project failure[\s\S]*CRUCIBLE_PROJECT_ID: github:\$\{\{ github\.repository \}\}/);
+  assert.match(workflow, /ciDiagnosticOrgan\.js diagnose-local/);
+  assert.match(workflow, /the-crucible-ci-diagnosis-/);
   assert.match(workflow, /Create or update the Crucible failure issue[\s\S]*if: failure\(\)[\s\S]*cli\.js failure-issue/);
   assert.match(workflow, /malware_scan:[\s\S]*type: boolean/);
   assert.match(workflow, /Install ClamAV for the malware scan[\s\S]*if: inputs\.malware_scan[\s\S]*apt-get install -y clamav[\s\S]*Run Security Gate/);
@@ -72,6 +75,14 @@ test('agent boundaries document forbids touching anything installed to run the C
   const readme = fs.readFileSync(path.join(root, 'README.md'), 'utf8');
   assert.match(readme, /agent-boundaries\.md/);
   assert.match(readme, /persist-credentials: false.*ephemeral runner/);
+});
+
+test('host isolation is a selectively permeable governed membrane, not a ban on interaction', () => {
+  const policy = fs.readFileSync(path.join(root, 'governingDocuments', 'host-isolation-policy.md'), 'utf8');
+  assert.match(policy, /selectively permeable cell membrane/i);
+  assert.match(policy, /Authenticated, typed, project-bound, size-bounded, purpose-bound, and audited signals/i);
+  assert.match(policy, /rejected or quarantined/i);
+  assert.match(policy, /grants neither assimilation nor proof authority/i);
 });
 
 test('connect workflow requires main and a development branch in its two-phase project bootstrap', () => {
@@ -168,9 +179,40 @@ test('engine changes test across supported operating systems before adoption', (
   const codeql = fs.readFileSync(path.join(root, '.github', 'workflows', 'codeql.yml'), 'utf8');
   assert.match(workflow, /push:\s*\n\s*branches: \[main, development\]/);
   assert.match(codeql, /push:\s*\n\s*branches: \[main, development\]/);
-  assert.match(workflow, /os: \[ubuntu-latest, windows-latest, macos-latest\]/);
+  assert.match(workflow, /os: \[ubuntu-latest, windows-2022, macos-latest\]/);
   assert.match(workflow, /node: \[20, 22, 24\]/);
   assert.match(workflow, /npm test[\s\S]*npm run validate[\s\S]*npm run audit:clutter[\s\S]*npm run audit:security[\s\S]*npm run precheck[\s\S]*npm run run/);
+});
+
+test('GitHub hosts encrypted restart-safe R4-R8 proof without production authority', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'hosted-learning-proof.yml'), 'utf8');
+  assert.match(workflow, /push:\s*\n\s*branches:\s*\n\s*- development/);
+  assert.match(workflow, /github\.ref == 'refs\/heads\/development'/);
+  assert.match(workflow, /actions\/cache\/restore@0057852bfaa89a56745cba8c7296529d2fc39830/);
+  assert.match(workflow, /CRUCIBLE_HOSTED_STORE_KEY: \$\{\{ secrets\.CRUCIBLE_HOSTED_STORE_KEY \}\}/);
+  assert.match(workflow, /CRUCIBLE_VETTED_STATE_READ_KEY/);
+  assert.match(workflow, /CRUCIBLE_VETTED_BUNDLE_KEY/);
+  assert.match(workflow, /Crucible-Vetted-Learning-State\.git/);
+  assert.doesNotMatch(workflow, /CRUCIBLE_LEARNING_STATE_DEPLOY_KEY|secrets\.CRUCIBLE_SOURCE_BUNDLE_KEY|Crucible-Learning-State\.git/);
+  assert.match(workflow, /node src\/hostedLearningProof\.js/);
+  assert.match(workflow, /actions\/cache\/save@0057852bfaa89a56745cba8c7296529d2fc39830/);
+  assert.match(workflow, /retention-days: 90/);
+  assert.doesNotMatch(workflow, /contents: write|pull-requests: write|issues: write/);
+});
+
+test('GitHub verifies owner queue ciphertext without receiving a decryption key or plaintext', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'hosted-source-bootstrap.yml'), 'utf8');
+  assert.match(workflow, /branches:\s*\n\s*- development/);
+  assert.match(workflow, /CRUCIBLE_LEARNING_STATE_DEPLOY_KEY/);
+  assert.match(workflow, /git clone --depth 1 git@github\.com:jonathanblunt1214-lgtm\/Crucible-Learning-State\.git/);
+  assert.match(workflow, /github\.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl/);
+  assert.match(workflow, /node src\/hostedSourceBundle\.js join/);
+  assert.match(workflow, /node src\/hostedSourceBundle\.js join/);
+  assert.match(workflow, /decrypted:false/);
+  assert.doesNotMatch(workflow, /CRUCIBLE_SOURCE_BUNDLE_KEY|hostedSourceBundle\.js decrypt|hostedSourceBundle\.js verify/);
+  assert.match(workflow, /Destroy runner ciphertext and credentials[\s\S]*if: always\(\)/);
+  assert.doesNotMatch(workflow, /contents: write|pull-requests: write|issues: write/);
+  assert.doesNotMatch(workflow, /CRUCIBLE_SOURCE_BOOTSTRAP_TOKEN|CRUCIBLE_SOURCE_BUNDLE_ASSET_API_URL/);
 });
 
 test('hosted multi-repository integration remains manual and report-only', () => {
@@ -275,6 +317,12 @@ test('GitHub checks every development change and main PR for a current DEVLOG ha
   assert.match(workflow, /HANDOFF_HEAD_SHA:/);
   assert.match(workflow, /npm run audit:handoff/);
   assert.match(workflow, /takeover-ready AI development plan/);
+  assert.match(workflow, /archive-pruned-devlog:/);
+  assert.match(workflow, /if: github\.event_name == 'push' && github\.ref == 'refs\/heads\/development'/);
+  assert.match(workflow, /permissions:\s*\n\s*contents: write/);
+  assert.match(workflow, /DEVLOG_BASE_SHA: \$\{\{ github\.event\.before \}\}/);
+  assert.match(workflow, /DEVLOG_HEAD_SHA: \$\{\{ github\.sha \}\}/);
+  assert.match(workflow, /node src\/devlogPruneArchive\.js/);
 });
 
 test('governingDocuments must be rechecked at the start of every session, same or different agent, after any 10+ minute gap', () => {
@@ -348,6 +396,7 @@ test('the pre-push hook is tracked as executable and runs the fast offline verif
   const tracked = execFileSync('git', ['ls-files', '-s', '.githooks/pre-push'], { cwd: root, encoding: 'utf8' });
   assert.match(tracked, /^100755 /, 'the pre-push hook must be tracked with the executable bit (mode 100755), or Git silently skips it');
   const hook = fs.readFileSync(path.join(root, '.githooks', 'pre-push'), 'utf8');
+  assert.match(hook, /git rev-parse --local-env-vars/, 'the pre-push hook must isolate temporary-repository tests from the live push repository');
   assert.match(hook, /^#!\/bin\/sh/);
   for (const script of ['lint:workflows', 'docs:check', 'audit:clutter', 'audit:privacy', 'audit:security']) {
     assert.match(hook, new RegExp(`npm run ${script.replace(':', '\\:')}`));
@@ -383,6 +432,10 @@ test('the required Self-Test job runs an additive, non-blocking on-error diagnos
   // The existing required steps (npm test, the audits, etc.) must be untouched.
   assert.match(workflow, /- run: npm test\r?\n/);
   assert.match(workflow, /- run: npm run validate\r?\n/);
+  assert.match(workflow, /node src\/ciDiagnosticOrgan\.js capture-npm-ci/);
+  assert.match(workflow, /node src\/ciDiagnosticOrgan\.js diagnose-local/);
+  assert.match(workflow, /crucible-ci-diagnosis-/);
+  assert.match(workflow, /os: \[ubuntu-latest, windows-2022, macos-latest\]/);
 });
 
 test('the cadence registry itself is documented in AGENTS.md, including the no-invisible-self-repair boundary for on-error triggers', () => {
@@ -391,4 +444,40 @@ test('the cadence registry itself is documented in AGENTS.md, including the no-i
   assert.match(agents, /src\/testCadence\.js/);
   assert.match(agents, /never\s+changes what the required Self-Test workflow runs\s+on every\s+push/i);
   assert.match(agents, /On-error triggers may never fix or repair anything unattended/i);
+});
+
+// The boundary the CRU-0023 remedy rests on, and until now enforced only by convention.
+//
+// The Crucible consumes independently vetted custody; it does not author it. Both state
+// repositories are cloned and neither is ever pushed to, which is why the extraction backlog
+// cannot be drained from inside this repository - extraction here would write into a runner
+// directory the job then destroys. The existing tests assert key separation and the absence of
+// `contents: write`, but `contents: write` governs GITHUB_TOKEN, not a deploy key: a workflow
+// could add `git push` over an SSH deploy key to a state repository and no test would object.
+//
+// If this ever has to change it is a governance decision about what Crucible is, and whoever
+// makes it should have to delete this test to do so.
+test('no workflow pushes to a learning state repository, so Crucible stays a consumer of vetted custody', () => {
+  const workflowDir = path.join(root, '.github', 'workflows');
+  const stateRepositories = /Crucible-Vetted-Learning-State|Crucible-Learning-State/;
+  const offenders = [];
+  for (const file of fs.readdirSync(workflowDir).filter((name) => /\.ya?ml$/i.test(name))) {
+    const text = fs.readFileSync(path.join(workflowDir, file), 'utf8');
+    if (!stateRepositories.test(text)) continue;
+    for (const [index, line] of text.split(/\r?\n/).entries()) {
+      if (/git\s+push/.test(line)) offenders.push(`${file}:${index + 1}: ${line.trim()}`);
+    }
+    // Every reference to a state repository must be a clone.
+    assert.match(text, /git clone --depth 1 git@github\.com:jonathanblunt1214-lgtm\/Crucible-(Vetted-)?Learning-State\.git/, `${file} reaches a state repository other than by cloning it`);
+  }
+  assert.deepEqual(offenders, [], `a workflow that reaches a state repository must never push to one:\n${offenders.join('\n')}`);
+});
+
+// The corpus reaches the proof under a read key and the plaintext does not outlive the job.
+// Both are load-bearing for "the backlog cannot be drained here".
+test('the hosted proof reads the corpus under a read key and destroys the plaintext', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'hosted-learning-proof.yml'), 'utf8');
+  assert.match(workflow, /STATE_DEPLOY_KEY: \$\{\{ secrets\.CRUCIBLE_VETTED_STATE_READ_KEY \}\}/);
+  assert.match(workflow, /Destroy runner plaintext[\s\S]*if: always\(\)[\s\S]*rm -rf/);
+  assert.doesNotMatch(workflow, /git\s+push/);
 });

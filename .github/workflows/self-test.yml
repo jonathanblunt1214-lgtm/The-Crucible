@@ -22,13 +22,18 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest, windows-2022, macos-latest]
         node: [20, 22, 24]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 10
     env:
       GITHUB_TOKEN: ${{ github.token }}
       CRUCIBLE_SECURITY_READ_TOKEN: ${{ secrets.SECURITY_READ_TOKEN }}
+      # Opt in to recording coded failures; the path is resolved in code from RUNNER_TEMP.
+      # It was written here as ${{ runner.temp }}/... at first, which GitHub rejects outright -
+      # the runner context does not exist in a job-level env block - taking the whole matrix
+      # down with zero jobs. npm run lint:workflows now refuses that shape.
+      CRUCIBLE_FAILURE_LOG: "1"
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
         with:
@@ -36,6 +41,10 @@ jobs:
       - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
         with:
           node-version: ${{ matrix.node }}
+          cache: npm
+      - name: Install locked dependencies
+        id: install
+        run: node src/ciDiagnosticOrgan.js capture-npm-ci
       - name: Lint GitHub Actions workflow permissions
         env:
           CRUCIBLE_WORKFLOW_LINT_DIRS: templates
@@ -56,6 +65,10 @@ jobs:
           CRUCIBLE_BASE_SHA: ${{ github.event.before || github.event.pull_request.base.sha }}
           CRUCIBLE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
       - run: npm run validate
+      - name: Enforce fly-by-wire on every push, not only when someone remembers to look
+        run: npm run audit:circulation
+      - name: Enforce failure-code coverage, so the diagnosable surface can only grow
+        run: npm run audit:failure-codes
       - run: npm run audit:clutter
       - run: npm run audit:privacy
       - run: npm run audit:security
@@ -70,6 +83,7 @@ jobs:
         run: npm run run
       - name: Save quarantined flagged files
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: the-crucible-quarantine-${{ matrix.os }}-${{ matrix.node }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -78,6 +92,7 @@ jobs:
           retention-days: 90
       - name: Save governed known-bug results
         if: failure()
+        continue-on-error: true
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: the-crucible-known-bugs-${{ matrix.os }}-${{ matrix.node }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -88,3 +103,24 @@ jobs:
         if: failure()
         continue-on-error: true
         run: node src/testCadence.js on-error self-test-failure
+      - name: Diagnose the exact hosted failure without dependencies or repair authority
+        if: failure()
+        # Diagnosis may never decide this job's result. AGENTS.md requires every on-error step to
+        # be additive, and a diagnostic that fails would replace the real failure with its own.
+        continue-on-error: true
+        env:
+          CRUCIBLE_PROJECT_ID: github:${{ github.repository }}
+          CRUCIBLE_CI_JOB: The Crucible (${{ matrix.os }}, Node ${{ matrix.node }})
+          CRUCIBLE_FAILED_STEP: ${{ steps.install.outcome == 'failure' && 'Install locked dependencies' || 'Post-install Self-Test step' }}
+        run: node src/ciDiagnosticOrgan.js diagnose-local "${{ runner.temp }}/crucible-npm-ci.log"
+      - name: Preserve the typed CI diagnosis
+        if: failure()
+        # This one matters most: it uploads with if-no-files-found: error, so when the diagnosis
+        # step above produced nothing the upload would fail the job and hide what actually broke.
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: crucible-ci-diagnosis-${{ matrix.os }}-${{ matrix.node }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ci-diagnostic-report.json
+          if-no-files-found: error
+          retention-days: 90

@@ -1,0 +1,113 @@
+name: GitHub-hosted durable learning proof
+
+on:
+  push:
+    branches:
+      - development
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hosted-learning-proof-development
+  cancel-in-progress: false
+
+jobs:
+  prove:
+    name: Prove R4-R8 on encrypted durable state
+    if: github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+      - name: Restore encrypted project-bound learning state
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .hosted-learning-cache
+          key: hosted-learning-${{ github.repository_id }}-${{ github.run_id }}
+          restore-keys: |
+            hosted-learning-${{ github.repository_id }}-
+      - name: Install locked dependencies
+        run: npm ci
+      # The corpus has to be here, in this job, but Crucible may consume only the
+      # independently vetted custody published by Oversight. It never receives the
+      # raw intake key or access to the unvetted state repository.
+      - name: Restore independently vetted encrypted corpus
+        env:
+          STATE_DEPLOY_KEY: ${{ secrets.CRUCIBLE_VETTED_STATE_READ_KEY }}
+        run: |
+          test -n "$STATE_DEPLOY_KEY"
+          mkdir -p "$RUNNER_TEMP/crucible-state-ssh" "$RUNNER_TEMP/crucible-source-restore"
+          printf '%s\n' "$STATE_DEPLOY_KEY" > "$RUNNER_TEMP/crucible-state-ssh/key"
+          chmod 600 "$RUNNER_TEMP/crucible-state-ssh/key"
+          printf '%s\n' 'github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl' > "$RUNNER_TEMP/crucible-state-ssh/known_hosts"
+          GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/crucible-state-ssh/key -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/crucible-state-ssh/known_hosts -o StrictHostKeyChecking=yes" \
+            git clone --depth 1 git@github.com:jonathanblunt1214-lgtm/Crucible-Vetted-Learning-State.git \
+            "$RUNNER_TEMP/crucible-source-restore/ciphertext"
+          node src/hostedSourceBundle.js join \
+            --input-root "$RUNNER_TEMP/crucible-source-restore/ciphertext" \
+            --output "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc"
+      - name: Decrypt vetted custody and verify every restored hash
+        env:
+          # Only vetted keys reach this runner. The outgoing one is set only while a rotation
+          # is in flight, so a rotated vetted key does not strand a corpus already published
+          # under the old one - and a bundle no key can open reports the diagnosis rather than
+          # a bare crypto error.
+          CRUCIBLE_VETTED_BUNDLE_KEY: ${{ secrets.CRUCIBLE_VETTED_BUNDLE_KEY }}
+          CRUCIBLE_VETTED_BUNDLE_KEY_PREVIOUS: ${{ secrets.CRUCIBLE_VETTED_BUNDLE_KEY_PREVIOUS }}
+        run: |
+          node src/hostedSourceBundle.js decrypt \
+            --input "$RUNNER_TEMP/crucible-source-restore/source-bundle.enc" \
+            --output "$RUNNER_TEMP/crucible-source-restore/source-bundle.tar.gz" \
+            --repository "$GITHUB_REPOSITORY" --ref "$GITHUB_REF" \
+            > "$RUNNER_TEMP/crucible-source-restore/decrypt.json"
+          provenance="$(node -e 'process.stdout.write(JSON.parse(require("node:fs").readFileSync(process.argv[1],"utf8")).provenance)' "$RUNNER_TEMP/crucible-source-restore/decrypt.json")"
+          echo "[The Crucible] corpus provenance: $provenance"
+          # Provenance is decided by the key that opened the bundle, never by which repository it
+          # was filed in. Anything this job can read must have come through the information gate.
+          if [ "$provenance" != "oversight-vetted" ]; then
+            echo "[The Crucible] The restored corpus opened as $provenance; only independently vetted custody may reach the proof." >&2
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/crucible-source-restore/plaintext"
+          tar -xzf "$RUNNER_TEMP/crucible-source-restore/source-bundle.tar.gz" \
+            -C "$RUNNER_TEMP/crucible-source-restore/plaintext"
+          node src/hostedSourceBundle.js verify \
+            --root "$RUNNER_TEMP/crucible-source-restore/plaintext" \
+            --repository "$GITHUB_REPOSITORY" --ref "$GITHUB_REF" \
+            --provenance "$provenance" \
+            --report hosted-learning-proof/corpus-custody.json
+      - name: Run project-bound durable R4-R8 proof on the real corpus
+        env:
+          CRUCIBLE_HOSTED_STORE_KEY: ${{ secrets.CRUCIBLE_HOSTED_STORE_KEY }}
+          CRUCIBLE_HOSTED_ENCRYPTED_STATE: .hosted-learning-cache/store.envelope.json
+          CRUCIBLE_HOSTED_PROOF_REPORT: hosted-learning-proof/report.json
+          CRUCIBLE_HOSTED_BUNDLE_ROOT: ${{ runner.temp }}/crucible-source-restore/plaintext
+          CRUCIBLE_HOSTED_SCOPE_DECLARATIONS: governingDocuments/learning-scope-declarations.json
+        run: node src/hostedLearningProof.js
+      - name: Destroy runner plaintext
+        if: always()
+        run: rm -rf "$RUNNER_TEMP/crucible-source-restore" "$RUNNER_TEMP/crucible-state-ssh"
+      - name: Save encrypted project-bound learning state
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .hosted-learning-cache
+          key: hosted-learning-${{ github.repository_id }}-${{ github.run_id }}
+      - name: Retain bounded proof and ciphertext
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: hosted-learning-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            hosted-learning-proof/report.json
+            hosted-learning-proof/corpus-custody.json
+            .hosted-learning-cache/store.envelope.json
+          if-no-files-found: error
+          retention-days: 90
