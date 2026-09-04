@@ -93,6 +93,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/aiHandoffContinuation.test.js',
     'test/aiConflictResolution.test.js',
     'test/devlogAccountability.test.js',
+    'test/devlogPruneArchive.test.js',
     'test/collisions.test.js',
     'test/designBriefGate.test.js',
     'test/docSync.test.js',
@@ -127,7 +128,7 @@ const ERROR_TRIGGERS = {
   'security-gate-failure': ['audit:github-security', 'audit:collisions'],
   'handoff-policy-failure': ['audit:ai-conflict-governance'],
 };
-const GOVERNANCE_TESTS = ['test/workflow.test.js', 'test/handoffPolicy.test.js', 'test/testCadence.test.js'];
+const GOVERNANCE_TESTS = ['test/workflow.test.js', 'test/handoffPolicy.test.js', 'test/devlogPruneArchive.test.js', 'test/testCadence.test.js'];
 const ORCHESTRATOR_TESTS = ['test/testCadence.test.js', 'test/workflow.test.js'];
 const TEST_REQUEST_PREFIX = 'CRUCIBLE TEST REQUEST:';
 

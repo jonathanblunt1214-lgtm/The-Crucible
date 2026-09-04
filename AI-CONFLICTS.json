@@ -49,7 +49,7 @@
       "timestamp": "2026-09-03T00:00:00Z",
       "type": "governance-rule-vs-enforcement",
       "description": "AGENTS.md required on-error diagnosis to be additive so it could never alter a Self-Test job's true pass/fail result, but two on-error Self-Test steps ran without continue-on-error: true. The artifact-upload step also used if-no-files-found: error, allowing a missing diagnostic report to replace the actual underlying failure with an artifact failure.",
-      "status": "open",
+      "status": "resolved",
       "detectedAt": "2026-09-03",
       "contestedAction": "Allowing on-error diagnostic steps in .github/workflows/self-test.yml to fail the Self-Test job, while the conflict ledger was expected to provide a complete, machine-readable account of the issue.",
       "rationaleSummary": "The governing rule says diagnosis must be additive and must never change the job's pass/fail result. A diagnostic step without continue-on-error: true can fail after the original failure, and an artifact upload configured with if-no-files-found: error can replace the original cause with an artifact error. Those behaviors conflict directly with the stated governance boundary.",
@@ -81,10 +81,10 @@
         "Require mandatory diagnostic output to be produced by the original failing check rather than by a post-failure upload step."
       ],
       "resolution": {
-        "decision": "Pending repository-owner confirmation after the development SHA is checked for the workflow repair, ledger update, and exact hosted verification evidence.",
-        "rationaleSummary": "The repair is complete and verified locally at SHA 87de153, which names the exact workflow diff and the reverting proof above; it also found four more affected steps than this entry originally described, all in the reusable workflow shipped to opted-in projects. This conflict nonetheless remains open, because closing it is the repository owner's decision and no agent may record itself as having made it. What remains for closure: the owner's ruling, and a hosted Self-Test run green on a SHA carrying this repair - which cannot happen until the ruling lands, since an open conflict fails CRU-0010 by design.",
-        "decidedBy": null,
-        "decidedAt": null
+        "decision": "Approve the repair requiring every post-failure diagnostic and artifact-collection step to remain additive and never replace the originating job failure.",
+        "rationaleSummary": "The repository owner approved the already implemented fail-preserving boundary: post-failure diagnosis and artifact collection retain continue-on-error: true, while optional artifact absence cannot replace the original failure. Local reverting proof and hosted run 33778719652 established that the originating failed step remained the job's failure while all later diagnostic steps completed successfully. The owner-directed follow-up is exact-tip hosted CI on the development commit carrying this resolution.",
+        "decidedBy": "repository-owner",
+        "decidedAt": "2026-09-04"
       }
     }
   ]

@@ -99,7 +99,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-03T21:16:00Z"
+    "lastActionAt": "2026-09-04T16:40:00Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -179,14 +179,14 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "Claude",
-    "objective": "Extend the existing Crucible Orchestrator into the governed multi-AI coordinator: exclusive mutation ownership in AI-HANDOFF.json, cross-AI deliberation and corroboration in AI-CONFLICTS.json, permanent accountability in DEVLOG.md, and real governed adapters for OpenAI, Anthropic, Perplexity and NVIDIA NIM - enforced programmatically, not merely documented.",
-    "currentPrompt": "Implement the governed multi-AI coordinator end to end, with no placeholders in the completed path, and open a pull request rather than pushing to protected main.",
+    "agent": "Codex",
+    "objective": "Record the repository owner's approval of the additive post-failure diagnostics repair, make Devlog-Pruned synchronization automatic whenever development prunes DEVLOG.md, push only development, and verify the exact resulting tip in hosted CI.",
+    "currentPrompt": "I approve the repair requiring all post-failure diagnostics and artifact collection to remain additive and never replace the original job failure. Resolve this conflict as owner-approved, then re-run exact-tip hosted CI. Archive snapshot should be automatic",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "Claude",
-      "purpose": "Run the declared-but-unexecuted enforcement on a real cadence, give the corpus restore a rotation-survivable key path and a named diagnosis, and merge Codex's concurrent vetted-custody boundary without overwriting it.",
-      "selectionReason": "Repository-focused implementation on owner instruction; the receiving plan already recorded regular/default and the task needs have not changed, so the mode is preserved rather than re-selected.",
+      "agent": "Codex",
+      "purpose": "Apply the owner's narrow conflict ruling, mechanize the standing Archive exception for pruned DEVLOG snapshots, and inspect exact-tip hosted evidence.",
+      "selectionReason": "This is a bounded repository governance repair and hosted verification task, so regular/default remains sufficient.",
       "distinction": "Execution mode is separate from agent identity and workflow; diagnosis remains evidence processing, not proof or unattended repair authority."
     },
     "steps": [
@@ -287,11 +287,13 @@
       "[Claude, 2026-09-03] Made continuation scoped rather than global after review. Earlier drafts let any open conflict set mayMutate=false repository-wide, which is the opposite of freezing only the contested mutation: a conflict now freezes only its contestedScope, and a conflict naming no scope (or marked repositoryWide) is the explicit repository-wide stop. awaitingOwner is derived from the record - an explicit escalation, a corroboration escalatedToOwner, or a pending owner decision - never assumed from \"open\", so ordinary AI-to-AI deliberation is not mislabelled an owner escalation. Governance verification is no longer optional for mutation: inspectionComplete, governanceVerified and mayMutate are separate, skipped or failed checks cannot authorise a write, and read-only investigation stays available throughout. assertMutationAllowed now proves the actor owns the exact scope instead of a comment saying \"subject to claiming the scope first\". A predecessor's uncommitted work blocks an overlapping mutation and is never reset, while unrelated uncommitted paths do not block a separately claimed scope.",
       "[Claude, 2026-09-03] Finished two inherited placeholders this feature depended on rather than recording them as pre-existing and moving on: templates/ai-handoff.example.json now validates as takeover-ready (it was missing currentPrompt and executionMode entirely, so the example a starting AI copies could never have passed the handoff gate), and the current-step reader no longer assumes steps[length-1] - it prefers an explicit currentStep, then an in-progress step, then the first unfinished one, and falls back to the last entry only for the legacy string list this repository actually uses today.",
       "[Claude, 2026-09-03, self-corrected] CodeQL alert 14 opened at 17:04 immediately after 395e339: my \\s* fix to cleanText closed `</script >` but not the general end tag, which per HTML may carry anything up to the `>` (`</script foo=bar>`, `</script\\t\\n x>`). The alert count stayed at 4 because alert 7 closed and 14 opened - a partial fix, not a fix. Widened both patterns to `<\\/tag\\b[^>]*>`. I had also claimed sanitizeHtml already spelled this correctly; it did not - it used the same `\\s*` and leaked the same bodies, so it was widened identically. Proved by reverting cleanText alone with the widened test in place: it fails naming the surviving body on `</script\\t\\n bar>`.",
-      "[Claude, 2026-09-03] Classified the two red signals so they are not read as one. CodeQL alert 14 = an incomplete prior sanitizer repair, subsequently corrected: introduced by this work as the direct consequence of the narrow \\s* repair in 395e339 (which is why it opened minutes after that push and why the count held at 4 instead of falling to 3), corrected in 4a80add by widening both end-tag patterns to <\\/tag\\b[^>]*>. Roslyn / Native analyzers (windows-latest) = an independently observed, pre-existing Windows/.NET toolchain failure, intentionally not modified in this mutation scope: no commit of mine touched a .cs, .csproj, native-semantic-analysis.yml or semanticAnalysis.js file, those last changed in e755546 which is an ancestor of 395e339, and it fails inside the toolchain (NuGet.targets: Value cannot be null. (Parameter 'path1')) rather than in repository logic. It remains a separate scoped task, consistent with the earlier recorded finding that actions/setup-dotnet would not actually fix it because test/semanticAnalysis.test.js asserts an absolute system path rather than resolving dotnet from PATH."
+      "[Claude, 2026-09-03] Classified the two red signals so they are not read as one. CodeQL alert 14 = an incomplete prior sanitizer repair, subsequently corrected: introduced by this work as the direct consequence of the narrow \\s* repair in 395e339 (which is why it opened minutes after that push and why the count held at 4 instead of falling to 3), corrected in 4a80add by widening both end-tag patterns to <\\/tag\\b[^>]*>. Roslyn / Native analyzers (windows-latest) = an independently observed, pre-existing Windows/.NET toolchain failure, intentionally not modified in this mutation scope: no commit of mine touched a .cs, .csproj, native-semantic-analysis.yml or semanticAnalysis.js file, those last changed in e755546 which is an ancestor of 395e339, and it fails inside the toolchain (NuGet.targets: Value cannot be null. (Parameter 'path1')) rather than in repository logic. It remains a separate scoped task, consistent with the earlier recorded finding that actions/setup-dotnet would not actually fix it because test/semanticAnalysis.test.js asserts an absolute system path rather than resolving dotnet from PATH.",
+      "[done, Codex] Applied the repository owner's decision to self-test-on-error-diagnostics-overriding-real-failure: all post-failure diagnosis and artifact collection remains additive and may never replace the original job failure.",
+      "[done, Codex] Added automatic development-push synchronization for pruned DEVLOG sessions. It computes full pre-prune snapshots from exact commit history, deduplicates retries, and creates only a Devlog-Pruned change on Archive. Exact-tip hosted CI is the remaining verification step."
     ],
     "status": "active",
     "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-09-03T21:16:00Z"
+    "lastUpdatedAt": "2026-09-04T16:40:00Z"
   },
   "handoffNotes": {
     "completed": [
@@ -359,7 +361,9 @@
       "Merged Codex organism wiring at 29fe27a cleanly (fast-forward, no conflict) and verified it before building on it: circulation, durable runtime, organism health, oversight reflex, and the hypothesis and variable contract all landed and the suite was green. Two findings were recorded rather than assumed: circulation exists but nothing in production routes through it, and the plan contract hard-enforced the provenance boundary, which both the hosted proof and the supersession tests had to strip the plan binding to work around.",
       "Made all six non-additive on-error steps additive across .github/workflows/self-test.yml and .github/workflows/the-crucible.yml, added workflowLint rule 'on-error-additive' with failure code CRU-0028, tightened fixWorkflowPermissions to an allow-list so only 'permissions-key' findings are ever repaired by line deletion, and recorded the repair SHA, diff and verification in the open conflict entry.",
       "Closed the cleanText end-tag hole reported as CodeQL alert 7 (js/bad-tag-filter): </script >, </style > and </form > carrying whitespace before the > now match, so those bodies no longer reach boundedAssertions as document prose. A regression test covers all three tags against four end-tag spellings and fails if the source is reverted.",
-      "Governed multi-AI coordination is implemented end to end: exclusive mutation ownership with acquire/release/handoff, scoped conflict freezing, cross-AI deliberation and corroboration inside AI-CONFLICTS.json, DEVLOG accountability, credential hygiene, and real HTTP adapters for all four governed providers. 797/797 tests pass and every governance gate is green."
+      "Governed multi-AI coordination is implemented end to end: exclusive mutation ownership with acquire/release/handoff, scoped conflict freezing, cross-AI deliberation and corroboration inside AI-CONFLICTS.json, DEVLOG accountability, credential hygiene, and real HTTP adapters for all four governed providers. 797/797 tests pass and every governance gate is green.",
+      "The repository owner resolved self-test-on-error-diagnostics-overriding-real-failure in favor of the existing additive diagnostics repair.",
+      "DEVLOG prune archival is now an automatic development-push job with a one-file-only Archive commit boundary and retry-safe deduplication."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -419,7 +423,8 @@
       "The fly-by-wire gate proved itself on its first real use: it failed the push because gradedOversightResponse belonged to no system, which is exactly the unassigned-module case it exists to catch. The module was placed with oversightReflex in circulation and the ratchet held at 57 bypassing edges with none added.",
       "Reverted src/workflowLint.js alone with the tests in place: 'an on-error step that can decide the job result is refused' fails; restored, passes. Reverted the two workflow files alone with the linter in place: 'every workflow in this repository keeps on-error diagnosis additive' fails and the gate reports CRU-0028 naming all six steps; restored, passes. Full suite 713/713 and lint:workflows, audit:failure-codes, audit:circulation, audit:clutter, docs:check all green. Hosted run 33778719652 on f2930be, job 100726825064: step 19 failed while on-error steps 20-24 all completed success, and all 9 matrix jobs were created, so the diagnosis stayed additive and the workflow files still compile.",
       "node --test 797/797. audit:coordination, audit:ai-conflict, audit:ai-conflict-governance, lint:workflows, audit:failure-codes, audit:circulation, audit:clutter, audit:privacy, audit:security, docs:check, validate all pass. Fly-by-wire ratchet held at 57 direct edges and the uncoded-throw ratchet at 583, with 71 throw sites now carrying a failure code (up from 22).",
-      "node --test 798/798 after widening the end-tag patterns; all governance gates pass. The nesting fixpoint in sanitizeHtml still defeats `<scr<script>ipt>`, confirmed alongside the widening."
+      "node --test 798/798 after widening the end-tag patterns; all governance gates pass. The nesting fixpoint in sanitizeHtml still defeats `<scr<script>ipt>`, confirmed alongside the widening.",
+      "After npm ci installed the locked dependencies in the clean worktree, node --test passes 802/802. Focused archive, handoff, workflow, conflict, accountability, failure-code, and circulation tests pass; audit:coordination, audit:ai-conflict, audit:ai-conflict-governance, lint:workflows, audit:failure-codes, audit:circulation, audit:clutter, audit:privacy, audit:security, docs:check, validate, and git diff --check pass. The exact historical range c688a9014f81d2b0ee19473a3fbfe721bd7cb688..87de153edfd92785bd8b7c55bf5d20acdd784378 deterministically yields one full pre-prune snapshot containing the removed autonomous scientific learning engine session. npm run run executed its selected tests successfully but then failed closed on an existing operator-store lock under AppData; the lock was not removed or reclaimed because it may belong to another live worker. The first authenticated pre-push attempt then correctly refused an email-shaped scripted Git identity under the privacy gate; the working copy was sanitized, the identity was replaced with a non-email Git ident, and the unpushed commit was amended rather than bypassing the gate."
     ],
     "remaining": [
       "OWNER DECISION REQUIRED: define what makes two sources assert the same claim. Options recorded are semantic corroboration (same proposition, needs a deterministic defensible same-meaning test that itself requires proof), owner-paired corroboration (the owner nominates two sources and declares the claim text with the scope), or restricting the corpus to sources where identical claim text is expected such as specifications and API documentation. Until this is decided, no verified knowledge can come from scraped prose.",
@@ -439,7 +444,7 @@
     ],
     "open": [
       "CodeQL reports 4 new high-severity alerts on PR #19. The check output carries no detail text and the GitHub tools available to this session expose no code-scanning-alerts reader, so the alerts could not be enumerated here. They are listed at https://github.com/jonathanblunt1214-lgtm/The-Crucible/security/code-scanning?query=pr%3A19+tool%3ACodeQL+is%3Aopen and need an owner or a session with code-scanning read access to triage.",
-      "Conflict 'self-test-on-error-diagnostics-overriding-real-failure' is OPEN and blocks CI by design: an open entry is a CRU-0010 failure, so Self-Test step 19 fails until the owner rules. The repair is complete and verified (SHA 87de153, hosted run 33778719652); what remains is the owner's decision and a green hosted run on a SHA carrying it, which cannot happen until the ruling lands. No agent may set decidedBy."
+      "Exact-tip hosted CI must run on the development commit carrying the owner-approved conflict resolution and automatic DEVLOG archive synchronization; results remain unverified until those hosted jobs reach terminal states."
     ]
   },
   "mutationOwnershipPolicy": {
@@ -492,6 +497,34 @@
       "acquiredAt": "2026-09-03T17:10:00Z",
       "handedOffTo": null,
       "releasedAt": "2026-09-03T18:05:00Z"
+    },
+    {
+      "taskId": "resolve-additive-diagnostics-conflict",
+      "owner": {
+        "provider": "openai",
+        "model": "codex",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-CONFLICTS.json",
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          ".github/workflows/handoff-policy.yml",
+          "src/devlogPruneArchive.js",
+          "src/testCadenceCoreLegacy.js",
+          "test/devlogPruneArchive.test.js",
+          "test/workflow.test.js",
+          "src/failureCodes.js",
+          "src/circulationLinkage.js"
+        ],
+        "regions": []
+      },
+      "purpose": "Record the owner-approved additive diagnostics ruling and automate the standing Devlog-Pruned Archive synchronization exception.",
+      "status": "released",
+      "acquiredAt": "2026-09-04T16:18:55Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-04T16:18:55Z"
     }
   ]
 }

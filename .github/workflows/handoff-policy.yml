@@ -28,3 +28,26 @@ jobs:
           HANDOFF_BASE_SHA: ${{ github.event_name == 'workflow_dispatch' && inputs.base_sha || github.event_name == 'pull_request' && github.event.pull_request.base.sha || github.event.before }}
           HANDOFF_HEAD_SHA: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.sha || github.sha }}
         run: npm run audit:handoff
+
+  archive-pruned-devlog:
+    name: Archive pruned DEVLOG sessions
+    if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+    needs: handoff
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    concurrency:
+      group: archive-pruned-devlog-${{ github.repository }}
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+      - name: Append every pruned session as a full pre-prune snapshot
+        env:
+          DEVLOG_BASE_SHA: ${{ github.event.before }}
+          DEVLOG_HEAD_SHA: ${{ github.sha }}
+        run: node src/devlogPruneArchive.js
