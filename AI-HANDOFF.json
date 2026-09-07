@@ -99,7 +99,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-04T16:40:00Z"
+    "lastActionAt": "2026-09-07T02:47:14Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -180,13 +180,13 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Record the repository owner's approval of the additive post-failure diagnostics repair, make Devlog-Pruned synchronization automatic whenever development prunes DEVLOG.md, push only development, and verify the exact resulting tip in hosted CI.",
-    "currentPrompt": "I approve the repair requiring all post-failure diagnostics and artifact collection to remain additive and never replace the original job failure. Resolve this conflict as owner-approved, then re-run exact-tip hosted CI. Archive snapshot should be automatic",
+    "objective": "Review and record scientific-learning release readiness from literal origin/development, update status, handoff, and DEVLOG atomically only on material change, push development only, and never promote main.",
+    "currentPrompt": "Review The Crucible's scientific-learning release readiness at the latest literal origin/development tip. Re-read the release plan, release status, learning-scope declarations, mutation-claim state, and active handoff before acting. Recalculate the rolling target from current extraction throughput, the remaining live learning cycle, rollback/retention proof, the mandatory 72-96 hour soak (forecast with 96 hours), exact-tip hosted CI, and owner authorization; move the target forward and mark confidence low when throughput is zero or evidence is missing rather than inventing a rate. Do not weaken proof, security, privacy, rollback, project-isolation, or promotion gates; do not treat correlation as causation or retrieval as proof; do not promote training material directly; keep all cross-project knowledge transfer as anonymized candidate evidence requiring independent validation and never let one project's data expose or control another. Use only development, never push or promote main, and do not use a new branch unless explicitly requested. Update status, handoff, and DEVLOG atomically only when evidence or forecast changes materially, commit and push development, then report the updated target, gate states R1-R11, exact SHA, hosted CI state, and blockers. If nothing material changed, make no commit.",
     "executionMode": {
       "mode": "regular/default",
       "agent": "Codex",
-      "purpose": "Apply the owner's narrow conflict ruling, mechanize the standing Archive exception for pruned DEVLOG snapshots, and inspect exact-tip hosted evidence.",
-      "selectionReason": "This is a bounded repository governance repair and hosted verification task, so regular/default remains sufficient.",
+      "purpose": "Recalculate the rolling scientific-learning release forecast from current hosted custody, gate, and exact-tip CI evidence without changing any proof boundary.",
+      "selectionReason": "This is a bounded repository governance review and status-only update, so regular/default remains sufficient.",
       "distinction": "Execution mode is separate from agent identity and workflow; diagnosis remains evidence processing, not proof or unattended repair authority."
     },
     "steps": [
@@ -289,11 +289,14 @@
       "[Claude, 2026-09-03, self-corrected] CodeQL alert 14 opened at 17:04 immediately after 395e339: my \\s* fix to cleanText closed `</script >` but not the general end tag, which per HTML may carry anything up to the `>` (`</script foo=bar>`, `</script\\t\\n x>`). The alert count stayed at 4 because alert 7 closed and 14 opened - a partial fix, not a fix. Widened both patterns to `<\\/tag\\b[^>]*>`. I had also claimed sanitizeHtml already spelled this correctly; it did not - it used the same `\\s*` and leaked the same bodies, so it was widened identically. Proved by reverting cleanText alone with the widened test in place: it fails naming the surviving body on `</script\\t\\n bar>`.",
       "[Claude, 2026-09-03] Classified the two red signals so they are not read as one. CodeQL alert 14 = an incomplete prior sanitizer repair, subsequently corrected: introduced by this work as the direct consequence of the narrow \\s* repair in 395e339 (which is why it opened minutes after that push and why the count held at 4 instead of falling to 3), corrected in 4a80add by widening both end-tag patterns to <\\/tag\\b[^>]*>. Roslyn / Native analyzers (windows-latest) = an independently observed, pre-existing Windows/.NET toolchain failure, intentionally not modified in this mutation scope: no commit of mine touched a .cs, .csproj, native-semantic-analysis.yml or semanticAnalysis.js file, those last changed in e755546 which is an ancestor of 395e339, and it fails inside the toolchain (NuGet.targets: Value cannot be null. (Parameter 'path1')) rather than in repository logic. It remains a separate scoped task, consistent with the earlier recorded finding that actions/setup-dotnet would not actually fix it because test/semanticAnalysis.test.js asserts an absolute system path rather than resolving dotnet from PATH.",
       "[done, Codex] Applied the repository owner's decision to self-test-on-error-diagnostics-overriding-real-failure: all post-failure diagnosis and artifact collection remains additive and may never replace the original job failure.",
-      "[done, Codex] Added automatic development-push synchronization for pruned DEVLOG sessions. It computes full pre-prune snapshots from exact commit history, deduplicates retries, and creates only a Devlog-Pruned change on Archive. Exact-tip hosted CI is the remaining verification step."
+      "[done, Codex] Added automatic development-push synchronization for pruned DEVLOG sessions. It computes full pre-prune snapshots from exact commit history, deduplicates retries, and creates only a Devlog-Pruned change on Archive. Exact-tip hosted CI is the remaining verification step.",
+      "[done, Codex 2026-09-06] Reviewed literal origin/development tip 677956ca8b082ed04ed8a06a1ccaead04ef1bf44, the governed release state, live Learning-Worker recovery/export evidence, Oversight return-vetted-data evidence, the latest vetted-state tip, and exact-tip Crucible checks.",
+      "[done, Codex 2026-09-06] Recorded the material evidence change without weakening any gate: R2 restart durability is passed, while R3-R8 remain pending, R9 remains held, R10-R11 remain pending, and releaseAuthorized and promotionPerformed remain false.",
+      "[blocked, Codex 2026-09-06] Withdrew the stale 2026-09-14 target and set the forecast indeterminate at low confidence because measured end-to-end throughput is zero. A finite forecast requires a successful Oversight return to vetted custody, scheduled R3 evidence, a real R4-R8 cycle, and the full forecasted 96-hour soak."
     ],
     "status": "active",
-    "startedAt": "2026-08-31T16:44:00Z",
-    "lastUpdatedAt": "2026-09-04T16:40:00Z"
+    "startedAt": "2026-09-06T16:15:41Z",
+    "lastUpdatedAt": "2026-09-07T02:47:14Z"
   },
   "handoffNotes": {
     "completed": [
@@ -363,7 +366,9 @@
       "Closed the cleanText end-tag hole reported as CodeQL alert 7 (js/bad-tag-filter): </script >, </style > and </form > carrying whitespace before the > now match, so those bodies no longer reach boundedAssertions as document prose. A regression test covers all three tags against four end-tag spellings and fails if the source is reverted.",
       "Governed multi-AI coordination is implemented end to end: exclusive mutation ownership with acquire/release/handoff, scoped conflict freezing, cross-AI deliberation and corroboration inside AI-CONFLICTS.json, DEVLOG accountability, credential hygiene, and real HTTP adapters for all four governed providers. 797/797 tests pass and every governance gate is green.",
       "The repository owner resolved self-test-on-error-diagnostics-overriding-real-failure in favor of the existing additive diagnostics repair.",
-      "DEVLOG prune archival is now an automatic development-push job with a one-file-only Archive commit boundary and retry-safe deduplication."
+      "DEVLOG prune archival is now an automatic development-push job with a one-file-only Archive commit boundary and retry-safe deduplication.",
+      "The 2026-09-06 rolling review inspected exact Crucible tip 677956ca8b082ed04ed8a06a1ccaead04ef1bf44, exact Learning-Worker tip 272e6a344f1516b3a58f14b36643d34a537dfd45, Oversight run 34042918030, and current vetted-state tip a4341b142445cde8bf71c7dea2ba74a16cfcb715.",
+      "Learning-Worker restart recovery and candidate-only export are healthy, but Oversight fails before merged vetted ciphertext is signed and published. The stale September 14 target is withdrawn; no finite target is asserted while measured end-to-end throughput is zero."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -424,27 +429,23 @@
       "Reverted src/workflowLint.js alone with the tests in place: 'an on-error step that can decide the job result is refused' fails; restored, passes. Reverted the two workflow files alone with the linter in place: 'every workflow in this repository keeps on-error diagnosis additive' fails and the gate reports CRU-0028 naming all six steps; restored, passes. Full suite 713/713 and lint:workflows, audit:failure-codes, audit:circulation, audit:clutter, docs:check all green. Hosted run 33778719652 on f2930be, job 100726825064: step 19 failed while on-error steps 20-24 all completed success, and all 9 matrix jobs were created, so the diagnosis stayed additive and the workflow files still compile.",
       "node --test 797/797. audit:coordination, audit:ai-conflict, audit:ai-conflict-governance, lint:workflows, audit:failure-codes, audit:circulation, audit:clutter, audit:privacy, audit:security, docs:check, validate all pass. Fly-by-wire ratchet held at 57 direct edges and the uncoded-throw ratchet at 583, with 71 throw sites now carrying a failure code (up from 22).",
       "node --test 798/798 after widening the end-tag patterns; all governance gates pass. The nesting fixpoint in sanitizeHtml still defeats `<scr<script>ipt>`, confirmed alongside the widening.",
-      "After npm ci installed the locked dependencies in the clean worktree, node --test passes 802/802. Focused archive, handoff, workflow, conflict, accountability, failure-code, and circulation tests pass; audit:coordination, audit:ai-conflict, audit:ai-conflict-governance, lint:workflows, audit:failure-codes, audit:circulation, audit:clutter, audit:privacy, audit:security, docs:check, validate, and git diff --check pass. The exact historical range c688a9014f81d2b0ee19473a3fbfe721bd7cb688..87de153edfd92785bd8b7c55bf5d20acdd784378 deterministically yields one full pre-prune snapshot containing the removed autonomous scientific learning engine session. npm run run executed its selected tests successfully but then failed closed on an existing operator-store lock under AppData; the lock was not removed or reclaimed because it may belong to another live worker. The first authenticated pre-push attempt then correctly refused an email-shaped scripted Git identity under the privacy gate; the working copy was sanitized, the identity was replaced with a non-email Git ident, and the unpushed commit was amended rather than bypassing the gate."
+      "After npm ci installed the locked dependencies in the clean worktree, node --test passes 802/802. Focused archive, handoff, workflow, conflict, accountability, failure-code, and circulation tests pass; audit:coordination, audit:ai-conflict, audit:ai-conflict-governance, lint:workflows, audit:failure-codes, audit:circulation, audit:clutter, audit:privacy, audit:security, docs:check, validate, and git diff --check pass. The exact historical range c688a9014f81d2b0ee19473a3fbfe721bd7cb688..87de153edfd92785bd8b7c55bf5d20acdd784378 deterministically yields one full pre-prune snapshot containing the removed autonomous scientific learning engine session. npm run run executed its selected tests successfully but then failed closed on an existing operator-store lock under AppData; the lock was not removed or reclaimed because it may belong to another live worker. The first authenticated pre-push attempt then correctly refused an email-shaped scripted Git identity under the privacy gate; the working copy was sanitized, the identity was replaced with a non-email Git ident, and the unpushed commit was amended rather than bypassing the gate.",
+      "At inherited exact development SHA 677956ca8b082ed04ed8a06a1ccaead04ef1bf44, 28 of 32 completed checks succeed, 3 fail, and 1 is skipped. Self-Test run 33896683475 passes 779/779 tests but Ubuntu/Node 24 exits on CRU-0016; hosted learning proof run 33896683769 fails closed on CRU-0023.",
+      "Learning-Worker run 34036664167 succeeds at 272e6a344f1516b3a58f14b36643d34a537dfd45 with actionable=0 after restoring 260 source-progress records and 24,671 candidates. Oversight run 34042918030 independently validates its inputs but fails in return-vetted-data before publication; the latest vetted result records proofStageSatisfied=false and assimilatedRecords=0.",
+      "After npm ci installed the exact locked dependencies in the clean detached worktree, node --test passes 802/802. The focused handoff, accountability, and mutation-claim proof passes 41/41; audit:coordination, audit:ai-conflict-governance, docs:check, validate, JSON parsing, and git diff --check all pass."
     ],
     "remaining": [
-      "OWNER DECISION REQUIRED: define what makes two sources assert the same claim. Options recorded are semantic corroboration (same proposition, needs a deterministic defensible same-meaning test that itself requires proof), owner-paired corroboration (the owner nominates two sources and declares the claim text with the scope), or restricting the corpus to sources where identical claim text is expected such as specifications and API documentation. Until this is decided, no verified knowledge can come from scraped prose.",
-      "Purge or supersede the fixture-derived knowledge versions still held in the encrypted hosted state, so the persisted store stops carrying evidence the gates should never have counted.",
-      "Make R7 real: the supersession is still performed on a candidate the proof generates for itself and labels a repository test fixture.",
-      "Make R8 real: the safety and deduplication cases still run against a stubbed fetch rather than live retrieval.",
-      "Finish R2 live backlog drain (278 sources still forced-pending) and R3 bounded discovery run.",
-      "Begin the soak only after R2-R8 are simultaneously green on real evidence, within the owner-set 72-96 hour band; R11 remains owner-only.",
-      "Never write to the oversight repository: its policy forbids Crucible writing there, and it already reads AI-CONFLICTS.json from development on a five-minute cycle.",
-      "Re-prove R4-R6 on the hosted run against the real corpus now that corroboration can fire at all, and check the run rather than trusting a green result.",
-      "Declare a scope for one claim the real corpus now corroborates, or nominate a pairing for one it asserts in words the wording test cannot relate; until then the proof still fails closed by design.",
-      "Reject document chrome at extraction - navigation, disclaimers, cookie and download-gate text, browser-upgrade notices, newsletter copy. The verb filter in boundedAssertions passes all of it, and it is precisely the text that repeats across independently retrieved documents, so it is what survives to corroborate. Until this lands, corroboration will keep finding boilerplate no matter how sound the sameness test is.",
-      "R11 is release authorization, not a learning prerequisite: it authorizes promotion of an exact SHA to main and is never inferred. Learning happens at R4-R6, entirely behind it.",
-      "Write the pre-prune DEVLOG.md snapshot to Devlog-Pruned on Archive. The 10-session cap forced pruning the 2026-08-29 'autonomous scientific learning engine' session in 87de153; the complete pre-prune file survives in that commit's parent, but the Archive mirror the DEVLOG header requires was NOT written, because this session is authorized for development only. Needs the owner or a session with Archive authority.",
-      "OWNER DECISION: CodeQL alerts 10, 11 and 12 (js/incomplete-multi-character-sanitization on sanitizeHtml in src/safeInformationRetrieval.js) are believed false positives and the evidence is recorded, but they remain OPEN and will keep the CodeQL check red. Dismissing a code-scanning alert as a false positive is a repository-owner action and was deliberately not taken. The basis for dismissal: the sanitizer is a do/while fixpoint loop that re-runs until the text stops changing, and the specific nesting attacks the query models were executed against it and all came out clean.",
-      "EXTERNAL CONFIGURATION, not a placeholder: no provider can be called until the owner supplies credentials and models as environment variables or repository secrets - OPENAI_API_KEY/OPENAI_MODEL, ANTHROPIC_API_KEY/ANTHROPIC_MODEL, PERPLEXITY_API_KEY/PERPLEXITY_MODEL, NVIDIA_NIM_API_KEY/NVIDIA_NIM_MODEL. Endpoints are overridable via *_BASE_URL. Run npm run coordination:providers to see which are configured."
+      "Repair or otherwise resolve the Oversight return-vetted-data failure without weakening independent validation, encryption, signing, project isolation, or custody. The current step exits 1 after validating both encrypted manifests and before merged ciphertext publication.",
+      "Run and record R3 through a complete scheduled automated-Google-discovery cycle; no scheduled discovery workflow exists on the reviewed Crucible tip.",
+      "Complete one real independently corroborated, owner-scoped hosted R4-R8 learning cycle, including bounded retrieval, real supersession, rollback, retention, and every combined R8 safety behaviour.",
+      "Start R9 only after R2-R8 are simultaneously green, choose 72-96 hours from evidence without revising downward, and forecast with the full 96 hours.",
+      "Return exact development CI to green without weakening Self-Test, the hosted learning proof, code scanning, governance, privacy, or security gates.",
+      "R11 remains owner-only release authorization for an exact SHA. Never infer it, push main, or promote main from this task."
     ],
     "open": [
-      "CodeQL reports 4 new high-severity alerts on PR #19. The check output carries no detail text and the GitHub tools available to this session expose no code-scanning-alerts reader, so the alerts could not be enumerated here. They are listed at https://github.com/jonathanblunt1214-lgtm/The-Crucible/security/code-scanning?query=pr%3A19+tool%3ACodeQL+is%3Aopen and need an owner or a session with code-scanning read access to triage.",
-      "Exact-tip hosted CI must run on the development commit carrying the owner-approved conflict resolution and automatic DEVLOG archive synchronization; results remain unverified until those hosted jobs reach terminal states."
+      "Why Oversight return-vetted-data exits 1 after decrypting and validating both manifests but before its signing and publication step; current logs expose no more specific stderr.",
+      "A finite rolling target is indeterminate until nonzero end-to-end custody throughput is observed. Recalculate from measured throughput and include a 96-hour soak once the blocking publication path is restored.",
+      "Exact-tip hosted CI must run on the development commit carrying this status update; results remain unverified until those checks reach terminal states."
     ]
   },
   "mutationOwnershipPolicy": {
@@ -525,6 +526,27 @@
       "acquiredAt": "2026-09-04T16:18:55Z",
       "handedOffTo": null,
       "releasedAt": "2026-09-04T16:18:55Z"
+    },
+    {
+      "taskId": "crucible-rolling-learning-release-review-20260906",
+      "owner": {
+        "provider": "openai",
+        "model": "codex",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "governingDocuments/scientific-learning-release-status.json"
+        ],
+        "regions": []
+      },
+      "purpose": "Record the material 2026-09-06 scientific-learning release forecast and gate evidence update on development only.",
+      "status": "released",
+      "acquiredAt": "2026-09-06T16:15:41Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-07T02:47:14Z"
     }
   ]
 }

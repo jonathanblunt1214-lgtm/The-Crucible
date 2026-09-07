@@ -2,27 +2,28 @@
   "schemaVersion": 1,
   "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
   "branch": "development",
-  "developmentSha": "452cc42e2e144ea25b8db10e449a89f4a962fd68",
-  "updatedAt": "2026-09-01T15:15:00Z",
-  "rollingTarget": "2026-09-14T16:00:00Z",
+  "developmentSha": "677956ca8b082ed04ed8a06a1ccaead04ef1bf44",
+  "updatedAt": "2026-09-07T02:47:14Z",
+  "rollingTarget": null,
+  "rollingTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
   "timezone": "America/New_York",
-  "confidence": "medium",
+  "confidence": "low",
   "releaseAuthorized": false,
   "promotionPerformed": false,
   "gates": {
     "R1": "passed",
-    "R2": "restart-proof-passed; live backlog drain unverified from this host",
-    "R3": "pending",
-    "R4": "pending-hosted-reproof-on-real-corpus; corroboration now fires (19 claims at 9600b4c, fewer once source independence and named-subject rejection apply) but every corroborated claim is document chrome, because chrome is what repeats across independently retrieved documents and extraction accepts it as a bounded assertion.",
-    "R5": "pending-hosted-reproof-on-real-corpus; machinery proven locally against real extracted candidates",
-    "R6": "pending-hosted-reproof-on-real-corpus; retrieval proven locally within a real source boundary",
-    "R7": "unblocked; awaiting hosted re-proof. Supersession now works on real multi-source evidence: the owner-declared claimScope carries the tested boundary through the plan, the reasoner, the worker, the learner and the state machine, so two independent sources can share a boundary and a third can supersede an earlier version, with rollback restoring it and history intact. Proven locally on three independent documents. Without a declared scope the provenance boundary still governs, so the looser boundary is always an owner declaration and never an inference.",
-    "R8": "no-longer-fixture-based; awaiting hosted count on the real corpus. The stubbed fetch and the three self-comparing tautologies are gone. Kill switch and blocked source are proven against a real retriever with its real fetch, since the refusal precedes any socket; duplicate URL, content and claim are measured on the corpus; injection and executable quarantine run over real stored bytes; contradiction-quarantine follows R4-R6 and says so. A behaviour the corpus cannot demonstrate is reported unsatisfied and is never passed to the gate as evidence.",
+    "R2": "passed; forced-interruption recovery is durable. Learning-Worker run 34036664167 at 272e6a344f1516b3a58f14b36643d34a537dfd45 restored 260 compatible source-progress records and 24,671 candidate records with actionable=0, but this worker-side state has not returned to vetted custody.",
+    "R3": "pending; no scheduled automated-Google-discovery workflow exists on exact development tip 677956ca8b082ed04ed8a06a1ccaead04ef1bf44 and no complete live scheduled discovery run is recorded.",
+    "R4": "pending; candidate-only worker export is published and independently inspected, but Oversight return-vetted-data fails before merged ciphertext publication. Exact-tip Crucible proof still reads vetted custody a4341b142445cde8bf71c7dea2ba74a16cfcb715 and reports 278 sources awaiting extraction.",
+    "R5": "pending; no real independently corroborated claim with an owner-declared scope has completed hosted evaluation and promotion.",
+    "R6": "pending; no verified active knowledge from the current real corpus has completed bounded live retrieval.",
+    "R7": "pending; the mechanism is locally proven, but no real promoted version from the current custody chain exists to supersede and roll back in hosted evidence.",
+    "R8": "pending; no complete combined live cycle currently demonstrates every required safety, quarantine, deduplication, contradiction, and rollback behaviour on the current real corpus.",
     "R9": "held; soak band 72-96 continuous hours, observation ceiling 1000 data points, and the soak does not start while the data cannot exhibit the failures it checks",
-    "R10": "pending",
+    "R10": "pending; exact development SHA 677956ca8b082ed04ed8a06a1ccaead04ef1bf44 has 28 successful, 3 failed, and 1 skipped completed checks. The failures include Ubuntu/Node 24 Self-Test CRU-0016, hosted learning proof CRU-0023, and aggregate code-scanning results.",
     "R11": "pending"
   },
-  "blockingReason": "The stale raw-key blocker is removed without giving Crucible continuing raw-intake access: independent Oversight run 33524179971 authenticated the raw bundle and republished vetted ciphertext under the rotated vetted-output key. The development workflow now consumes only Crucible-Vetted-Learning-State through a dedicated read-only identity. Exact-tip hosted R4-R8 re-proof is still required before those gates or R9 can advance; R4-R6 also require a declared scope for a claim that survives furniture rejection, and R9 remains held until R2-R8 are simultaneously green.",
+  "blockingReason": "End-to-end scientific-learning throughput is zero. Learning-Worker run 34036664167 succeeds and publishes a candidate-only export, but Oversight run 34042918030 fails in return-vetted-data before merged ciphertext is signed and published; Crucible-Vetted-Learning-State therefore remains at a4341b142445cde8bf71c7dea2ba74a16cfcb715. R3 also lacks its first complete scheduled discovery run, no real claim has completed R4-R8, exact development CI is red, and the R9 soak cannot start until R2-R8 are simultaneously green.",
   "history": [
     {
       "recordedAt": "2026-08-30T20:33:00Z",
@@ -71,6 +72,13 @@
       "priorTarget": "2026-09-14T16:00:00Z",
       "newTarget": "2026-09-14T16:00:00Z",
       "reason": "Gate correction under the owner decision of 2026-08-31 to build a real learning machine. R4-R8 had been recorded passed on a hosted proof that built its sources in code and never read the restored corpus. R4-R6 are now wired to the real corpus with no fallback and are pending hosted re-proof; R7 and R8 are recorded as fixture-based. The target does not move: the corrected gates are no further from completion than the real work was before, only more accurately described."
+    },
+    {
+      "recordedAt": "2026-09-07T02:47:14Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
+      "reason": "The September 14 forecast is withdrawn rather than rolled forward by an invented rate. Learning-Worker recovery and candidate export now succeed, but Oversight repeatedly fails before returning merged vetted ciphertext, the vetted-state tip remains unchanged, R3 has no scheduled run, and the exact development tip is red. A finite target can be recalculated only after measurable end-to-end throughput resumes; forecasting must still include the full 96-hour soak."
     }
   ]
 }
