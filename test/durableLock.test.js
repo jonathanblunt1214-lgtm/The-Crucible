@@ -5,7 +5,8 @@ const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { spawnSync } = require('node:child_process');
-const { acquireDurableLock, inspectLock, RECLAIM_STALE_AFTER_MS, MAX_RECLAIM_STALE_AFTER_MS } = require('../src/durableLock');
+const { acquireDurableLock, inspectLock, recoverLegacyZeroByteLock, EMPTY_SHA256, RECLAIM_STALE_AFTER_MS, MAX_RECLAIM_STALE_AFTER_MS } = require('../src/durableLock');
+const { run:runRecoveryCli } = require('../src/durableLockRecoveryCli');
 const { ClaimExtractionWorker } = require('../src/claimExtractionWorker');
 const { DurableScientificLearningStore } = require('../src/scientificLearning');
 
@@ -64,6 +65,33 @@ test('refuses to reclaim a lock it did not write, rather than deleting on a gues
   fs.writeFileSync(file, 'not a lock record');
   assert.throws(() => acquireDurableLock(file, { isAlive: () => false }), /not written by this lock/);
   assert.equal(fs.readFileSync(file, 'utf8'), 'not a lock record');
+});
+
+test('canonical lock publication never exposes a zero-byte lock when publication is interrupted', (t) => {
+  const directory = workspace(t); const file = path.join(directory, 'atomic.lock'); let staged;
+  const failure = Object.assign(new Error('simulated publication interruption'), { code:'EIO' });
+  assert.throws(() => acquireDurableLock(file, { publishLock:(temporary) => { staged = fs.readFileSync(temporary, 'utf8'); throw failure; } }), /simulated publication interruption/);
+  assert.doesNotMatch(staged, /^$/); assert.equal(fs.existsSync(file), false, 'the canonical path never existed empty');
+  assert.deepEqual(fs.readdirSync(directory).filter((name) => name.endsWith('.pending')), [], 'the complete staging record is cleaned up');
+});
+
+test('legacy zero-byte recovery is explicit, fingerprint-bound, quarantined, and audited', (t) => {
+  const file = path.join(workspace(t), 'legacy.lock'); fs.writeFileSync(file, ''); ageLockFile(file, MAX_RECLAIM_STALE_AFTER_MS * 2);
+  const mtimeMs = fs.statSync(file).mtimeMs; const options = { projectId:'github:owner/repo', expectedSha256:EMPTY_SHA256, expectedMtimeMs:mtimeMs, confirmedNoActiveWorker:true, now:() => mtimeMs + MAX_RECLAIM_STALE_AFTER_MS * 2 };
+  assert.throws(() => recoverLegacyZeroByteLock(file, options), /explicit owner authorization/); assert.ok(fs.existsSync(file));
+  assert.throws(() => recoverLegacyZeroByteLock(file, { ...options, ownerAuthorized:true, expectedSha256:'f'.repeat(64) }), /exact empty-file SHA-256/); assert.ok(fs.existsSync(file));
+  const result = recoverLegacyZeroByteLock(file, { ...options, ownerAuthorized:true });
+  assert.equal(fs.existsSync(file), false); assert.equal(fs.readFileSync(result.quarantineFile).length, 0); assert.ok(fs.existsSync(result.auditFile));
+  const audit = JSON.parse(fs.readFileSync(result.auditFile, 'utf8')); assert.equal(audit.action, 'owner-authorized-legacy-zero-byte-lock-quarantine'); assert.equal(audit.projectId, 'github:owner/repo'); assert.equal(audit.observed.sha256, EMPTY_SHA256);
+});
+
+test('legacy recovery CLI derives only the project-bound extraction lock and refuses nonzero malformed data', (t) => {
+  const directory = workspace(t); const queueFile = path.join(directory, 'queue.json'); const projectId = 'github:owner/repo';
+  fs.writeFileSync(queueFile, JSON.stringify({ schemaVersion:1, projectId, documents:[], links:[] }));
+  const lockFile = `${queueFile}.claim-extraction.lock`; fs.writeFileSync(lockFile, 'untrusted'); ageLockFile(lockFile, MAX_RECLAIM_STALE_AFTER_MS * 2);
+  const env = { CRUCIBLE_LEARNING_PROJECT_ID:projectId, CRUCIBLE_SOURCE_QUEUE:queueFile, CRUCIBLE_LEGACY_LOCK_RECOVERY_AUTHORIZED:'1', CRUCIBLE_LEGACY_LOCK_NO_ACTIVE_WORKER:'1', CRUCIBLE_LEGACY_LOCK_EXPECTED_SHA256:EMPTY_SHA256, CRUCIBLE_LEGACY_LOCK_EXPECTED_MTIME_MS:String(fs.statSync(lockFile).mtimeMs) };
+  assert.throws(() => runRecoveryCli(['recover-extraction'], env, () => {}), /zero-byte lock fingerprint/); assert.equal(fs.readFileSync(lockFile, 'utf8'), 'untrusted');
+  assert.throws(() => runRecoveryCli(['recover-extraction'], { ...env, CRUCIBLE_LEARNING_PROJECT_ID:'github:other/repo' }, () => {}), /another project/);
 });
 
 test('refuses to reclaim inside the staleness floor, so no takeover rests on one liveness check', (t) => {

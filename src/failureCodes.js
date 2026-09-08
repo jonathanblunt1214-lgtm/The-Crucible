@@ -504,6 +504,30 @@ const FAILURE_CODES = Object.freeze({
       forbidden: 'Never force-push or rebase Archive, never touch an Archive path other than Devlog-Pruned, and never omit a failed snapshot merely to make the handoff job green.',
     },
   },
+  'CRU-0039': {
+    code: 'CRU-0039',
+    category: 'learning-lock-recovery',
+    meaning: 'The narrowly authorized legacy zero-byte extraction-lock recovery was refused because its project identity, owner authorization, no-live-worker confirmation, exact fingerprint, age, or preservation proof was absent or changed.',
+    next: 'Reinspect the exact project-bound extraction lock and active workers. Proceed only with explicit owner authorization and the currently observed empty-file SHA-256 and modification time; otherwise leave the lock untouched.',
+    remedy: {
+      kind: 'owner-decision',
+      command: 'npm run learning:recover-extraction-lock',
+      verifyWith: { tests: ['test/durableLock.test.js'] },
+      forbidden: 'Never delete an empty, unreadable, malformed, changed, recent, foreign-project, or possibly live lock merely because its owner cannot be parsed.',
+    },
+  },
+  'CRU-0040': {
+    code: 'CRU-0040',
+    category: 'learning-blockage',
+    meaning: 'Automated Google discovery completed, but the extraction phase failed, so the run is partial and its completed search evidence remains available while the process exits unsuccessfully.',
+    next: 'Read the structured partial report, preserve its search outcomes, diagnose the extraction reason it carries, run extraction readiness, and retry extraction without repeating or discarding completed discovery.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run learning:extract-readiness',
+      verifyWith: { tests: ['test/automatedGoogleResearch.test.js', 'test/claimExtractionWorker.test.js'] },
+      forbidden: 'Never report the partial run as successful, discard its completed search results, or rerun discovery solely to hide an extraction failure.',
+    },
+  },
   'CRU-0022': {
     code: 'CRU-0022',
     category: 'diagnosis-coverage',

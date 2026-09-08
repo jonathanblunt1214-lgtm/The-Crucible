@@ -57,6 +57,7 @@
     "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger.",
     "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity, America/New_York timestamping, completion/interruption check-ins, and continue-until-done behavior.",
     "src/durableLock.js": "Owner-recording durable lock shared by the source queue and the durable learning store. Reclaims a lock only from a process proven dead on the same host past a bounded staleness floor, fails closed on live, foreign-host, unreadable, too-recent, and lost-race conditions, and reports every reclamation so recovery from a forced interruption is never invisible.",
+    "src/durableLockRecoveryCli.js": "Fail-closed operator entry point for the one narrow legacy zero-byte extraction-lock recovery path. It derives the lock from a project-bound source queue and requires explicit authorization, no-live-worker confirmation, and an exact hash and modification-time fingerprint before preserving quarantine and audit evidence.",
     "src/soakGate.js": "Executable R9 soak definition. One data point per verified knowledge version, candidate record, and queued source; an owner-set ceiling of 1000 observed at once with the remainder held rather than discarded; a deterministic replayable observation window; the owner-set 72-96 hour duration band; and a fail-closed hold when the current data cannot exhibit the failures R9 names. It never reports a pass - passing is what the soak itself establishes over its duration.",
     "src/soakRun.js": "Executable R9 soak run. Freezes the observed population at the start, records hourly sweeps, resets the clock for a failed data point only, recycles a data point to the collection pool after three failures and marks it trash after three more, orders recirculated sources behind new data, voids the soak on a store-level failure, restarts every surviving clock across an unobserved gap, and reaches a verdict only after the full chosen duration.",
     "src/preSoakReadiness.js": "Read-only pre-soak gate reporter. Judges R2-R8 from durable state, reports manual-evidence-required rather than inferring a combined R8 cycle from unit coverage, and authorizes nothing.",
@@ -99,7 +100,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-07T02:47:14Z"
+    "lastActionAt": "2026-09-08T18:26:58Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -180,16 +181,23 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Review and record scientific-learning release readiness from literal origin/development, update status, handoff, and DEVLOG atomically only on material change, push development only, and never promote main.",
-    "currentPrompt": "Review The Crucible's scientific-learning release readiness at the latest literal origin/development tip. Re-read the release plan, release status, learning-scope declarations, mutation-claim state, and active handoff before acting. Recalculate the rolling target from current extraction throughput, the remaining live learning cycle, rollback/retention proof, the mandatory 72-96 hour soak (forecast with 96 hours), exact-tip hosted CI, and owner authorization; move the target forward and mark confidence low when throughput is zero or evidence is missing rather than inventing a rate. Do not weaken proof, security, privacy, rollback, project-isolation, or promotion gates; do not treat correlation as causation or retrieval as proof; do not promote training material directly; keep all cross-project knowledge transfer as anonymized candidate evidence requiring independent validation and never let one project's data expose or control another. Use only development, never push or promote main, and do not use a new branch unless explicitly requested. Update status, handoff, and DEVLOG atomically only when evidence or forecast changes materially, commit and push development, then report the updated target, gate states R1-R11, exact SHA, hosted CI state, and blockers. If nothing material changed, make no commit.",
+    "objective": "Make automated Google research run daily with capacity for all 50 approved topics, prevent zero-byte canonical durable locks, recover the exact owner-authorized legacy extraction lock with an audit trail, and preserve completed search evidence in a structured failing partial report when extraction is blocked.",
+    "currentPrompt": "Change the existing governed research automation from weekly to daily and make one run process up to 50 due topics so the holding process stays supplied. Confirm the safe lock repair is the proper repair, implement it without weakening refusal of arbitrary malformed locks, refresh the exact origin/development tip, recover the existing zero-byte August 30 extraction lock only through the explicit owner-authorized path, and after those changes make extraction-lock failures emit a structured partial report while retaining a failing exit status. Never touch main or release.",
     "executionMode": {
-      "mode": "regular/default",
+      "mode": "work",
       "agent": "Codex",
-      "purpose": "Recalculate the rolling scientific-learning release forecast from current hosted custody, gate, and exact-tip CI evidence without changing any proof boundary.",
-      "selectionReason": "This is a bounded repository governance review and status-only update, so regular/default remains sufficient.",
-      "distinction": "Execution mode is separate from agent identity and workflow; diagnosis remains evidence processing, not proof or unattended repair authority."
+      "purpose": "Implement and verify the daily 50-topic research path, durable-lock creation and explicit legacy recovery, and partial-result reporting across repository code, durable state, and the existing scheduled task.",
+      "selectionReason": "This is a multi-file governed implementation with destructive-state safeguards, external durable-state recovery, automation mutation, full testing, commit, push, and hosted verification.",
+      "distinction": "Execution mode is separate from agent identity and workflow; this task changes transport and recovery mechanics but never grants evidence, proof, promotion, or release authority."
     },
     "steps": [
+      "[done] Raised the approved-topic and per-run due-query capacity to 50, exposed the bound through CRUCIBLE_GOOGLE_MAX_QUERIES with a default and hard ceiling of 50, changed persisted scheduling from weekly to daily, and kept every per-query result, delay, timeout, endpoint, suffix, network, content, and kill-switch limit unchanged.",
+      "[done] Replaced create-then-write canonical lock publication with a fully written and flushed temporary owner record installed through an atomic no-overwrite hard link, eliminating the zero-byte canonical-lock crash window without making malformed locks auto-reclaimable.",
+      "[done] Added an explicit project-bound owner-authorized legacy-lock recovery command that derives the exact extraction lock from the validated queue, requires its expected empty SHA-256 and mtime plus no-live-worker confirmation, preserves quarantine evidence, writes a durable audit, and refuses changed, nonempty, recent, or normally owner-recorded targets.",
+      "[done] Used that command once for the owner-authorized zero-byte August 30 source-queue lock, verified the canonical lock is absent and both quarantine and audit remain, then completed extraction readiness, a 25-source extraction batch, and one real 16-topic daily coordinator run.",
+      "[done] Post-search extraction failure now emits a structured partial report containing every completed query outcome and the exact extraction blocker, then throws CRU-0040 so the process still exits 1.",
+      "[standing] A separate local development worktree contains pre-existing uncommitted real-learning work. Preserve it byte-for-byte; do not stash, fast-forward, commit, overwrite, or include it in this task.",
+      "[in progress] Focused tests and the full repository suite pass. Update this handoff and DEVLOG in the same commit, run every final governed audit, fetch immediately before push, push only development, and verify exact-tip hosted checks. Never touch main or release.",
       "[done] Failure codes: every Crucible failure carries a CRU-#### code from the closed registry in src/failureCodes.js, and every code carries a remedy (kind automatic/guided/owner-decision, the exact command where one exists, the existing tests that prove a repair, and the fix that is forbidden because it would only hide the symptom). The diagnostic organ classifies by code rather than by pattern-matching prose, is a governed organ between brain and immune, and never returns an empty diagnosis: an uncoded failure comes back as CRU-0000 naming the coverage gap and the log it was classified against. 21 throw sites coded, 584 recorded in governingDocuments/failure-code-baseline.json as a baseline that may only fall, enforced by npm run audit:failure-codes on every push.",
       "[done] Option 1, semantic corroboration: a deterministic, dependency-free same-meaning test in src/semanticCorroboration.js that reduces a claim to polarity, committed numbers, and stemmed content terms, and accepts paraphrase only above a term-overlap threshold. It must refuse to cross a negation or a changed number however similar the wording, must be symmetric and repeatable, and must never report proof, independent verification, or promotion.",
       "[done] Prove that test before anything depends on it: the near-identical opposite pair, the double negative, differing numbers, sentences too short to judge, genuine paraphrase, unrelated same-polarity prose, symmetry and determinism, and stable grouping.",
@@ -296,7 +304,7 @@
     ],
     "status": "active",
     "startedAt": "2026-09-06T16:15:41Z",
-    "lastUpdatedAt": "2026-09-07T02:47:14Z"
+    "lastUpdatedAt": "2026-09-08T18:26:58Z"
   },
   "handoffNotes": {
     "completed": [
@@ -433,10 +441,17 @@
       "At inherited exact development SHA 677956ca8b082ed04ed8a06a1ccaead04ef1bf44, 28 of 32 completed checks succeed, 3 fail, and 1 is skipped. Self-Test run 33896683475 passes 779/779 tests but Ubuntu/Node 24 exits on CRU-0016; hosted learning proof run 33896683769 fails closed on CRU-0023.",
       "Learning-Worker run 34036664167 succeeds at 272e6a344f1516b3a58f14b36643d34a537dfd45 with actionable=0 after restoring 260 source-progress records and 24,671 candidates. Oversight run 34042918030 independently validates its inputs but fails in return-vetted-data before publication; the latest vetted result records proofStageSatisfied=false and assimilatedRecords=0.",
       "After npm ci installed the exact locked dependencies in the clean detached worktree, node --test passes 802/802. The focused handoff, accountability, and mutation-claim proof passes 41/41; audit:coordination, audit:ai-conflict-governance, docs:check, validate, JSON parsing, and git diff --check all pass."
+      ,"On 2026-09-08, fetched literal origin/development at 162ef0db6a68798716e9d6a468e02662fe11bb56 before mutation. The separate local development worktree with uncommitted learning work was left byte-for-byte untouched."
+      ,"Changed automated discovery to a one-day cadence and a default and maximum of 50 due topics per run. Existing weekly nextRunAt values migrate forward to the daily boundary while preserving the original audit log; one real run consumed all 16 configured due topics while retaining the existing ten-result, delay, timeout, trusted-suffix, network, content, and kill-switch bounds."
+      ,"Eliminated the zero-byte canonical-lock publication interval by fully writing and fsyncing a private pending owner record before atomically hard-linking it into the canonical name. Generic inspection still refuses every missing, unreadable, malformed, foreign-host, live, recent, or changed lock rather than deleting it on a guess."
+      ,"Recovered only the exact owner-authorized legacy extraction lock after confirming no extraction worker was active and matching its queue-derived path, zero length, empty-file SHA-256 e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855, and observed mtime. The canonical lock is gone; a zero-byte quarantine and JSON recovery audit remain under the same source-queue directory."
+      ,"After recovery, extraction readiness passed, a direct 25-source batch completed with 18 complete and 7 blocked outcomes and 2,240 candidate references, and the real daily coordinator processed 16 of 16 due topics plus a 25-source extraction batch with 105 candidate references. Google returned no admitted novel URLs in that run; this is a result, not a fabricated throughput claim."
+      ,"Structured partial reporting is now pinned: completed search outcomes are emitted with overallState partial and the exact extraction reason, followed by failing CRU-0040 process status. CRU-0039 covers any refused legacy-lock recovery. The failure-code ratchet remains 583 uncoded sites while coded sites rise to 93; the fly-by-wire ratchet remains 57 bypassing edges."
+      ,"Final local proof on the completed tree passes 809/809 tests. validate, clutter, workflow lint, design brief, privacy, security, AI conflict, AI conflict governance, coordination, governance, authenticity, generated-documentation, circulation, failure-code, JSON, and whitespace checks pass. Core-ref and reproducibility correctly report not configured; the range-bound handoff check remains for the resulting commit SHA."
     ],
     "remaining": [
       "Repair or otherwise resolve the Oversight return-vetted-data failure without weakening independent validation, encryption, signing, project isolation, or custody. The current step exits 1 after validating both encrypted manifests and before merged ciphertext publication.",
-      "Run and record R3 through a complete scheduled automated-Google-discovery cycle; no scheduled discovery workflow exists on the reviewed Crucible tip.",
+      "Let the updated daily scheduled task execute on its own trigger and record that scheduler-originated R3 evidence. A real hand-run 16-topic production cycle completed, but it is not relabelled as a scheduler trigger.",
       "Complete one real independently corroborated, owner-scoped hosted R4-R8 learning cycle, including bounded retrieval, real supersession, rollback, retention, and every combined R8 safety behaviour.",
       "Start R9 only after R2-R8 are simultaneously green, choose 72-96 hours from evidence without revising downward, and forecast with the full 96 hours.",
       "Return exact development CI to green without weakening Self-Test, the hosted learning proof, code scanning, governance, privacy, or security gates.",
@@ -445,7 +460,7 @@
     "open": [
       "Why Oversight return-vetted-data exits 1 after decrypting and validating both manifests but before its signing and publication step; current logs expose no more specific stderr.",
       "A finite rolling target is indeterminate until nonzero end-to-end custody throughput is observed. Recalculate from measured throughput and include a 96-hour soak once the blocking publication path is restored.",
-      "Exact-tip hosted CI must run on the development commit carrying this status update; results remain unverified until those checks reach terminal states."
+      "Exact-tip hosted CI must run on the development commit carrying the daily research, atomic lock, narrow legacy recovery, and structured partial-report changes; results remain unverified until those checks reach terminal states."
     ]
   },
   "mutationOwnershipPolicy": {
@@ -547,6 +562,35 @@
       "acquiredAt": "2026-09-06T16:15:41Z",
       "handedOffTo": null,
       "releasedAt": "2026-09-07T02:47:14Z"
+    },
+    {
+      "taskId": "daily-google-research-and-lock-recovery-20260908",
+      "owner": {
+        "provider": "openai",
+        "model": "gpt-5",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "package.json",
+          "src/automatedGoogleResearch.js",
+          "src/automatedGoogleResearchCli.js",
+          "src/durableLock.js",
+          "src/durableLockRecoveryCli.js",
+          "src/circulationLinkage.js",
+          "src/failureCodes.js",
+          "test/automatedGoogleResearch.test.js",
+          "test/durableLock.test.js"
+        ],
+        "regions": []
+      },
+      "purpose": "Run up to 50 due research topics daily, prevent zero-byte canonical locks, recover the exact owner-authorized legacy extraction lock with preserved evidence, and report post-search extraction blockage as a structured failing partial result.",
+      "status": "released",
+      "acquiredAt": "2026-09-08T17:56:00Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-08T18:28:00Z"
     }
   ]
 }
