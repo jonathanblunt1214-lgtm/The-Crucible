@@ -6,11 +6,18 @@ const { DurableScientificLearningStore } = require('./scientificLearning');
 const { acquireDurableLock } = require('./durableLock');
 const { INJECTION_PATTERNS } = require('./safeInformationRetrieval');
 const { documentFurniture } = require('./documentFurniture');
+const { extractDocumentText } = require('./htmlTextExtraction');
 
 function sha256(value) { return crypto.createHash('sha256').update(value).digest('hex'); }
 function normalizedClaimSha256(value) { return sha256(cleanText(value).toLowerCase()); }
+// Bounded text extraction, not HTML sanitization. This returns the prose a reader sees, so it can
+// be hashed, deduplicated and turned into candidate claims; nothing downstream renders it. Where
+// each element ends is decided by the tokenizer in htmlTextExtraction, because deciding it with a
+// regex family was tried twice here and leaked script and style bodies into the corpus both times.
+// Entities are decoded only after the markup is gone, so an encoded `&lt;script&gt;` in the text
+// cannot become a tag on the way out.
 function cleanText(value) {
-  return String(value || '').replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, ' ').replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, ' ').replace(/<form\b[^>]*>[\s\S]*?<\/form\b[^>]*>/gi, ' ').replace(/<[^>]+>/g, ' ').replace(/&(?:nbsp|#160);/gi, ' ').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/&amp;/gi, '&').replace(/\s+/g, ' ').trim();
+  return extractDocumentText(String(value || '')).replace(/&(?:nbsp|#160);/gi, ' ').replace(/&lt;/gi, '<').replace(/&gt;/gi, '>').replace(/&quot;/gi, '"').replace(/&#39;/gi, "'").replace(/&amp;/gi, '&').replace(/\s+/g, ' ').trim();
 }
 
 function boundedAssertions(text) {

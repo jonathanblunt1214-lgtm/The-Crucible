@@ -4,6 +4,7 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const net = require('node:net');
 const path = require('node:path');
+const { stripElements } = require('./htmlTextExtraction');
 const dns = require('node:dns').promises;
 const https = require('node:https');
 const { executableMagic, SUSPICIOUS_BINARY_EXTENSION } = require('./security');
@@ -81,19 +82,15 @@ function metadataFromHtml(text) {
   }
   return { author:content('author') || 'not declared', license:content('license') || 'not declared; verify source terms before redistribution' };
 }
+// Removes whole dangerous elements from retrieved HTML, and the attributes that make a surviving
+// element act, before anything downstream reads it. Both boundaries come from the shared tokenizer
+// rather than a pattern, for the reason recorded in htmlTextExtraction: a regex cannot decide where
+// a raw-text element ends, and this function carried the identical hole as cleanText until it was
+// moved off one. The do/while loop it used to run is gone with the chain that needed it - a pass
+// that never invents an element cannot expose one on a second pass - and the tests assert the fixed
+// point directly instead.
 function sanitizeHtml(text) {
-  let previous;
-  let current = String(text);
-  do {
-    previous = current;
-    current = current
-      .replace(/<(script|style|template|noscript)\b[^>]*>[\s\S]*?<\/\1\b[^>]*>/gi, '')
-      .replace(/<form\b[^>]*>[\s\S]*?<\/form\b[^>]*>/gi, '')
-      .replace(/<\/?(?:script|style|template|noscript|form)\b[^>]*>/gi, '')
-      .replace(/\son[a-z]+\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '')
-      .replace(/\s(?:srcdoc|formaction)\s*=\s*(?:"[^"]*"|'[^']*'|[^\s>]+)/gi, '');
-  } while (current !== previous);
-  return current;
+  return stripElements(String(text));
 }
 function suspiciousText(buffer, contentType) {
   if (!/text|html|json|xml/i.test(contentType)) return [];

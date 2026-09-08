@@ -148,6 +148,84 @@ test('script, style and form blocks are stripped even when the end tag carries j
       assert.ok(!cleaned.includes('POISON_BODY'), `${tag} body survived ${JSON.stringify(close)}`);
     }
   }
-  // The fixpoint loop that defeats nested-tag evasion must survive the widening.
-  assert.ok(!/<script/i.test(sanitizeHtml('<scr<script>ipt>alert(1)</script>')));
+  // This assertion used to read `!/<script/i.test(...)`, which was asserting the old model rather
+  // than a security property. The regex chain deleted `<script>...</script>` out of the middle of
+  // `<scr<script>ipt>alert(1)</script>` and so manufactured the element it then removed - the
+  // do/while loop existed to clean up after that. Chromium parses this input as one element named
+  // `scr<script` holding the text `ipt>alert(1)`; there is no script in it to defeat, and the
+  // substring now legitimately appears inside a tag name. What matters is that nothing executes and
+  // that the output is already a fixed point, which is what replaces the loop.
+  const nested = sanitizeHtml('<scr<script>ipt>alert(1)</script>');
+  assert.equal(nested, '<scr<script>ipt>alert(1)');
+  assert.equal(sanitizeHtml(nested), nested);
+});
+
+// sanitizeHtml carried the identical defect as cleanText, for the identical reason: it decided
+// where script, style, template, noscript and form ended with a regex family, and a regex cannot
+// answer that. Every input here leaked the element body through the sanitizer before it moved onto
+// the shared tokenizer, and is kept verbatim so the repair stays verified.
+test('sanitizeHtml removes dangerous element bodies whatever the end tag does',()=>{
+  const NUL = String.fromCharCode(0);
+  const cases = [
+    ['no end tag at all', '<script>POISON_BODY'],
+    ['end tag truncated at EOF', '<script>POISON_BODY</script'],
+    ['bare < at EOF', '<script>POISON_BODY<'],
+    ['quoted > inside the end tag', '<script>ignored</script x="><b>POISON_BODY is confirmed.'],
+    ['NUL inside the end-tag name', '<script>POISON_BODY</scr' + NUL + 'ipt>'],
+    ['end-tag name without a boundary', '<script>POISON_BODY</scriptZ>'],
+    ['style, no end tag', '<style>POISON_BODY'],
+    ['template, quoted > inside the end tag', '<template>ignored</template x="><b>POISON_BODY."'],
+    ['noscript, NUL inside the end-tag name', '<noscript>POISON_BODY</nosc' + NUL + 'ript>'],
+    ['form, no end tag', '<form action=x>POISON_BODY'],
+  ];
+  for (const [label, markup] of cases) {
+    const sanitized = sanitizeHtml('<p>Real prose here.</p>' + markup);
+    assert.ok(!sanitized.includes('POISON_BODY'), label + ': body survived as ' + JSON.stringify(sanitized));
+    assert.ok(sanitized.includes('Real prose here.'), label + ': surrounding prose was over-stripped');
+  }
+});
+
+// `<svg/onload=alert(1)>` passed through this sanitizer untouched and then ran: Chromium loaded the
+// sanitized output, the handler fired, and one live handler remained on the document. The rule
+// required a whitespace character before the attribute name, and `/` separates attributes just as
+// well. The same document-wide rule also edited prose, deleting `/one=1` out of an ordinary
+// sentence, because nothing confined it to the inside of a tag. Both are fixed by scrubbing within
+// the tag spans the tokenizer already delimits.
+test('attributes that make an element act are removed however they are separated',()=>{
+  const cases = [
+    '<svg/onload=alert(1)>Real prose.',
+    '<img/onerror=alert(1) src=x>Real prose.',
+    '<img src=x onerror=alert(1)>Real prose.',
+    '<body/onload="alert(1)">Real prose.',
+    '<a/OnClick=alert(1) href=y>Real prose.</a>',
+    '<iframe/srcdoc="<script>alert(1)</script>">Real prose.</iframe>',
+    '<button/formaction=javascript:alert(1)>Real prose.</button>',
+  ];
+  for (const markup of cases) {
+    const sanitized = sanitizeHtml(markup);
+    assert.ok(!/on[a-z]+\s*=/i.test(sanitized), `handler survived in ${JSON.stringify(sanitized)}`);
+    assert.ok(!/(?:srcdoc|formaction)\s*=/i.test(sanitized), `smuggling attribute survived in ${JSON.stringify(sanitized)}`);
+    assert.ok(sanitized.includes('Real prose.'), `prose was over-stripped: ${JSON.stringify(sanitized)}`);
+  }
+  // Text is not markup: a rule confined to tags cannot edit a sentence that merely looks like one.
+  assert.equal(sanitizeHtml('Cost is and/one=1 per unit.'), 'Cost is and/one=1 per unit.');
+  assert.equal(sanitizeHtml('Compare 3 < 5 and 10 > 2 before ordering.'), 'Compare 3 < 5 and 10 > 2 before ordering.');
+});
+
+// One pass reaches a fixed point because the tokenizer never manufactures an element out of the
+// fragments it removed. That is the property the removed do/while loop was standing in for, so it
+// is asserted directly rather than implied by a loop nobody could point a failing input at.
+test('sanitizing is idempotent across the adversarial corpus',()=>{
+  const NUL = String.fromCharCode(0);
+  const corpus = [
+    '<script>POISON_BODY', '<script>POISON_BODY</script', '<script>POISON_BODY<',
+    '<script>ignored</script x="><b>POISON_BODY.', '<script>POISON_BODY</scr' + NUL + 'ipt>',
+    '<script>POISON_BODY</scriptZ>', '<scr<script>ipt>alert(1)</script>',
+    '<script><!--<script>x</script>-->POISON_BODY</script>', '<svg/onload=alert(1)>P.',
+    '<template><script>alert(1)</script></template>P.', '<p>Ordinary prose survives.</p>',
+  ];
+  for (const markup of corpus) {
+    const once = sanitizeHtml(markup);
+    assert.equal(sanitizeHtml(once), once, `not a fixed point: ${JSON.stringify(markup)}`);
+  }
 });
