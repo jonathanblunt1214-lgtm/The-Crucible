@@ -66,3 +66,45 @@ test('the trusted corpus root defaults to the directory the queue itself lives i
   const named = new ClaimExtractionWorker({ queueFile, projectId: 'github:owner/repo', learningRoot: path.join(root, 'store'), corpusRoot: path.join(root, 'elsewhere') });
   assert.equal(named.corpusRoot, path.resolve(root, 'elsewhere'), 'a caller may name a different trusted root');
 });
+
+// The end-tag widening above closed the shape CodeQL named and nothing more. A regex family
+// cannot decide where a raw-text element ends, because a tokenizer state machine answers that
+// question, not a pattern: `</script` closes a script only when the next character is whitespace,
+// `/` or `>`; a NUL inside the name becomes U+FFFD, so it does not close it; an unterminated
+// attribute value swallows the rest of the document; and a script with no end tag at all runs to
+// EOF. In every case below the bytes are script *content* - a browser never renders them as prose
+// - yet the regex chain stripped the delimiters and handed the body to the corpus as if the
+// document had asserted it. Each input leaked before this moved onto a real tokenizer; they are
+// kept verbatim so the repair stays verified rather than asserted.
+test('raw-text element bodies never reach the corpus, whatever the end tag does',()=>{
+  const NUL = String.fromCharCode(0);
+  const cases = [
+    ['no end tag at all', '<script>POISON_BODY'],
+    ['end tag truncated at EOF', '<script>POISON_BODY</script'],
+    ['bare < at EOF', '<script>POISON_BODY<'],
+    ['quoted > inside the end tag', '<script>ignored</script x="><b>POISON_BODY is confirmed.'],
+    ['NUL inside the end-tag name', '<script>POISON_BODY</scr' + NUL + 'ipt>'],
+    ['end-tag name without a boundary', '<script>POISON_BODY</scriptZ>'],
+    ['style, no end tag', '<style>POISON_BODY'],
+    ['style, quoted > inside the end tag', '<style>ignored</style x="><b>POISON_BODY is confirmed.'],
+    ['style, NUL inside the end-tag name', '<style>POISON_BODY</sty' + NUL + 'le>'],
+    ['form, no end tag', '<form action=x>POISON_BODY'],
+    ['form, junk end-tag name', '<form action=x>POISON_BODY</formZ>'],
+  ];
+  for (const [label, markup] of cases) {
+    const cleaned = cleanText('<p>Real prose here.</p>' + markup);
+    assert.equal(cleaned, 'Real prose here.', label + ': body survived as ' + JSON.stringify(cleaned));
+  }
+});
+
+// The mirror of the above, and the reason the repair is a tokenizer rather than a wider pattern:
+// text a browser does render must still be extracted. `<scr<form>` is one start tag named
+// `scr<form` - `<` is an ordinary tag-name character - so the trailing `ipt>` and everything after
+// it is page prose, not a reconstructed script body. The old chain deleted the delimiters and then
+// re-matched the fragments into a `<script>` the document never contained; asserting these as
+// leaks would assert that the extractor must drop text readers can see.
+test('split and stray tag constructions are extracted as the prose a parser renders',()=>{
+  assert.equal(cleanText('<scr<form>X</form>ipt>Visible prose.</script>'), 'X ipt>Visible prose.');
+  assert.equal(cleanText('<script>var x=1;<!--</script>-->Visible prose.'), '-->Visible prose.');
+  assert.equal(cleanText('<p>Kept.</p></script>'), 'Kept.');
+});
