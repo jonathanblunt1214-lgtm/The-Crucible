@@ -4,7 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { parseGoogleSearchResults, privateAddress } = require('./safeInformationRetrieval');
 
-const DEFAULT_RESEARCH_INTERVAL_MS = 7 * 24 * 60 * 60 * 1000;
+const DEFAULT_RESEARCH_INTERVAL_MS = 24 * 60 * 60 * 1000;
+const MAXIMUM_QUERIES_PER_RUN = 50;
 const GOOGLE_SEARCH_HOST = 'www.google.com';
 
 function sha256(value) { return crypto.createHash('sha256').update(value).digest('hex'); }
@@ -52,6 +53,17 @@ class GoogleResearchStore {
     const state = envelope.payload;
     if (state?.schemaVersion !== 1 || state.projectId !== this.projectId || !Array.isArray(state.topics) || !Array.isArray(state.discoveredUrls) || !Array.isArray(state.auditLog)) throw new Error('Google research store is invalid or belongs to another project.');
     for (const topic of this.topics) if (!state.topics.some((item) => item.topic === topic)) state.topics.push({ topic, nextRunAt:this.now(), lastRunAt:null, runs:0 });
+    // The owner changed discovery from weekly to daily. Existing envelopes may
+    // still carry a seven-day nextRunAt from the previous cadence; cap that
+    // persisted delay in memory so the first daily run migrates it without
+    // rewriting or discarding any audit entry.
+    for (const entry of state.topics) {
+      const lastRunAt = Date.parse(entry.lastRunAt); const nextRunAt = Date.parse(entry.nextRunAt);
+      if (Number.isFinite(lastRunAt) && Number.isFinite(nextRunAt)) {
+        const dailyNextRunAt = lastRunAt + DEFAULT_RESEARCH_INTERVAL_MS;
+        if (nextRunAt > dailyNextRunAt) entry.nextRunAt = new Date(dailyNextRunAt).toISOString();
+      }
+    }
     return structuredClone(state);
   }
 
@@ -63,8 +75,8 @@ class GoogleResearchStore {
     fs.renameSync(temporary, this.file);
   }
 
-  due(at = this.now(), maximum = 5) {
-    if (!Number.isSafeInteger(maximum) || maximum < 1 || maximum > 10) throw new Error('maximum due searches must be between 1 and 10.');
+  due(at = this.now(), maximum = MAXIMUM_QUERIES_PER_RUN) {
+    if (!Number.isSafeInteger(maximum) || maximum < 1 || maximum > MAXIMUM_QUERIES_PER_RUN) throw new Error(`maximum due searches must be between 1 and ${MAXIMUM_QUERIES_PER_RUN}.`);
     const timestamp = Date.parse(at);
     if (!Number.isFinite(timestamp)) throw new Error('A valid due timestamp is required.');
     return this.read().topics.filter((item) => Date.parse(item.nextRunAt) <= timestamp).slice(0, maximum).map((item) => structuredClone(item));
@@ -145,11 +157,11 @@ class AtomicSourceQueueCandidateSink {
 }
 
 class AutomatedGoogleResearch {
-  constructor({ store, client, candidateSink, scopeProvider = null, intervalMs = DEFAULT_RESEARCH_INTERVAL_MS, maximumQueriesPerRun = 5 }) {
+  constructor({ store, client, candidateSink, scopeProvider = null, intervalMs = DEFAULT_RESEARCH_INTERVAL_MS, maximumQueriesPerRun = MAXIMUM_QUERIES_PER_RUN }) {
     if (!store?.due || !store?.recordRun) throw new Error('A Google research store is required.');
     if (!client?.search) throw new Error('A bounded Google search client is required.');
     if (!candidateSink?.register) throw new Error('A candidate URL sink is required.');
-    if (!Number.isSafeInteger(maximumQueriesPerRun) || maximumQueriesPerRun < 1 || maximumQueriesPerRun > 10) throw new Error('maximumQueriesPerRun must be between 1 and 10.');
+    if (!Number.isSafeInteger(maximumQueriesPerRun) || maximumQueriesPerRun < 1 || maximumQueriesPerRun > MAXIMUM_QUERIES_PER_RUN) throw new Error(`maximumQueriesPerRun must be between 1 and ${MAXIMUM_QUERIES_PER_RUN}.`);
     this.store = store; this.client = client; this.candidateSink = candidateSink; this.scopeProvider = scopeProvider; this.intervalMs = intervalMs; this.maximumQueriesPerRun = maximumQueriesPerRun;
   }
 
@@ -176,4 +188,4 @@ class AutomatedGoogleResearch {
   }
 }
 
-module.exports = { DEFAULT_RESEARCH_INTERVAL_MS, GOOGLE_SEARCH_HOST, boundedTopic, buildGoogleSearchUrl, GoogleResearchStore, BoundedGoogleSearchClient, AtomicSourceQueueCandidateSink, AutomatedGoogleResearch };
+module.exports = { DEFAULT_RESEARCH_INTERVAL_MS, MAXIMUM_QUERIES_PER_RUN, GOOGLE_SEARCH_HOST, boundedTopic, buildGoogleSearchUrl, GoogleResearchStore, BoundedGoogleSearchClient, AtomicSourceQueueCandidateSink, AutomatedGoogleResearch };

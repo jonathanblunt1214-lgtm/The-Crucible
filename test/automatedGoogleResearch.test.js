@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const { DEFAULT_RESEARCH_INTERVAL_MS, buildGoogleSearchUrl, GoogleResearchStore, BoundedGoogleSearchClient, AtomicSourceQueueCandidateSink, AutomatedGoogleResearch } = require('../src/automatedGoogleResearch');
+const { DEFAULT_RESEARCH_INTERVAL_MS, MAXIMUM_QUERIES_PER_RUN, buildGoogleSearchUrl, GoogleResearchStore, BoundedGoogleSearchClient, AtomicSourceQueueCandidateSink, AutomatedGoogleResearch } = require('../src/automatedGoogleResearch');
 const { run:runCli } = require('../src/automatedGoogleResearchCli');
 
 function response(body, type = 'text/html') {
@@ -43,8 +43,8 @@ test('due coordinator admits only edu org gov, deduplicates URLs, and registers 
   const coordinator = new AutomatedGoogleResearch({ store, client, candidateSink:{ register:async (candidate) => { registered.push(candidate); return candidate.url; } } });
   const first = await coordinator.runDue(); assert.equal(first[0].discovered, 3); assert.equal(first[0].novel, 3); assert.equal(registered.length, 3);
   assert.ok(registered.every((item) => item.classification === 'Insufficient Evidence')); assert.ok(registered.every((item) => item.state === 'trusted-domain-candidate-url'));
-  assert.equal(store.due('2026-09-06T19:59:59.999Z').length, 0); assert.equal(store.due('2026-09-06T20:00:00.000Z').length, 1);
-  const second = await coordinator.runDue('2026-09-06T20:00:00.000Z'); assert.equal(second[0].novel, 0); assert.equal(registered.length, 3);
+  assert.equal(store.due('2026-08-31T19:59:59.999Z').length, 0); assert.equal(store.due('2026-08-31T20:00:00.000Z').length, 1);
+  const second = await coordinator.runDue('2026-08-31T20:00:00.000Z'); assert.equal(second[0].novel, 0); assert.equal(registered.length, 3);
 });
 
 test('failed searches are audited as blocked and cannot emit candidate URLs', async (t) => {
@@ -61,7 +61,30 @@ test('research store fails closed on tampering and cross-project reuse', () => {
   assert.throws(() => store.read(), /integrity check failed/); fs.rmSync(root, { recursive:true, force:true });
 });
 
-test('default automated research cadence is weekly', () => assert.equal(DEFAULT_RESEARCH_INTERVAL_MS, 7 * 24 * 60 * 60 * 1000));
+test('default automated research cadence is daily', () => assert.equal(DEFAULT_RESEARCH_INTERVAL_MS, 24 * 60 * 60 * 1000));
+
+test('daily cadence migrates a persisted weekly nextRunAt without losing its audit history', (t) => {
+  const { store } = storeFixture(t, ['Python']);
+  store.recordRun('Python', { searchedAt:'2026-08-30T20:00:00.000Z', intervalMs:7 * 24 * 60 * 60 * 1000, candidates:[], state:'completed' });
+  const raw = JSON.parse(fs.readFileSync(path.join(store.root, 'automated-google-research.json'), 'utf8')).payload;
+  assert.equal(raw.topics[0].nextRunAt, '2026-09-06T20:00:00.000Z');
+  assert.equal(store.due('2026-08-31T20:00:00.000Z').length, 1); assert.equal(store.read().auditLog.length, 1);
+});
+
+test('one governed run drains as many as 50 due topics without widening per-query bounds', async (t) => {
+  const topics = Array.from({ length:50 }, (_, index) => `Language ${index + 1}`);
+  const { store } = storeFixture(t, topics); const searched = [];
+  const coordinator = new AutomatedGoogleResearch({
+    store,
+    client:{ search:async (topic) => { searched.push(topic); return { html:'', searchedAt:'2026-08-30T20:00:00.000Z', queryUrl:buildGoogleSearchUrl(topic) }; } },
+    candidateSink:{ register:async () => { throw new Error('empty result pages register nothing'); } },
+  });
+  const outcomes = await coordinator.runDue();
+  assert.equal(MAXIMUM_QUERIES_PER_RUN, 50); assert.equal(outcomes.length, 50); assert.deepEqual(searched, topics);
+  assert.equal(store.due('2026-08-31T19:59:59.999Z').length, 0); assert.equal(store.due('2026-08-31T20:00:00.000Z').length, 50);
+  assert.throws(() => new AutomatedGoogleResearch({ store, client:{ search:async () => {} }, candidateSink:{ register:async () => {} }, maximumQueriesPerRun:51 }), /between 1 and 50/);
+  assert.throws(() => store.due(undefined, 51), /between 1 and 50/);
+});
 
 test('source queue sink registers once as pending retrieval and fails closed across projects', (t) => {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-google-queue-')); t.after(() => fs.rmSync(root, { recursive:true, force:true }));
@@ -87,5 +110,23 @@ test('automated research runs bounded claim extraction in the same governed exec
     research:{ runDue:async () => [{ state:'completed', novel:1 }] },
     extractionWorker:{ run:() => { extractionRuns += 1; return [{ state:'claim-extraction-complete', candidateIds:['candidate-1'] }]; } }
   });
-  assert.equal(extractionRuns, 1); assert.deepEqual(lines[0].extraction, { processed:1, completed:1, continuing:0, blocked:0, candidates:1 });
+  assert.equal(extractionRuns, 1); assert.equal(lines[0].overallState, 'completed'); assert.deepEqual(lines[0].extraction, { state:'completed', reason:null, processed:1, completed:1, continuing:0, blocked:0, candidates:1 });
+});
+
+test('CLI emits completed search evidence as a structured partial report before failing on extraction', async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-google-partial-')); t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const queue = path.join(root, 'queue.json'); fs.writeFileSync(queue, JSON.stringify({ schemaVersion:1, projectId:'github:owner/repository', updatedAt:null, protocol:{}, documents:[], links:[] }));
+  const lines = [];
+  await assert.rejects(() => runCli(['run', 'JavaScript'], { CRUCIBLE_LEARNING_PROJECT_ID:'github:owner/repository', CRUCIBLE_LEARNING_ROOT:root, CRUCIBLE_SOURCE_QUEUE:queue, CRUCIBLE_GOOGLE_MAX_QUERIES:'50' }, (line) => lines.push(JSON.parse(line)), {
+    research:{ runDue:async () => [{ topic:'JavaScript', state:'completed', discovered:3, novel:2, registered:[{ id:'candidate-1' }, { id:'candidate-2' }] }] },
+    extractionWorker:{ run:() => { throw new Error('Source queue lock is held'); } },
+  }), /research completed, but extraction failed/);
+  assert.equal(lines.length, 1); assert.equal(lines[0].overallState, 'partial'); assert.equal(lines[0].searched, 1); assert.equal(lines[0].novel, 2); assert.equal(lines[0].duplicates, 1);
+  assert.deepEqual(lines[0].outcomes[0].candidateIds, ['candidate-1', 'candidate-2']); assert.deepEqual(lines[0].extraction, { state:'blocked', reason:'Source queue lock is held', processed:0, completed:0, continuing:0, blocked:1, candidates:0 });
+});
+
+test('CLI rejects a query capacity above the owner-set 50 topic ceiling', async (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-google-limit-')); t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const queue = path.join(root, 'queue.json'); fs.writeFileSync(queue, JSON.stringify({ schemaVersion:1, projectId:'github:owner/repository', updatedAt:null, protocol:{}, documents:[], links:[] }));
+  await assert.rejects(() => runCli(['run', 'JavaScript'], { CRUCIBLE_LEARNING_PROJECT_ID:'github:owner/repository', CRUCIBLE_LEARNING_ROOT:root, CRUCIBLE_SOURCE_QUEUE:queue, CRUCIBLE_GOOGLE_MAX_QUERIES:'51' }, () => {}), /between 1 and 50/);
 });
