@@ -308,12 +308,14 @@
       "[done, Claude 2026-09-08] Removed the vestigial do/while fixpoint loop in sanitizeHtml and asserted idempotence over the adversarial corpus instead, so a regression names a failing input rather than being absorbed by another iteration.",
       "[done, Claude 2026-09-08] Fixed the measured quadratic denial of service: 350 KB of unterminated `<script` fell from 40,955 ms to 1.8 ms in cleanText and from 35,893 ms to 2.4 ms in sanitizeHtml, inside a retriever whose own byte limit is 20 MB.",
       "[verified, Claude 2026-09-08] Full suite 791/791, up from 786 with five tests added and none removed or weakened. All local governance gates pass, including audit:ai-conflict-governance now that the owner resolved conflicts[1] in 677956c. audit:handoff fails identically on a clean tree because it needs CI-supplied 40-character SHAs. Fly-by-wire holds at 57 and uncoded throws at 583.",
-      "[remaining, Claude 2026-09-08] Confirm the actual CodeQL alert state on the pushed commit rather than workflow colour, as the owner required. Alerts 15/16/17 against sanitizeHtml were verified false positives of the fixpoint-loop model; that model is now gone, so the query should be re-read against the tokenizer rather than assumed to report the same three."
+      "[remaining, Claude 2026-09-08] Confirm the actual CodeQL alert state on the pushed commit rather than workflow colour, as the owner required. Alerts 15/16/17 against sanitizeHtml were verified false positives of the fixpoint-loop model; that model is now gone, so the query should be re-read against the tokenizer rather than assumed to report the same three.",
+      "[verified, Claude 2026-09-08] CodeQL alert state read directly on 86a0dd8, not the workflow conclusion: check success, alert-level title \"No new alerts in code changed by this pull request\", every github-advanced-security thread resolved and outdated including alert 14, and no thread against src/htmlTextExtraction.js. Alerts 15/16/17 needed no owner dismissal - they were reported against the do/while fixpoint loop, and removing it removed the finding.",
+      "[blocked, Claude 2026-09-08] Prove R4-R8 on encrypted durable state is red on 86a0dd8 with CRU-0023, identical to its parent 6b133aa in every figure (278 awaiting extraction, 138 producing candidates, 0 with two independent sources, same 41,581-byte artifact). Corpus throughput, owner-scoped, recorded on the pull request rather than patched around."
     ],
     "status": "active",
     "startedAt": "2026-09-06T16:15:41Z",
-    "lastUpdatedAt": "2026-09-08T20:05:00Z",
-    "currentStep": 117
+    "lastUpdatedAt": "2026-09-08T19:35:00Z",
+    "currentStep": 119
   },
   "handoffNotes": {
     "completed": [
@@ -460,7 +462,8 @@
       "After recovery, extraction readiness passed, a direct 25-source batch completed with 18 complete and 7 blocked outcomes and 2,240 candidate references, and the real daily coordinator processed 16 of 16 due topics plus a 25-source extraction batch with 105 candidate references. Google returned no admitted novel URLs in that run; this is a result, not a fabricated throughput claim.",
       "Structured partial reporting is now pinned: completed search outcomes are emitted with overallState partial and the exact extraction reason, followed by failing CRU-0040 process status. CRU-0039 covers any refused legacy-lock recovery. The failure-code ratchet remains 583 uncoded sites while coded sites rise to 93; the fly-by-wire ratchet remains 57 bypassing edges.",
       "Final local proof on the completed tree passes 809/809 tests. validate, clutter, workflow lint, design brief, privacy, security, AI conflict, AI conflict governance, coordination, governance, authenticity, generated-documentation, circulation, failure-code, JSON, and whitespace checks pass. Core-ref and reproducibility correctly report not configured; the range-bound handoff check remains for the resulting commit SHA.",
-      "791/791 tests; validate, clutter, workflow-lint, privacy, security, coordination, collisions, failure-codes, circulation, docs, governance, authenticity, reproducibility and ai-conflict-governance gates pass. audit:handoff is environmental and fails the same way on a clean tree."
+      "791/791 tests; validate, clutter, workflow-lint, privacy, security, coordination, collisions, failure-codes, circulation, docs, governance, authenticity, reproducibility and ai-conflict-governance gates pass. audit:handoff is environmental and fails the same way on a clean tree.",
+      "CodeQL on 86a0dd8: no new alerts in changed code, and every prior alert thread resolved and outdated, verified through the review threads rather than the workflow conclusion."
     ],
     "remaining": [
       "Repair or otherwise resolve the Oversight return-vetted-data failure without weakening independent validation, encryption, signing, project isolation, or custody. The current step exits 1 after validating both encrypted manifests and before merged ciphertext publication.",
@@ -469,8 +472,8 @@
       "Start R9 only after R2-R8 are simultaneously green, choose 72-96 hours from evidence without revising downward, and forecast with the full 96 hours.",
       "Return exact development CI to green without weakening Self-Test, the hosted learning proof, code scanning, governance, privacy, or security gates.",
       "R11 remains owner-only release authorization for an exact SHA. Never infer it, push main, or promote main from this task.",
-      "Read the CodeQL alert state on the pushed commit directly, not the workflow conclusion. The three sanitizeHtml alerts were false positives of a fixpoint loop that no longer exists.",
-      "The pre-prune DEVLOG.md snapshot to Devlog-Pruned on Archive is still outstanding; this session is authorized for development only."
+      "The pre-prune DEVLOG.md snapshot to Devlog-Pruned on Archive is still outstanding; this session is authorized for development only.",
+      "Drain the extraction backlog so the hosted R4-R8 proof can conclude: 278 sources awaiting extraction, 109 retrieval-blocked, 128 with no stored content. Owner-scoped work on the vetted corpus."
     ],
     "open": [
       "Why Oversight return-vetted-data exits 1 after decrypting and validating both manifests but before its signing and publication step; current logs expose no more specific stderr.",
