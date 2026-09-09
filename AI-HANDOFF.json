@@ -100,7 +100,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-08T18:26:58Z"
+    "lastActionAt": "2026-09-09T16:12:14Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -181,23 +181,21 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Make automated Google research run daily with capacity for all 50 approved topics, prevent zero-byte canonical durable locks, recover the exact owner-authorized legacy extraction lock with an audit trail, and preserve completed search evidence in a structured failing partial report when extraction is blocked.",
-    "currentPrompt": "Change the existing governed research automation from weekly to daily and make one run process up to 50 due topics so the holding process stays supplied. Confirm the safe lock repair is the proper repair, implement it without weakening refusal of arbitrary malformed locks, refresh the exact origin/development tip, recover the existing zero-byte August 30 extraction lock only through the explicit owner-authorized path, and after those changes make extraction-lock failures emit a structured partial report while retaining a failing exit status. Never touch main or release.",
+    "objective": "Review and record scientific-learning release readiness from literal origin/development without weakening gates or promoting main.",
+    "currentPrompt": "Review the literal origin/development tip against the scientific-learning release plan and status, recalculate the rolling target only from durable Worker, Oversight, vetted-custody, hosted proof, soak, and exact-tip CI evidence, update status, handoff, and DEVLOG atomically only on material change, push development only, and never push or promote main.",
     "executionMode": {
-      "mode": "work",
+      "mode": "regular/default",
       "agent": "Codex",
-      "purpose": "Implement and verify the daily 50-topic research path, durable-lock creation and explicit legacy recovery, and partial-result reporting across repository code, durable state, and the existing scheduled task.",
-      "selectionReason": "This is a multi-file governed implementation with destructive-state safeguards, external durable-state recovery, automation mutation, full testing, commit, push, and hosted verification.",
-      "distinction": "Execution mode is separate from agent identity and workflow; this task changes transport and recovery mechanics but never grants evidence, proof, promotion, or release authority."
+      "purpose": "Perform a bounded evidence review and status-only development transaction.",
+      "selectionReason": "This review changes only three governance records after checking current hosted evidence; regular/default is sufficient.",
+      "distinction": "Execution mode is separate from agent identity and workflow; this review records evidence and never grants proof, promotion, or release authority."
     },
     "steps": [
-      "[done] Raised the approved-topic and per-run due-query capacity to 50, exposed the bound through CRUCIBLE_GOOGLE_MAX_QUERIES with a default and hard ceiling of 50, changed persisted scheduling from weekly to daily, and kept every per-query result, delay, timeout, endpoint, suffix, network, content, and kill-switch limit unchanged.",
-      "[done] Replaced create-then-write canonical lock publication with a fully written and flushed temporary owner record installed through an atomic no-overwrite hard link, eliminating the zero-byte canonical-lock crash window without making malformed locks auto-reclaimable.",
-      "[done] Added an explicit project-bound owner-authorized legacy-lock recovery command that derives the exact extraction lock from the validated queue, requires its expected empty SHA-256 and mtime plus no-live-worker confirmation, preserves quarantine evidence, writes a durable audit, and refuses changed, nonempty, recent, or normally owner-recorded targets.",
-      "[done] Used that command once for the owner-authorized zero-byte August 30 source-queue lock, verified the canonical lock is absent and both quarantine and audit remain, then completed extraction readiness, a 25-source extraction batch, and one real 16-topic daily coordinator run.",
-      "[done] Post-search extraction failure now emits a structured partial report containing every completed query outcome and the exact extraction blocker, then throws CRU-0040 so the process still exits 1.",
+      "[done, Codex 2026-09-09] Fetched literal origin/development and reviewed exact tip 2bf95fc7620d6c8001afd8396b935bfb0c61f154 from a clean detached worktree; preserved the older dirty development worktree byte-for-byte.",
+      "[done, Codex 2026-09-09] Verified exact-tip CI at 31 successful, 1 failed, and 1 skipped checks. Both Self-Test matrices and CodeQL now pass; hosted proof 34268883735 alone fails closed on CRU-0023 with 278 sources awaiting extraction and zero independent corroboration.",
+      "[done, Codex 2026-09-09] Traced current custody through Worker run 34360357630 and Oversight run 34373189105. Worker again processed zero from vetted lineage a4341b1; Oversight passed its independent project checks and failed before publishing merged vetted ciphertext.",
+      "[done, Codex 2026-09-09] Kept R1-R2 passed, R3-R8 pending, R9 held, and R10-R11 pending. Recorded the materially newer SHA and CI/custody evidence without inventing a finite forecast or changing release authority.",
       "[standing] A separate local development worktree contains pre-existing uncommitted real-learning work. Preserve it byte-for-byte; do not stash, fast-forward, commit, overwrite, or include it in this task.",
-      "[in progress] Focused tests and the full repository suite pass. Update this handoff and DEVLOG in the same commit, run every final governed audit, fetch immediately before push, push only development, and verify exact-tip hosted checks. Never touch main or release.",
       "[done] Failure codes: every Crucible failure carries a CRU-#### code from the closed registry in src/failureCodes.js, and every code carries a remedy (kind automatic/guided/owner-decision, the exact command where one exists, the existing tests that prove a repair, and the fix that is forbidden because it would only hide the symptom). The diagnostic organ classifies by code rather than by pattern-matching prose, is a governed organ between brain and immune, and never returns an empty diagnosis: an uncoded failure comes back as CRU-0000 naming the coverage gap and the log it was classified against. 21 throw sites coded, 584 recorded in governingDocuments/failure-code-baseline.json as a baseline that may only fall, enforced by npm run audit:failure-codes on every push.",
       "[done] Option 1, semantic corroboration: a deterministic, dependency-free same-meaning test in src/semanticCorroboration.js that reduces a claim to polarity, committed numbers, and stemmed content terms, and accepts paraphrase only above a term-overlap threshold. It must refuse to cross a negation or a changed number however similar the wording, must be symmetric and repeatable, and must never report proof, independent verification, or promotion.",
       "[done] Prove that test before anything depends on it: the near-identical opposite pair, the double negative, differing numbers, sentences too short to judge, genuine paraphrase, unrelated same-polarity prose, symmetry and determinism, and stable grouping.",
@@ -312,10 +310,10 @@
       "[verified, Claude 2026-09-08] CodeQL alert state read directly on 86a0dd8, not the workflow conclusion: check success, alert-level title \"No new alerts in code changed by this pull request\", every github-advanced-security thread resolved and outdated including alert 14, and no thread against src/htmlTextExtraction.js. Alerts 15/16/17 needed no owner dismissal - they were reported against the do/while fixpoint loop, and removing it removed the finding.",
       "[blocked, Claude 2026-09-08] Prove R4-R8 on encrypted durable state is red on 86a0dd8 with CRU-0023, identical to its parent 6b133aa in every figure (278 awaiting extraction, 138 producing candidates, 0 with two independent sources, same 41,581-byte artifact). Corpus throughput, owner-scoped, recorded on the pull request rather than patched around."
     ],
-    "status": "active",
-    "startedAt": "2026-09-06T16:15:41Z",
-    "lastUpdatedAt": "2026-09-08T19:35:00Z",
-    "currentStep": 119
+    "status": "complete",
+    "startedAt": "2026-09-09T16:01:00Z",
+    "lastUpdatedAt": "2026-09-09T16:12:14Z",
+    "currentStep": 4
   },
   "handoffNotes": {
     "completed": [
@@ -390,7 +388,10 @@
       "Learning-Worker restart recovery and candidate-only export are healthy, but Oversight fails before merged vetted ciphertext is signed and published. The stale September 14 target is withdrawn; no finite target is asserted while measured end-to-end throughput is zero.",
       "The two HTML paths share one tokenizer (src/htmlTextExtraction.js) rather than two regex families that disagreed about where an element ended.",
       "Every previously leaking input is a committed regression test that was shown failing before the repair existed.",
-      "A live <svg/onload=> execution bypass, unreported by the review, was found with a browser oracle and closed."
+      "A live <svg/onload=> execution bypass, unreported by the review, was found with a browser oracle and closed.",
+      "The 2026-09-09 rolling review fetched exact development tip 2bf95fc7620d6c8001afd8396b935bfb0c61f154 and recorded the materially improved Self-Test and CodeQL state without advancing a learning gate.",
+      "Daily research capacity and one manual 16-topic cycle are proven, but scheduler-originated R3 evidence is still absent and the manual result is not relabelled as a scheduled pass.",
+      "Current Worker and Oversight runs prove that end-to-end vetted throughput remains zero, so the rolling target stays indeterminate at low confidence and R9 remains held."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -463,14 +464,17 @@
       "Structured partial reporting is now pinned: completed search outcomes are emitted with overallState partial and the exact extraction reason, followed by failing CRU-0040 process status. CRU-0039 covers any refused legacy-lock recovery. The failure-code ratchet remains 583 uncoded sites while coded sites rise to 93; the fly-by-wire ratchet remains 57 bypassing edges.",
       "Final local proof on the completed tree passes 809/809 tests. validate, clutter, workflow lint, design brief, privacy, security, AI conflict, AI conflict governance, coordination, governance, authenticity, generated-documentation, circulation, failure-code, JSON, and whitespace checks pass. Core-ref and reproducibility correctly report not configured; the range-bound handoff check remains for the resulting commit SHA.",
       "791/791 tests; validate, clutter, workflow-lint, privacy, security, coordination, collisions, failure-codes, circulation, docs, governance, authenticity, reproducibility and ai-conflict-governance gates pass. audit:handoff is environmental and fails the same way on a clean tree.",
-      "CodeQL on 86a0dd8: no new alerts in changed code, and every prior alert thread resolved and outdated, verified through the review threads rather than the workflow conclusion."
+      "CodeQL on 86a0dd8: no new alerts in changed code, and every prior alert thread resolved and outdated, verified through the review threads rather than the workflow conclusion.",
+      "At exact development SHA 2bf95fc7620d6c8001afd8396b935bfb0c61f154, all 33 completed checks are terminal: 31 successful, 1 failed, and 1 skipped. Both nine-job Self-Test matrices, CodeQL analysis and aggregate result, handoff, conflict governance, monitoring sync, and locked-monitor checks pass. Hosted proof run 34268883735 alone fails closed with CRU-0023: 534 sources, 403 with stored content, 2162 corpus candidates, 2031 usable candidates from 126 sources, 278 awaiting extraction, 109 retrieval-blocked, one held in extraction, and zero independent corroboration at thresholds 0.8 through 0.5.",
+      "Learning-Worker run 34360357630 at 272e6a344f1516b3a58f14b36643d34a537dfd45 succeeds from schedule, restores 260 progress records and 24671 candidates from quarantine, reports actionable=0 and processed/completed/continuing/blocked/candidates all 0, then publishes candidate export commit 3f93ec3.",
+      "Oversight run 34373189105 at b5b70bac994dd2a98ac46a6db00521f29131f0c8 records Crucible 2bf95fc and Worker 272e6a3 as independently passed with assimilatedRecords=0 and proofStageSatisfied=false, then fails in return-vetted-data before publishing merged vetted custody."
     ],
     "remaining": [
       "Repair or otherwise resolve the Oversight return-vetted-data failure without weakening independent validation, encryption, signing, project isolation, or custody. The current step exits 1 after validating both encrypted manifests and before merged ciphertext publication.",
       "Let the updated daily scheduled task execute on its own trigger and record that scheduler-originated R3 evidence. A real hand-run 16-topic production cycle completed, but it is not relabelled as a scheduler trigger.",
       "Complete one real independently corroborated, owner-scoped hosted R4-R8 learning cycle, including bounded retrieval, real supersession, rollback, retention, and every combined R8 safety behaviour.",
       "Start R9 only after R2-R8 are simultaneously green, choose 72-96 hours from evidence without revising downward, and forecast with the full 96 hours.",
-      "Return exact development CI to green without weakening Self-Test, the hosted learning proof, code scanning, governance, privacy, or security gates.",
+      "Return exact development CI to green by satisfying the hosted learning proof without weakening Self-Test, CodeQL, governance, privacy, security, or any learning gate; every other current exact-tip check passes.",
       "R11 remains owner-only release authorization for an exact SHA. Never infer it, push main, or promote main from this task.",
       "The pre-prune DEVLOG.md snapshot to Devlog-Pruned on Archive is still outstanding; this session is authorized for development only.",
       "Drain the extraction backlog so the hosted R4-R8 proof can conclude: 278 sources awaiting extraction, 109 retrieval-blocked, 128 with no stored content. Owner-scoped work on the vetted corpus."
@@ -478,7 +482,7 @@
     "open": [
       "Why Oversight return-vetted-data exits 1 after decrypting and validating both manifests but before its signing and publication step; current logs expose no more specific stderr.",
       "A finite rolling target is indeterminate until nonzero end-to-end custody throughput is observed. Recalculate from measured throughput and include a 96-hour soak once the blocking publication path is restored.",
-      "Exact-tip hosted CI must run on the development commit carrying the daily research, atomic lock, narrow legacy recovery, and structured partial-report changes; results remain unverified until those checks reach terminal states."
+      "Why scheduled Worker extraction remains actionable=0 against vetted lineage a4341b1 even after the owner-custody local extraction resumed; no finite target can use local-only throughput until the result returns through independent vetted publication."
     ]
   },
   "mutationOwnershipPolicy": {
@@ -609,6 +613,27 @@
       "acquiredAt": "2026-09-08T17:56:00Z",
       "handedOffTo": null,
       "releasedAt": "2026-09-08T18:28:00Z"
+    },
+    {
+      "taskId": "crucible-rolling-learning-release-review-20260909",
+      "owner": {
+        "provider": "openai",
+        "model": "gpt-5",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "governingDocuments/scientific-learning-release-status.json"
+        ],
+        "regions": []
+      },
+      "purpose": "Record the material 2026-09-09 exact-tip CI, custody, and rolling scientific-learning forecast evidence on development only.",
+      "status": "released",
+      "acquiredAt": "2026-09-09T16:12:14Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-09T16:12:14Z"
     }
   ]
 }
