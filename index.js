@@ -2,7 +2,7 @@
 
 const PLUGIN_ID = 'the-crucible';
 const PLUGIN_NAME = 'The Crucible';
-const VERSION = '0.3.0';
+const VERSION = '0.4.0';
 const GOVERNANCE_ROOT = 'governingDocuments';
 const REFERENCE_MANIFEST = `${GOVERNANCE_ROOT}/CRUCIBLE-REFERENCES.json`;
 const BRANCH_LINK_MANIFEST = `${GOVERNANCE_ROOT}/BRANCH-LINKS.json`;
@@ -14,6 +14,19 @@ const REQUIRED_LEARNING_GATES = Object.freeze(['falsifiableHypothesis', 'control
 const PROHIBITED_PROMOTION_KINDS = Object.freeze(['raw-telemetry', 'correlation', 'one-off-repair', 'repeated-observation', 'model-guess', 'incomplete-observation', 'untested-hypothesis', 'retrieval']);
 const CANDIDATE_KEYS = Object.freeze(['schemaVersion', 'id', 'projectId', 'claim', 'claimBoundary', 'generalizationBoundary', 'kind', 'provenance', 'createdAt']);
 const PROVENANCE_KEYS = Object.freeze(['sourceType', 'sourceId', 'retrievedAt', 'author', 'license', 'contentSha256']);
+const SOURCE_SCAN_MAX_FILES = 1000;
+const SOURCE_SCAN_MAX_BYTES = 1024 * 1024;
+const GAME_LANGUAGE_GROUPS = Object.freeze([
+  Object.freeze({ id: 'gamemaker', label: 'GameMaker Language', extensions: Object.freeze(['.gml']) }),
+  Object.freeze({ id: 'csharp', label: 'C#', extensions: Object.freeze(['.cs']) }),
+  Object.freeze({ id: 'cpp', label: 'C / C++', extensions: Object.freeze(['.c', '.h', '.cpp', '.cc', '.cxx', '.hpp', '.hxx']) }),
+  Object.freeze({ id: 'gdscript', label: 'GDScript', extensions: Object.freeze(['.gd']) }),
+  Object.freeze({ id: 'lua', label: 'Lua', extensions: Object.freeze(['.lua']) }),
+  Object.freeze({ id: 'godot-shader', label: 'Godot Shader', extensions: Object.freeze(['.gdshader']) }),
+  Object.freeze({ id: 'hlsl', label: 'HLSL', extensions: Object.freeze(['.hlsl', '.fx', '.fxh', '.compute']) }),
+  Object.freeze({ id: 'glsl', label: 'GLSL', extensions: Object.freeze(['.glsl', '.vert', '.frag', '.geom', '.tesc', '.tese', '.comp']) }),
+  Object.freeze({ id: 'shaderlab', label: 'Unity ShaderLab', extensions: Object.freeze(['.shader']) })
+]);
 
 const CANONICAL_DOCUMENTS = Object.freeze([
   'AGENTS.md',
@@ -407,6 +420,68 @@ async function readWorkspaceText(path) {
   return String(result?.content || '');
 }
 
+function sourceLanguageForPath(path) {
+  const lower = String(path || '').toLowerCase();
+  return GAME_LANGUAGE_GROUPS.find((language) => language.extensions.some((extension) => lower.endsWith(extension))) || null;
+}
+
+function sourceStructureDiagnostics(path, content, language) {
+  const diagnostics = [];
+  const stack = [];
+  const pairs = { ')': '(', ']': '[', '}': '{' };
+  let quote = null; let escaped = false; let lineComment = false; let blockComment = false; let line = 1; let column = 0;
+  const hashComments = language.id === 'gdscript';
+  const luaComments = language.id === 'lua';
+  for (let index = 0; index < content.length; index += 1) {
+    const character = content[index]; const next = content[index + 1]; column += 1;
+    if (character === '\n') { line += 1; column = 0; lineComment = false; continue; }
+    if (lineComment) continue;
+    if (blockComment) { if (character === '*' && next === '/') { blockComment = false; index += 1; column += 1; } continue; }
+    if (quote) {
+      if (escaped) { escaped = false; continue; }
+      if (character === '\\') { escaped = true; continue; }
+      if (character === quote) quote = null;
+      continue;
+    }
+    if ((character === '/' && next === '/') || (luaComments && character === '-' && next === '-') || (hashComments && character === '#')) { lineComment = true; if (next === '/' || next === '-') { index += 1; column += 1; } continue; }
+    if (character === '/' && next === '*') { blockComment = true; index += 1; column += 1; continue; }
+    if (character === '"' || character === "'") { quote = character; continue; }
+    if ('([{'.includes(character)) stack.push({ character, line, column });
+    else if (')]}'.includes(character)) {
+      const opening = stack.pop();
+      if (!opening || opening.character !== pairs[character]) diagnostics.push({ path, language: language.id, rule: 'mismatched-delimiter', line, column });
+    }
+  }
+  for (const opening of stack) diagnostics.push({ path, language: language.id, rule: 'unclosed-delimiter', line: opening.line, column: opening.column });
+  if (quote) diagnostics.push({ path, language: language.id, rule: 'unclosed-string', line, column });
+  if (blockComment) diagnostics.push({ path, language: language.id, rule: 'unclosed-comment', line, column });
+  return diagnostics;
+}
+
+async function scanGameLanguages() {
+  const result = await nexus.call('workspace:read', { operation: 'list', path: '', recursive: true, textOnly: true });
+  const candidates = (result?.files || []).map((item) => typeof item === 'string' ? { path: item } : item).filter((item) => sourceLanguageForPath(item.path)).sort((left, right) => left.path.localeCompare(right.path));
+  const selected = candidates.slice(0, SOURCE_SCAN_MAX_FILES);
+  const summaries = new Map(GAME_LANGUAGE_GROUPS.map((language) => [language.id, { id: language.id, label: language.label, extensions: [...language.extensions], files: 0, bytes: 0, skippedOversize: 0 }]));
+  const diagnostics = [];
+  let scannedFiles = 0; let scannedBytes = 0; let skippedBinary = 0;
+  for (const item of selected) {
+    const language = sourceLanguageForPath(item.path);
+    const summary = summaries.get(language.id);
+    if (Number.isFinite(item.size) && item.size > SOURCE_SCAN_MAX_BYTES) { summary.skippedOversize += 1; continue; }
+    const content = await readWorkspaceText(item.path);
+    const bytes = new TextEncoder().encode(content).length;
+    if (bytes > SOURCE_SCAN_MAX_BYTES) { summary.skippedOversize += 1; continue; }
+    if (content.includes('\0')) { skippedBinary += 1; continue; }
+    summary.files += 1; summary.bytes += bytes; scannedFiles += 1; scannedBytes += bytes;
+    diagnostics.push(...sourceStructureDiagnostics(item.path, content, language));
+  }
+  const languages = [...summaries.values()].filter((language) => language.files || language.skippedOversize);
+  const report = { ok: true, scannedFiles, scannedBytes, supportedFiles: candidates.length, truncated: candidates.length > SOURCE_SCAN_MAX_FILES, maxFiles: SOURCE_SCAN_MAX_FILES, maxBytesPerFile: SOURCE_SCAN_MAX_BYTES, skippedBinary, languages, diagnostics };
+  nexus.emitTelemetry('crucible.source.scan', { version: VERSION, scannedFiles, scannedBytes, supportedFiles: candidates.length, diagnosticCount: diagnostics.length, truncated: report.truncated, evidentiary: false });
+  return report;
+}
+
 async function readBranchRelationships() {
   try {
     const parsed = JSON.parse(await readWorkspaceText(BRANCH_LINK_MANIFEST));
@@ -503,6 +578,7 @@ async function projectAction(payload = {}) {
     case 'crucible-auto-inject-preview': return previewAutoInject();
     case 'crucible-auto-inject': return autoInject(payload);
     case 'crucible-branch-links-read': return readBranchRelationships();
+    case 'crucible-game-language-scan': return scanGameLanguages();
     case 'crucible-governance-list': return { ok: true, localFiles: await listLocalGovernance(), canonical: canonicalReferenceManifest().documents };
     case 'crucible-governance-read': return readLocalGovernance(payload);
     case 'crucible-governance-write': return writeLocalGovernance(payload);
@@ -524,6 +600,7 @@ async function projectAction(payload = {}) {
           localOverlayRoot: GOVERNANCE_ROOT,
           localOperations: ['list', 'read', 'create', 'update', 'move', 'delete'],
           destructiveOperationsRequireConfirmation: true
+          ,gameLanguageScan: { enabled: true, readOnly: true, maxFiles: SOURCE_SCAN_MAX_FILES, maxBytesPerFile: SOURCE_SCAN_MAX_BYTES, languages: GAME_LANGUAGE_GROUPS }
           ,scientificLearning: {
             enabled: true,
             setupRequiredBeforeEvidence: true,
@@ -539,6 +616,7 @@ async function projectAction(payload = {}) {
         actions: [
           action('crucible-auto-inject', 'Auto Inject The Crucible', 'Install canonical references after explicit confirmation.', { selectable: true, selectedByDefault: false, requiresConfirmation: true }),
           action('crucible-branch-links-read', 'Inspect branch relationships', 'Identify project-declared paired and canonical-reference relationships without relying on example branch names.'),
+          action('crucible-game-language-scan', 'Scan game source files', 'Read supported game-language files and report language coverage plus conservative structural diagnostics.'),
           action('crucible-configure-governance', 'Configure project governance', 'Manage project-specific governance overlays without copying canonical Crucible policy files.', { opensConfiguration: true }),
           action('crucible-open-canonical', 'Open canonical Crucible governance', 'Use the default Crucible branch as the shared source of truth.', { references: canonicalReferenceManifest().documents })
           ,action('crucible-learning-configure', 'Learning: Configure secure project', 'Bind the project ID, trusted OIDC identity, OIDC subject, and ephemeral transport-key commitment before evidence intake.')
@@ -575,12 +653,14 @@ register({
       localGovernanceFiles: await listLocalGovernance().catch(() => []),
       canonicalDocuments: canonicalReferenceManifest().documents,
       autoInject: { selectedByDefault: false, requiresConfirmation: true }
+      ,gameLanguageScan: { enabled: true, readOnly: true, languages: GAME_LANGUAGE_GROUPS }
       ,scientificLearning: { enabled: true, setupRequiredBeforeEvidence: true, storageRoot: LEARNING_ROOT, telemetryIsEvidence: false, weeklyTransport: 'web-crypto-rs256-oidc-a256gcm-hkdf-sha256', masterKeyPersistence: 'forbidden' }
     }),
     'command-palette': async () => ({
       commands: [
         action('crucible.inject', 'Crucible: Auto Inject references', 'Install the reference manifest after explicit confirmation.', { selectable: true, selectedByDefault: false }),
         action('crucible.links', 'Crucible: Inspect branch relationships', 'Read project-specific branch-link governance without assuming naming conventions.'),
+        action('crucible.scanGameLanguages', 'Crucible: Scan game source files', 'Inspect supported game-language files without executing or modifying them.'),
         action('crucible.configure', 'Crucible: Configure local governance', 'Manage project-specific governance overlays.'),
         action('crucible.canonical', 'Crucible: Open canonical governance', 'Open shared governance from the default Crucible branch.', { references: canonicalReferenceManifest().documents })
         ,action('crucible.learning', 'Crucible: Scientific learning', 'Open project-isolated candidate, experiment, verification, promotion, and knowledge retrieval actions.')

@@ -109,6 +109,57 @@ test('default project action describes canonical references, project-specific br
   const inject = result.actions.find((item) => item.id === 'crucible-auto-inject');
   assert.equal(inject.selectedByDefault, false);
   assert.equal(inject.requiresConfirmation, true);
+  assert.ok(result.actions.some((item) => item.id === 'crucible-game-language-scan'));
+  assert.equal(result.configuration.gameLanguageScan.readOnly, true);
+});
+
+test('game-language scan recognizes every supported extension', async () => {
+  const extensions = ['gml', 'cs', 'c', 'h', 'cpp', 'cc', 'cxx', 'hpp', 'hxx', 'gd', 'lua', 'gdshader', 'hlsl', 'fx', 'fxh', 'compute', 'glsl', 'vert', 'frag', 'geom', 'tesc', 'tese', 'comp', 'shader'];
+  const files = Object.fromEntries(extensions.map((extension) => [`game/source.${extension.toUpperCase()}`, '{}']));
+  const { registration } = loadPlugin(files);
+  const result = await registration.slots['project-actions']({ actionId: 'crucible-game-language-scan' });
+  assert.equal(result.ok, true);
+  assert.equal(result.supportedFiles, extensions.length);
+  assert.equal(result.scannedFiles, extensions.length);
+  assert.deepEqual(Array.from(result.languages, (language) => language.id), ['gamemaker', 'csharp', 'cpp', 'gdscript', 'lua', 'godot-shader', 'hlsl', 'glsl', 'shaderlab']);
+  assert.equal(result.diagnostics.length, 0);
+});
+
+test('game-language scan reports normalized structural diagnostics without source text', async () => {
+  const secret = 'DO_NOT_EXPOSE_SOURCE_TEXT';
+  const { registration, telemetry } = loadPlugin({
+    'scripts/broken.gml': `function broken() { "${secret}`,
+    'scripts/player.gd': '# ignored }\nfunc ready():\n  print("ok")',
+    'scripts/readme.txt': '}'
+  });
+  const result = await registration.slots['project-actions']({ actionId: 'crucible-game-language-scan' });
+  assert.equal(result.supportedFiles, 2);
+  assert.deepEqual(Array.from(result.diagnostics, (item) => item.rule).sort(), ['unclosed-delimiter', 'unclosed-string']);
+  assert.doesNotMatch(JSON.stringify(result.diagnostics), new RegExp(secret));
+  assert.doesNotMatch(JSON.stringify(telemetry), new RegExp(secret));
+  assert.equal(telemetry.at(-1).payload.evidentiary, false);
+});
+
+test('game-language scan skips binary and oversized files and enforces its file bound', async () => {
+  const files = Object.fromEntries(Array.from({ length: 1001 }, (_, index) => [`source/${String(index).padStart(4, '0')}.cs`, '{}']));
+  files['source/0000.cs'] = '\0binary';
+  files['source/0001.cs'] = 'x'.repeat(1024 * 1024 + 1);
+  const { registration } = loadPlugin(files);
+  const result = await registration.slots['project-actions']({ actionId: 'crucible-game-language-scan' });
+  assert.equal(result.supportedFiles, 1001);
+  assert.equal(result.truncated, true);
+  assert.equal(result.maxFiles, 1000);
+  assert.equal(result.skippedBinary, 1);
+  assert.equal(result.languages[0].skippedOversize, 1);
+  assert.equal(result.scannedFiles, 998);
+});
+
+test('game-language scan is discoverable in inspector and command palette', async () => {
+  const { registration } = loadPlugin();
+  const inspector = await registration.slots['inspector-panel']();
+  const palette = await registration.slots['command-palette']();
+  assert.equal(inspector.gameLanguageScan.readOnly, true);
+  assert.ok(palette.commands.some((item) => item.id === 'crucible.scanGameLanguages'));
 });
 
 test('branch-link identification accepts arbitrary names for canonical-reference and paired structures', async () => {

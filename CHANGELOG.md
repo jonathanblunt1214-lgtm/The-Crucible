@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0
+
+- Added bounded read-only scanning for GameMaker Language, C#, C/C++, GDScript, Lua, Godot Shader, HLSL, GLSL, and Unity ShaderLab source files.
+- Added conservative structural diagnostics without executing or modifying project source.
+- Added regression coverage for every supported extension, UI discoverability, malformed source, binary and oversized files, scan truncation, and telemetry privacy.
+
 ## 0.3.0
 
 - Added a mandatory secure-learning readiness gate before candidate-evidence intake or any learning mutation.

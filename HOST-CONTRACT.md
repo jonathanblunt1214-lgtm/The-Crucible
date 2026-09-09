@@ -9,6 +9,8 @@ This plugin targets Nexus plugin API version 1 and uses only capabilities curren
 
 The plugin contributes `project-actions`, `inspector-panel`, and `command-palette` slots.
 
+The `crucible-game-language-scan` project action uses only bounded `workspace:read` list/read calls. It recognizes GameMaker Language, C#, C/C++, GDScript, Lua, Godot Shader, HLSL, GLSL, and Unity ShaderLab extensions. It never invokes `workspace:write`, never executes source, scans at most 1,000 supported files, and skips binary or files larger than 1 MiB. Returned diagnostics contain path, language, rule, line, and column only; telemetry contains aggregate counts only.
+
 ## Workspace calls
 
 The plugin expects the Nexus host to provide bounded project-workspace operations through the generic capability handlers:

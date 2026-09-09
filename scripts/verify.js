@@ -14,7 +14,7 @@ function fail(message) {
 }
 
 if (manifest.id !== 'the-crucible') fail('manifest id must be the-crucible');
-if (manifest.version !== '0.3.0' || pkg.version !== manifest.version) fail('package and manifest versions must match v0.3.0');
+if (manifest.version !== '0.4.0' || pkg.version !== manifest.version) fail('package and manifest versions must match v0.4.0');
 if (manifest.apiVersion !== 1) fail('apiVersion must be 1');
 if (manifest.entry !== 'index.js') fail('entry must be index.js');
 const expectedCapabilities = ['telemetry:emit','ui:slot','workspace:read','workspace:write'];
@@ -26,6 +26,9 @@ if (!entry.includes("const CANONICAL_BRANCH = 'main'")) fail('canonical shared c
 if (!entry.includes('CRUCIBLE-REFERENCES.json')) fail('Auto Inject must use the reference manifest');
 if (entry.includes('BOOTSTRAP_FILES')) fail('shared governance must not be bundled as bootstrap copies');
 for (const action of ['crucible-learning-configure', 'crucible-learning-readiness', 'crucible-learning-ingest', 'crucible-learning-experiment', 'crucible-learning-independent-verify', 'crucible-learning-promote', 'crucible-learning-retrieve', 'crucible-learning-rollback', 'crucible-learning-oidc-verify', 'crucible-learning-weekly-encrypt', 'crucible-learning-weekly-decrypt']) if (!entry.includes(action)) fail(`scientific learning action is missing: ${action}`);
+if (!entry.includes('crucible-game-language-scan')) fail('game-language scan action is missing');
+for (const extension of ['.gml', '.cs', '.cpp', '.gd', '.lua', '.gdshader', '.hlsl', '.glsl', '.shader']) if (!entry.includes(`'${extension}'`)) fail(`game-language extension is missing: ${extension}`);
+if (!entry.includes('SOURCE_SCAN_MAX_FILES') || !entry.includes('SOURCE_SCAN_MAX_BYTES')) fail('game-language scan bounds are missing');
 if (!entry.includes('telemetryIsEvidence: false')) fail('telemetry must be explicitly non-evidentiary');
 if (!entry.includes("masterKeyPersistence: 'forbidden'")) fail('weekly transport must forbid master-key persistence');
 if (!process.exitCode) console.log('[The Crucible Nexus plugin] static verification passed.');

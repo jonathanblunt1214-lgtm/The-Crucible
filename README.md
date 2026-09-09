@@ -14,6 +14,10 @@ The plugin is optional and disabled until the Nexus user installs and enables it
 
 The plugin requests only Nexus UI-slot, workspace read/write, and telemetry capabilities. It does not request Git write, shell/process execution, secrets, arbitrary filesystem access, or unrestricted network access.
 
+## Game-language scanning
+
+Version 0.4.0 adds a read-only, bounded project scan for GameMaker Language (`.gml`), C# (`.cs`), C/C++, GDScript, Lua, Godot Shader, HLSL, GLSL, and Unity ShaderLab files. It reports file and byte totals by language plus conservative unmatched-delimiter, string, and block-comment diagnostics. It never executes or modifies source, ignores unsupported files, skips binary and files above 1 MiB, and scans at most 1,000 supported files per request. Telemetry contains counts only and is explicitly non-evidentiary.
+
 ## Scientific learning
 
 Version 0.3.0 provides project-isolated scientific learning under `governingDocuments/.crucible-learning/<projectId>/`. Before the first item of training evidence can be accepted, `crucible-learning-configure` must validate and bind the project ID, trusted RS256 OIDC configuration, exact OIDC subject, and supplied ephemeral transport key. `crucible-learning-readiness` reports whether that setup is complete. Candidate evidence is rejected until readiness is true; after setup it is strictly validated and always enters as `Insufficient Evidence`. Separate actions declare a falsifiable hypothesis, record a bounded controlled experiment, confirm causal isolation, record independent verification, promote verified knowledge, retrieve records, quarantine/reject evidence, and roll back a knowledge version.
