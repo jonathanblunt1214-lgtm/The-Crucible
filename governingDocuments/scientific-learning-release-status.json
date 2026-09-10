@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
   "branch": "development",
-  "developmentSha": "2bf95fc7620d6c8001afd8396b935bfb0c61f154",
-  "updatedAt": "2026-09-09T16:12:14Z",
+  "developmentSha": "743a7bf947fdad2cdb55e992002cd5867b52e0b7",
+  "updatedAt": "2026-09-10T20:07:44Z",
   "rollingTarget": null,
   "rollingTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
   "timezone": "America/New_York",
@@ -12,18 +12,18 @@
   "promotionPerformed": false,
   "gates": {
     "R1": "passed",
-    "R2": "passed; forced-interruption recovery is durable. The owner-authorized legacy zero-byte lock was recovered with quarantine and audit evidence, and a local live run resumed extraction, but latest scheduled Learning-Worker run 34360357630 at 272e6a344f1516b3a58f14b36643d34a537dfd45 still restored the old vetted lineage with actionable=0 and processed/completed/continuing/blocked/candidates all 0.",
-    "R3": "pending; development now carries a daily 50-topic schedule and one real hand-run completed all 16 due topics, retained its audit, and admitted no novel URLs. The required first scheduler-originated discovery run is not durably recorded, so the manual run is not relabelled as R3 proof.",
-    "R4": "pending; local owner-custody extraction resumed and candidate-only Worker export continues, but current Oversight run 34373189105 fails in return-vetted-data before merged ciphertext publication. Exact-tip hosted proof 34268883735 still reads vetted lineage a4341b142445cde8bf71c7dea2ba74a16cfcb715 and reports 278 sources awaiting extraction.",
+    "R2": "passed; forced-interruption recovery is durable. Latest scheduled Learning-Worker run 34522273359 at 671922249a431bf4e40c234424ff2868e9ba192f completed after the new vetted publication but still reported actionable=0 and processed/completed/continuing/blocked/candidates all 0.",
+    "R3": "pending; the first scheduler-originated research run is now durably recorded. It completed all 16 due approved topics with 0 blocked searches, then extracted 25 queued links into 85 candidate IDs, but Google discovered and admitted 0 URLs. Scheduler custody is proven; live novel-URL discovery, rejection, and atomic admission remain unexercised.",
+    "R4": "pending; Oversight run 34514857456 independently validated a candidate-only Worker export containing 26,794 candidates from 534 queued sources and published vetted commit 4c4297f. The next scheduled Worker run still processed zero, and exact-tip hosted proof 34512949809 predates that publication and failed during restore on 'Restored queue hash mismatch.', so the new vetted bundle has not completed exact-tip hosted R4 proof.",
     "R5": "pending; no real independently corroborated claim with an owner-declared scope has completed hosted evaluation and promotion.",
     "R6": "pending; no verified active knowledge from the current real corpus has completed bounded live retrieval.",
     "R7": "pending; the mechanism is locally proven, but no real promoted version from the current custody chain exists to supersede and roll back in hosted evidence.",
     "R8": "pending; no complete combined live cycle currently demonstrates every required safety, quarantine, deduplication, contradiction, and rollback behaviour on the current real corpus.",
     "R9": "held; soak band 72-96 continuous hours, observation ceiling 1000 data points, and the soak does not start while the data cannot exhibit the failures it checks",
-    "R10": "pending; exact development SHA 2bf95fc7620d6c8001afd8396b935bfb0c61f154 has 31 successful, 1 failed, and 1 skipped completed checks. Both nine-job Self-Test matrices, CodeQL analysis and aggregate result, handoff, conflict governance, monitoring sync, and locked-monitor checks pass; hosted learning proof 34268883735 alone fails closed with CRU-0023.",
+    "R10": "pending; exact development SHA 743a7bf947fdad2cdb55e992002cd5867b52e0b7 has 29 successful, 1 failed, and 1 skipped completed checks. Both nine-job Self-Test matrices, CodeQL analysis and aggregate result, handoff, conflict governance, monitoring sync, and locked-monitor checks pass; hosted learning proof 34512949809 alone fails closed during restore on 'Restored queue hash mismatch.'.",
     "R11": "pending"
   },
-  "blockingReason": "End-to-end scientific-learning throughput remains zero. Learning-Worker run 34360357630 succeeds and publishes a fresh candidate-only export but processes zero work from the old vetted lineage; Oversight run 34373189105 passes independent project checks and then fails in return-vetted-data before merged ciphertext is signed and published. R3 still lacks its first scheduler-originated discovery run, exact-tip hosted proof 34268883735 finds zero independent corroboration with 278 sources awaiting extraction, no real claim has completed R4-R8, and the R9 soak cannot start until R2-R8 are simultaneously green.",
+  "blockingReason": "End-to-end scientific-learning throughput remains zero. The first scheduler-originated research run and a successful independently validated Oversight publication are now recorded, but research admitted zero new URLs, the next scheduled Worker run processed zero work, and no exact-tip hosted proof has consumed the new vetted publication. The latest proof predates it and fails during restore on 'Restored queue hash mismatch.'; no real claim has completed R4-R8, and the R9 soak cannot start until R2-R8 are simultaneously green.",
   "history": [
     {
       "recordedAt": "2026-08-30T20:33:00Z",
@@ -86,6 +86,13 @@
       "newTarget": null,
       "newTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
       "reason": "Development advanced to 2bf95fc7620d6c8001afd8396b935bfb0c61f154 and exact-tip CI improved to 31 successful, 1 failed, and 1 skipped checks, clearing the prior Self-Test and CodeQL blockers. Daily research capacity and a real manual 16-topic cycle are now proven, but R3 still lacks scheduler-originated evidence, scheduled Worker throughput remains zero, Oversight still fails before vetted publication, and the hosted real corpus still has zero independent corroboration with 278 sources awaiting extraction. The target remains indeterminate at low confidence rather than inventing an end-to-end rate; any future finite forecast still includes the full 96-hour soak."
+    },
+    {
+      "recordedAt": "2026-09-10T20:07:44Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
+      "reason": "Development advanced to 743a7bf947fdad2cdb55e992002cd5867b52e0b7. The first scheduler-originated research run completed all 16 due topics and Oversight successfully published independently validated vetted commit 4c4297f, clearing two prior custody unknowns. They do not establish end-to-end throughput: research admitted zero URLs, scheduled Worker run 34522273359 still processed zero work after the publication, and exact-tip hosted proof 34512949809 predates it and fails on a restored queue hash mismatch. The target remains indeterminate at low confidence; any future finite forecast still includes the full 96-hour soak."
     }
   ]
 }

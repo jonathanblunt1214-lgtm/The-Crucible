@@ -9,7 +9,7 @@ The scientific-learning system remains on `development`. A rolling forecast is n
 - Initial forecast: **2026-09-14 at 12:00 PM America/New_York**.
 - Confidence: **medium** after the claim-extraction worker processed restart-safe live batches and established measurable throughput.
 - Earliest release: the later of the rolling forecast or 72 continuous hours after the final operational gate completes, 72 being the hard floor of the accepted 72-96 hour soak band.
-- Review cadence: daily at 12:00 PM America/New_York and immediately after any gate changes state.
+- Review cadence: every four hours beginning at 4:00 PM America/New_York and immediately after any gate changes state.
 - Movement rule: move the forecast forward when measured throughput or a blocker makes the current date unrealistic. Never move it earlier merely because a deadline is desired, and never weaken, waive, average, or reinterpret a gate to preserve a date.
 - Completion rule: stop rolling the date only after all gates pass, exact-tip hosted checks are green, owner approval is recorded, and the authorized promotion is verified. The plan itself never authorizes a push to `main`.
 
