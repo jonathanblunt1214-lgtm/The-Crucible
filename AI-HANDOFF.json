@@ -100,7 +100,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-10T17:57:53Z"
+    "lastActionAt": "2026-09-10T20:07:44Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -180,15 +180,15 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "Claude",
-    "objective": "Schedule the governed Google coding-resource research coordinator every four hours, expand its approved topics to the permitted ceiling without weakening a governed bound, and publish a Claude Code plugin marketplace on the Plug-in branch that defers every rule to canonical governance rather than restating it.",
-    "currentPrompt": "i want want strict compliance, chain-of-custody entry and My command files restate some policy (branch rules, the DEVLOG entry format)",
+    "agent": "Codex",
+    "objective": "Review the governed scientific-learning release plan against current development, scheduler, Worker, Oversight, vetted-custody, and exact-tip hosted evidence; update the rolling forecast without weakening any gate or granting release authority.",
+    "currentPrompt": "Review The Crucible's scientific-learning release plan against the current development branch and real learning evidence every four hours beginning at 4:00 PM America/New_York.",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "Claude",
-      "purpose": "Add a scheduled research cadence and additive Claude Code plugin material, then record the unit of work in the chain of custody.",
-      "selectionReason": "The change is a scheduler configuration plus additive files on the Plug-in branch and two governance records; no proof gate, learning gate, or governed bound is touched, so regular/default is sufficient.",
-      "distinction": "Execution mode is separate from agent identity and from workflow: this unit of work configures a schedule and adds plugin files, and grants no proof, promotion, or release authority."
+      "agent": "Codex",
+      "purpose": "Perform the four-hour rolling release review and record only evidence-backed gate and forecast changes.",
+      "selectionReason": "This is a bounded evidence review and governance-record update; it does not implement learning behavior, weaken a gate, or authorize release.",
+      "distinction": "Execution mode is separate from agent identity and workflow. This review records evidence and does not grant proof, promotion, or release authority."
     },
     "steps": [
       "[done, Codex 2026-09-09] Fetched literal origin/development and reviewed exact tip 2bf95fc7620d6c8001afd8396b935bfb0c61f154 from a clean detached worktree; preserved the older dirty development worktree byte-for-byte.",
@@ -326,12 +326,16 @@
       "[corrected, Claude 2026-09-10] I recorded that Prove R4-R8 still failed on CRU-0023 with 278 sources awaiting extraction. That was carried forward from 984f47c and written without re-reading the log at the new tip. It is wrong: the reason changed. The job now dies earlier, in the corpus restore, on 'Restored queue hash mismatch.', and never reaches corroboration, so no report.json is produced.",
       "[verified, Claude 2026-09-10] The transition is evidenced by the artifacts, not inferred. At 984f47c the job uploaded 3 files, 41,581 bytes, digest 41d3cc6d97d5ae4420a576fb3ea8fe4399c1e98ac8b4d7a9060be99f81903330, failing at corroboration on CRU-0023. At 00b11d5 and 874cfd7 it uploads 1 file, 39,144 bytes, digest 7fd2fc6f28aee740ca8743de6aacab1ebafb625a35839671eeae1e5ab0abbfe6, byte-identical to each other, failing in hostedSourceBundle verify.",
       "[verified, Claude 2026-09-10] Not caused by any Crucible commit. The corpus decrypts and opens as oversight-vetted and the three-chunk manifest hashes match, so key and ciphertext are intact; the mismatch is between the restored queue and its recorded hash. No source changed between 984f47c and 874cfd7 - both intervening commits are records-only - so verifyRestored() is byte-identical across the transition and the input changed. The change is in Crucible-Vetted-Learning-State, between 2026-09-09T16:28Z and 2026-09-10T18:00Z.",
-      "[blocked, owner/Oversight] Republishing a vetted bundle whose queue matches its recorded hash is Oversight's and the owner's, not Crucible's. AGENTS.md forbids writing to the learning state repository and Crucible is a read-only consumer of vetted custody, so this was recorded rather than repaired. It supersedes CRU-0023 as the active Prove R4-R8 blocker: the corroboration counts cannot be observed at all until the restore succeeds again."
+      "[blocked, owner/Oversight] Republishing a vetted bundle whose queue matches its recorded hash is Oversight's and the owner's, not Crucible's. AGENTS.md forbids writing to the learning state repository and Crucible is a read-only consumer of vetted custody, so this was recorded rather than repaired. It supersedes CRU-0023 as the active Prove R4-R8 blocker: the corroboration counts cannot be observed at all until the restore succeeds again.",
+      "[done, Codex 2026-09-10] Reviewed clean detached exact development tip 743a7bf947fdad2cdb55e992002cd5867b52e0b7. Exact-tip CI has 29 successful, 1 failed, and 1 skipped checks; hosted proof 34512949809 is the only failure and predates the newer vetted publication.",
+      "[done, Codex 2026-09-10] Recorded the first scheduler-originated research evidence: all 16 due topics completed with no blocked searches and extraction produced 85 candidate IDs from 25 queued links, but Google discovered and admitted zero URLs, so R3's live novelty and admission portion remains pending.",
+      "[done, Codex 2026-09-10] Recorded Oversight run 34514857456 publishing independently validated candidate-only vetted commit 4c4297f from 26,794 candidates and 534 queued sources. Scheduled Worker run 34522273359 followed it but still processed zero work, so end-to-end throughput remains zero.",
+      "[next, Codex 2026-09-10] Wait for an exact-tip hosted proof to consume the new vetted publication. Do not infer R4-R8 from successful publication alone, start R9, authorize R11, or invent a finite forecast before measurable end-to-end throughput exists."
     ],
     "status": "handoff-ready",
-    "startedAt": "2026-09-10T15:35:00Z",
-    "lastUpdatedAt": "2026-09-10T18:52:00Z",
-    "currentStep": "Self-Test is green again on development after correcting the handoff-shape assertion. Prove R4-R8 remains red but for a NEW reason, no longer CRU-0023: the hosted proof dies in the corpus restore on 'Restored queue hash mismatch.' and never reaches corroboration. That is external vetted-custody state, owner/Oversight scope, and was recorded rather than repaired."
+    "startedAt": "2026-09-10T20:00:53Z",
+    "lastUpdatedAt": "2026-09-10T20:07:44Z",
+    "currentStep": "Oversight publication and the first scheduler-originated research run are now durably recorded, but end-to-end throughput remains zero. Wait for an exact-tip hosted proof to consume vetted commit 4c4297f; the latest proof predates it and fails on a restored queue hash mismatch, while the next scheduled Worker run still processed zero work."
   },
   "handoffNotes": {
     "completed": [
@@ -665,6 +669,28 @@
       "acquiredAt": "2026-09-09T16:12:14Z",
       "handedOffTo": null,
       "releasedAt": "2026-09-09T16:12:14Z"
+    },
+    {
+      "taskId": "crucible-rolling-learning-release-review-20260910-1600",
+      "owner": {
+        "provider": "openai",
+        "model": "gpt-5",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "governingDocuments/scientific-learning-release-plan.md",
+          "governingDocuments/scientific-learning-release-status.json"
+        ],
+        "regions": []
+      },
+      "purpose": "Record the material 2026-09-10 scheduler, vetted-custody, exact-tip CI, and rolling scientific-learning forecast evidence on development only.",
+      "status": "released",
+      "acquiredAt": "2026-09-10T20:07:39.795Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-10T20:09:30.249Z"
     }
   ]
 }
