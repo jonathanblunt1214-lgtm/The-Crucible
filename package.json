@@ -8,6 +8,8 @@
     "configure:suite": "node src/configureSuite.js",
     "test": "node src/testCadence.js changed",
     "test:all": "node src/testCadence.js all",
+    "test:mcp": "node --test test/mcpServer.test.js",
+    "mcp": "node src/mcpServer.js",
     "validate": "node src/cli.js validate",
     "audit:clutter": "node src/cli.js clutter",
     "lint:workflows": "node src/cli.js workflow-lint",
