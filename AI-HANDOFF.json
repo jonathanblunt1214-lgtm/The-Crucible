@@ -317,12 +317,18 @@
       "Read verify.js and package.js on Plug-in before writing, proving added files cannot break its CI or leak into the .nexusplugin artifact.",
       "Add .claude-plugin/marketplace.json publishing the crucible plugin and an ai-collaboration entry sourced from AI-collaboration- with skills pointed at its existing plugin/skills and strict false, defaultEnabled false, MCP deliberately unwired.",
       "Rewrite all five commands, the SessionStart hook, and the plugin README to carry mechanics only and defer every rule to canonical governance, per the canonical-source rule on Plug-in.",
-      "Record this unit of work in DEVLOG.md, prune to the ten-session cap, and prepare the mandated full-snapshot append to Devlog-Pruned on Archive."
+      "Record this unit of work in DEVLOG.md, prune to the ten-session cap, and prepare the mandated full-snapshot append to Devlog-Pruned on Archive.",
+      "[done, Claude 2026-09-10] Repaired the Self-Test regression the preceding records commit 00b11d5 introduced. test/aiHandoffContinuation.test.js asserted this repository's own AI-HANDOFF.json still used the legacy step shape; replacing the meaningless numeric currentStep 4 with a descriptive string moved the file to the reader's highest-priority 'explicit' branch and turned three matrix legs red on a commit that changed no source at all.",
+      "[done, Claude 2026-09-10] Established the assertion was the defect rather than the record, from this repository's own documentation of the reader: it prefers an explicit currentStep, then in-progress, then first-unfinished, and falls back to the last entry only for the legacy string list. The new record moved the file up that documented order, so the numeric currentStep was the accident and the string is the intended shape. The test pinned an incidental snapshot of the file, not the property its name claims.",
+      "[verified, Claude 2026-09-10] The corrected assertion is stronger, not weaker: it still rejects every record that resolves to source 'none' - no steps, a numeric currentStep, a whitespace-only currentStep - and now also requires the resolved step to be a non-empty string, which the previous version never checked. Both legitimate shapes are accepted. Proven against five constructed records before the change was trusted.",
+      "[verified, Claude 2026-09-10] Full suite 791/791, identical to the count before the repair: no test added, removed, weakened, disabled, or skipped. All fourteen local governance gates pass, including audit:ai-conflict-governance, audit:circulation and audit:collisions.",
+      "[note, Claude 2026-09-10] The CRU-0015 collision report in the hosted log is not this repair's and was not acted on: it names PR #20 on package.json and the permanently locked PR #11, and it ran only inside the additive self-test-failure on-error trigger, which cannot decide a job result and does not fire when Self-Test is green.",
+      "[blocked, Claude 2026-09-10] Prove R4-R8 on encrypted durable state remains the one red check on PR #19 and is unchanged by this repair: it fails closed on CRU-0023 because 278 sources await extraction, 109 are retrieval-blocked and 128 have no stored content, so no claim has two independent sources. Draining the extraction backlog is owner-scoped and already recorded on the pull request; it was not patched around."
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-10T15:35:00Z",
-    "lastUpdatedAt": "2026-09-10T17:57:53Z",
-    "currentStep": "Chain-of-custody recorded for the Plug-in plugin work; pushes of DEVLOG.md and AI-HANDOFF.json to development, and the pruned snapshot to Archive, await explicit owner branch authorization."
+    "lastUpdatedAt": "2026-09-10T18:30:00Z",
+    "currentStep": "Self-Test is green again on development after correcting the handoff-shape assertion in test/aiHandoffContinuation.test.js. The one remaining red check on PR #19 is Prove R4-R8 on encrypted durable state, which fails closed on CRU-0023 corpus throughput and is owner-scoped."
   },
   "handoffNotes": {
     "completed": [
