@@ -100,7 +100,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-10T20:07:44Z"
+    "lastActionAt": "2026-09-10T20:19:27Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -330,12 +330,13 @@
       "[done, Codex 2026-09-10] Reviewed clean detached exact development tip 743a7bf947fdad2cdb55e992002cd5867b52e0b7. Exact-tip CI has 29 successful, 1 failed, and 1 skipped checks; hosted proof 34512949809 is the only failure and predates the newer vetted publication.",
       "[done, Codex 2026-09-10] Recorded the first scheduler-originated research evidence: all 16 due topics completed with no blocked searches and extraction produced 85 candidate IDs from 25 queued links, but Google discovered and admitted zero URLs, so R3's live novelty and admission portion remains pending.",
       "[done, Codex 2026-09-10] Recorded Oversight run 34514857456 publishing independently validated candidate-only vetted commit 4c4297f from 26,794 candidates and 534 queued sources. Scheduled Worker run 34522273359 followed it but still processed zero work, so end-to-end throughput remains zero.",
-      "[next, Codex 2026-09-10] Wait for an exact-tip hosted proof to consume the new vetted publication. Do not infer R4-R8 from successful publication alone, start R9, authorize R11, or invent a finite forecast before measurable end-to-end throughput exists."
+      "[corrected, Codex 2026-09-10] The first review record said no exact-tip proof had yet consumed the new vetted publication. Run 34525272883 started immediately after that record was pushed and has now done so; the record is corrected rather than left stale.",
+      "[verified, Codex 2026-09-10] Exact development SHA 4f0bdb378a15343c310e9e4fa1a5d5f4ea407df6 decrypts the current bundle as oversight-vetted and then fails in hostedSourceBundle verify on the same 'Restored queue hash mismatch.' before corroboration. Successful Oversight publication did not restore valid queue custody, so R4-R8 remain pending and the forecast remains indeterminate."
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-10T20:00:53Z",
-    "lastUpdatedAt": "2026-09-10T20:07:44Z",
-    "currentStep": "Oversight publication and the first scheduler-originated research run are now durably recorded, but end-to-end throughput remains zero. Wait for an exact-tip hosted proof to consume vetted commit 4c4297f; the latest proof predates it and fails on a restored queue hash mismatch, while the next scheduled Worker run still processed zero work."
+    "lastUpdatedAt": "2026-09-10T20:19:27Z",
+    "currentStep": "Exact-tip hosted proof 34525272883 consumed the current vetted custody after the successful Oversight publication and still failed on 'Restored queue hash mismatch.' before corroboration. Oversight or the owner must republish a bundle whose restored queue matches its recorded hash; Crucible remains a read-only consumer and R4-R8 remain pending."
   },
   "handoffNotes": {
     "completed": [
@@ -691,6 +692,27 @@
       "acquiredAt": "2026-09-10T20:07:39.795Z",
       "handedOffTo": null,
       "releasedAt": "2026-09-10T20:09:30.249Z"
+    },
+    {
+      "taskId": "crucible-rolling-learning-release-review-20260910-proof-correction",
+      "owner": {
+        "provider": "openai",
+        "model": "gpt-5",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "governingDocuments/scientific-learning-release-status.json"
+        ],
+        "regions": []
+      },
+      "purpose": "Correct the 2026-09-10 rolling review with the exact-tip hosted proof that consumed the new vetted publication and still failed queue-hash verification.",
+      "status": "released",
+      "acquiredAt": "2026-09-10T20:19:22.533Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-10T20:20:27.385Z"
     }
   ]
 }
