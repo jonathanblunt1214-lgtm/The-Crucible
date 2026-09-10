@@ -1,0 +1,22 @@
+﻿{
+  "name": "crucible_gemini_extension",
+  "version": "0.4.0",
+  "description": "Read-only Gemini integration for The Crucible governance and manifest discovery",
+  "tools": [
+    {
+      "name": "crucible_plugin_info",
+      "description": "Returns package metadata, version, description, and canonical governance repository coordinates.",
+      "parameters": { "type": "OBJECT", "properties": {}, "additionalProperties": false }
+    },
+    {
+      "name": "crucible_nexus_manifest",
+      "description": "Returns the verbatim nexus.plugin.json manifest contents.",
+      "parameters": { "type": "OBJECT", "properties": {}, "additionalProperties": false }
+    },
+    {
+      "name": "crucible_canonical_governance",
+      "description": "Returns canonical repository location and policy governing shared Crucible specifications.",
+      "parameters": { "type": "OBJECT", "properties": {}, "additionalProperties": false }
+    }
+  ]
+}
