@@ -1,0 +1,16 @@
+{
+  "name": "crucible",
+  "displayName": "The Crucible",
+  "version": "0.1.0",
+  "description": "Governed verification, audit, handoff, and scientific-learning workflows for The Crucible.",
+  "author": {
+    "name": "jonathanblunt1214-lgtm"
+  },
+  "homepage": "https://github.com/jonathanblunt1214-lgtm/The-Crucible",
+  "repository": "https://github.com/jonathanblunt1214-lgtm/The-Crucible",
+  "license": "MIT",
+  "keywords": ["governance", "audit", "verification", "handoff", "scientific-learning"],
+  "commands": ["./commands"],
+  "hooks": "./hooks/hooks.json",
+  "defaultEnabled": true
+}

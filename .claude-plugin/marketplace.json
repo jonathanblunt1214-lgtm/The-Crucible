@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-marketplace.json",
+  "name": "the-crucible",
+  "description": "Governed verification, audit, handoff, and multi-model collaboration plugins for The Crucible.",
+  "version": "1.1.0",
+  "owner": {
+    "name": "jonathanblunt1214-lgtm",
+    "url": "https://github.com/jonathanblunt1214-lgtm/The-Crucible"
+  },
+  "plugins": [
+    {
+      "name": "crucible",
+      "source": "./claude-code-plugin",
+      "displayName": "The Crucible",
+      "description": "Runs The Crucible's governed audit suite, enforces the AGENTS.md handoff-reading discipline, and drives the bounded scientific-learning research coordinator.",
+      "version": "0.1.0",
+      "author": { "name": "jonathanblunt1214-lgtm" },
+      "homepage": "https://github.com/jonathanblunt1214-lgtm/The-Crucible",
+      "repository": "https://github.com/jonathanblunt1214-lgtm/The-Crucible",
+      "license": "MIT",
+      "category": "development",
+      "keywords": ["governance", "audit", "verification", "handoff", "scientific-learning"]
+    },
+    {
+      "name": "ai-collaboration",
+      "source": {
+        "source": "github",
+        "repo": "jonathanblunt1214-lgtm/AI-collaboration-"
+      },
+      "displayName": "AI Collaboration",
+      "description": "Capability-aware multi-provider council routing with provider-separated provenance, where independent model perspectives or resilience materially improve the result. Consensus is evidence, never authorization.",
+      "skills": "./plugin/skills",
+      "strict": false,
+      "author": { "name": "jonathanblunt1214-lgtm" },
+      "homepage": "https://github.com/jonathanblunt1214-lgtm/AI-collaboration-",
+      "repository": "https://github.com/jonathanblunt1214-lgtm/AI-collaboration-",
+      "category": "development",
+      "keywords": ["multi-model", "consensus", "routing", "review", "mcp"],
+      "defaultEnabled": false
+    }
+  ]
+}
