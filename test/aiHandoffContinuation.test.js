@@ -172,11 +172,22 @@ test('the current step is the unfinished one, with the legacy string list still 
   assert.deepEqual(resolveCurrentStep({ steps: [] }), { currentStep: null, source: 'none', stepCount: 0 });
 });
 
-test('the legacy AI-HANDOFF schema in this repository still reads cleanly', () => {
+test('the AI-HANDOFF schema in this repository reads cleanly, in whichever shape it is recorded', () => {
   const root = path.join(__dirname, '..');
   const report = inspectForContinuation(root);
   assert.equal(report.handoff.present, true);
-  assert.equal(report.handoff.currentStepSource, 'legacy-last-step');
+  // Which source wins is a fact about how the recording session wrote the plan, not about the
+  // reader. An agent that writes an explicit currentStep moves the file up the documented
+  // preference order deliberately, so pinning one source here fails the next session that does
+  // exactly that. What has to hold is that the real file resolves through a source the reader
+  // defines and yields a step a successor can actually resume from. The source-by-source
+  // behaviour is pinned against fixtures in the resolveCurrentStep test above.
+  assert.ok(
+    ['explicit', 'in-progress', 'first-unfinished', 'legacy-last-step'].includes(report.handoff.currentStepSource),
+    `the real handoff resolved through an undefined source: ${report.handoff.currentStepSource}`,
+  );
+  assert.equal(typeof report.handoff.currentStep, 'string');
+  assert.ok(report.handoff.currentStep.trim(), 'the resolved current step is not empty');
   assert.ok(report.handoff.stepCount > 0);
   assert.ok(report.resumeFrom, 'the real repository reports a commit to resume from');
 });
