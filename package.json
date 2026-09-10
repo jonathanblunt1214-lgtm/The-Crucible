@@ -4,13 +4,16 @@
   "private": true,
   "description": "Optional Nexus plugin for game-source scanning, fail-closed project-isolated scientific learning, and canonical Crucible governance references.",
   "license": "MIT",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
-    "test": "node --test test/plugin.test.js chatgpt-mcp/server.test.js",
-    "test:mcp": "node --test chatgpt-mcp/server.test.js",
+    "test": "node --test test/plugin.test.js chatgpt-mcp/server.test.js chatgpt-mcp/stdio.test.js",
+    "test:mcp": "node --test chatgpt-mcp/server.test.js chatgpt-mcp/stdio.test.js",
     "mcp": "node chatgpt-mcp/server.js",
     "verify": "node scripts/verify.js",
     "verify:core-contract": "node scripts/verify-core-contract.js",
-    "package": "node scripts/package.js"
+    "package": "node scripts/package.js",
+    "mcp:stdio": "node chatgpt-mcp/stdio.js"
   }
 }

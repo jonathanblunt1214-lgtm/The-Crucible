@@ -64,9 +64,25 @@ same on Windows, macOS, and Linux.
 - Nothing weakens, disables, or edits a governed bound to make a check pass.
 - Nothing writes to `AI-CONFLICTS.json` or the known-bug ledger automatically.
 
-## Second plugin in this marketplace
+## Other plugins in this marketplace
 
-`ai-collaboration` is also published from this marketplace, sourced from
+### crucible-mcp
+
+Declares the MCP server in `chatgpt-mcp/` so its bounded read-only tools
+(`crucible_plugin_info`, `crucible_nexus_manifest`, `crucible_canonical_governance`) are
+available to Claude Code, launched over stdio via `chatgpt-mcp/stdio.js`:
+
+```
+/plugin install crucible-mcp@the-crucible
+```
+
+Its `source` is the branch root rather than `./chatgpt-mcp`, because `server.js` resolves
+`package.json` and `nexus.plugin.json` from its parent directory and would fail to read
+them if only its own subtree were installed. It ships disabled by default.
+
+### ai-collaboration
+
+Sourced from
 `jonathanblunt1214-lgtm/AI-collaboration-`. That repository ships a Codex
 plugin, but its `plugin/skills/` directory uses the same `SKILL.md` frontmatter
 Claude Code expects, so the marketplace entry points `skills` at it directly
