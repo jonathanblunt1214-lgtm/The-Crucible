@@ -100,7 +100,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-09T16:12:14Z"
+    "lastActionAt": "2026-09-10T17:57:53Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -180,15 +180,15 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "Codex",
-    "objective": "Review and record scientific-learning release readiness from literal origin/development without weakening gates or promoting main.",
-    "currentPrompt": "Review the literal origin/development tip against the scientific-learning release plan and status, recalculate the rolling target only from durable Worker, Oversight, vetted-custody, hosted proof, soak, and exact-tip CI evidence, update status, handoff, and DEVLOG atomically only on material change, push development only, and never push or promote main.",
+    "agent": "Claude",
+    "objective": "Schedule the governed Google coding-resource research coordinator every four hours, expand its approved topics to the permitted ceiling without weakening a governed bound, and publish a Claude Code plugin marketplace on the Plug-in branch that defers every rule to canonical governance rather than restating it.",
+    "currentPrompt": "i want want strict compliance, chain-of-custody entry and My command files restate some policy (branch rules, the DEVLOG entry format)",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "Codex",
-      "purpose": "Perform a bounded evidence review and status-only development transaction.",
-      "selectionReason": "This review changes only three governance records after checking current hosted evidence; regular/default is sufficient.",
-      "distinction": "Execution mode is separate from agent identity and workflow; this review records evidence and never grants proof, promotion, or release authority."
+      "agent": "Claude",
+      "purpose": "Add a scheduled research cadence and additive Claude Code plugin material, then record the unit of work in the chain of custody.",
+      "selectionReason": "The change is a scheduler configuration plus additive files on the Plug-in branch and two governance records; no proof gate, learning gate, or governed bound is touched, so regular/default is sufficient.",
+      "distinction": "Execution mode is separate from agent identity and from workflow: this unit of work configures a schedule and adds plugin files, and grants no proof, promotion, or release authority."
     },
     "steps": [
       "[done, Codex 2026-09-09] Fetched literal origin/development and reviewed exact tip 2bf95fc7620d6c8001afd8396b935bfb0c61f154 from a clean detached worktree; preserved the older dirty development worktree byte-for-byte.",
@@ -308,12 +308,21 @@
       "[verified, Claude 2026-09-08] Full suite 791/791, up from 786 with five tests added and none removed or weakened. All local governance gates pass, including audit:ai-conflict-governance now that the owner resolved conflicts[1] in 677956c. audit:handoff fails identically on a clean tree because it needs CI-supplied 40-character SHAs. Fly-by-wire holds at 57 and uncoded throws at 583.",
       "[remaining, Claude 2026-09-08] Confirm the actual CodeQL alert state on the pushed commit rather than workflow colour, as the owner required. Alerts 15/16/17 against sanitizeHtml were verified false positives of the fixpoint-loop model; that model is now gone, so the query should be re-read against the tokenizer rather than assumed to report the same three.",
       "[verified, Claude 2026-09-08] CodeQL alert state read directly on 86a0dd8, not the workflow conclusion: check success, alert-level title \"No new alerts in code changed by this pull request\", every github-advanced-security thread resolved and outdated including alert 14, and no thread against src/htmlTextExtraction.js. Alerts 15/16/17 needed no owner dismissal - they were reported against the do/while fixpoint loop, and removing it removed the finding.",
-      "[blocked, Claude 2026-09-08] Prove R4-R8 on encrypted durable state is red on 86a0dd8 with CRU-0023, identical to its parent 6b133aa in every figure (278 awaiting extraction, 138 producing candidates, 0 with two independent sources, same 41,581-byte artifact). Corpus throughput, owner-scoped, recorded on the pull request rather than patched around."
+      "[blocked, Claude 2026-09-08] Prove R4-R8 on encrypted durable state is red on 86a0dd8 with CRU-0023, identical to its parent 6b133aa in every figure (278 awaiting extraction, 138 producing candidates, 0 with two independent sources, same 41,581-byte artifact). Corpus throughput, owner-scoped, recorded on the pull request rather than patched around.",
+      "Read AGENTS.md, CLAUDE.md, the Shared AI handoff in DEVLOG.md, and every governingDocuments file before acting; established that learning:google-research exists only on development.",
+      "Create the four-hourly research Routine at cron 30 3,7,11,15,19,23 UTC anchored on 11:30 America/New_York, and record that the scheduler re-anchors every-N-hour expressions to roughly :34 rather than :30.",
+      "Run the coordinator for real on development tip 984f47c: 16 topics searched, 16 blocked on Google search HTTP 403, extraction blocked on ENOENT, exit 1 CRU-0040 with the structured partial report retained.",
+      "Establish and preserve the two governed bounds that cap this work: a 50 approved-topic ceiling in GoogleResearchStore and a one-day minimum research interval in recordRun.",
+      "Expand the Routine approved topics from 16 to exactly 50 and prove the list against the real module, including that a 51st topic is refused.",
+      "Read verify.js and package.js on Plug-in before writing, proving added files cannot break its CI or leak into the .nexusplugin artifact.",
+      "Add .claude-plugin/marketplace.json publishing the crucible plugin and an ai-collaboration entry sourced from AI-collaboration- with skills pointed at its existing plugin/skills and strict false, defaultEnabled false, MCP deliberately unwired.",
+      "Rewrite all five commands, the SessionStart hook, and the plugin README to carry mechanics only and defer every rule to canonical governance, per the canonical-source rule on Plug-in.",
+      "Record this unit of work in DEVLOG.md, prune to the ten-session cap, and prepare the mandated full-snapshot append to Devlog-Pruned on Archive."
     ],
-    "status": "complete",
-    "startedAt": "2026-09-09T16:01:00Z",
-    "lastUpdatedAt": "2026-09-09T16:12:14Z",
-    "currentStep": 4
+    "status": "handoff-ready",
+    "startedAt": "2026-09-10T15:35:00Z",
+    "lastUpdatedAt": "2026-09-10T17:57:53Z",
+    "currentStep": "Chain-of-custody recorded for the Plug-in plugin work; pushes of DEVLOG.md and AI-HANDOFF.json to development, and the pruned snapshot to Archive, await explicit owner branch authorization."
   },
   "handoffNotes": {
     "completed": [
@@ -391,7 +400,11 @@
       "A live <svg/onload=> execution bypass, unreported by the review, was found with a browser oracle and closed.",
       "The 2026-09-09 rolling review fetched exact development tip 2bf95fc7620d6c8001afd8396b935bfb0c61f154 and recorded the materially improved Self-Test and CodeQL state without advancing a learning gate.",
       "Daily research capacity and one manual 16-topic cycle are proven, but scheduler-originated R3 evidence is still absent and the manual result is not relabelled as a scheduled pass.",
-      "Current Worker and Oversight runs prove that end-to-end vetted throughput remains zero, so the rolling target stays indeterminate at low confidence and R9 remains held."
+      "Current Worker and Oversight runs prove that end-to-end vetted throughput remains zero, so the rolling target stays indeterminate at low confidence and R9 remains held.",
+      "Four-hourly governed research Routine created and its approved topics expanded from 16 to the permitted ceiling of 50, verified against the real module.",
+      "Claude Code plugin marketplace published on Plug-in at 7d6d1dedff411770398562976b09501495e31653, additive to the Nexus package and its CI.",
+      "Plugin commands, hook, and README rewritten to defer to canonical governance instead of restating branch policy, the DEVLOG format, or the research bounds.",
+      "ai-collaboration published as a second plugin from the same marketplace without modifying the AI-collaboration- repository."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -467,7 +480,11 @@
       "CodeQL on 86a0dd8: no new alerts in changed code, and every prior alert thread resolved and outdated, verified through the review threads rather than the workflow conclusion.",
       "At exact development SHA 2bf95fc7620d6c8001afd8396b935bfb0c61f154, all 33 completed checks are terminal: 31 successful, 1 failed, and 1 skipped. Both nine-job Self-Test matrices, CodeQL analysis and aggregate result, handoff, conflict governance, monitoring sync, and locked-monitor checks pass. Hosted proof run 34268883735 alone fails closed with CRU-0023: 534 sources, 403 with stored content, 2162 corpus candidates, 2031 usable candidates from 126 sources, 278 awaiting extraction, 109 retrieval-blocked, one held in extraction, and zero independent corroboration at thresholds 0.8 through 0.5.",
       "Learning-Worker run 34360357630 at 272e6a344f1516b3a58f14b36643d34a537dfd45 succeeds from schedule, restores 260 progress records and 24671 candidates from quarantine, reports actionable=0 and processed/completed/continuing/blocked/candidates all 0, then publishes candidate export commit 3f93ec3.",
-      "Oversight run 34373189105 at b5b70bac994dd2a98ac46a6db00521f29131f0c8 records Crucible 2bf95fc and Worker 272e6a3 as independently passed with assimilatedRecords=0 and proofStageSatisfied=false, then fails in return-vetted-data before publishing merged vetted custody."
+      "Oversight run 34373189105 at b5b70bac994dd2a98ac46a6db00521f29131f0c8 records Crucible 2bf95fc and Worker 272e6a3 as independently passed with assimilatedRecords=0 and proofStageSatisfied=false, then fails in return-vetted-data before publishing merged vetted custody.",
+      "Plug-in CI commands run locally before each push: npm run verify exit 0, npm test 21/21 exit 0, npm run package exit 0, and the workflow runtime-only package assertion passed with no added path in the artifact.",
+      "SessionStart hook exercised against a real Crucible checkout and a non-Crucible directory: 32 governing documents enumerated, the branch-qualified Archive:Devlog-Pruned correctly excluded from local-file expansion, exit 0 in both cases.",
+      "The 50-topic list proved against the real GoogleResearchStore: all pass boundedTopic, 50 unique after normalisation, the store constructs, a 51st is refused, and fresh topics are immediately due.",
+      "validateDevlogChainOfCustody reports ok on the updated DEVLOG.md at 10 of 10 sessions with none older than 180 days."
     ],
     "remaining": [
       "Repair or otherwise resolve the Oversight return-vetted-data failure without weakening independent validation, encryption, signing, project isolation, or custody. The current step exits 1 after validating both encrypted manifests and before merged ciphertext publication.",
@@ -477,7 +494,12 @@
       "Return exact development CI to green by satisfying the hosted learning proof without weakening Self-Test, CodeQL, governance, privacy, security, or any learning gate; every other current exact-tip check passes.",
       "R11 remains owner-only release authorization for an exact SHA. Never infer it, push main, or promote main from this task.",
       "The pre-prune DEVLOG.md snapshot to Devlog-Pruned on Archive is still outstanding; this session is authorized for development only.",
-      "Drain the extraction backlog so the hosted R4-R8 proof can conclude: 278 sources awaiting extraction, 109 retrieval-blocked, 128 with no stored content. Owner-scoped work on the vetted corpus."
+      "Drain the extraction backlog so the hosted R4-R8 proof can conclude: 278 sources awaiting extraction, 109 retrieval-blocked, 128 with no stored content. Owner-scoped work on the vetted corpus.",
+      "DEVLOG.md and AI-HANDOFF.json for this unit of work are committed locally on development but NOT pushed: this session is branch-authorized for Plug-in only and needs explicit owner authorization for development.",
+      "The mandated Devlog-Pruned snapshot on Archive for the pruned session durable autonomous learning from training evidence is prepared but NOT pushed, pending the same authorization.",
+      "The four-hourly Routine cannot yield research off owner-custody hardware: Google refuses every search with HTTP 403 from a data-centre address, and the configured Windows store paths do not resolve on a Linux runner.",
+      "The Routine cron is UTC-only, so its America/New_York anchor shifts by an hour when EST begins and needs updating then.",
+      "The AI Collaboration remote MCP service is not wired into the plugin; it needs a deployed base URL and its bearer token must stay a runtime secret."
     ],
     "open": [
       "Why Oversight return-vetted-data exits 1 after decrypting and validating both manifests but before its signing and publication step; current logs expose no more specific stderr.",
