@@ -1,0 +1,25 @@
+{
+  "_comment": "Streamable HTTP remote MCP connector registration metadata for Perplexity. Fill in deployment_url before registering.",
+  "connector_name": "The Crucible",
+  "transport": "streamable-http",
+  "mcp_version": "2025-11-05",
+  "deployment_url": "",
+  "mcp_path": "/mcp",
+  "auth": {
+    "mode": "bearer",
+    "header": "Authorization",
+    "value_format": "Bearer <CRUCIBLE_MCP_BEARER_TOKEN>"
+  },
+  "permitted_tools": [
+    "crucible_plugin_info",
+    "crucible_nexus_manifest",
+    "crucible_canonical_governance"
+  ],
+  "tool_argument_policy": "no_arguments",
+  "notes": [
+    "All three tools accept no arguments. Send params: {} or omit params.",
+    "Do not add new tools to this surface without updating permitted_tools here and adding a test in perplexity.test.js.",
+    "This connector does NOT expose Crucible learning/research retrieval to Perplexity search.",
+    "AI Collaboration routing is config-gated via AI_COLLABORATION_BASE_URL."
+  ]
+}

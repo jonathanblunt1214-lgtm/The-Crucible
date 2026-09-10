@@ -1,35 +1,44 @@
 # Changelog
 
-## 0.4.0
+All notable changes to The Crucible are documented here.
 
-- Added bounded read-only scanning for GameMaker Language, C#, C/C++, GDScript, Lua, Godot Shader, HLSL, GLSL, and Unity ShaderLab source files.
-- Added conservative structural diagnostics without executing or modifying project source.
-- Added regression coverage for every supported extension, UI discoverability, malformed source, binary and oversized files, scan truncation, and telemetry privacy.
+---
 
-## 0.3.0
+## [Unreleased] — Plug-in branch
 
-- Added a mandatory secure-learning readiness gate before candidate-evidence intake or any learning mutation.
-- Added one-time project setup that verifies and stores the project ID, trusted public RS256 OIDC policy, exact OIDC subject, and SHA-256 commitment to the supplied ephemeral transport key without persisting the key or token.
-- Bound every later OIDC/weekly transport action to stored trust configuration and required the supplied ephemeral key to match the configured commitment.
+### Added — Perplexity Plugin (config-gated)
 
-## 0.2.0
+- `perplexity-plugin/README.md` — Perplexity remote MCP connector setup,
+  security model, permitted-tool list, and self-routing policy documentation.
+- `perplexity-plugin/.env.example` — All required env vars. `AI_COLLABORATION_BASE_URL`
+  is intentionally blank by default; the AI Collaboration adapter remains **disabled**
+  until that value is set.
+- `perplexity-plugin/connector-contract.json` — Streamable HTTP registration
+  metadata for Perplexity custom remote connectors.
+- `perplexity-plugin/ai-collaboration-adapter.js` — Thin config-gated adapter
+  over the existing AI Collaboration `/mcp` and `/v1/chat/completions` surfaces.
+  Injects `_origin.provider = 'perplexity'` and `selfRouting` metadata so the
+  council can enforce the self-routing policy without any changes to the
+  AI Collaboration codebase.
+- `perplexity-plugin/perplexity.test.js` — Regression tests: tool-list parity,
+  no-argument rule, forbidden-tool exclusion, config-gate enforcement, and
+  self-routing default.
 
-- Added Web Crypto weekly transport with trusted RS256 OIDC verification, HKDF-SHA256 project-key derivation, AES-256-GCM authenticated encryption, exact identity/envelope binding, and no master-key persistence.
-- Added hosted parity verification against canonical `main` states, mandatory gates, and prohibited-promotion kinds.
+### Not changed
 
-## 0.1.0
+- `chatgpt-mcp/server.js` — **unchanged**
+- `chatgpt-mcp/stdio.js` — **unchanged**
+- `chatgpt-mcp/server.test.js` — **unchanged**
+- `chatgpt-mcp/stdio.test.js` — **unchanged**
+- Canonical governance on `main` — **unchanged**
+- Crucible learning/research search path — **unchanged and not exposed to Perplexity**
 
-- Added project-isolated candidate-evidence and verified-knowledge stores.
-- Added separate fail-closed hypothesis, controlled-experiment, causal-confirmation, independent-verification, promotion, retrieval, quarantine/rejection, and rollback actions.
-- Prevented raw telemetry, correlation, retrieval, repetition, guesses, incomplete observations, untested hypotheses, and one-off repairs from promotion.
-- Added exact claim/boundary enforcement, contradiction quarantine, versioned knowledge, proof digests, and rollback.
-- Kept telemetry explicitly non-evidentiary and weekly transport fail-closed while no trusted plugin transport was present.
+### Policy decisions recorded
 
-## 0.0.1
-
-- Initial standalone Nexus plugin package.
-- Plugin files live at the `Plug-in` branch root.
-- Shared Crucible governance is referenced from the canonical default `main` branch instead of duplicated.
-- Auto Inject writes one reference manifest only and remains opt-in with confirmation.
-- Project-specific governance is managed as a local overlay under `governingDocuments/`.
-- Runtime capability set is limited to Nexus UI slots, project workspace read/write, and telemetry.
+- `PERPLEXITY_SELF_ROUTING=exclude_origin_provider` is the enforced default.
+  Perplexity-originated AI Collaboration council requests will not include the
+  Perplexity provider to prevent circular self-corroboration.
+- AI Collaboration integration is **config-gated**: the adapter is a no-op
+  unless `AI_COLLABORATION_BASE_URL` is explicitly set.
+- Perplexity connects to the existing `chatgpt-mcp` HTTPS `/mcp` endpoint.
+  No new MCP server or RPC implementation was created.
