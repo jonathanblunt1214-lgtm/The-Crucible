@@ -100,7 +100,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-11T01:29:36Z"
+    "lastActionAt": "2026-09-11T01:35:02Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -338,12 +338,15 @@
       "Validate non-circularly against a third-party PDF, which exposed the required ASCII85+Flate filter chain.",
       "Wire it as a third tier after both external tiers and report every failed tier in a total failure.",
       "Register the module in the digestive system, the test in the code category and the pinned classification list, and code all four throw sites as CRU-0041, lowering the uncoded baseline from 583 to 581.",
-      "Record that the AI council could not review this change because it has zero configured providers, and that two review subagents died on a rate limit before reporting."
+      "Record that the AI council could not review this change because it has zero configured providers, and that two review subagents died on a rate limit before reporting.",
+      "Diagnose Archive commit db00dfe deleting 14 of 15 Devlog-Pruned snapshots: spawnSync with no maxBuffer hit the 1 MiB default once the ledger passed 1,028,531 bytes, and archiveLedgerAt reported the failed read as an empty ledger.",
+      "Make archiveLedgerAt fail closed on a failed read while still treating a genuinely absent file as empty, raise the git stdout limit to 256 MiB, and prove the regression catches the defect by reverting only the source.",
+      "Restore the 14 destroyed snapshots from d540a97 and append this session snapshot on top."
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-11T00:50:00Z",
-    "lastUpdatedAt": "2026-09-11T01:29:36Z",
-    "currentStep": "Extraction tier verified locally; pushed to development. Retention still blocked on the owner-declared claim scope."
+    "lastUpdatedAt": "2026-09-11T01:35:02Z",
+    "currentStep": "Extraction tier pushed at 3e97bb9. Archiver data-loss defect repaired and the 14 destroyed Devlog-Pruned snapshots restored."
   },
   "handoffNotes": {
     "completed": [
@@ -427,7 +430,8 @@
       "Plugin commands, hook, and README rewritten to defer to canonical governance instead of restating branch policy, the DEVLOG format, or the research bounds.",
       "ai-collaboration published as a second plugin from the same marketplace without modifying the AI-collaboration- repository.",
       "In-process PDF extraction tier added and wired after the existing pdftotext and pypdf tiers, so extraction no longer requires an external binary.",
-      "CRU-0041 registered and the uncoded throw-site baseline lowered from 583 to 581."
+      "CRU-0041 registered and the uncoded throw-site baseline lowered from 583 to 581.",
+      "DEVLOG archiver no longer rewrites Devlog-Pruned from scratch when the ledger cannot be read; the 14 snapshots it destroyed are restored."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -510,7 +514,8 @@
       "validateDevlogChainOfCustody reports ok on the updated DEVLOG.md at 10 of 10 sessions with none older than 180 days.",
       "node --test test/pdfTextExtraction.test.js 8/8; npm run test:all 788/789 with test/semanticAnalysis.test.js proven pre-existing by stashing all changes and re-running on the unmodified checkout.",
       "Extraction validated against a third-party PDF at 10 pages and 4,486 characters with correct page attribution, not only against a self-generated fixture.",
-      "All twelve audits and git diff --check exit 0."
+      "All twelve audits and git diff --check exit 0.",
+      "test/devlogPruneArchive.test.js 6/6, including a regression proven to fail against the unfixed source and pass against the fixed one, asserting no blob write and no push occur when the ledger is unreadable."
     ],
     "remaining": [
       "Repair or otherwise resolve the Oversight return-vetted-data failure without weakening independent validation, encryption, signing, project isolation, or custody. The current step exits 1 after validating both encrypted manifests and before merged ciphertext publication.",
@@ -528,7 +533,8 @@
       "The AI Collaboration remote MCP service is not wired into the plugin; it needs a deployed base URL and its bearer token must stay a runtime secret.",
       "Retention is unchanged by this work: learning-scope-declarations.json is still empty, so the promotion gate stays shut until the owner declares a claim scope. Better extraction feeds the funnel; the declaration is the valve.",
       "The AI council remains unusable for review until provider credentials are configured; its own readiness tool reports all six providers configured=false.",
-      "test/semanticAnalysis.test.js fails on hosts with no .NET toolchain; pre-existing and unchanged by this work."
+      "test/semanticAnalysis.test.js fails on hosts with no .NET toolchain; pre-existing and unchanged by this work.",
+      "Any Devlog-Pruned snapshot taken by the archiver between db00dfe and this repair is unaffected, but confirm no other automated writer reads a growing governed file through a default-limited stdout buffer."
     ],
     "open": [
       "Why Oversight return-vetted-data exits 1 after decrypting and validating both manifests but before its signing and publication step; current logs expose no more specific stderr.",

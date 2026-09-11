@@ -8,6 +8,11 @@ const { crucibleError } = require('./failureCodes');
 const SHA_PATTERN = /^[0-9a-f]{40}$/i;
 const ZERO_SHA = /^0{40}$/;
 
+// The ledger grows without bound by design - its retention floor is time, not count -
+// so stdout must never be the thing that limits reading it. Node's default maxBuffer is
+// 1 MiB; the ledger crossed that and the archiver silently rewrote history from scratch.
+const GIT_STDOUT_LIMIT = 256 * 1024 * 1024;
+
 function git(args, options = {}) {
   const result = spawnSync('git', args, {
     cwd: options.cwd || process.cwd(),
@@ -15,6 +20,7 @@ function git(args, options = {}) {
     shell: false,
     input: options.input,
     env: options.env || process.env,
+    maxBuffer: GIT_STDOUT_LIMIT,
   });
   if (result.status !== 0 && !options.allowFailure) {
     const detail = (result.stderr || result.stdout || 'git command failed').trim();
@@ -54,9 +60,17 @@ function collectPruneSnapshots(baseSha, headSha, runGit = git) {
   return snapshots;
 }
 
+// Fail closed. A read that failed for any reason other than "the file is not on that ref"
+// must not be reported as an empty ledger: appending to "" rewrites the file and deletes
+// every snapshot it held. That is how 14 snapshots were lost once the ledger passed the
+// old 1 MiB stdout limit, and the archiver still reported success.
 function archiveLedgerAt(archiveHead, runGit = git) {
   const result = runGit(['show', `${archiveHead}:Devlog-Pruned`], { allowFailure: true });
-  return result.status === 0 ? result.stdout : '';
+  if (result.status === 0) return result.stdout;
+  const detail = `${result.stderr || ''}`;
+  const absent = /does not exist|exists on disk, but not in|path .* does not exist/i.test(detail);
+  if (absent) return '';
+  throw crucibleError('CRU-0038', `Refusing to rewrite Devlog-Pruned: reading ${archiveHead}:Devlog-Pruned failed (${(result.error && result.error.message) || detail.trim() || `git exited ${result.status}`}). An unreadable ledger is never an empty ledger.`);
 }
 
 function createArchiveCommit(archiveHead, ledger, headSha, runGit = git) {
