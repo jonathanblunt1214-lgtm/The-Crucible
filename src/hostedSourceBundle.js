@@ -164,7 +164,25 @@ function verifyRestored({ root, repository, ref, reportFile, provenance = 'raw-i
   if (!['oversight-vetted','raw-intake'].includes(provenance)) throw new Error(`Corpus provenance must be recorded as oversight-vetted or raw-intake, not ${provenance}.`);
   const manifest = JSON.parse(fs.readFileSync(path.join(root,'manifest.json'),'utf8'));
   validateIdentity(manifest.projectId, repository, ref);
-  if (sha256File(path.join(root,'source-queue.json')) !== manifest.queueSha256) throw new Error('Restored queue hash mismatch.');
+  const queueFile = path.join(root, 'source-queue.json');
+  const queueSha256 = sha256File(queueFile);
+  // A bare "hash mismatch" is unactionable from a hosted log: it cannot distinguish a queue whose
+  // CONTENT differs from the published one (the publisher shipped something else, which is a custody
+  // failure) from a queue that is semantically identical but serialized differently (key order,
+  // indentation, trailing newline - which is a contract gap between publisher and consumer, because
+  // this check is byte-exact over a non-canonical encoding). Those need opposite repairs and only
+  // the failing run can tell them apart, so it reports what it saw. The check still fails closed and
+  // is not weakened: bytes must match exactly. Hashes and counts only - never queue content.
+  if (queueSha256 !== manifest.queueSha256) {
+    let shape = 'unparseable as JSON';
+    try {
+      const restored = JSON.parse(fs.readFileSync(queueFile, 'utf8'));
+      const documents = Array.isArray(restored.documents) ? restored.documents.length : 'absent';
+      const links = Array.isArray(restored.links) ? restored.links.length : 'absent';
+      shape = `${documents} documents and ${links} links`;
+    } catch (error) { shape = `unparseable as JSON (${error.message})`; }
+    throw new Error(`Restored queue hash mismatch. Expected ${manifest.queueSha256}, restored file hashes to ${queueSha256} at ${fs.statSync(queueFile).size} bytes carrying ${shape}. Equal counts with unequal hashes indicate a serialization contract gap rather than different content.`);
+  }
   if (sha256File(path.join(root,manifest.learningFile)) !== manifest.learningSha256) throw new Error('Restored learning-store hash mismatch.');
   for (const source of manifest.sourceFiles) if (sha256File(path.join(root,'sources',source.name)) !== source.sha256) throw new Error(`Restored source hash mismatch: ${source.name}`);
   const queue=JSON.parse(fs.readFileSync(path.join(root,'source-queue.json'),'utf8'));

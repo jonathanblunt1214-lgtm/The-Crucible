@@ -182,7 +182,7 @@
   "activePlan": {
     "agent": "Claude",
     "objective": "Remove the external-binary dependency from PDF claim extraction by adding an in-process third tier, so extraction throughput stops being a property of one workstation, without relaxing any governed bound.",
-    "currentPrompt": "shut up and do it right and if you can\u2019t don\u2019t change a fucking , even",
+    "currentPrompt": "shut up and do it right and if you can’t don’t change a fucking , even",
     "executionMode": {
       "mode": "regular/default",
       "agent": "Claude",
@@ -341,12 +341,17 @@
       "Record that the AI council could not review this change because it has zero configured providers, and that two review subagents died on a rate limit before reporting.",
       "Diagnose Archive commit db00dfe deleting 14 of 15 Devlog-Pruned snapshots: spawnSync with no maxBuffer hit the 1 MiB default once the ledger passed 1,028,531 bytes, and archiveLedgerAt reported the failed read as an empty ledger.",
       "Make archiveLedgerAt fail closed on a failed read while still treating a genuinely absent file as empty, raise the git stdout limit to 256 MiB, and prove the regression catches the defect by reverting only the source.",
-      "Restore the 14 destroyed snapshots from d540a97 and append this session snapshot on top."
+      "Restore the 14 destroyed snapshots from d540a97 and append this session snapshot on top.",
+      "[done, Claude 2026-09-11] Made the hosted proof's corpus-restore refusal diagnostic. 'Restored queue hash mismatch.' is thrown for two problems needing opposite repairs - publisher shipped different content, or identical content serialized differently against a byte-exact check over a non-canonical format - and the bare string distinguishes neither. It now reports expected hash, actual hash, byte size and document/link counts. Hashes and counts only; never queue content.",
+      "[verified, Claude 2026-09-11] The check is not weakened: byte-identical queues still pass, and all three failure modes still refuse. Proven against four constructed bundles and committed as a regression test in test/hostedSourceBundle.test.js. Suite 802/802, up from 801, one test added and none removed or weakened; all fourteen gates pass.",
+      "[note, Claude 2026-09-11] This does NOT fix R4 and does not make the corpus readable. It converts the next hosted run into the evidence needed to decide whose repair it is. The bundle cannot be opened from this session because CRUCIBLE_VETTED_BUNDLE_KEY is not held here and must not be.",
+      "[open, owner] R3's zero-URL result is a network-egress refusal, not a reasoning failure: Google returns HTTP 403 to the data-centre address. Of the four governed providers, openai, anthropic and nvidia-nim are chat/completions endpoints only; perplexity's endpoint performs retrieval server-side and returns citations, so it is the one credible alternative discovery path. It needs PERPLEXITY_API_KEY in GitHub Secrets - none of the four provider credentials is present in the environment, verified.",
+      "[open, owner] Recorded rather than taken: using multi-provider agreement as corroboration would make R5-R8 green while learning nothing, and is forbidden by the coordinator's own rule that model agreement is evidence, not authority. Two models agreeing is not two independent sources observing. Multi-AI belongs on the reviewing and challenging side of the gate, not the supplying side."
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-11T00:50:00Z",
-    "lastUpdatedAt": "2026-09-11T01:35:02Z",
-    "currentStep": "Extraction tier pushed at 3e97bb9. Archiver data-loss defect repaired and the 14 destroyed Devlog-Pruned snapshots restored."
+    "lastUpdatedAt": "2026-09-11T02:02:00Z",
+    "currentStep": "The hosted proof's corpus-restore refusal now carries evidence, so the next run says whether the queue mismatch is different content or different encoding. R4 remains blocked and owner/Oversight-scoped. R3 needs PERPLEXITY_API_KEY for a discovery path that is not IP-blocked; no provider credential is currently present."
   },
   "handoffNotes": {
     "completed": [
