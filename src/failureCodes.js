@@ -528,6 +528,18 @@ const FAILURE_CODES = Object.freeze({
       forbidden: 'Never report the partial run as successful, discard its completed search results, or rerun discovery solely to hide an extraction failure.',
     },
   },
+  'CRU-0041': {
+    code: 'CRU-0041',
+    category: 'learning-blockage',
+    meaning: 'In-process PDF text extraction could not read a source document, so no text was returned rather than partial or guessed text entering the corpus.',
+    next: 'Read the carried reason. An encrypted document needs a decrypted copy; an image-only scan needs OCR; an unsupported filter or unmapped composite font needs the pdftotext or pypdf tier on a host that has it. Never register text the extractor did not actually read.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run learning:extract-readiness',
+      verifyWith: { tests: ['test/pdfTextExtraction.test.js', 'test/claimExtractionWorker.test.js'] },
+      forbidden: 'Never substitute empty, partial, or reconstructed text for a document that could not be read, and never mark the source extracted.',
+    },
+  },
   'CRU-0022': {
     code: 'CRU-0022',
     category: 'diagnosis-coverage',
