@@ -120,3 +120,47 @@ test('a chunk name that is not a plain filename in its own directory is refused 
   assert.throws(() => joinEncrypted({ inputRoot, output: path.join(root, 'joined.enc') }), /not a plain filename/);
   assert.equal(fs.existsSync(path.join(root, 'joined.enc')), false, 'nothing is written for a manifest that names a file outside its directory');
 });
+
+// A bare "hash mismatch" cannot be acted on from a hosted log, and the hosted proof has been
+// failing on exactly that string. Different content and identical-content-different-encoding need
+// opposite repairs - one is a custody failure by the publisher, the other a serialization contract
+// gap between publisher and consumer - so the failure has to carry enough to tell them apart.
+test('a restored queue hash mismatch reports enough to tell different content from different encoding', () => {
+  const repository = 'owner/repo'; const ref = 'refs/heads/development';
+  const sha = (file) => crypto.createHash('sha256').update(fs.readFileSync(file)).digest('hex');
+  const queue = { schemaVersion: 1, projectId: `github:${repository}`, documents: [{ id: 'd1' }, { id: 'd2' }], links: [{ id: 'l1' }] };
+
+  const build = (rewrite) => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), 'queue-mismatch-'));
+    fs.mkdirSync(path.join(root, 'sources'));
+    const queueFile = path.join(root, 'source-queue.json');
+    fs.writeFileSync(queueFile, `${JSON.stringify(queue, null, 2)}\n`);
+    const learning = path.join(root, 'learning.json'); fs.writeFileSync(learning, '{}\n');
+    fs.writeFileSync(path.join(root, 'manifest.json'), `${JSON.stringify({
+      schemaVersion: 1, projectId: `github:${repository}`, ref, queueSha256: sha(queueFile),
+      learningFile: 'learning.json', learningSha256: sha(learning), sourceFiles: [],
+    }, null, 2)}\n`);
+    rewrite(queueFile);
+    return { root, run: () => verifyRestored({ root, repository, ref, reportFile: path.join(root, 'report.json'), provenance: 'oversight-vetted' }) };
+  };
+
+  // Byte-identical still passes: the check is not loosened into a semantic comparison.
+  assert.equal(build(() => {}).run().documents, 2);
+
+  // Same claims, compact encoding. The counts match, which is what says "encoding, not content".
+  const encoding = build((file) => fs.writeFileSync(file, JSON.stringify(JSON.parse(fs.readFileSync(file, 'utf8')))));
+  assert.throws(encoding.run, (error) => {
+    assert.match(error.message, /Restored queue hash mismatch/);
+    assert.match(error.message, /2 documents and 1 links/);
+    assert.match(error.message, /serialization contract gap/);
+    return true;
+  });
+
+  // Genuinely different content reports different counts, so the two cases are distinguishable.
+  const content = build((file) => { const q = JSON.parse(fs.readFileSync(file, 'utf8')); q.documents.push({ id: 'd3' }); fs.writeFileSync(file, `${JSON.stringify(q, null, 2)}\n`); });
+  assert.throws(content.run, /3 documents and 1 links/);
+
+  // An unreadable queue is still a refusal, and says so rather than pretending it counted anything.
+  const corrupt = build((file) => fs.writeFileSync(file, '{not json'));
+  assert.throws(corrupt.run, /unparseable as JSON/);
+});
