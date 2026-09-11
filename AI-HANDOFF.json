@@ -100,7 +100,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-11T01:35:02Z"
+    "lastActionAt": "2026-09-11T03:02:00Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -339,9 +339,9 @@
       "Wire it as a third tier after both external tiers and report every failed tier in a total failure.",
       "Register the module in the digestive system, the test in the code category and the pinned classification list, and code all four throw sites as CRU-0041, lowering the uncoded baseline from 583 to 581.",
       "Record that the AI council could not review this change because it has zero configured providers, and that two review subagents died on a rate limit before reporting.",
-      "Diagnose Archive commit db00dfe deleting 14 of 15 Devlog-Pruned snapshots: spawnSync with no maxBuffer hit the 1 MiB default once the ledger passed 1,028,531 bytes, and archiveLedgerAt reported the failed read as an empty ledger.",
+      "Diagnose Archive commit db00dfe deleting all 15 Devlog-Pruned snapshots: spawnSync with no maxBuffer hit the 1 MiB default once the ledger passed 1,028,531 bytes, and archiveLedgerAt reported the failed read as an empty ledger.",
       "Make archiveLedgerAt fail closed on a failed read while still treating a genuinely absent file as empty, raise the git stdout limit to 256 MiB, and prove the regression catches the defect by reverting only the source.",
-      "Restore the 14 destroyed snapshots from d540a97 and append this session snapshot on top.",
+      "Restore all 15 destroyed snapshots from d540a97 beneath the snapshots the archiver has since written legitimately, rebuilt on the live Archive tip each time it moved and pushed without force: Archive 74e0d9c, 18 snapshots, 3,815 insertions and 0 deletions, only Devlog-Pruned touched.",
       "[done, Claude 2026-09-11] Made the hosted proof's corpus-restore refusal diagnostic. 'Restored queue hash mismatch.' is thrown for two problems needing opposite repairs - publisher shipped different content, or identical content serialized differently against a byte-exact check over a non-canonical format - and the bare string distinguishes neither. It now reports expected hash, actual hash, byte size and document/link counts. Hashes and counts only; never queue content.",
       "[verified, Claude 2026-09-11] The check is not weakened: byte-identical queues still pass, and all three failure modes still refuse. Proven against four constructed bundles and committed as a regression test in test/hostedSourceBundle.test.js. Suite 802/802, up from 801, one test added and none removed or weakened; all fourteen gates pass.",
       "[note, Claude 2026-09-11] This does NOT fix R4 and does not make the corpus readable. It converts the next hosted run into the evidence needed to decide whose repair it is. The bundle cannot be opened from this session because CRUCIBLE_VETTED_BUNDLE_KEY is not held here and must not be.",
@@ -441,7 +441,7 @@
       "ai-collaboration published as a second plugin from the same marketplace without modifying the AI-collaboration- repository.",
       "In-process PDF extraction tier added and wired after the existing pdftotext and pypdf tiers, so extraction no longer requires an external binary.",
       "CRU-0041 registered and the uncoded throw-site baseline lowered from 583 to 581.",
-      "DEVLOG archiver no longer rewrites Devlog-Pruned from scratch when the ledger cannot be read; the 14 snapshots it destroyed are restored."
+      "DEVLOG archiver no longer rewrites Devlog-Pruned from scratch when the ledger cannot be read; all 15 snapshots it destroyed are restored in Archive 74e0d9c, and the restored 1,824,696-byte ledger is itself the proof - it fails ENOBUFS under the old 1 MiB default and reads completely under the shipped 256 MiB bound."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
