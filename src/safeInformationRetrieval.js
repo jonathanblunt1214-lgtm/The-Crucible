@@ -8,6 +8,7 @@ const { stripElements } = require('./htmlTextExtraction');
 const dns = require('node:dns').promises;
 const https = require('node:https');
 const { executableMagic, SUSPICIOUS_BINARY_EXTENSION } = require('./security');
+const { crucibleError } = require('./failureCodes');
 
 const DEFAULT_CONTENT_TYPES = Object.freeze(['text/html', 'application/xhtml+xml', 'text/plain', 'application/pdf', 'application/json']);
 const SOCIAL_MEDIA_DENYLIST = Object.freeze([
@@ -97,18 +98,15 @@ function suspiciousText(buffer, contentType) {
   const text = buffer.toString('utf8', 0, Math.min(buffer.length, 2 * 1024 * 1024));
   return INJECTION_PATTERNS.filter((pattern) => pattern.test(text)).map((pattern) => pattern.source);
 }
-function parseGoogleSearchResults(html, { trustedDomains = [], trustedSuffixes = ['.edu', '.gov', '.org'], extremeVettingSuffixes = ['.science'], deniedDomains = [], newsDomains = NEWS_AGENCY_DOMAINS, maximumResults = 20 } = {}) {
-  if (typeof html !== 'string') throw new Error('Google result HTML must be text.');
+function admitDiscoveryCandidateUrls(values, { trustedDomains = [], trustedSuffixes = ['.edu', '.gov', '.org'], extremeVettingSuffixes = ['.science'], deniedDomains = [], newsDomains = NEWS_AGENCY_DOMAINS, maximumResults = 20 } = {}) {
+  if (!Array.isArray(values)) throw crucibleError('CRU-0042', 'Discovery candidates must be an array.');
   if (!Array.isArray(trustedDomains) || !Array.isArray(trustedSuffixes) || !Array.isArray(extremeVettingSuffixes) || (!trustedDomains.length && !trustedSuffixes.length && !extremeVettingSuffixes.length)) throw new Error('A positive trusted-domain, trusted-suffix, or extreme-vetting-suffix allow-list is required.');
   if (!Number.isSafeInteger(maximumResults) || maximumResults < 1 || maximumResults > 100) throw new Error('maximumResults must be between 1 and 100.');
   const found = [];
   const seen = new Set();
-  const hrefPattern = /href\s*=\s*["']([^"']+)["']/gi;
-  for (const match of html.matchAll(hrefPattern)) {
-    let candidate = match[1].replace(/&amp;/g, '&');
-    if (candidate.startsWith('/url?')) candidate = new URL(candidate, 'https://www.google.com').searchParams.get('q') || '';
+  for (const value of values) {
     let url;
-    try { url = safeUrl(candidate); } catch { continue; }
+    try { url = safeUrl(String(value)); } catch { continue; }
     const host = normalizedHost(url.hostname);
     if (domainMatches(host, 'google.com') || ALWAYS_DENIED_DOMAINS.some((rule) => domainMatches(host, rule)) || deniedDomains.some((rule) => domainMatches(host, rule))) continue;
     const extremeSuffix = extremeVettingSuffixes.some((suffix) => host.endsWith(String(suffix).toLowerCase()));
@@ -122,6 +120,18 @@ function parseGoogleSearchResults(html, { trustedDomains = [], trustedSuffixes =
     if (found.length >= maximumResults) break;
   }
   return found;
+}
+
+function parseGoogleSearchResults(html, options = {}) {
+  if (typeof html !== 'string') throw new Error('Google result HTML must be text.');
+  const candidates = [];
+  const hrefPattern = /href\s*=\s*["']([^"']+)["']/gi;
+  for (const match of html.matchAll(hrefPattern)) {
+    let candidate = match[1].replace(/&amp;/g, '&');
+    if (candidate.startsWith('/url?')) candidate = new URL(candidate, 'https://www.google.com').searchParams.get('q') || '';
+    candidates.push(candidate);
+  }
+  return admitDiscoveryCandidateUrls(candidates, options);
 }
 
 // Resolving once to check and then letting the HTTP client resolve again asks the same question
@@ -239,4 +249,4 @@ class SafeInformationRetriever {
   }
 }
 
-module.exports = { DEFAULT_CONTENT_TYPES, pinnedLookup, pinnedHttpsRequest, INJECTION_PATTERNS, SOCIAL_MEDIA_DENYLIST, NEWS_AGENCY_DOMAINS, privateAddress, safeUrl, sanitizeHtml, parseGoogleSearchResults, RetrievalAuditStore, SafeInformationRetriever };
+module.exports = { DEFAULT_CONTENT_TYPES, pinnedLookup, pinnedHttpsRequest, INJECTION_PATTERNS, SOCIAL_MEDIA_DENYLIST, NEWS_AGENCY_DOMAINS, privateAddress, safeUrl, sanitizeHtml, admitDiscoveryCandidateUrls, parseGoogleSearchResults, RetrievalAuditStore, SafeInformationRetriever };

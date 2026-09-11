@@ -138,8 +138,10 @@ test('claim extraction reports every tier that failed instead of only the last',
 test('a working external tier still wins, so existing hosts are unaffected', (t) => {
   const file = tempFile(t, flatePdf());
   const source = { id: 'doc:3', durablePath: file, mediaType: 'application/pdf' };
-  // Stand in for pdftotext with a command that succeeds and prints a marker.
-  const text = defaultExtractText(source, 1, 1, { CRUCIBLE_PDFTOTEXT: 'echo' });
+  // Inject the process boundary itself. `echo` is a shell builtin or PowerShell alias on
+  // some hosts rather than an executable, so using it made this test platform-dependent.
+  const spawn = (_executable, arguments_) => ({ status: 0, stdout: arguments_.join(' '), stderr: '' });
+  const text = defaultExtractText(source, 1, 1, { CRUCIBLE_PDFTOTEXT: 'test-pdftotext' }, spawn);
   assert.match(text, /source\.pdf/);
   assert.doesNotMatch(text, /Kestrel/);
 });

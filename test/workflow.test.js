@@ -200,6 +200,22 @@ test('GitHub hosts encrypted restart-safe R4-R8 proof without production authori
   assert.doesNotMatch(workflow, /contents: write|pull-requests: write|issues: write/);
 });
 
+test('daily Perplexity discovery retains a candidate-only holding queue without state-repository authority', () => {
+  const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'perplexity-research.yml'), 'utf8');
+  assert.match(workflow, /cron: '30 11 \* \* \*'/);
+  assert.match(workflow, /permissions:\s*\n\s*contents: read/);
+  assert.match(workflow, /ref: development/);
+  assert.match(workflow, /CRUCIBLE_PERPLEXITY_MAX_QUERIES: '50'/);
+  assert.match(workflow, /PERPLEXITY_API_KEY: \$\{\{ secrets\.PERPLEXITY_API_KEY \}\}/);
+  assert.match(workflow, /PERPLEXITY_MODEL: \$\{\{ secrets\.PERPLEXITY_MODEL \}\}/);
+  assert.match(workflow, /actions\/cache\/restore@0057852bfaa89a56745cba8c7296529d2fc39830/);
+  assert.match(workflow, /actions\/cache\/save@0057852bfaa89a56745cba8c7296529d2fc39830/);
+  assert.match(workflow, /learning:perplexity-research-init/);
+  assert.match(workflow, /learning:perplexity-research/);
+  assert.match(workflow, /source-queue\.json/);
+  assert.doesNotMatch(workflow, /Crucible-(Vetted-)?Learning-State|git\s+push|contents: write|pull-requests: write|issues: write/);
+});
+
 test('GitHub verifies owner queue ciphertext without receiving a decryption key or plaintext', () => {
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'hosted-source-bootstrap.yml'), 'utf8');
   assert.match(workflow, /branches:\s*\n\s*- development/);

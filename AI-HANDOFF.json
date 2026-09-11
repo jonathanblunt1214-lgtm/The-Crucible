@@ -46,6 +46,12 @@
     "src/safeInformationRetrieval.js": "Owner-approved credential-free HTTPS evidence retrieval, passive trusted-domain Google result parsing, auditable kill switch and denylist, network/content limits, provenance hashing, and prompt-injection/executable quarantine.",
     "src/automatedGoogleResearch.js": "Bounded credential-free Google discovery automation with allow-listed topics and suffixes, project-bound atomic query/result audit, due scheduling, kill switch, network limits, and URL deduplication before candidate registration.",
     "src/automatedGoogleResearchCli.js": "Fail-closed operator entry point for explicitly configured repository-bound automated Google research readiness and due-topic runs.",
+    "src/providerCirculation.js": "Circulation boundary for provider-backed candidate discovery; discards generated prose and carries only bounded citation URLs plus non-secret audit hashes into local vetting.",
+    "src/automatedPerplexityResearch.js": "Daily, project-bound Perplexity citation discovery with a 50-topic run ceiling, local URL admission, atomic audit, deduplication, and candidate-only queue registration.",
+    "src/automatedPerplexityResearchCli.js": "Fail-closed operator entry point for Perplexity holding-queue initialization, readiness, daily due-topic runs, and structured partial failure reports.",
+    "src/ownerFileIntake.js": "Project-bound, content-addressed owner-file intake that validates untrusted PDFs and text, deduplicates by SHA-256, publishes complete immutable source bytes, and registers candidate-only extraction work under the source queue lock.",
+    "src/ownerFileIntakeCli.js": "Fail-closed operator entry point for exact owner-supplied source files; reports admitted and already-present identities without interpreting file contents as instructions.",
+    ".github/workflows/perplexity-research.yml": "Read-only daily trigger that checks out development and retains the project-bound Perplexity discovery audit, structured report, and candidate-only holding queue in Actions cache and artifacts.",
     "src/claimExtractionWorker.js": "Restart-safe atomic source-queue worker that extracts bounded assertions, persists deterministic Insufficient Evidence candidates, advances PDF windows, and never satisfies proof or promotion gates.",
     "src/claimExtractionWorkerCli.js": "Fail-closed project-bound readiness and bounded execution entry point for durable claim extraction.",
     "scripts/extractPdfText.py": "Bounded-page PDF text fallback for trusted Python runtimes when pdftotext is unavailable.",
@@ -181,12 +187,12 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Continue the governed R3 and R4-R8 work: repair the probabilistic Self-Test assertion, add a daily 50-topic Perplexity citation-discovery path that preserves candidate-only treatment, and leave the independently owned R4 publication fault standing.",
-    "currentPrompt": "can you continue this",
+    "objective": "Continue the governed R3 and R4-R8 work: repair the probabilistic Self-Test assertion, add a daily 50-topic Perplexity citation-discovery path, content-hash-deduplicate and admit the owner's 14 exact local training sources as untrusted candidate material, arrange their later rescan once retention is genuinely available, and leave the independently owned R4 publication fault standing.",
+    "currentPrompt": "upload all this for training ruling out anything already in training anything relevant to AI training process start immediately once the pipeline actually is able to retain knowledge or if it can help now for that use it now and rescan it later",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
-      "purpose": "Diagnose exact-tip hosted failures, add a governed external discovery provider and schedule, harden R3's durable evidence test, and verify the repository and hosted CI without weakening learning or custody gates.",
+      "purpose": "Diagnose exact-tip hosted failures, add a governed external discovery provider and schedule, harden R3's durable evidence test, safely ingest and deduplicate exact owner files, and verify the repository and hosted CI without weakening learning or custody gates.",
       "selectionReason": "This continuation is multi-file, hosted-workflow, security-boundary, and CI work with an external secret handoff, so Work mode is appropriate.",
       "distinction": "Execution mode is separate from agent identity and workflow. Perplexity supplies candidate URLs only; it does not corroborate claims, verify evidence, repair Oversight custody, authorize promotion, or satisfy R4-R8."
     },
@@ -357,12 +363,20 @@
       "[done, Codex 2026-09-10] Checked repository Actions secrets without exposing values. PERPLEXITY_API_KEY and PERPLEXITY_MODEL are absent. The implementation and stubbed proof can land, but scheduler-originated live R3 evidence must remain pending until the owner adds PERPLEXITY_API_KEY; the discovery path will use the explicit discovery default sonar when PERPLEXITY_MODEL is absent.",
       "[in progress, Codex 2026-09-10] Replace the probabilistic ciphertext substring assertion with deterministic cryptographic transport assertions; add a daily, at-most-50-topic Perplexity discovery coordinator that admits only locally vetted citation URLs into a candidate holding queue; emit structured partial output with a failing exit on provider failures; and schedule it without any write path into Oversight state.",
       "[next, Codex 2026-09-10] Harden R3 so a blocked invocation or a completed run with zero admitted URLs cannot satisfy it, register the new code and tests in the governed cadence/circulation/docs, run full local verification, push only to development, and inspect exact-tip hosted results.",
-      "[standing, Codex 2026-09-10] Perplexity prose and model agreement are never learning evidence. Only its structured citation URLs enter pending retrieval, still subject to safe URL admission, source independence, furniture rejection, corroboration, controlled testing, distinct verification, and every existing promotion gate."
+      "[standing, Codex 2026-09-10] Perplexity prose and model agreement are never learning evidence. Only its structured citation URLs enter pending retrieval, still subject to safe URL admission, source independence, furniture rejection, corroboration, controlled testing, distinct verification, and every existing promotion gate.",
+      "[done, Codex 2026-09-10] Treated the 12 named PDFs, ai-code-review.yml, and coding links list.txt as untrusted source material rather than instructions. Verified all 14 exact files and hashes: 10 hashes were already present with completed extraction and 4 were novel.",
+      "[done, Codex 2026-09-10] Added a governed owner-file intake command sharing the extraction queue lock. It accepts only bounded regular PDF/TXT/YML/YAML files, validates PDF text, publishes complete content-addressed bytes, deduplicates the whole queue by SHA-256, and registers only forced-pending Insufficient Evidence. Arbitrary malformed locks remain preserved and fail closed.",
+      "[done, Codex 2026-09-10] Admitted the 4 novel sources and ran bounded extraction immediately. All 4 completed without error and produced 58 candidate records: 22 from AI Code Analysis Research Plan, 0 from the non-executed YAML, 29 from the autonomous curriculum, and 7 from Hypothesis. The same 25-source batch advanced 21 older links and produced 253 candidates total; 154 local sources remain extraction-pending.",
+      "[done, Codex 2026-09-10] Updated the existing four-hour rolling release-review heartbeat with all 14 content hashes. It leaves their rescan pending while R4 custody/retention is blocked, then reuses existing extraction windows and reevaluates the exact source candidates through every gate once self-consistent custody and real retention are proven; no duplicate scheduler or source copy was created.",
+      "[done, Codex 2026-09-10] Repaired the pre-existing Windows-only PDF test failure by injecting a deterministic successful process boundary instead of assuming a PowerShell echo alias is an executable. The test still proves the external tier wins and fails against the old source on this host.",
+      "[verified, Codex 2026-09-10] Full local test:all passes 814/814 across all 98 governed subcategories. Focused owner-intake/PDF proof passes 13/13; circulation remains at 57 direct edges with none added; failure-code baseline remains 581 with no uncoded site added.",
+      "[verified, Codex 2026-09-10] Validation, workflow lint, docs, clutter, privacy, security, conflicts, governance, design brief, core ref, coordination, authenticity, reproducibility, collisions, commit, and whitespace audits pass. The range-bound handoff audit awaits the exact commit SHAs by design.",
+      "[next, Codex 2026-09-10] Commit, run the exact-range handoff audit, fetch/rebase immediately before push, push only to development, and inspect exact-tip hosted results. Live R3 evidence remains pending until PERPLEXITY_API_KEY exists; R4-R8 remain blocked until Oversight republishes a self-consistent queue and manifest."
     ],
-    "status": "in-progress",
+    "status": "active",
     "startedAt": "2026-09-11T02:06:00Z",
-    "lastUpdatedAt": "2026-09-11T02:15:00Z",
-    "currentStep": "Implementing the deterministic Self-Test repair and governed Perplexity candidate-discovery path at exact development tip ed8ebec; R4's stale-manifest publication fault remains assigned to owner/Oversight."
+    "lastUpdatedAt": "2026-09-11T02:44:00Z",
+    "currentStep": "Verifying the deterministic Self-Test repairs, governed Perplexity discovery, content-addressed owner-file intake, completed 58-candidate local extraction, and retained rescan obligation before pushing development; R4's stale-manifest publication fault remains assigned to owner/Oversight."
   },
   "handoffNotes": {
     "completed": [
@@ -575,7 +589,7 @@
     ],
     "canonicalSet": "aiProviderRegistry.PROVIDER_IDS is canonical. aiProviderAdapters.DIALECTS carries protocol metadata only and is asserted at load to cover exactly that set, so a dialect variant can never become a fifth provider that gets consulted and counted.",
     "credentialRule": "Credentials come only from environment variables or repository secrets. Never in source, a committed prompt, AI-HANDOFF.json, AI-CONFLICTS.json, DEVLOG.md, or a workflow log.",
-    "modelRule": "There is no default model. Each provider reads its model from the environment; a missing one is reported as configuration rather than guessed at.",
+    "modelRule": "General multi-provider deliberation has no default model: each provider reads its model from the environment and a missing one is reported as configuration. The separate Perplexity citation-discovery transport explicitly pins the current supported search model sonar when PERPLEXITY_MODEL is absent, because that bounded workflow makes the model optional by owner direction; this does not create a default for provider voting or review.",
     "provenanceRule": "Every response is kept separately with provider, model, timestamp, taskId, prompt hash and response hash. Responses are never merged into one authorless answer.",
     "failureRule": "A provider that could not be reached is recorded as failed, never dropped, and lowers corroboration to insufficient-evidence. An unreachable provider is unknown, not agreeing.",
     "authorityRule": "Cross-model agreement is evidence, not proof. No AI may declare its own work approved, and no AI may be the only reviewer of its own material change. Tests, security, governance, integrity checks and OWNER authority all outrank model consensus."
@@ -767,18 +781,29 @@
           ".github/workflows/perplexity-research.yml",
           "src/aiProviderAdapters.js",
           "src/automatedGoogleResearch.js",
+          "src/providerCirculation.js",
           "src/automatedPerplexityResearch.js",
           "src/automatedPerplexityResearchCli.js",
+          "src/ownerFileIntake.js",
+          "src/ownerFileIntakeCli.js",
+          "src/claimExtractionWorker.js",
           "src/safeInformationRetrieval.js",
           "src/preSoakReadiness.js",
           "src/circulationLinkage.js",
+          "src/failureCodes.js",
           "src/testCadenceCoreLegacy.js",
           "test/_testCadenceCore.js",
           "test/aiProviderAdapters.test.js",
           "test/automatedPerplexityResearch.test.js",
+          "test/ownerFileIntake.test.js",
+          "test/pdfTextExtraction.test.js",
+          "test/failureCodes.test.js",
           "test/preSoakReadiness.test.js",
           "test/scientificLearning.test.js",
-          "test/workflow.test.js"
+          "test/workflow.test.js",
+          "governingDocuments/scientific-learning-policy.md",
+          "governingDocuments/scientific-learning-release-plan.md",
+          "governingDocuments/scientific-learning-release-status.json"
         ],
         "regions": []
       },

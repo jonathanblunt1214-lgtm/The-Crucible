@@ -80,7 +80,7 @@ test('Anthropic: x-api-key, pinned version header, and content-block extraction'
   assert.equal(result.model, 'served-anthropic');
 });
 
-test('Perplexity: bearer auth, and citations are retained as evidence', async () => {
+test('Perplexity: bearer auth, and citations are retained only for downstream vetting', async () => {
   const { calls, fetchImpl } = transport(() => ok({ ...CHAT_PAYLOAD, citations: ['https://example.org/spec'] }));
   const result = await createProviderAdapter('perplexity', { env: FULL_ENV, fetchImpl }).run({ prompt: 'question' });
   assert.equal(calls[0].url, 'https://api.perplexity.ai/chat/completions');

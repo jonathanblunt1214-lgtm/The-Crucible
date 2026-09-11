@@ -24,14 +24,18 @@ function evaluateR2(queue) {
     : gate('R2', 'Extraction worker', 'satisfied', `all ${sources.length} queued sources have left the extraction backlog; the forced-interruption restart proof is covered permanently by test/durableLock.test.js`);
 }
 
-// R3: one real bounded discovery run is recorded in the research audit.
+// R3: one real bounded discovery run admitted at least one locally governed URL. A blocked
+// invocation still increments a topic's run counter, and a completed provider request may yield
+// zero admissible URLs; neither is evidence that live discovery reached the candidate queue.
 function evaluateR3(research) {
   const topics = research.topics || [];
-  const completed = topics.filter((item) => Number(item.runs || 0) > 0);
-  if (!topics.length) return gate('R3', 'Live Google discovery', 'pending', 'no research audit state was supplied, so no bounded discovery run is recorded');
-  return completed.length
-    ? gate('R3', 'Live Google discovery', 'satisfied', `${completed.length} of ${topics.length} topics have completed at least one real bounded run, with ${(research.discoveredUrls || []).length} URLs registered`)
-    : gate('R3', 'Live Google discovery', 'pending', `${topics.length} topics are registered but none has completed a run yet`);
+  const audit = Array.isArray(research.auditLog) ? research.auditLog : [];
+  const discoveredUrls = Array.isArray(research.discoveredUrls) ? research.discoveredUrls : [];
+  const admitted = audit.filter((item) => item?.state === 'completed' && Number(item.discovered || 0) > 0);
+  if (!topics.length) return gate('R3', 'Live governed discovery', 'pending', 'no research audit state was supplied, so no bounded discovery run is recorded');
+  return admitted.length && discoveredUrls.length
+    ? gate('R3', 'Live governed discovery', 'satisfied', `${admitted.length} completed bounded run(s) admitted candidate URLs, with ${discoveredUrls.length} unique URLs registered`)
+    : gate('R3', 'Live governed discovery', 'pending', `${topics.length} topics are registered, but no completed run has admitted a candidate URL`);
 }
 
 // R4: at least one candidate carries a complete provenance chain, which is what proves a

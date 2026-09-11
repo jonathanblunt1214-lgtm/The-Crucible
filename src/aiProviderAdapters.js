@@ -60,8 +60,9 @@ function parseAnthropic(payload) {
 function parseChatCompletion(payload) {
   const choice = Array.isArray(payload?.choices) ? payload.choices[0] : null;
   const text = String(choice?.message?.content || '').trim();
-  // Perplexity returns the sources it used. They are real evidence and are carried through rather
-  // than discarded, because a claim with its sources is worth more than the same claim without.
+  // Perplexity returns source references. They are preserved as candidate citations, never as
+  // proof: callers must retrieve and vet the underlying sources independently before a citation
+  // can become evidence of any claim.
   const citations = Array.isArray(payload?.citations) ? payload.citations.map((item) => String(item)) : [];
   return { text, model: payload?.model || null, evidence: citations };
 }
