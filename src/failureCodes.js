@@ -540,6 +540,30 @@ const FAILURE_CODES = Object.freeze({
       forbidden: 'Never substitute empty, partial, or reconstructed text for a document that could not be read, and never mark the source extracted.',
     },
   },
+  'CRU-0042': {
+    code: 'CRU-0042',
+    category: 'learning-blockage',
+    meaning: 'Governed Perplexity citation discovery or its project-bound holding state was invalid, blocked, or only partially completed.',
+    next: 'Read the structured report, preserve completed topic outcomes and candidate ids, verify the key, model, kill switch, project identity, state integrity, and source admission rules, then retry only the blocked due work.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run learning:perplexity-research-readiness',
+      verifyWith: { tests: ['test/automatedPerplexityResearch.test.js'] },
+      forbidden: 'Never turn provider prose into evidence, admit an unvetted citation, discard completed partial results, reset the holding state, or report a partially blocked run as successful.',
+    },
+  },
+  'CRU-0043': {
+    code: 'CRU-0043',
+    category: 'learning-intake',
+    meaning: 'An exact owner-supplied source could not be safely admitted or deduplicated under the project-bound extraction queue lock.',
+    next: 'Read the carried file, type, hash, queue, or lock reason. Preserve the source bytes and queue, correct only the named condition, then retry the exact intake command.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run learning:intake-owner-files -- <exact-file> [exact-file ...]',
+      verifyWith: { tests: ['test/ownerFileIntake.test.js', 'test/claimExtractionWorker.test.js'] },
+      forbidden: 'Never execute source content, bypass content-hash deduplication, overwrite a content-addressed source, delete a malformed lock, or register material outside the project-bound candidate queue.',
+    },
+  },
   'CRU-0022': {
     code: 'CRU-0022',
     category: 'diagnosis-coverage',

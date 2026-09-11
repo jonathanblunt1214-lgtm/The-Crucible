@@ -60,18 +60,18 @@ function containedSourcePath(corpusRoot, source) {
 // stopping. Every tier's failure is preserved in the final message, because losing the
 // pdftotext or pypdf diagnosis would make a real toolchain fault look like a parser
 // limitation.
-function defaultExtractText(source, pageStart, pageEnd, environment = process.env) {
+function defaultExtractText(source, pageStart, pageEnd, environment = process.env, spawn = spawnSync) {
   if (!source.durablePath || !fs.existsSync(source.durablePath)) throw new Error('Durable source content is missing.');
   if (source.mediaType === 'application/pdf') {
     const attempts = [];
     const executable = environment.CRUCIBLE_PDFTOTEXT || 'pdftotext';
-    const result = spawnSync(executable, ['-f', String(pageStart), '-l', String(pageEnd), '-enc', 'UTF-8', source.durablePath, '-'], { encoding:'utf8', shell:false, windowsHide:true, maxBuffer:8 * 1024 * 1024 });
+    const result = spawn(executable, ['-f', String(pageStart), '-l', String(pageEnd), '-enc', 'UTF-8', source.durablePath, '-'], { encoding:'utf8', shell:false, windowsHide:true, maxBuffer:8 * 1024 * 1024 });
     if (!result.error && result.status === 0) return result.stdout;
     attempts.push(`pdftotext: ${result.error?.message || `exited ${result.status}`}`);
 
     const python = environment.CRUCIBLE_PYTHON;
     if (python) {
-      const fallback = spawnSync(python, [path.join(__dirname, '..', 'scripts', 'extractPdfText.py'), source.durablePath, String(pageStart), String(pageEnd)], { encoding:'utf8', shell:false, windowsHide:true, maxBuffer:8 * 1024 * 1024 });
+      const fallback = spawn(python, [path.join(__dirname, '..', 'scripts', 'extractPdfText.py'), source.durablePath, String(pageStart), String(pageEnd)], { encoding:'utf8', shell:false, windowsHide:true, maxBuffer:8 * 1024 * 1024 });
       if (!fallback.error && fallback.status === 0) return fallback.stdout;
       attempts.push(`pypdf: ${fallback.error ? fallback.error.message : `exited ${fallback.status}: ${String(fallback.stderr || '').trim()}`}`);
     } else {

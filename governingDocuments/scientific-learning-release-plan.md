@@ -19,7 +19,7 @@ The scientific-learning system remains on `development`. A rolling forecast is n
 | --- | --- | --- |
 | R1 Architecture | Durable scientific state machine, safe retrieval, automated Google discovery, monthly refresh, versioning, and rollback are implemented and locally/hosted green. | Passed at `55d3c60bb8034067e643cd39636784a19b991660`. |
 | R2 Extraction worker | A real worker consumes `claim-extraction-forced-pending`, increments attempts, persists bounded candidate IDs, and resumes safely after interruption. | In progress: live batches reduced forced web sources from 393 to 288, advanced all seven PDFs to page 11, and persisted candidate IDs without promotion. Restart proof remains pending. |
-| R3 Live Google discovery | The scheduled executable search completes one real bounded run, records its query audit, rejects disallowed results, and atomically registers only novel `.edu`, `.org`, or `.gov` URLs. | Pending first scheduled run. |
+| R3 Live governed discovery | A scheduled executable discovery provider completes one real bounded run, records its audit, rejects disallowed results, and atomically registers only novel `.edu`, `.org`, or `.gov` URLs. Provider prose, citations alone, and model agreement are not evidence. | Pending a scheduled run that admits at least one governed candidate URL. |
 | R4 End-to-end candidate | At least one real source proceeds from search or owner ingest through safe retrieval, provenance hashing, bounded claim extraction, deduplication, and candidate custody. | Pending. |
 | R5 Independent verification | At least one low-risk claim persists a hash-bound pre-result hypothesis/test-variable plan, then completes controls, causal isolation where applicable, negative/regression tests, deterministic scope proof, contradiction analysis, and a distinct verifier against that unchanged plan. | Pending; zero verified knowledge versions. |
 | R6 Verified-only retrieval | The active verified version is retrieved and used within its tested boundary while unverified and superseded records remain unavailable. | Pending live proof. |
@@ -32,7 +32,7 @@ The scientific-learning system remains on `development`. A rolling forecast is n
 ## Ordered execution plan
 
 1. Connect and verify the claim-extraction worker; process a small bounded batch before scaling.
-2. Complete the first scheduled automated Google run and verify its audit and queue effects.
+2. Complete the first scheduled governed discovery run and verify that its audit records at least one locally admitted candidate URL and the atomic holding queue contains the same pending-retrieval entry.
 3. Select one low-risk testable claim from real candidate evidence and execute the full independent scientific pipeline.
 4. Prove active-only retrieval, then rollback or supersede that test claim and verify retrieval changes.
 5. Exercise live safety and deduplication cases without weakening gates or using private source contents.

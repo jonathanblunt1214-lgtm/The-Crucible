@@ -66,6 +66,8 @@ const TEST_MAIN_CATEGORIES = {
   ],
   security: [
     'test/automatedGoogleResearch.test.js',
+    'test/automatedPerplexityResearch.test.js',
+    'test/ownerFileIntake.test.js',
     'test/aiProviderAdapters.test.js',
     'test/aiProviderRegistry.test.js',
     'test/apiGuard.test.js',

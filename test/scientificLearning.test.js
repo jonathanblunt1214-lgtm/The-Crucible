@@ -185,10 +185,16 @@ test('learning by doing fails closed on missing custody proof, unknown fields, a
   assert.throws(() => new LearningExperienceRecorder({ store, projectId:'project-b' }), /same project identity/);
 });
 
-test('weekly learning transport is encrypted, authenticated, and project bound', () => {
-  const masterKey = crypto.randomBytes(32); const payload = { schemaVersion:1, projectId:'project-a', week:'2026-W35', candidateEvidence:[{ id:'c-1' }], verifiedKnowledge:[] };
+test('weekly learning transport is encrypted, authenticated, and project bound', (t) => {
+  const masterKey = Buffer.alloc(32, 0x33); const payload = { schemaVersion:1, projectId:'project-a', week:'2026-W35', candidateEvidence:[{ id:'c-1' }], verifiedKnowledge:[] };
+  t.mock.method(crypto, 'randomBytes', () => Buffer.alloc(12, 0x5a));
   const envelope = encryptWeeklyEnvelope(payload, { masterKey, projectId:'project-a', repository:'owner/repo-a', week:'2026-W35', oidcSubject:'repo:owner/repo-a:ref:refs/heads/development' });
-  assert.doesNotMatch(envelope.ciphertext, /c-1/);
+  // Random Base64URL may contain any short plaintext token by chance; matching three encoded
+  // characters is not evidence of plaintext leakage. A fixed key and IV make the actual AES-GCM
+  // bytes deterministic, while the bound decrypt and tamper checks below prove the inverse path.
+  assert.equal(envelope.iv, 'WlpaWlpaWlpaWlpa');
+  assert.equal(envelope.ciphertext, 'L-tlMy4jEk5rsiPrpsYqKp76_D4uqrzEAcYlq4er1hdaS8l0QXvOcKq2lnKKPzi2bwH94AzM_KjJlZhFRnDNDz-6NsIofxrEhNZGDSgY7xzDOkBY_2o5g6zDzY_lBDY7lq3OrOgblMiXHZ1qAIrPyRXeZUNNklw');
+  assert.equal(envelope.tag, '-dlXnKTDTzPXUAjsZvyaog');
   assert.deepEqual(decryptWeeklyEnvelope(envelope, { masterKey, expectedProjectId:'project-a', expectedRepository:'owner/repo-a', expectedWeek:'2026-W35', expectedOidcSubject:'repo:owner/repo-a:ref:refs/heads/development' }), payload);
   assert.throws(() => decryptWeeklyEnvelope(envelope, { masterKey, expectedProjectId:'project-b', expectedRepository:'owner/repo-a', expectedWeek:'2026-W35', expectedOidcSubject:'repo:owner/repo-a:ref:refs/heads/development' }), /binding mismatch/);
   const tamperedBytes = Buffer.from(envelope.ciphertext, 'base64url'); tamperedBytes[0] ^= 1;

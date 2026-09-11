@@ -3,6 +3,7 @@ const dns = require('node:dns').promises;
 const fs = require('node:fs');
 const path = require('node:path');
 const { parseGoogleSearchResults, privateAddress } = require('./safeInformationRetrieval');
+const { crucibleError } = require('./failureCodes');
 
 const DEFAULT_RESEARCH_INTERVAL_MS = 24 * 60 * 60 * 1000;
 const MAXIMUM_QUERIES_PER_RUN = 50;
@@ -143,12 +144,23 @@ class AtomicSourceQueueCandidateSink {
   register(candidate) {
     if (typeof candidate?.url !== 'string' || candidate.classification !== 'Insufficient Evidence') throw new Error('Only bounded Insufficient Evidence URL candidates may be registered.');
     const url = new URL(candidate.url); if (url.protocol !== 'https:') throw new Error('Only HTTPS candidates may be registered.');
+    const method = candidate.discoveredBy || 'automated-google-discovery';
+    const methods = {
+      'automated-google-discovery': 'google-research',
+      'automated-perplexity-discovery': 'perplexity-research',
+    };
+    if (!methods[method]) throw crucibleError('CRU-0042', 'Candidate discovery method is not governed.');
+    const hash = /^[a-f0-9]{64}$/i;
+    if (method === 'automated-google-discovery' && !hash.test(String(candidate.querySha256 || ''))) throw crucibleError('CRU-0042', 'Google discovery requires its exact query hash.');
+    if (method === 'automated-perplexity-discovery' && (candidate.provider !== 'perplexity' || typeof candidate.model !== 'string' || !candidate.model.trim() || !hash.test(String(candidate.promptSha256 || '')) || !hash.test(String(candidate.responseSha256 || '')))) throw crucibleError('CRU-0042', 'Perplexity discovery requires provider, model, prompt hash, and response hash provenance.');
     const queue = JSON.parse(fs.readFileSync(this.file, 'utf8'));
     if (queue?.schemaVersion !== 1 || queue.projectId !== this.projectId || !Array.isArray(queue.links)) throw new Error('Source queue is invalid or belongs to another project.');
     const existing = queue.links.find((item) => item.url === url.toString() || item.finalUrl === url.toString());
     if (existing) return { created:false, id:existing.id };
-    const discoveredAt = this.now(); const id = `google-research:${sha256(url.toString())}`;
-    queue.links.push({ id, catalogSourceId:null, ordinal:null, url:url.toString(), author:'unknown until retrieved', license:'not declared; verify source terms before redistribution', retrievedAt:null, contentSha256:null, classification:'Insufficient Evidence', state:'research-approved-pending-retrieval', retrievalStartedAt:null, finalUrl:null, httpStatus:null, contentType:null, contentLength:null, durablePath:null, publisher:null, blocker:null, discovery:{ method:'automated-google-discovery', discoveredAt, querySha256:candidate.querySha256 } });
+    const discoveredAt = this.now(); const id = `${methods[method]}:${sha256(url.toString())}`;
+    const discovery = { method, discoveredAt };
+    for (const field of ['querySha256', 'promptSha256', 'responseSha256', 'provider', 'model']) if (candidate[field] != null) discovery[field] = candidate[field];
+    queue.links.push({ id, catalogSourceId:null, ordinal:null, url:url.toString(), author:'unknown until retrieved', license:'not declared; verify source terms before redistribution', retrievedAt:null, contentSha256:null, classification:'Insufficient Evidence', state:'research-approved-pending-retrieval', retrievalStartedAt:null, finalUrl:null, httpStatus:null, contentType:null, contentLength:null, durablePath:null, publisher:null, blocker:null, discovery });
     queue.updatedAt = discoveredAt;
     const temporary = `${this.file}.${process.pid}.${crypto.randomUUID()}.tmp`;
     fs.writeFileSync(temporary, `${JSON.stringify(queue, null, 2)}\n`, { flag:'wx', mode:0o600 }); fs.renameSync(temporary, this.file);

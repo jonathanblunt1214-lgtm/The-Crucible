@@ -16,7 +16,7 @@ const everythingDone = () => ({
     activeVersion: 'v-2',
   },
   queue: { documents: [], links: [{ id: 's-1', state: 'claim-extraction-complete' }] },
-  research: { topics: [{ topic: 'node', runs: 1 }], discoveredUrls: ['https://example.edu/a'] },
+  research: { topics: [{ topic: 'node', runs: 1 }], discoveredUrls: ['https://example.edu/a'], auditLog: [{ topic: 'node', state: 'completed', discovered: 1 }] },
   combinedSafetyEvidence: ALL_EIGHT,
 });
 
@@ -28,10 +28,12 @@ test('R2 tracks the live drain and does not claim the restart proof it does not 
   assert.equal(evaluateR2({}).state, 'unknown', 'an absent queue is unknown, never satisfied');
 });
 
-test('R3 requires a recorded bounded run, not merely a registered topic', () => {
+test('R3 requires a completed bounded run that admitted a governed candidate URL', () => {
   assert.equal(evaluateR3({}).state, 'pending');
   assert.equal(evaluateR3({ topics: [{ topic: 'node', runs: 0 }] }).state, 'pending');
-  assert.equal(evaluateR3({ topics: [{ topic: 'node', runs: 2 }], discoveredUrls: [] }).state, 'satisfied');
+  assert.equal(evaluateR3({ topics: [{ topic: 'node', runs: 2 }], discoveredUrls: [], auditLog: [{ state: 'blocked', discovered: 0 }] }).state, 'pending');
+  assert.equal(evaluateR3({ topics: [{ topic: 'node', runs: 2 }], discoveredUrls: [], auditLog: [{ state: 'completed', discovered: 0 }] }).state, 'pending');
+  assert.equal(evaluateR3({ topics: [{ topic: 'node', runs: 2 }], discoveredUrls: ['https://example.edu/a'], auditLog: [{ state: 'completed', discovered: 1 }] }).state, 'satisfied');
 });
 
 test('R4 requires a complete provenance chain, not merely a candidate record', () => {
