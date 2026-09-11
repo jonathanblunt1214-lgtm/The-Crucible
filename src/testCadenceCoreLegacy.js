@@ -30,6 +30,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/suiteSelection.test.js',
     'test/scientificLearning.test.js',
     'test/claimExtractionWorker.test.js',
+    'test/pdfTextExtraction.test.js',
     'test/monthlyKnowledgeRefresh.test.js',
     'test/languageCatalog.test.js',
     'test/semanticAnalysis.test.js',

@@ -4,6 +4,7 @@ const path = require('node:path');
 const { spawnSync } = require('node:child_process');
 const { DurableScientificLearningStore } = require('./scientificLearning');
 const { acquireDurableLock } = require('./durableLock');
+const { extractPdfTextRange } = require('./pdfTextExtraction');
 const { INJECTION_PATTERNS } = require('./safeInformationRetrieval');
 const { documentFurniture } = require('./documentFurniture');
 const { extractDocumentText } = require('./htmlTextExtraction');
@@ -51,18 +52,38 @@ function containedSourcePath(corpusRoot, source) {
   return resolved;
 }
 
+// Three tiers, tried in order of fidelity. The first two are unchanged: the external
+// `pdftotext` binary, then a configured CRUCIBLE_PYTHON + pypdf script. Previously a
+// host with neither threw, which made extraction throughput a property of one
+// workstation and stalled every PDF source on any other host. The third tier extracts
+// in-process with no external dependency, so extraction degrades in fidelity instead of
+// stopping. Every tier's failure is preserved in the final message, because losing the
+// pdftotext or pypdf diagnosis would make a real toolchain fault look like a parser
+// limitation.
 function defaultExtractText(source, pageStart, pageEnd, environment = process.env) {
   if (!source.durablePath || !fs.existsSync(source.durablePath)) throw new Error('Durable source content is missing.');
   if (source.mediaType === 'application/pdf') {
+    const attempts = [];
     const executable = environment.CRUCIBLE_PDFTOTEXT || 'pdftotext';
     const result = spawnSync(executable, ['-f', String(pageStart), '-l', String(pageEnd), '-enc', 'UTF-8', source.durablePath, '-'], { encoding:'utf8', shell:false, windowsHide:true, maxBuffer:8 * 1024 * 1024 });
     if (!result.error && result.status === 0) return result.stdout;
+    attempts.push(`pdftotext: ${result.error?.message || `exited ${result.status}`}`);
+
     const python = environment.CRUCIBLE_PYTHON;
-    if (!python) throw new Error(`PDF extraction unavailable: ${result.error?.message || `pdftotext exited ${result.status}`}; CRUCIBLE_PYTHON is not configured.`);
-    const fallback = spawnSync(python, [path.join(__dirname, '..', 'scripts', 'extractPdfText.py'), source.durablePath, String(pageStart), String(pageEnd)], { encoding:'utf8', shell:false, windowsHide:true, maxBuffer:8 * 1024 * 1024 });
-    if (fallback.error) throw new Error(`PDF extraction fallback unavailable: ${fallback.error.message}`);
-    if (fallback.status !== 0) throw new Error(`PDF extraction fallback failed with exit ${fallback.status}: ${String(fallback.stderr || '').trim()}`);
-    return fallback.stdout;
+    if (python) {
+      const fallback = spawnSync(python, [path.join(__dirname, '..', 'scripts', 'extractPdfText.py'), source.durablePath, String(pageStart), String(pageEnd)], { encoding:'utf8', shell:false, windowsHide:true, maxBuffer:8 * 1024 * 1024 });
+      if (!fallback.error && fallback.status === 0) return fallback.stdout;
+      attempts.push(`pypdf: ${fallback.error ? fallback.error.message : `exited ${fallback.status}: ${String(fallback.stderr || '').trim()}`}`);
+    } else {
+      attempts.push('pypdf: CRUCIBLE_PYTHON is not configured');
+    }
+
+    try {
+      return extractPdfTextRange(fs.readFileSync(source.durablePath), pageStart, pageEnd);
+    } catch (error) {
+      attempts.push(`in-process: ${error.message}`);
+    }
+    throw new Error(`PDF extraction unavailable for ${source.id}; every tier failed. ${attempts.join(' | ')}`);
   }
   return fs.readFileSync(source.durablePath, 'utf8');
 }

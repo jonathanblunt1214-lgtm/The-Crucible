@@ -100,7 +100,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-10T20:19:27Z"
+    "lastActionAt": "2026-09-11T01:29:36Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -180,15 +180,15 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "Codex",
-    "objective": "Review the governed scientific-learning release plan against current development, scheduler, Worker, Oversight, vetted-custody, and exact-tip hosted evidence; update the rolling forecast without weakening any gate or granting release authority.",
-    "currentPrompt": "Review The Crucible's scientific-learning release plan against the current development branch and real learning evidence every four hours beginning at 4:00 PM America/New_York.",
+    "agent": "Claude",
+    "objective": "Remove the external-binary dependency from PDF claim extraction by adding an in-process third tier, so extraction throughput stops being a property of one workstation, without relaxing any governed bound.",
+    "currentPrompt": "shut up and do it right and if you can\u2019t don\u2019t change a fucking , even",
     "executionMode": {
       "mode": "regular/default",
-      "agent": "Codex",
-      "purpose": "Perform the four-hour rolling release review and record only evidence-backed gate and forecast changes.",
-      "selectionReason": "This is a bounded evidence review and governance-record update; it does not implement learning behavior, weaken a gate, or authorize release.",
-      "distinction": "Execution mode is separate from agent identity and workflow. This review records evidence and does not grant proof, promotion, or release authority."
+      "agent": "Claude",
+      "purpose": "Add one additive src module with its governance registrations and tests.",
+      "selectionReason": "The change is a single new module plus the registrations a new module requires; no gate or bound is altered, so regular/default is sufficient.",
+      "distinction": "Execution mode is separate from agent identity and from workflow: this unit of work adds an extraction tier and grants no proof, promotion, or release authority."
     },
     "steps": [
       "[done, Codex 2026-09-09] Fetched literal origin/development and reviewed exact tip 2bf95fc7620d6c8001afd8396b935bfb0c61f154 from a clean detached worktree; preserved the older dirty development worktree byte-for-byte.",
@@ -331,12 +331,19 @@
       "[done, Codex 2026-09-10] Recorded the first scheduler-originated research evidence: all 16 due topics completed with no blocked searches and extraction produced 85 candidate IDs from 25 queued links, but Google discovered and admitted zero URLs, so R3's live novelty and admission portion remains pending.",
       "[done, Codex 2026-09-10] Recorded Oversight run 34514857456 publishing independently validated candidate-only vetted commit 4c4297f from 26,794 candidates and 534 queued sources. Scheduled Worker run 34522273359 followed it but still processed zero work, so end-to-end throughput remains zero.",
       "[corrected, Codex 2026-09-10] The first review record said no exact-tip proof had yet consumed the new vetted publication. Run 34525272883 started immediately after that record was pushed and has now done so; the record is corrected rather than left stale.",
-      "[verified, Codex 2026-09-10] Exact development SHA 4f0bdb378a15343c310e9e4fa1a5d5f4ea407df6 decrypts the current bundle as oversight-vetted and then fails in hostedSourceBundle verify on the same 'Restored queue hash mismatch.' before corroboration. Successful Oversight publication did not restore valid queue custody, so R4-R8 remain pending and the forecast remains indeterminate."
+      "[verified, Codex 2026-09-10] Exact development SHA 4f0bdb378a15343c310e9e4fa1a5d5f4ea407df6 decrypts the current bundle as oversight-vetted and then fails in hostedSourceBundle verify on the same 'Restored queue hash mismatch.' before corroboration. Successful Oversight publication did not restore valid queue custody, so R4-R8 remain pending and the forecast remains indeterminate.",
+      "Establish that the prior PDF-ingestion work targeted AI-collaboration-, a provider router with no promotion authority, and exclude it from this change.",
+      "Read defaultExtractText and confirm the two-tier pdftotext/pypdf chain throws on hosts with neither.",
+      "Add src/pdfTextExtraction.js: in-process, standard-library-only, page-accurate, fail-closed with a precise reason.",
+      "Validate non-circularly against a third-party PDF, which exposed the required ASCII85+Flate filter chain.",
+      "Wire it as a third tier after both external tiers and report every failed tier in a total failure.",
+      "Register the module in the digestive system, the test in the code category and the pinned classification list, and code all four throw sites as CRU-0041, lowering the uncoded baseline from 583 to 581.",
+      "Record that the AI council could not review this change because it has zero configured providers, and that two review subagents died on a rate limit before reporting."
     ],
     "status": "handoff-ready",
-    "startedAt": "2026-09-10T20:00:53Z",
-    "lastUpdatedAt": "2026-09-10T20:19:27Z",
-    "currentStep": "Exact-tip hosted proof 34525272883 consumed the current vetted custody after the successful Oversight publication and still failed on 'Restored queue hash mismatch.' before corroboration. Oversight or the owner must republish a bundle whose restored queue matches its recorded hash; Crucible remains a read-only consumer and R4-R8 remain pending."
+    "startedAt": "2026-09-11T00:50:00Z",
+    "lastUpdatedAt": "2026-09-11T01:29:36Z",
+    "currentStep": "Extraction tier verified locally; pushed to development. Retention still blocked on the owner-declared claim scope."
   },
   "handoffNotes": {
     "completed": [
@@ -418,7 +425,9 @@
       "Four-hourly governed research Routine created and its approved topics expanded from 16 to the permitted ceiling of 50, verified against the real module.",
       "Claude Code plugin marketplace published on Plug-in at 7d6d1dedff411770398562976b09501495e31653, additive to the Nexus package and its CI.",
       "Plugin commands, hook, and README rewritten to defer to canonical governance instead of restating branch policy, the DEVLOG format, or the research bounds.",
-      "ai-collaboration published as a second plugin from the same marketplace without modifying the AI-collaboration- repository."
+      "ai-collaboration published as a second plugin from the same marketplace without modifying the AI-collaboration- repository.",
+      "In-process PDF extraction tier added and wired after the existing pdftotext and pypdf tiers, so extraction no longer requires an external binary.",
+      "CRU-0041 registered and the uncoded throw-site baseline lowered from 583 to 581."
     ],
     "verification": [
       "At exact development SHA a9002e41412ff48403fc864ab279a328212b2e01, Self-Test run 33389464236 fails across the OS/Node matrix at the critical Code cadence; the sampled Ubuntu/Node 20 log shows 93/94 passing with the sole failure being MODULE_NOT_FOUND for typescript.",
@@ -498,7 +507,10 @@
       "Plug-in CI commands run locally before each push: npm run verify exit 0, npm test 21/21 exit 0, npm run package exit 0, and the workflow runtime-only package assertion passed with no added path in the artifact.",
       "SessionStart hook exercised against a real Crucible checkout and a non-Crucible directory: 32 governing documents enumerated, the branch-qualified Archive:Devlog-Pruned correctly excluded from local-file expansion, exit 0 in both cases.",
       "The 50-topic list proved against the real GoogleResearchStore: all pass boundedTopic, 50 unique after normalisation, the store constructs, a 51st is refused, and fresh topics are immediately due.",
-      "validateDevlogChainOfCustody reports ok on the updated DEVLOG.md at 10 of 10 sessions with none older than 180 days."
+      "validateDevlogChainOfCustody reports ok on the updated DEVLOG.md at 10 of 10 sessions with none older than 180 days.",
+      "node --test test/pdfTextExtraction.test.js 8/8; npm run test:all 788/789 with test/semanticAnalysis.test.js proven pre-existing by stashing all changes and re-running on the unmodified checkout.",
+      "Extraction validated against a third-party PDF at 10 pages and 4,486 characters with correct page attribution, not only against a self-generated fixture.",
+      "All twelve audits and git diff --check exit 0."
     ],
     "remaining": [
       "Repair or otherwise resolve the Oversight return-vetted-data failure without weakening independent validation, encryption, signing, project isolation, or custody. The current step exits 1 after validating both encrypted manifests and before merged ciphertext publication.",
@@ -513,7 +525,10 @@
       "The mandated Devlog-Pruned snapshot on Archive for the pruned session durable autonomous learning from training evidence is prepared but NOT pushed, pending the same authorization.",
       "The four-hourly Routine cannot yield research off owner-custody hardware: Google refuses every search with HTTP 403 from a data-centre address, and the configured Windows store paths do not resolve on a Linux runner.",
       "The Routine cron is UTC-only, so its America/New_York anchor shifts by an hour when EST begins and needs updating then.",
-      "The AI Collaboration remote MCP service is not wired into the plugin; it needs a deployed base URL and its bearer token must stay a runtime secret."
+      "The AI Collaboration remote MCP service is not wired into the plugin; it needs a deployed base URL and its bearer token must stay a runtime secret.",
+      "Retention is unchanged by this work: learning-scope-declarations.json is still empty, so the promotion gate stays shut until the owner declares a claim scope. Better extraction feeds the funnel; the declaration is the valve.",
+      "The AI council remains unusable for review until provider credentials are configured; its own readiness tool reports all six providers configured=false.",
+      "test/semanticAnalysis.test.js fails on hosts with no .NET toolchain; pre-existing and unchanged by this work."
     ],
     "open": [
       "Why Oversight return-vetted-data exits 1 after decrypting and validating both manifests but before its signing and publication step; current logs expose no more specific stderr.",
