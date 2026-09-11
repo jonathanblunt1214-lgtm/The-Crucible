@@ -100,7 +100,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-11T03:02:00Z"
+    "lastActionAt": "2026-09-11T02:15:00Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -180,15 +180,15 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "Claude",
-    "objective": "Remove the external-binary dependency from PDF claim extraction by adding an in-process third tier, so extraction throughput stops being a property of one workstation, without relaxing any governed bound.",
-    "currentPrompt": "shut up and do it right and if you can’t don’t change a fucking , even",
+    "agent": "Codex",
+    "objective": "Continue the governed R3 and R4-R8 work: repair the probabilistic Self-Test assertion, add a daily 50-topic Perplexity citation-discovery path that preserves candidate-only treatment, and leave the independently owned R4 publication fault standing.",
+    "currentPrompt": "can you continue this",
     "executionMode": {
-      "mode": "regular/default",
-      "agent": "Claude",
-      "purpose": "Add one additive src module with its governance registrations and tests.",
-      "selectionReason": "The change is a single new module plus the registrations a new module requires; no gate or bound is altered, so regular/default is sufficient.",
-      "distinction": "Execution mode is separate from agent identity and from workflow: this unit of work adds an extraction tier and grants no proof, promotion, or release authority."
+      "mode": "work",
+      "agent": "Codex",
+      "purpose": "Diagnose exact-tip hosted failures, add a governed external discovery provider and schedule, harden R3's durable evidence test, and verify the repository and hosted CI without weakening learning or custody gates.",
+      "selectionReason": "This continuation is multi-file, hosted-workflow, security-boundary, and CI work with an external secret handoff, so Work mode is appropriate.",
+      "distinction": "Execution mode is separate from agent identity and workflow. Perplexity supplies candidate URLs only; it does not corroborate claims, verify evidence, repair Oversight custody, authorize promotion, or satisfy R4-R8."
     },
     "steps": [
       "[done, Codex 2026-09-09] Fetched literal origin/development and reviewed exact tip 2bf95fc7620d6c8001afd8396b935bfb0c61f154 from a clean detached worktree; preserved the older dirty development worktree byte-for-byte.",
@@ -351,12 +351,18 @@
       "[done, Claude 2026-09-11] Made the next run settle it outright rather than leaving it at an inference. stage() is the only writer of a published queue and writes exactly one encoding - two-space JSON with a trailing newline - so the runner now reports whether the restored bytes are that encoding. In canonical form means the publisher hashed different content; not in canonical form means the publisher re-serialized what stage() produced. Proven by a regression test where identical counts reach opposite verdicts.",
       "[corrected, Claude 2026-09-11] I inferred from the 534-source count match that the queue mismatch was a serialization gap rather than a custody failure, and told the owner so. Wrong. The run at 9f4541f reports the restored queue is in stage() canonical form, so the published hash was taken over different content. The discriminator was built so the answer would not rest on that inference, and it overturned it.",
       "[finding, Claude 2026-09-11] The fault is an internally inconsistent published bundle. The queue file is in the exact form stage() writes, so stage() wrote it, but the manifest shipped beside it records queueSha256 96f13274cf8c57d717e6f581cbe3c38bdcb6d52ad7e56a5fac51fd18eeefb50e which does not describe it. Manifest and queue are from different stage runs, or the queue was regenerated after the manifest was written. The 534 sources still match the published count, so the corpus is plausibly intended and the manifest is the stale half.",
-      "[blocked, owner/Oversight] The repair is to republish with a manifest whose queueSha256 is computed over the queue actually shipped. Not Crucible's: AGENTS.md forbids writing to the learning state repository and Crucible is a read-only consumer of vetted custody. R4 through R8 stay blocked until the bundle is self-consistent, and the corroboration counts remain unobservable until then."
+      "[blocked, owner/Oversight] The repair is to republish with a manifest whose queueSha256 is computed over the queue actually shipped. Not Crucible's: AGENTS.md forbids writing to the learning state repository and Crucible is a read-only consumer of vetted custody. R4 through R8 stay blocked until the bundle is self-consistent, and the corroboration counts remain unobservable until then.",
+      "[done, Codex 2026-09-10] Diagnosed the isolated Self-Test PR failure at 9f4541f. test/scientificLearning.test.js rejected any randomized Base64URL ciphertext containing the three characters c-1; the failing ciphertext happened to contain rc-1O. The same SHA's push run passed all nine legs, proving a probabilistic assertion rather than a third product defect. Current tip still contains the latent flake.",
+      "[done, Codex 2026-09-10] Confirmed exact development tip ed8ebece87302005c57e09cb3c99309970908783 is otherwise green in both push and pull-request Self-Test matrices and CodeQL. Prove R4-R8 alone remains red on the already diagnosed internally inconsistent vetted bundle.",
+      "[done, Codex 2026-09-10] Checked repository Actions secrets without exposing values. PERPLEXITY_API_KEY and PERPLEXITY_MODEL are absent. The implementation and stubbed proof can land, but scheduler-originated live R3 evidence must remain pending until the owner adds PERPLEXITY_API_KEY; the discovery path will use the explicit discovery default sonar when PERPLEXITY_MODEL is absent.",
+      "[in progress, Codex 2026-09-10] Replace the probabilistic ciphertext substring assertion with deterministic cryptographic transport assertions; add a daily, at-most-50-topic Perplexity discovery coordinator that admits only locally vetted citation URLs into a candidate holding queue; emit structured partial output with a failing exit on provider failures; and schedule it without any write path into Oversight state.",
+      "[next, Codex 2026-09-10] Harden R3 so a blocked invocation or a completed run with zero admitted URLs cannot satisfy it, register the new code and tests in the governed cadence/circulation/docs, run full local verification, push only to development, and inspect exact-tip hosted results.",
+      "[standing, Codex 2026-09-10] Perplexity prose and model agreement are never learning evidence. Only its structured citation URLs enter pending retrieval, still subject to safe URL admission, source independence, furniture rejection, corroboration, controlled testing, distinct verification, and every existing promotion gate."
     ],
-    "status": "handoff-ready",
-    "startedAt": "2026-09-11T00:50:00Z",
-    "lastUpdatedAt": "2026-09-11T02:42:00Z",
-    "currentStep": "R4's fault is now precisely identified and handed off: the published bundle is internally inconsistent - queue in stage() canonical form, manifest queueSha256 taken over different content. Owner/Oversight repair. Next: build the governed Perplexity discovery path for R3, which needs PERPLEXITY_API_KEY to be proven live."
+    "status": "in-progress",
+    "startedAt": "2026-09-11T02:06:00Z",
+    "lastUpdatedAt": "2026-09-11T02:15:00Z",
+    "currentStep": "Implementing the deterministic Self-Test repair and governed Perplexity candidate-discovery path at exact development tip ed8ebec; R4's stale-manifest publication fault remains assigned to owner/Oversight."
   },
   "handoffNotes": {
     "completed": [
@@ -744,6 +750,43 @@
       "acquiredAt": "2026-09-10T20:19:22.533Z",
       "handedOffTo": null,
       "releasedAt": "2026-09-10T20:20:27.385Z"
+    },
+    {
+      "taskId": "perplexity-r3-discovery-and-self-test-repair-20260910",
+      "owner": {
+        "provider": "openai",
+        "model": "gpt-5",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "README.md",
+          "package.json",
+          ".github/workflows/perplexity-research.yml",
+          "src/aiProviderAdapters.js",
+          "src/automatedGoogleResearch.js",
+          "src/automatedPerplexityResearch.js",
+          "src/automatedPerplexityResearchCli.js",
+          "src/safeInformationRetrieval.js",
+          "src/preSoakReadiness.js",
+          "src/circulationLinkage.js",
+          "src/testCadenceCoreLegacy.js",
+          "test/_testCadenceCore.js",
+          "test/aiProviderAdapters.test.js",
+          "test/automatedPerplexityResearch.test.js",
+          "test/preSoakReadiness.test.js",
+          "test/scientificLearning.test.js",
+          "test/workflow.test.js"
+        ],
+        "regions": []
+      },
+      "purpose": "Repair the random ciphertext assertion and add a daily, 50-topic, candidate-only Perplexity citation discovery path with structured failing partial reports and no Oversight write authority.",
+      "status": "active",
+      "acquiredAt": "2026-09-11T02:15:00Z",
+      "handedOffTo": null,
+      "releasedAt": null
     }
   ]
 }
