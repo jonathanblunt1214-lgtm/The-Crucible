@@ -152,7 +152,17 @@ test('a restored queue hash mismatch reports enough to tell different content fr
   assert.throws(encoding.run, (error) => {
     assert.match(error.message, /Restored queue hash mismatch/);
     assert.match(error.message, /2 documents and 1 links/);
-    assert.match(error.message, /serialization contract gap/);
+    assert.match(error.message, /publisher encoding gap/);
+    return true;
+  });
+
+  // The discriminator is the encoding itself, not the counts: a queue still in stage()'s canonical
+  // form whose published hash disagrees means the publisher hashed different content, and that is
+  // the opposite repair. Same counts as the case above, opposite verdict.
+  const contentAtSameCounts = build((file) => { const q = JSON.parse(fs.readFileSync(file, 'utf8')); q.documents[0].id = 'renamed'; fs.writeFileSync(file, `${JSON.stringify(q, null, 2)}\n`); });
+  assert.throws(contentAtSameCounts.run, (error) => {
+    assert.match(error.message, /2 documents and 1 links/);
+    assert.match(error.message, /published hash was taken over different content/);
     return true;
   });
 

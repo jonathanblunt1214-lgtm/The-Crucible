@@ -175,13 +175,23 @@ function verifyRestored({ root, repository, ref, reportFile, provenance = 'raw-i
   // is not weakened: bytes must match exactly. Hashes and counts only - never queue content.
   if (queueSha256 !== manifest.queueSha256) {
     let shape = 'unparseable as JSON';
+    let encoding = 'undetermined';
     try {
-      const restored = JSON.parse(fs.readFileSync(queueFile, 'utf8'));
+      const raw = fs.readFileSync(queueFile, 'utf8');
+      const restored = JSON.parse(raw);
       const documents = Array.isArray(restored.documents) ? restored.documents.length : 'absent';
       const links = Array.isArray(restored.links) ? restored.links.length : 'absent';
       shape = `${documents} documents and ${links} links`;
+      // stage() is the only writer of a published queue and it writes exactly one encoding:
+      // two-space JSON with a trailing newline. So whether the restored bytes ARE that encoding
+      // decides which side to repair, and decides it here rather than by inspection of a bundle
+      // nobody can open without the key. In canonical form means the publisher hashed different
+      // CONTENT; not in canonical form means the publisher re-serialized what stage() produced.
+      encoding = raw === `${JSON.stringify(restored, null, 2)}\n`
+        ? 'in stage() canonical form, so the published hash was taken over different content'
+        : 're-serialized away from stage() canonical form, so this is a publisher encoding gap';
     } catch (error) { shape = `unparseable as JSON (${error.message})`; }
-    throw new Error(`Restored queue hash mismatch. Expected ${manifest.queueSha256}, restored file hashes to ${queueSha256} at ${fs.statSync(queueFile).size} bytes carrying ${shape}. Equal counts with unequal hashes indicate a serialization contract gap rather than different content.`);
+    throw new Error(`Restored queue hash mismatch. Expected ${manifest.queueSha256}, restored file hashes to ${queueSha256} at ${fs.statSync(queueFile).size} bytes carrying ${shape}, ${encoding}.`);
   }
   if (sha256File(path.join(root,manifest.learningFile)) !== manifest.learningSha256) throw new Error('Restored learning-store hash mismatch.');
   for (const source of manifest.sourceFiles) if (sha256File(path.join(root,'sources',source.name)) !== source.sha256) throw new Error(`Restored source hash mismatch: ${source.name}`);
