@@ -200,10 +200,37 @@ function groupCorroborating(entries, options = {}) {
   const buckets = new Map();
   for (const { entry, fingerprint } of ordered) {
     const key = incompatibilityKey(fingerprint);
-    if (!buckets.has(key)) buckets.set(key, []);
+    if (!buckets.has(key)) buckets.set(key, { groups: [], postings: new Map() });
     const bucket = buckets.get(key);
+    const threshold = options.minimumOverlap === undefined ? DEFAULT_MINIMUM_OVERLAP : options.minimumOverlap;
+    // A group can pass Jaccard overlap only if its representative shares enough terms with this
+    // claim. Build that exact intersection count through an inverted index, then run the original
+    // full decision on the surviving groups in creation order. This changes no judgement or
+    // first-match semantics; it only avoids asking the expensive question of groups that
+    // mathematically cannot reach the configured threshold.
+    let candidates;
+    if (Number.isFinite(threshold) && threshold > 0) {
+      const intersections = new Map();
+      for (const term of fingerprint.terms) {
+        for (const groupIndex of bucket.postings.get(term) || []) {
+          intersections.set(groupIndex, (intersections.get(groupIndex) || 0) + 1);
+        }
+      }
+      candidates = [...intersections]
+        .filter(([groupIndex, shared]) => {
+          const otherTerms = bucket.groups[groupIndex].fingerprint.terms.length;
+          return shared / (otherTerms + fingerprint.terms.length - shared) >= threshold;
+        })
+        .map(([groupIndex]) => groupIndex)
+        .sort((a, b) => a - b);
+    } else {
+      // Preserve the exhaustive algorithm's edge-case behaviour for zero, negative, or malformed
+      // thresholds rather than silently redefining configuration while optimizing normal runs.
+      candidates = bucket.groups.map((_, index) => index);
+    }
     let placed = false;
-    for (const group of bucket) {
+    for (const groupIndex of candidates) {
+      const group = bucket.groups[groupIndex];
       const decision = compareFingerprints(group.fingerprint, fingerprint, options);
       if (decision.corroborates) {
         group.members.push({ ...entry, match: decision });
@@ -214,7 +241,12 @@ function groupCorroborating(entries, options = {}) {
     if (!placed) {
       const group = { claim: entry.claim, fingerprint, members: [{ ...entry, match: null }] };
       groups.push(group);
-      bucket.push(group);
+      const groupIndex = bucket.groups.length;
+      bucket.groups.push(group);
+      for (const term of fingerprint.terms) {
+        if (!bucket.postings.has(term)) bucket.postings.set(term, []);
+        bucket.postings.get(term).push(groupIndex);
+      }
     }
   }
   return groups.map(({ claim, members }) => ({ claim, members }));

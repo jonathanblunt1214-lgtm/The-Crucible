@@ -96,7 +96,7 @@ class AtomicClaimExtractionQueue {
 }
 
 class ClaimExtractionWorker {
-  constructor({ queueFile, projectId, learningRoot, corpusRoot = null, extractText = defaultExtractText, now = () => new Date().toISOString(), maximumSources = 25, maximumDocuments = 9, pdfPagesPerBatch = 20 }) {
+  constructor({ queueFile, projectId, learningRoot, corpusRoot = null, extractText = defaultExtractText, now = () => new Date().toISOString(), maximumSources = 25, maximumDocuments = 9, pdfPagesPerBatch = 20, sourceId = null }) {
     if (!projectId || !learningRoot) throw new Error('Repository-bound projectId and learningRoot are required.');
     if (!Number.isSafeInteger(maximumSources) || maximumSources < 1 || maximumSources > 100) throw new Error('maximumSources must be between 1 and 100.');
     if (!Number.isSafeInteger(maximumDocuments) || maximumDocuments < 1 || maximumDocuments > maximumSources) throw new Error('maximumDocuments must be between 1 and maximumSources.');
@@ -104,7 +104,7 @@ class ClaimExtractionWorker {
     // The trusted corpus root: the directory the queue itself lives in unless the caller names a
     // different one. Every source path is resolved against it and may not leave it.
     this.corpusRoot = path.resolve(corpusRoot || path.dirname(path.resolve(queueFile)));
-    this.queue = new AtomicClaimExtractionQueue(queueFile, projectId); this.store = new DurableScientificLearningStore({ projectId, root:path.resolve(learningRoot) }); this.projectId = projectId; this.extractText = extractText; this.now = now; this.maximumSources = maximumSources; this.maximumDocuments = maximumDocuments; this.pdfPagesPerBatch = pdfPagesPerBatch;
+    this.queue = new AtomicClaimExtractionQueue(queueFile, projectId); this.store = new DurableScientificLearningStore({ projectId, root:path.resolve(learningRoot) }); this.projectId = projectId; this.extractText = extractText; this.now = now; this.maximumSources = maximumSources; this.maximumDocuments = maximumDocuments; this.pdfPagesPerBatch = pdfPagesPerBatch; this.sourceId = sourceId ? String(sourceId).trim() : null;
   }
 
   candidate(source, assertion, boundary, createdAt) {
@@ -120,8 +120,9 @@ class ClaimExtractionWorker {
     try {
       let queue = this.queue.read();
       const isEligible = (item) => item.state === 'claim-extraction-forced-pending' || item.state === 'claim-extraction-in-progress';
-      const eligibleDocuments = queue.documents.filter(isEligible).slice(0, this.maximumDocuments);
-      const eligibleLinks = queue.links.filter(isEligible).slice(0, Math.max(0, this.maximumSources - eligibleDocuments.length));
+      const inScope = (item) => (!this.sourceId || item.id === this.sourceId) && isEligible(item);
+      const eligibleDocuments = queue.documents.filter(inScope).slice(0, this.maximumDocuments);
+      const eligibleLinks = queue.links.filter(inScope).slice(0, Math.max(0, this.maximumSources - eligibleDocuments.length));
       const eligible = [...eligibleDocuments, ...eligibleLinks];
       for (const selected of eligible) {
         const collection = queue.documents.some((item) => item.id === selected.id) ? queue.documents : queue.links;

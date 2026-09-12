@@ -22,7 +22,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const { boundedAssertions } = require('./claimExtractionWorker');
+const { boundedAssertions, defaultExtractText, normalizedClaimSha256 } = require('./claimExtractionWorker');
+const { crucibleError } = require('./failureCodes');
 const { semanticallyCorroborates } = require('./semanticCorroboration');
 const { sourceIndex, independent } = require('./sourceIndependence');
 
@@ -31,7 +32,7 @@ const sha256 = (value) => crypto.createHash('sha256').update(value).digest('hex'
 
 // Bundled sources record durablePath relative to the bundle root; a source staged in place may
 // still hold an absolute one. Either way the content must hash to what the queue recorded.
-function readSourceContent(bundleRoot, source) {
+function verifySourceCustody(bundleRoot, source) {
   const declared = String(source.durablePath || '').replaceAll('\\', '/');
   if (!declared) throw new Error(`Source ${source.id} has no stored content path.`);
   const file = path.isAbsolute(declared) ? declared : path.join(bundleRoot, declared);
@@ -43,15 +44,39 @@ function readSourceContent(bundleRoot, source) {
   const sourcesRoot = path.resolve(bundleRoot, 'sources');
   if (resolved !== sourcesRoot && !resolved.startsWith(`${sourcesRoot}${path.sep}`)) throw new Error(`Source ${source.id} declares content outside the corpus: ${declared}.`);
   if (!fs.existsSync(resolved)) throw new Error(`Source ${source.id} has no restored content at ${declared}.`);
-  const content = fs.readFileSync(resolved, 'utf8');
+  const bytes = fs.readFileSync(resolved);
   const recorded = String(source.contentSha256 || '').toLowerCase();
   // The hash is required, not merely checked when present. A pairing is the one place owner
   // judgement reaches the corpus, and it reaches it by source id; without a recorded hash the
   // bytes behind that id are whatever is on disk now, so unhashed content could become
   // corroboration on nothing but a filename.
   if (!/^[0-9a-f]{64}$/.test(recorded)) throw new Error(`Source ${source.id} has no recorded content hash, so its content cannot be corroboration.`);
-  if (sha256(content) !== recorded) throw new Error(`Source ${source.id} content does not match the hash the queue recorded.`);
-  return content;
+  if (sha256(bytes) !== recorded) throw new Error(`Source ${source.id} content does not match the hash the queue recorded.`);
+  return { bytes, resolved, recorded };
+}
+
+function readSourceContent(bundleRoot, source, { extractText = defaultExtractText } = {}) {
+  const { bytes, resolved } = verifySourceCustody(bundleRoot, source);
+  if ((source.mediaType || source.contentType) === 'application/pdf') {
+    const pages = Number(source.pages);
+    if (!Number.isSafeInteger(pages) || pages < 1) throw crucibleError('CRU-0026', `PDF source ${source.id} has no bounded page count for corroboration.`);
+    return extractText({ ...source, durablePath: resolved, mediaType:'application/pdf' }, 1, pages);
+  }
+  return bytes.toString('utf8');
+}
+
+function extractedAssertion(records, source, sentence) {
+  if (!Array.isArray(records)) return null;
+  const wanted = normalize(sentence);
+  const listed = new Set(source.claimExtraction?.candidateIds || []);
+  const expectedId = `extracted-${sha256(`${source.id}\n${normalizedClaimSha256(sentence)}`).slice(0, 32)}`;
+  const record = records.find((item) => item?.candidate?.id === expectedId
+    && listed.has(expectedId)
+    && item.candidate.kind === 'extracted-source-assertion'
+    && String(item.candidate.provenance?.sourceId) === String(source.id)
+    && String(item.candidate.provenance?.contentSha256).toLowerCase() === String(source.contentSha256).toLowerCase()
+    && normalize(item.candidate.claim) === wanted);
+  return record ? record.candidate.claim : null;
 }
 
 // The sentence a document actually uses to assert a claim, chosen from that document's own
@@ -101,9 +126,17 @@ function verifyPairedDeclaration({ bundle, bundleRoot, declaration, options = {}
 
   const resolved = [];
   for (const [index, source] of found.entries()) {
+    if (declared && Array.isArray(options.candidateRecords)) {
+      try { verifySourceCustody(bundleRoot, source); }
+      catch (error) { return unsatisfied(error.message); }
+      const sentence = extractedAssertion(options.candidateRecords, source, declared[index]);
+      if (!sentence) return unsatisfied(`source ${source.id} does not carry the declared sentence through its hash-bound extraction window and candidate record; the nominated sources have not been through claim extraction for that assertion, and a pairing may select existing evidence, never invent it`);
+      resolved.push({ sourceId:String(source.id), sentence, agreement:'owner-declared', overlap:null, contentSha256:String(source.contentSha256 || '').toLowerCase() });
+      continue;
+    }
     let content;
     try {
-      content = readSourceContent(bundleRoot, source);
+      content = readSourceContent(bundleRoot, source, { extractText:options.extractText });
     } catch (error) {
       return unsatisfied(error.message);
     }
@@ -146,4 +179,4 @@ function verifyPairedDeclaration({ bundle, bundleRoot, declaration, options = {}
   };
 }
 
-module.exports = { readSourceContent, assertingSentence, verifyPairedDeclaration };
+module.exports = { verifySourceCustody, readSourceContent, extractedAssertion, assertingSentence, verifyPairedDeclaration };

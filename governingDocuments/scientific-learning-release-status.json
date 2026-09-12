@@ -3,9 +3,9 @@
   "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
   "branch": "development",
   "developmentSha": "4f0bdb378a15343c310e9e4fa1a5d5f4ea407df6",
-  "updatedAt": "2026-09-11T02:44:00Z",
+  "updatedAt": "2026-09-12T12:02:00Z",
   "rollingTarget": null,
-  "rollingTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
+  "rollingTargetState": "indeterminate-until-nonzero-hosted-throughput",
   "timezone": "America/New_York",
   "confidence": "low",
   "releaseAuthorized": false,
@@ -14,16 +14,16 @@
     "R1": "passed",
     "R2": "passed; forced-interruption recovery is durable. A local owner-authorized intake/extraction pass on 2026-09-11 admitted 4 novel files, skipped 10 content-identical files, completed those 4 plus 21 older queued sources, emitted 253 candidate IDs in the batch including 58 from the 4 new sources, and left 154 local sources extraction-pending with no active lock. This local throughput does not substitute for independently published Worker custody.",
     "R3": "pending; the first scheduler-originated Google run completed all 16 due topics but admitted 0 URLs because data-centre egress was refused. A daily at-most-50-topic Perplexity citation-discovery implementation is prepared with local URL admission and structured failing partial reports, but PERPLEXITY_API_KEY is absent, so no live provider run has admitted a governed URL and R3 remains pending.",
-    "R4": "pending; the current vetted publication is internally inconsistent. Hosted proof measured the restored canonical stage() queue at SHA-256 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef while its adjacent manifest records 96f13274cf8c57d717e6f581cbe3c38bdcb6d52ad7e56a5fac51fd18eeefb50e. Decryption, provenance, all three chunk hashes, canonical queue encoding, and the 8 document + 526 link = 534 source count pass. Oversight must republish a manifest hash computed over the queue it actually ships; Crucible cannot repair independent custody.",
-    "R5": "pending; no real independently corroborated claim with an owner-declared scope has completed hosted evaluation and promotion.",
-    "R6": "pending; no verified active knowledge from the current real corpus has completed bounded live retrieval.",
+    "R4": "pending hosted; passed locally on real custody. The local corpus paired GoalKicker candidate extracted-6e63f5d20038b1a127742bb8137e85da with independently retrieved MDN candidate extracted-6e640fb76734ddacec1741722c148542 after verifying both source hashes and extraction custody. Hosted proof remains blocked because the current vetted publication pairs canonical queue SHA-256 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef with manifest value 96f13274cf8c57d717e6f581cbe3c38bdcb6d52ad7e56a5fac51fd18eeefb50e. Oversight must republish the self-consistent pair.",
+    "R5": "pending hosted; passed locally on real corpus. The owner-declared Node.js dense-numeric-array scope completed the controlled experiment and distinct independent verifier, producing active durable knowledge version 1 with proof SHA-256 2f0ba6995432f34715867eb4e3945bb9d5e789241e0e66be7a835291b62fd3cf.",
+    "R6": "pending hosted; passed locally. After the learning process exited, a fresh process restored version 1 and exact-boundary retrieval returned it; a separate authenticity consumer selected it as bounded regression context with knowledgeIsProofForCurrentRun false and maySkipTest false.",
     "R7": "pending; the mechanism is locally proven, but no real promoted version from the current custody chain exists to supersede and roll back in hosted evidence.",
     "R8": "pending; no complete combined live cycle currently demonstrates every required safety, quarantine, deduplication, contradiction, and rollback behaviour on the current real corpus.",
     "R9": "held; soak band 72-96 continuous hours, observation ceiling 1000 data points, and the soak does not start while the data cannot exhibit the failures it checks",
     "R10": "pending; exact development SHA 4f0bdb378a15343c310e9e4fa1a5d5f4ea407df6 currently has 19 successful, 1 failed, and 1 skipped checks with 9 matrix jobs still in progress. Hosted learning proof 34525272883 has completed and fails closed during restore on 'Restored queue hash mismatch.' after the new vetted publication.",
     "R11": "pending"
   },
-  "blockingReason": "Local candidate intake and extraction now work on the owner-supplied material, but end-to-end retained scientific-learning throughput remains zero. Live Perplexity discovery still needs PERPLEXITY_API_KEY, and the current independently published vetted bundle pairs a canonical 534-source queue with a manifest hash for different bytes. The four new sources and ten existing matches remain candidate-only; their rescan is scheduled for the first review where self-consistent custody and real retention are proven. No real claim has completed R4-R8, and R9 cannot start until R2-R8 are simultaneously green.",
+  "blockingReason": "Local retained scientific-learning throughput is now nonzero: one real independently corroborated claim completed R4-R6, survived restart, and entered the normal bounded-use path. Release remains blocked because this is not hosted evidence: live Perplexity discovery still needs PERPLEXITY_API_KEY, the independently published vetted bundle is internally inconsistent, R7 has no real supersession/rollback cycle, R8 lacks its complete combined live safety cycle, and R9 cannot start until R2-R8 are simultaneously green.",
   "history": [
     {
       "recordedAt": "2026-08-30T20:33:00Z",
@@ -100,6 +100,13 @@
       "newTarget": null,
       "newTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
       "reason": "Owner-file intake measured 14 requested sources as 10 exact SHA-256 matches already fully extracted and 4 novel files. The 4 new records completed local bounded extraction with 58 candidate IDs and no blocker, while the same batch advanced 21 older sources. This proves useful local candidate throughput, not retained or independently vetted knowledge. The current bundle is still internally inconsistent and live Perplexity discovery still lacks its secret, so no release gate advances and the target remains indeterminate. The active rolling review now preserves a one-time hash-bound rescan obligation for all 14 sources after real retention and self-consistent custody are proven."
+    },
+    {
+      "recordedAt": "2026-09-12T12:02:00Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-hosted-throughput",
+      "reason": "Local end-to-end retention is no longer zero. Two independent real sources carried the bounded Array.prototype.map claim through controlled testing and a distinct verifier into durable version 1; fresh-process retrieval and the normal authenticity consumer both restored and used it without skipping tests. This advances local R4-R6 only. The target remains indeterminate because Oversight must republish the inconsistent vetted bundle before hosted R4-R6 can repeat, and R7-R9 remain unsatisfied."
     }
   ]
 }

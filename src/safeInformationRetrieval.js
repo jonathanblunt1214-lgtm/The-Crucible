@@ -27,8 +27,8 @@ const INJECTION_PATTERNS = Object.freeze([
   /ignore\s+(all|any|the|previous|prior)\s+(instructions?|rules?|prompts?)/i,
   /system\s*prompt/i,
   /developer\s*message/i,
-  /reveal|exfiltrat|upload.{0,30}(secret|credential|token|key)/i,
-  /execute|run.{0,20}(command|shell|powershell|bash)/i,
+  /(?:reveal|exfiltrat|upload).{0,30}(?:secret|credential|token|key)/i,
+  /(?:execute|run).{0,20}(?:command|shell|powershell|bash)/i,
 ]);
 
 function sha256(value) { return crypto.createHash('sha256').update(value).digest('hex'); }
@@ -240,8 +240,11 @@ class SafeInformationRetriever {
       const content = Buffer.concat(chunks); const magic = executableMagic(content);
       if (magic || SUSPICIOUS_BINARY_EXTENSION.test(new URL(response.url || current).pathname)) throw new Error(`Executable content quarantined: ${magic || 'suspicious extension'}.`);
       const injectionSignals = suspiciousText(content, contentType); const metadata = /html|xhtml/.test(contentType) ? metadataFromHtml(content.toString('utf8')) : { author:'not declared', license:'not declared; verify source terms before redistribution' };
-      const record = { schemaVersion:1, requestedUrl:requested, finalUrl:safeUrl(response.url || current.toString()).toString(), retrievedAt:this.now(), author:metadata.author, license:metadata.license, contentType, contentLength:length, contentSha256:sha256(content), redirects, classification:injectionSignals.length ? 'Crucible Issue' : 'Insufficient Evidence', state:injectionSignals.length ? 'quarantined' : 'retrieved-candidate-evidence', quarantineReasons:injectionSignals.map(() => 'prompt-injection-pattern') };
       const parserContent = /html|xhtml/.test(contentType) ? Buffer.from(sanitizeHtml(content.toString('utf8'))) : content;
+      // Downstream custody hashes the bytes it actually stores and extracts. Keep the raw
+      // transport hash separately so sanitization is still auditable without making the queue
+      // claim that sanitized bytes have the response body's digest.
+      const record = { schemaVersion:1, requestedUrl:requested, finalUrl:safeUrl(response.url || current.toString()).toString(), retrievedAt:this.now(), author:metadata.author, license:metadata.license, contentType, contentLength:parserContent.length, contentSha256:sha256(parserContent), retrievedContentLength:length, retrievedContentSha256:sha256(content), redirects, classification:injectionSignals.length ? 'Crucible Issue' : 'Insufficient Evidence', state:injectionSignals.length ? 'quarantined' : 'retrieved-candidate-evidence', quarantineReasons:injectionSignals.map(() => 'prompt-injection-pattern') };
       this.auditStore.append(record); return { record, content:injectionSignals.length ? null : parserContent };
     } catch (error) {
       this.auditStore.append({ schemaVersion:1, requestedUrl:requested, decisionAt, state:'blocked', classification:'Insufficient Evidence', reason:String(error.message || error) }); throw error;

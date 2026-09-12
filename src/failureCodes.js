@@ -564,6 +564,18 @@ const FAILURE_CODES = Object.freeze({
       forbidden: 'Never execute source content, bypass content-hash deduplication, overwrite a content-addressed source, delete a malformed lock, or register material outside the project-bound candidate queue.',
     },
   },
+  'CRU-0044': {
+    code: 'CRU-0044',
+    category: 'learning-retrieval',
+    meaning: 'A positively admitted queued URL could not be retrieved, quarantined, content-addressed, deduplicated, or handed to extraction under the shared project-bound queue lock.',
+    next: 'Read the structured retrieval outcome and audit. Verify the URL admission, kill switch, DNS target, redirect, content type, size, content hash, and queue lock, then retry only the blocked source or continue with other pending sources.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run learning:retrieve-sources-readiness',
+      verifyWith: { tests: ['test/sourceRetrievalWorker.test.js', 'test/safeInformationRetrieval.test.js', 'test/claimExtractionWorker.test.js'] },
+      forbidden: 'Never fetch an unapproved URL, weaken the network or content guards, persist unsanitized active HTML, overwrite content-addressed bytes, bypass the shared queue lock, or turn retrieval into proof or promotion.',
+    },
+  },
   'CRU-0022': {
     code: 'CRU-0022',
     category: 'diagnosis-coverage',
