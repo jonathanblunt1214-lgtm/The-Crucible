@@ -2,7 +2,21 @@
 
 The plugin is intentionally narrow.
 
-It does not execute shell commands, spawn processes, write Git history, access secrets, or request network authority. Its write surface is limited by plugin logic to text paths under `governingDocuments/`, and destructive operations require explicit confirmation.
+The Nexus runtime does not execute shell commands, spawn processes, write Git
+history, access secrets, or request network authority. Its write surface is
+limited by plugin logic to text paths under `governingDocuments/`, and
+destructive operations require explicit confirmation.
+
+The separate ChatGPT MCP transport is part of this plugin package but is not part
+of the Nexus sandbox. HTTP requests require a deployment-specific bearer token;
+the listener fails closed when it is absent. Execution tools accept no request
+arguments or paths. They invoke only an allow-listed action through Node against
+fixed, resolved `CRUCIBLE_CORE_ROOT` and `CRUCIBLE_PROJECT_ROOT` directories, with
+bounded output, timeout, and concurrency. The adapter bearer token is removed
+from the spawned CLI environment. `security`, `run`, and `repair` remain
+disabled unless the deployment owner explicitly enables mutation-capable tools.
+The adapter does not copy the core engine onto `Plug-in` and does not provide
+arbitrary command, shell, Git, secret, or network primitives.
 
 Auto Inject is off by default. When explicitly selected and confirmed, it writes only `governingDocuments/CRUCIBLE-REFERENCES.json`, which contains non-secret links to canonical shared governance on The Crucible's default branch. It does not copy the canonical policy files themselves.
 

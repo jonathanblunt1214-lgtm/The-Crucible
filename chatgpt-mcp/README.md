@@ -16,23 +16,55 @@ other lacks. `stdio.test.js` asserts that parity directly.
 ## Run over HTTP
 
 ```bash
+set CRUCIBLE_MCP_BEARER_TOKEN=<secret-generated-for-this-deployment>
 npm run mcp
 ```
 
-The server listens on port `8787` by default, or `PORT` / `CRUCIBLE_MCP_PORT` when set.
+The server listens on loopback port `8787` by default, or `HOST` plus `PORT` /
+`CRUCIBLE_MCP_PORT` when explicitly set. Every `/mcp` request requires
+`Authorization: Bearer <CRUCIBLE_MCP_BEARER_TOKEN>`. The process refuses to
+start the HTTP listener when the token is missing. CORS is omitted by default;
+set one exact `CRUCIBLE_MCP_ALLOW_ORIGIN` only when a browser client needs it.
 
 Endpoints:
 
 - `GET /health`
 - `POST /mcp`
 
-The adapter intentionally exposes only bounded, read-only plugin metadata tools:
+The adapter exposes bounded, read-only plugin metadata tools:
 
 - `crucible_plugin_info`
 - `crucible_nexus_manifest`
 - `crucible_canonical_governance`
 
-It does not expose arbitrary shell execution, filesystem paths, secrets, Git writes, or unrestricted network access. The existing Nexus plugin actions continue to run through the Nexus host contract; this MCP adapter does not bypass that sandbox.
+It also keeps the ChatGPT MCP capability on this plugin branch by exposing the
+canonical Crucible CLI allow-list from the former feature branch:
+
+- Read-only by default: `crucible_validate`, `crucible_precheck`,
+  `crucible_governance`.
+- Mutation-capable and disabled by default: `crucible_security`, `crucible_run`,
+  `crucible_repair`.
+
+Execution never accepts a path or command from an MCP request and never uses a
+shell. The deployment must bind two absolute local directories:
+
+```bash
+set CRUCIBLE_CORE_ROOT=C:\absolute\path\to\The-Crucible-core-checkout
+set CRUCIBLE_PROJECT_ROOT=C:\absolute\path\to\the-authorized-project
+```
+
+`CRUCIBLE_CORE_ROOT` must contain `src/cli.js`; the adapter invokes that fixed
+CLI with one allow-listed action. Output is bounded to 250 KB, execution defaults
+to one concurrent run and a ten-minute timeout, and paths are resolved before
+execution. The HTTP bearer token is removed from the child-process environment.
+Override those bounds only with positive integers in
+`CRUCIBLE_MCP_MAX_CONCURRENT_RUNS` and `CRUCIBLE_MCP_TIMEOUT_MS`.
+
+The three mutation-capable tools remain unavailable unless the deployment owner
+explicitly sets `CRUCIBLE_MCP_ENABLE_MUTATIONS=true`. Their MCP annotations mark
+them non-read-only, destructive, and non-idempotent. Nexus actions still run
+through the Nexus host contract; this external bridge does not import core source
+into the plugin package.
 
 ## Run over stdio
 
@@ -42,7 +74,8 @@ npm run mcp:stdio
 
 Newline-delimited JSON-RPC on stdin/stdout, no port bound and nothing to start by hand.
 This is how a local MCP client launches it, and it is what the `crucible-mcp` entry in
-`.claude-plugin/marketplace.json` declares.
+`.claude-plugin/marketplace.json` declares. The same fixed core/project root and
+mutation opt-in rules apply; HTTP bearer authentication is transport-only.
 
 ## Which client uses what
 
@@ -55,7 +88,11 @@ This is how a local MCP client launches it, and it is what the `crucible-mcp` en
 
 ## ChatGPT connection
 
-Deploy this branch to an HTTPS-capable Node host, start it with `npm run mcp`, and register the public MCP endpoint ending in `/mcp` as a custom ChatGPT app/connector. The health endpoint can be used to verify the deployment before registration.
+Deploy this branch to an HTTPS-capable Node host, configure the bearer token and
+fixed roots, start it with `npm run mcp`, and register the public endpoint ending
+in `/mcp` as a custom ChatGPT app/connector. The unauthenticated health endpoint
+reports only whether authentication, execution, and mutation modes are configured;
+it does not expose paths or secrets.
 
 ## Test
 

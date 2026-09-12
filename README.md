@@ -14,6 +14,11 @@ The plugin is optional and disabled until the Nexus user installs and enables it
 
 The plugin requests only Nexus UI-slot, workspace read/write, and telemetry capabilities. It does not request Git write, shell/process execution, secrets, arbitrary filesystem access, or unrestricted network access.
 
+The same `Plug-in` branch owns the ChatGPT MCP adapter in `chatgpt-mcp/`.
+Its authenticated HTTP and local stdio transports provide plugin metadata and a
+fixed-root bridge to the canonical Crucible CLI; mutation-capable actions are
+disabled by default. See `chatgpt-mcp/README.md` for deployment requirements.
+
 ## Game-language scanning
 
 Version 0.4.0 adds a read-only, bounded project scan for GameMaker Language (`.gml`), C# (`.cs`), C/C++, GDScript, Lua, Godot Shader, HLSL, GLSL, and Unity ShaderLab files. It reports file and byte totals by language plus conservative unmatched-delimiter, string, and block-comment diagnostics. It never executes or modifies source, ignores unsupported files, skips binary and files above 1 MiB, and scans at most 1,000 supported files per request. Telemetry contains counts only and is explicitly non-evidentiary.

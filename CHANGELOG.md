@@ -6,6 +6,19 @@ All notable changes to The Crucible are documented here.
 
 ## [Unreleased] — Plug-in branch
 
+### Consolidated — ChatGPT MCP
+
+- Kept the ChatGPT MCP server and both HTTP/stdio transports inside `Plug-in`.
+- Brought the former `feature/chatgpt-mcp-plugin` CLI tool allow-list into the
+  plugin adapter without copying the core repository tree.
+- Added bearer authentication for HTTP, fixed resolved core/project roots,
+  bounded concurrency/output/timeouts, corrected MCP safety annotations, and a
+  default-off gate for `security`, `run`, and `repair`.
+- Preserved the already-merged `plugin-chatgpt-integration-work` and
+  `feature/perplexity-plugin` work as one plugin product line.
+- Treated `mcp-integration-prep` as canonical core history referenced by the
+  bridge, not as files to duplicate into this plugin-only branch.
+
 ### Added — Perplexity Plugin (config-gated)
 
 - `perplexity-plugin/README.md` — Perplexity remote MCP connector setup,

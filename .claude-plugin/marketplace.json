@@ -59,7 +59,7 @@
       "source": "./",
       "strict": false,
       "displayName": "The Crucible MCP tools",
-      "description": "Bounded read-only MCP tools reporting the plugin package metadata, the Nexus manifest, and the canonical governance source. Same tool set the ChatGPT connector serves over HTTP, launched here over stdio.",
+      "description": "Bounded plugin metadata plus fixed-root Crucible validation tools. Mutation-capable actions are disabled by default. The same tool set is served to ChatGPT over authenticated HTTP and launched here over stdio.",
       "mcpServers": {
         "crucible": {
           "command": "node",
@@ -79,7 +79,7 @@
         "mcp",
         "metadata",
         "governance",
-        "read-only"
+        "validation"
       ],
       "defaultEnabled": false
     }

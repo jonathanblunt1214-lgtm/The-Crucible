@@ -1,20 +1,24 @@
 'use strict';
 
 const http = require('node:http');
+const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
+const { spawn } = require('node:child_process');
+const { EXECUTION_TOOLS, executionSummary, runAllowedAction } = require('./execution');
 
 const ROOT = path.resolve(__dirname, '..');
 const PORT = Number.parseInt(process.env.PORT || process.env.CRUCIBLE_MCP_PORT || '8787', 10);
 const SERVER_NAME = 'the-crucible-plugin';
 const SERVER_VERSION = '0.4.0';
+const MAX_BODY_BYTES = 1_000_000;
 
 function readJson(relativePath) {
   return JSON.parse(fs.readFileSync(path.join(ROOT, relativePath), 'utf8'));
 }
 
 function toolDefinitions() {
-  return [
+  const metadataTools = [
     {
       name: 'crucible_plugin_info',
       description: 'Return metadata for The Crucible plugin package.',
@@ -34,6 +38,17 @@ function toolDefinitions() {
       annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true }
     }
   ];
+  const executionTools = Object.entries(EXECUTION_TOOLS).map(([name, tool]) => ({
+    name,
+    description: tool.description,
+    inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+    annotations: {
+      readOnlyHint: !tool.mutating,
+      destructiveHint: tool.mutating,
+      idempotentHint: !tool.mutating
+    }
+  }));
+  return [...metadataTools, ...executionTools];
 }
 
 function rpcResult(id, result) {
@@ -44,7 +59,12 @@ function rpcError(id, code, message) {
   return { jsonrpc: '2.0', id: id ?? null, error: { code, message } };
 }
 
-async function handleRpc(message) {
+function toolResult(value, isError = false) {
+  const text = typeof value === 'string' ? value : JSON.stringify(value, null, 2);
+  return { content: [{ type: 'text', text }], isError };
+}
+
+async function handleRpc(message, { env = process.env, spawnProcess = spawn } = {}) {
   if (!message || message.jsonrpc !== '2.0' || typeof message.method !== 'string') {
     return rpcError(message && message.id, -32600, 'Invalid Request');
   }
@@ -75,7 +95,9 @@ async function handleRpc(message) {
         description: pkg.description,
         branchRole: 'standalone plugin package',
         canonicalRepository: 'jonathanblunt1214-lgtm/The-Crucible',
-        canonicalBranch: 'main'
+        canonicalBranch: 'main',
+        executionBridgeConfigured: Boolean(env.CRUCIBLE_CORE_ROOT && env.CRUCIBLE_PROJECT_ROOT),
+        mutationToolsEnabled: env.CRUCIBLE_MCP_ENABLE_MUTATIONS === 'true'
       };
     } else if (name === 'crucible_nexus_manifest') {
       payload = readJson('nexus.plugin.json');
@@ -85,60 +107,96 @@ async function handleRpc(message) {
         branch: 'main',
         policy: 'Shared Crucible governance remains canonical on main; the Plug-in branch references it instead of duplicating it.'
       };
+    } else if (EXECUTION_TOOLS[name]) {
+      const tool = EXECUTION_TOOLS[name];
+      if (tool.mutating && env.CRUCIBLE_MCP_ENABLE_MUTATIONS !== 'true') {
+        return rpcResult(message.id, toolResult(
+          'This mutation-capable tool is disabled. Set CRUCIBLE_MCP_ENABLE_MUTATIONS=true only for an explicitly authorized deployment.',
+          true
+        ));
+      }
+      const result = await runAllowedAction(tool.action, { env, spawnProcess });
+      return rpcResult(message.id, toolResult(executionSummary(result), !result.ok));
     } else {
       return rpcError(message.id, -32602, `Unknown tool: ${String(name)}`);
     }
 
-    return rpcResult(message.id, {
-      content: [{ type: 'text', text: JSON.stringify(payload, null, 2) }],
-      isError: false
-    });
+    return rpcResult(message.id, toolResult(payload));
   }
 
   return rpcError(message.id, -32601, `Method not found: ${message.method}`);
 }
 
-function sendJson(res, statusCode, value) {
+function secureTokenEqual(provided, expected) {
+  const left = Buffer.from(provided || '', 'utf8');
+  const right = Buffer.from(expected || '', 'utf8');
+  return left.length === right.length && left.length > 0 && crypto.timingSafeEqual(left, right);
+}
+
+function authorized(req, env) {
+  const expected = env.CRUCIBLE_MCP_BEARER_TOKEN;
+  const match = /^Bearer ([^\s]+)$/.exec(req.headers.authorization || '');
+  return Boolean(expected && match && secureTokenEqual(match[1], expected));
+}
+
+function sendJson(res, statusCode, value, env) {
   const body = value === null ? '' : JSON.stringify(value);
-  res.writeHead(statusCode, {
+  const headers = {
     'content-type': 'application/json; charset=utf-8',
     'cache-control': 'no-store',
-    'access-control-allow-origin': process.env.CRUCIBLE_MCP_ALLOW_ORIGIN || '*',
     'access-control-allow-headers': 'content-type, authorization, mcp-protocol-version',
     'access-control-allow-methods': 'GET, POST, OPTIONS'
-  });
+  };
+  if (env.CRUCIBLE_MCP_ALLOW_ORIGIN) headers['access-control-allow-origin'] = env.CRUCIBLE_MCP_ALLOW_ORIGIN;
+  res.writeHead(statusCode, headers);
   res.end(body);
 }
 
-function createServer() {
-  return http.createServer((req, res) => {
-    if (req.method === 'OPTIONS') return sendJson(res, 204, null);
+function createServer({ env = process.env, spawnProcess = spawn } = {}) {
+  return http.createServer(async (req, res) => {
+    if (req.method === 'OPTIONS') return sendJson(res, 204, null, env);
     if (req.method === 'GET' && req.url === '/health') {
-      return sendJson(res, 200, { ok: true, server: SERVER_NAME, version: SERVER_VERSION });
+      return sendJson(res, 200, {
+        ok: true,
+        server: SERVER_NAME,
+        version: SERVER_VERSION,
+        authenticationConfigured: Boolean(env.CRUCIBLE_MCP_BEARER_TOKEN),
+        executionBridgeConfigured: Boolean(env.CRUCIBLE_CORE_ROOT && env.CRUCIBLE_PROJECT_ROOT),
+        mutationToolsEnabled: env.CRUCIBLE_MCP_ENABLE_MUTATIONS === 'true'
+      }, env);
     }
-    if (req.method !== 'POST' || req.url !== '/mcp') return sendJson(res, 404, { error: 'Not found' });
+    if (req.method !== 'POST' || req.url !== '/mcp') return sendJson(res, 404, { error: 'Not found' }, env);
+    if (!env.CRUCIBLE_MCP_BEARER_TOKEN) return sendJson(res, 503, { error: 'MCP authentication is not configured.' }, env);
+    if (!authorized(req, env)) return sendJson(res, 401, { error: 'Unauthorized' }, env);
 
-    let body = '';
-    req.setEncoding('utf8');
-    req.on('data', (chunk) => {
-      body += chunk;
-      if (body.length > 1_000_000) req.destroy();
-    });
-    req.on('end', async () => {
-      try {
-        const response = await handleRpc(JSON.parse(body));
-        return sendJson(res, response === null ? 202 : 200, response);
-      } catch (error) {
-        return sendJson(res, 400, rpcError(null, -32700, error.message));
+    const chunks = [];
+    let bytes = 0;
+    try {
+      for await (const chunk of req) {
+        bytes += chunk.length;
+        if (bytes > MAX_BODY_BYTES) {
+          return sendJson(res, 413, rpcError(null, -32600, 'Request body too large'), env);
+        }
+        chunks.push(chunk);
       }
-    });
+      const response = await handleRpc(JSON.parse(Buffer.concat(chunks).toString('utf8')), { env, spawnProcess });
+      return sendJson(res, response === null ? 202 : 200, response, env);
+    } catch (error) {
+      return sendJson(res, 400, rpcError(null, -32700, error.message), env);
+    }
   });
 }
 
 if (require.main === module) {
-  createServer().listen(PORT, () => {
-    console.log(`[The Crucible] ChatGPT MCP adapter listening on port ${PORT}.`);
-  });
+  if (!process.env.CRUCIBLE_MCP_BEARER_TOKEN) {
+    console.error('[The Crucible] CRUCIBLE_MCP_BEARER_TOKEN is required for the HTTP MCP transport.');
+    process.exitCode = 1;
+  } else {
+    const host = process.env.HOST || '127.0.0.1';
+    createServer().listen(PORT, host, () => {
+      console.log(`[The Crucible] ChatGPT MCP adapter listening on http://${host}:${PORT}/mcp`);
+    });
+  }
 }
 
-module.exports = { createServer, handleRpc, toolDefinitions };
+module.exports = { EXECUTION_TOOLS, createServer, handleRpc, runAllowedAction, toolDefinitions };
