@@ -318,7 +318,7 @@ function selectAllEvaluable({ store, available, corroborated, declarations, bund
     && normalize(record.candidate.claim) === normalize(sentence));
 
   for (const declaration of declarations.filter((item) => Array.isArray(item.pairedSources) && !ready.some((item2) => item2.declaration === item))) {
-    const verified = verifyPairedDeclaration({ bundle, bundleRoot, declaration, options });
+    const verified = verifyPairedDeclaration({ bundle, bundleRoot, declaration, options:{ ...options, candidateRecords:records } });
     if (!verified.satisfied) {
       pairedFailures.push({ claim: declaration.claim, pairedSources: declaration.pairedSources, reason: verified.reason });
       continue;

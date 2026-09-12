@@ -56,6 +56,13 @@ function buildBundle(dir, documents, { runExtraction = true } = {}) {
     const extractionQueue = path.join(dir, 'extraction-queue.json');
     fs.writeFileSync(extractionQueue, `${JSON.stringify(absolute, null, 2)}\n`);
     new ClaimExtractionWorker({ queueFile: extractionQueue, projectId: PROJECT, learningRoot, now: () => AT }).run();
+    const extracted = JSON.parse(fs.readFileSync(extractionQueue, 'utf8'));
+    const staged = JSON.parse(fs.readFileSync(queueFile, 'utf8'));
+    staged.links = staged.links.map((link) => {
+      const completed = extracted.links.find((item) => item.id === link.id);
+      return { ...link, state:completed.state, claimExtraction:completed.claimExtraction };
+    });
+    fs.writeFileSync(queueFile, `${JSON.stringify(staged, null, 2)}\n`);
   }
   return { bundleRoot, learningRoot, bundle: readBundle(bundleRoot) };
 }
@@ -264,4 +271,40 @@ test('a source with no recorded content hash cannot become corroboration', () =>
   }
   assert.throws(() => read('b'.repeat(64)), /does not match the hash/);
   assert.equal(read(crypto.createHash('sha256').update(body).digest('hex')), body);
+});
+
+test('PDF custody hashes raw bytes before text extraction', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'paired-pdf-bytes-'));
+  t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const sources = path.join(root, 'sources'); fs.mkdirSync(sources);
+  const bytes = Buffer.from([0x25,0x50,0x44,0x46,0x2d,0xff,0x00,0x41]);
+  const file = path.join(sources, 'source.pdf'); fs.writeFileSync(file, bytes);
+  let extracted = null;
+  const text = readSourceContent(root, { id:'pdf-source', durablePath:'sources/source.pdf', mediaType:'application/pdf', pages:3, contentSha256:crypto.createHash('sha256').update(bytes).digest('hex') }, {
+    extractText:(source,start,end) => { extracted={path:source.durablePath,start,end}; return 'The map method creates a new array.'; },
+  });
+  assert.equal(text, 'The map method creates a new array.');
+  assert.deepEqual(extracted, { path:file, start:1, end:3 });
+  assert.throws(
+    () => readSourceContent(root, { id:'pdf-source', durablePath:'sources/source.pdf', mediaType:'application/pdf', contentSha256:crypto.createHash('sha256').update(bytes).digest('hex') }),
+    /^Error: \[CRU-0026\] PDF source pdf-source has no bounded page count/,
+  );
+});
+
+test('a declared PDF sentence is verified through its hash-bound extraction window without parser drift', (t) => {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'paired-pdf-window-'));
+  t.after(() => fs.rmSync(root, { recursive:true, force:true }));
+  const sourcesRoot=path.join(root,'sources');fs.mkdirSync(sourcesRoot);
+  const bytes=Buffer.from([0x25,0x50,0x44,0x46,0x2d,0xff,0x00,0x41]);const digest=crypto.createHash('sha256').update(bytes).digest('hex');fs.writeFileSync(path.join(sourcesRoot,'book.pdf'),bytes);
+  const sentence='The map method creates a new array from transformed values.';const sourceId='owner-file:pdf';
+  const { normalizedClaimSha256 }=require('../src/claimExtractionWorker');const candidateId=`extracted-${crypto.createHash('sha256').update(`${sourceId}\n${normalizedClaimSha256(sentence)}`).digest('hex').slice(0,32)}`;
+  const source={id:sourceId,durablePath:'sources/book.pdf',mediaType:'application/pdf',pages:400,contentSha256:digest,author:'Book Author',claimExtraction:{sourceContentSha256:digest,candidateIds:[candidateId],windows:[{pageStart:181,pageEnd:200,sourceContentSha256:digest,candidateIds:[candidateId]}]}};
+  const webBytes=Buffer.from(sentence);const webDigest=crypto.createHash('sha256').update(webBytes).digest('hex');fs.writeFileSync(path.join(sourcesRoot,'web.html'),webBytes);const webId='web';const webCandidateId=`extracted-${crypto.createHash('sha256').update(`${webId}\n${normalizedClaimSha256(sentence)}`).digest('hex').slice(0,32)}`;
+  const web={id:webId,durablePath:'sources/web.html',contentSha256:webDigest,url:'https://example.org/map',author:'Web Author',claimExtraction:{sourceContentSha256:webDigest,candidateIds:[webCandidateId],windows:[{pageStart:1,pageEnd:1,sourceContentSha256:webDigest,candidateIds:[webCandidateId]}]}};
+  const records=[
+    {state:'candidate',candidate:{id:candidateId,kind:'extracted-source-assertion',claim:sentence,provenance:{sourceId,contentSha256:digest}}},
+    {state:'candidate',candidate:{id:webCandidateId,kind:'extracted-source-assertion',claim:sentence,provenance:{sourceId:webId,contentSha256:webDigest}}},
+  ];
+  const decision=verifyPairedDeclaration({bundle:{sources:[source,web]},bundleRoot:root,declaration:{claim:sentence,pairedSources:[sourceId,webId],pairedAssertions:[sentence,sentence]},options:{candidateRecords:records,extractText:()=>{throw new Error('must not re-extract a recorded window');}}});
+  assert.equal(decision.satisfied,true,decision.reason);
 });

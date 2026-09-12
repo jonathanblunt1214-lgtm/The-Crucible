@@ -173,4 +173,7 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
 
 if(require.main===module){runHostedProof({root:process.env.RUNNER_TEMP||process.cwd(),encryptedFile:process.env.CRUCIBLE_HOSTED_ENCRYPTED_STATE||'.hosted-learning-cache/store.envelope.json',reportFile:process.env.CRUCIBLE_HOSTED_PROOF_REPORT||'hosted-learning-proof/report.json',key:process.env.CRUCIBLE_HOSTED_STORE_KEY,repository:process.env.GITHUB_REPOSITORY,ref:process.env.GITHUB_REF,runId:process.env.GITHUB_RUN_ID,bundleRoot:process.env.CRUCIBLE_HOSTED_BUNDLE_ROOT,scopeDeclarationFile:process.env.CRUCIBLE_HOSTED_SCOPE_DECLARATIONS||crypto.randomUUID()}).then((report)=>console.log(`[The Crucible] GitHub-hosted durable learning proof passed R4-R8 at revision ${report.revision}.`)).catch((error)=>{console.error(`[The Crucible] Hosted learning proof failed closed: ${error.message}`);process.exitCode=1;});}
 
-module.exports={runHostedProof};
+// The local real-corpus proof reuses the exact controlled behaviour checks that hosted evidence
+// uses. Exporting the factory prevents a second, quietly divergent definition of "map worked"
+// from becoming local proof while the hosted gate measures something else.
+module.exports={harnesses,runHostedProof};

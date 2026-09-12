@@ -5,7 +5,14 @@ const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { ClaimExtractionWorker } = require('../src/claimExtractionWorker');
-const { runHostedProof } = require('../src/hostedLearningProof');
+const { harnesses, runHostedProof } = require('../src/hostedLearningProof');
+
+test('hosted and local proofs can share one controlled harness definition', () => {
+  const pair = harnesses('2026-09-12T12:00:00.000Z');
+  assert.equal(pair.experiment.id, 'github-controlled-runner');
+  assert.equal(pair.verifier.id, 'github-independent-runner');
+  assert.notEqual(pair.experiment.id, pair.verifier.id);
+});
 
 const AT = '2026-08-31T21:00:00.000Z';
 const PROJECT = 'github:owner/repo';

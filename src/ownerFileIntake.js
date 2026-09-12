@@ -52,13 +52,14 @@ function publishContentAddressed(source, destination) {
   const temporary = `${destination}.${process.pid}.${crypto.randomUUID()}.pending`;
   let descriptor;
   try {
-    fs.copyFileSync(source.file, temporary, fs.constants.COPYFILE_EXCL);
+    if (source.bytes !== undefined) fs.writeFileSync(temporary, Buffer.from(source.bytes), { flag:'wx', mode:0o600 });
+    else fs.copyFileSync(source.file, temporary, fs.constants.COPYFILE_EXCL);
     // Windows rejects fsync on a read-only handle, so open the completed copy for
     // update even though no further bytes are written.
     descriptor = fs.openSync(temporary, 'r+');
     fs.fsyncSync(descriptor);
     fs.closeSync(descriptor); descriptor = undefined;
-    if (sha256File(temporary) !== source.contentSha256) throw crucibleError('CRU-0043', `Owner source changed while it was being copied: ${source.file}.`);
+    if (sha256File(temporary) !== source.contentSha256) throw crucibleError('CRU-0043', `Source bytes do not match their declared SHA-256${source.file ? `: ${source.file}` : '.'}`);
     try { fs.linkSync(temporary, destination); }
     catch (error) {
       if (error.code !== 'EEXIST') throw error;
@@ -149,4 +150,4 @@ function ingestOwnerFiles({ queueFile, projectId, files, now = () => new Date().
   } finally { held.release(); }
 }
 
-module.exports = { ingestOwnerFiles, preflightOwnerFile, destinationHasExpectedContent, MEDIA_TYPES, MAX_OWNER_FILE_BYTES };
+module.exports = { ingestOwnerFiles, preflightOwnerFile, publishContentAddressed, destinationHasExpectedContent, MEDIA_TYPES, MAX_OWNER_FILE_BYTES };

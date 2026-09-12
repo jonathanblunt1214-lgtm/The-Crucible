@@ -1,6 +1,6 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { claimFingerprint, claimEntities, semanticallyCorroborates, groupCorroborating, DEFAULT_MINIMUM_OVERLAP } = require('../src/semanticCorroboration');
+const { claimFingerprint, claimEntities, compareFingerprints, semanticallyCorroborates, groupCorroborating, DEFAULT_MINIMUM_OVERLAP } = require('../src/semanticCorroboration');
 
 const MAP_A = 'The map method returns a new array and does not modify the original array.';
 const MAP_B = 'The map method returns a new array and does not change the original array.';
@@ -102,6 +102,27 @@ test('groups agreeing claims and keeps contradictions apart, in a stable order',
 
   assert.deepEqual(groupCorroborating(entries), groups, 'grouping is deterministic');
   assert.deepEqual(groupCorroborating([...entries].reverse()), groups, 'input order does not change the grouping');
+});
+
+test('indexed grouping is exactly equivalent to the exhaustive first-match algorithm', () => {
+  const exhaustive = (entries, options = {}) => {
+    const ordered = [...entries].map((entry) => ({ entry, fingerprint:claimFingerprint(entry.claim) })).sort((a,b) => String(a.entry.id) < String(b.entry.id) ? -1 : 1);
+    const groups=[]; const buckets=new Map();
+    for (const {entry,fingerprint} of ordered) {
+      const key=`${fingerprint.negated?'neg':'aff'}|${fingerprint.numbers.join(',')}`;
+      if(!buckets.has(key)) buckets.set(key,[]);
+      const bucket=buckets.get(key); let placed=false;
+      for(const group of bucket){const decision=compareFingerprints(group.fingerprint,fingerprint,options);if(decision.corroborates){group.members.push({...entry,match:decision});placed=true;break;}}
+      if(!placed){const group={claim:entry.claim,fingerprint,members:[{...entry,match:null}]};groups.push(group);bucket.push(group);}
+    }
+    return groups.map(({claim,members})=>({claim,members}));
+  };
+  const subjects=['array','socket','queue','cache','parser','worker','request','response'];
+  const verbs=['returns','creates','preserves','transforms','records','validates'];
+  const entries=[];
+  for(let index=0;index<1200;index+=1){const subject=subjects[index%subjects.length];const verb=verbs[Math.floor(index/subjects.length)%verbs.length];entries.push({id:`c-${String(index).padStart(4,'0')}`,claim:`The ${subject} method ${verb} a bounded result for input group ${index%7} while retaining deterministic runtime behavior.`});}
+  entries.push({id:'z-map-a',claim:MAP_A},{id:'z-map-b',claim:MAP_B},{id:'z-map-p',claim:MAP_PARAPHRASE},{id:'z-map-o',claim:MAP_OPPOSITE});
+  for(const minimumOverlap of [0.8,0.74,0.5,0,-1,Number.NaN]) assert.deepEqual(groupCorroborating(entries,{minimumOverlap}),exhaustive(entries,{minimumOverlap}));
 });
 
 // Found by running against the real corpus, not by imagining a case. All four of these were
