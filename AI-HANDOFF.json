@@ -6,6 +6,9 @@
     "AI-CONFLICTS.json": "Auditable AI conflict ledger; never bypass or disable it.",
     "CLAUDE.md": "Claude entry point to AGENTS.md.",
     "README.md": "Project documentation.",
+    "TASK-ROUTING.json": "Canonical stable-repository task-category registry. Governed checkouts reference this development-owned file; they do not copy or silently fork it.",
+    "src/taskRouting.js": "Fail-closed task classifier and repository/branch routing verifier for prompts, affected paths, project context, explicit overrides, protected routes, and repository-scoped commit splitting.",
+    "src/taskRoutingCli.js": "Pre-write, pre-push, and CI entry point for the canonical task-routing decision.",
     "templates/ai-conflict-resolution.md": "Conflict-resolution procedure.",
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
@@ -106,7 +109,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-11T02:15:00Z"
+    "lastActionAt": "2026-09-13T00:21:00Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -187,16 +190,32 @@
   },
   "activePlan": {
     "agent": "Codex",
-    "objective": "Continue the governed R3 and R4-R8 work: repair the probabilistic Self-Test assertion, add a daily 50-topic Perplexity citation-discovery path, content-hash-deduplicate and admit the owner's 14 exact local training sources as untrusted candidate material, arrange their later rescan once retention is genuinely available, and leave the independently owned R4 publication fault standing.",
-    "currentPrompt": "upload all this for training ruling out anything already in training anything relevant to AI training process start immediately once the pipeline actually is able to retain knowledge or if it can help now for that use it now and rescan it later",
+    "objective": "Implement the owner-approved canonical task-category dispatcher on The Crucible development branch, prove that knowledge-database work routes to development, and remove the redundant unapproved Knowledge-Database branch without weakening scientific-learning custody.",
+    "currentPrompt": "Implement canonical task routing, then inspect and execute the Knowledge-Database branch Command as written; remove the branch or artifact if it is redundant.",
     "executionMode": {
       "mode": "work",
       "agent": "Codex",
-      "purpose": "Diagnose exact-tip hosted failures, add a governed external discovery provider and schedule, harden R3's durable evidence test, safely ingest and deduplicate exact owner files, and verify the repository and hosted CI without weakening learning or custody gates.",
-      "selectionReason": "This continuation is multi-file, hosted-workflow, security-boundary, and CI work with an external secret handoff, so Work mode is appropriate.",
-      "distinction": "Execution mode is separate from agent identity and workflow. Perplexity supplies candidate URLs only; it does not corroborate claims, verify evidence, repair Oversight custody, authorize promotion, or satisfy R4-R8."
+      "purpose": "Add a stable-ID routing registry, deterministic classifier, pre-write handoff, pre-push and hosted enforcement, and durable route records while preserving branch and learning gates.",
+      "selectionReason": "This is a multi-file governance and CI boundary that changes how future agents select repositories and branches, so Work mode is appropriate.",
+      "distinction": "Execution mode is separate from agent identity and workflow. Routing selects an authorized checkout; it never creates or deletes a branch, promotes a release, grants Archive write access, or turns a local knowledge result into hosted proof."
+    },
+    "taskRouting": {
+      "category": "crucible-core",
+      "repositoryId": 1344890806,
+      "repository": "jonathanblunt1214-lgtm/The-Crucible",
+      "branch": "development",
+      "reason": "The owner requested the canonical task-category dispatcher and the Knowledge-Database instruction is core scientific-learning work; both route to The Crucible development.",
+      "explicitOverride": false,
+      "selectedAt": "2026-09-12T20:04:00-04:00",
+      "promptSha256": "d89c92f4335cd829737bca1b24740c82fa9ad25d12eb5769048ff9beb9f2013f",
+      "affectedPathsSha256": "4b19d3391f344e22b300c36384a5047e08d0bee6711bd4fc7b43662d6dd1c165"
     },
     "steps": [
+      "[done, Codex 2026-09-12] Fetched exact origin state and discovered the owner-created Knowledge-Database branch. It contained only a 20-line prose Command based on an old main snapshot and no database implementation or pull request.",
+      "[done, Codex 2026-09-12] Ran the current development knowledge commands: readiness reported revision 2453, 25,115 candidates, and one active version; a fresh retrieve returned proof SHA-256 2f0ba6995432f34715867eb4e3945bb9d5e789241e0e66be7a835291b62fd3cf. Pre-soak correctly held R2/R3/R7/R8 and the soak.",
+      "[done, Codex 2026-09-12] Verified hosted run 34713819307 still fails at vetted-custody hash verification. The Command's ordered first requirement therefore remains an Oversight publication blocker; repeating hosted proof twice before that repair would not satisfy the plan.",
+      "[done, Codex 2026-09-12] Deleted exact redundant remote branch Knowledge-Database under the owner's explicit cleanup authorization. Its pre-push deletion gate passed 825/825 and all mandatory audits; the retained local knowledge store was not touched.",
+      "[done, Codex 2026-09-12] Added and proved TASK-ROUTING.json, pre-write classification and exact-tip checkout discovery, route recording, pre-push and development CI enforcement, protected-route refusal, and multi-category repository-scoped commit splitting on development. The clean full suite passed 837/837.",
       "[done, Codex 2026-09-09] Fetched literal origin/development and reviewed exact tip 2bf95fc7620d6c8001afd8396b935bfb0c61f154 from a clean detached worktree; preserved the older dirty development worktree byte-for-byte.",
       "[done, Codex 2026-09-09] Verified exact-tip CI at 31 successful, 1 failed, and 1 skipped checks. Both Self-Test matrices and CodeQL now pass; hosted proof 34268883735 alone fails closed on CRU-0023 with 278 sources awaiting extraction and zero independent corroboration.",
       "[done, Codex 2026-09-09] Traced current custody through Worker run 34360357630 and Oversight run 34373189105. Worker again processed zero from vetted lineage a4341b1; Oversight passed its independent project checks and failed before publishing merged vetted ciphertext.",
@@ -826,10 +845,45 @@
         "regions": []
       },
       "purpose": "Complete the governed research-to-learning path: repair the random ciphertext assertion; add daily 50-topic candidate-only Perplexity discovery and safe URL retrieval; and prove one independently corroborated real-corpus claim through controlled testing, durable memory, restart restoration, and bounded use without claiming hosted release evidence.",
-      "status": "active",
+      "status": "released",
       "acquiredAt": "2026-09-11T02:15:00Z",
       "handedOffTo": null,
-      "releasedAt": null
+      "releasedAt": "2026-09-12T19:34:00Z"
+    },
+    {
+      "taskId": "canonical-task-routing-20260912",
+      "owner": {
+        "provider": "openai",
+        "model": "gpt-5",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "TASK-ROUTING.json",
+          "AGENTS.md",
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "README.md",
+          "package.json",
+          ".githooks/pre-push",
+          ".github/workflows/self-test.yml",
+          "src/taskRouting.js",
+          "src/taskRoutingCli.js",
+          "src/failureCodes.js",
+          "src/circulationLinkage.js",
+          "src/testCadenceCoreLegacy.js",
+          "test/_testCadenceCore.js",
+          "test/taskRouting.test.js",
+          "test/workflow.test.js",
+          "test/failureCodes.test.js"
+        ],
+        "regions": []
+      },
+      "purpose": "Classify each task once, route it by stable repository ID to an owner-approved branch, require repository-scoped commits, and fail closed before writes or pushes when routing is unknown, conflicting, protected, or mismatched.",
+      "status": "released",
+      "acquiredAt": "2026-09-12T19:34:00Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-13T00:21:00Z"
     }
   ]
 }

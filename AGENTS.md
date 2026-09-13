@@ -176,6 +176,35 @@ anything that already runs:
   checks the registry stays internally consistent (every referenced file
   exists, every referenced script is real, every tier is valid).
 
+## Task routing
+
+`TASK-ROUTING.json` on literal `development` is the one canonical task-category
+registry. Governed checkouts and repositories reference
+`development:TASK-ROUTING.json`; never copy it into another branch or silently
+fork its rules. Repository destinations are bound to immutable numeric GitHub
+repository IDs as well as their current exact names, so a rename, transfer, or
+name reuse fails closed instead of silently changing the destination.
+
+Before editing, run `npm run route:prewrite -- --prompt "<exact task>"
+--project "<project>" --path "<affected path>"` with every currently known
+affected path. Task wording, paths, and project context select a category.
+An explicit repository and branch instruction wins over automatic wording, but
+it cannot widen that branch's access policy. A `ready` result supplies the
+repository, branch, reason, and durable `activePlan.taskRouting` record. A
+`reroute-required` result supplies the matching existing checkout when one is
+available; move the task there before writing. `unknown` or `ambiguous` means
+no write or push and exactly one focused owner question. `split-required` means
+separate commits, each containing only one category's paths and shared handoff
+evidence.
+
+Every commit records the selected category, stable repository ID, repository,
+branch, and reason in both `AI-HANDOFF.json` and `DEVLOG.md`. The local pre-push
+hook verifies proposed refs and changed paths before the existing full safety
+suite, and development Self-Test repeats the stable-ID/branch/path check on the
+host. Routing never creates or deletes a branch, authorizes a manual
+`ci-monitor` write, writes Archive without exact owner approval, or promotes
+production. Promotion remains the explicit `release` to `main` system workflow.
+
 ## Branch policy
 
 - Resolve every conflict between agents, instructions, plans, concurrent work, or claimed authority with `templates/ai-conflict-resolution.md`. Freeze the contested mutation, preserve both sides in the Shared AI handoff, and obtain an explicit owner decision; never silently pick a side.

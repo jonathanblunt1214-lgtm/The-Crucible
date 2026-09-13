@@ -576,6 +576,18 @@ const FAILURE_CODES = Object.freeze({
       forbidden: 'Never fetch an unapproved URL, weaken the network or content guards, persist unsanitized active HTML, overwrite content-addressed bytes, bypass the shared queue lock, or turn retrieval into proof or promotion.',
     },
   },
+  'CRU-0045': {
+    code: 'CRU-0045',
+    category: 'task-routing',
+    meaning: 'A task has no single authorized repository and branch, or the recorded route does not match the checkout or pushed paths.',
+    next: 'Run npm run route:prewrite with the exact task wording, affected paths, and project context. Follow an explicit owner destination when supplied; otherwise use the single ready destination or ask one focused question when the result is unknown, conflicting, or split-required.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run route:prewrite -- --prompt "<exact task>" --project "<project>" --path "<affected path>"',
+      verifyWith: { tests: ['test/taskRouting.test.js'] },
+      forbidden: 'Never guess an ambiguous route, create or delete a branch, write to Archive without exact owner approval, push a manual ci-monitor snapshot, push directly to main, or combine multiple route categories in one commit.',
+    },
+  },
   'CRU-0022': {
     code: 'CRU-0022',
     category: 'diagnosis-coverage',

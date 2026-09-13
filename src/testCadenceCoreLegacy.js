@@ -110,6 +110,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/multiAiDeliberation.test.js',
     'test/multiAiOrchestrator.test.js',
     'test/mutationClaims.test.js',
+    'test/taskRouting.test.js',
     'test/testCadence.test.js',
     'test/workflow.test.js',
     'test/workflowLint.test.js',
