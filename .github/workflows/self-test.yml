@@ -49,6 +49,11 @@ jobs:
         env:
           CRUCIBLE_WORKFLOW_LINT_DIRS: templates
         run: npm run lint:workflows
+      - name: Enforce canonical task route on development pushes
+        if: github.event_name == 'push' && github.ref == 'refs/heads/development'
+        env:
+          CRUCIBLE_BASE_SHA: ${{ github.event.before }}
+        run: npm run route:verify-ci
       - run: npm run docs:check
       - run: npm run audit:design-brief
       - run: npm run audit:core-ref
