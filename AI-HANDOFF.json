@@ -109,7 +109,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-13T05:18:00Z"
+    "lastActionAt": "2026-09-13T05:25:00Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -214,8 +214,9 @@
       "[done] Re-verified AI Collaboration and Crucible remain independent projects joined by a non-containment cross-project policy reference; Nexus and ChatGPT remain excluded from the custom GitHub App package boundary.",
       "[done] Re-ran AI Collaboration CI and reproduced the same pre-runner failure: no steps, runner_id 0, empty runner identity, and no job log. A separate Crucible workflow received a GitHub-hosted runner at the same time. No further speculative application/workflow mutation is justified from this evidence.",
       "[done] Diagnosed the Crucible DEVLOG final-newline regression from hosted Self-Test evidence and repaired exactly that formatting defect.",
-      "[done] Final Verification then exposed the handoff-policy invariant: any project change that updates DEVLOG.md must update AI-HANDOFF.json in the same change. The gate was preserved and this plan/Devlog synchronization is the correction.",
-      "[in progress] Publish AI-HANDOFF.json and DEVLOG.md coherently in one development commit, then restart exact-tip Final Verification.",
+      "[done] Final Verification exposed the handoff-policy invariant and the coherent AI-HANDOFF.json + DEVLOG.md correction at a0b440ce7c9b964a491595680966fee0b514146c passed the takeover-ready handoff check.",
+      "[done] Final Verification then exposed CRU-0035 because seven released historical mutation-claim identifiers had been pruned from the compact DEVLOG even though the claims remained in AI-HANDOFF.json; the coordination gate was preserved.",
+      "[in progress] Restore those seven released claim identifiers as a compact accountability ledger in DEVLOG.md while keeping this plan synchronized in the same commit, then restart exact-tip Final Verification.",
       "[next] If verification is stable, write the terminal canonical Devlog/handoff record as the final state-changing operation and stop substantive work.",
       "[blocked-external] AI Collaboration private-repository Actions runner allocation/settings cannot be diagnosed or changed through the connected GitHub surface; the exact failure remains before runner assignment and is not represented as a source-code defect.",
       "[blocked-external] Crucible hosted scientific-learning proof remains blocked by the separately governed vetted-custody queue/manifest inconsistency; this task does not weaken or bypass that custody boundary.",
@@ -223,23 +224,23 @@
     ],
     "status": "active",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-13T05:18:00Z",
-    "currentStep": "Atomically synchronize AI-HANDOFF.json and DEVLOG.md, then restart terminal verification on the exact resulting development commit; no substantive work follows the terminal Devlog record."
+    "lastUpdatedAt": "2026-09-13T05:25:00Z",
+    "currentStep": "Restore the missing historical mutation-claim accountability references in DEVLOG.md without changing or weakening the coordination gate, then restart Final Verification on the exact resulting development commit."
   },
   "handoffNotes": {
     "completed": [
       "AI Collaboration canonical policy v2 is published at commit 83a466073fdb50930c81242ce95ebe1ed28622f2 with universal present/future scope, 5/8/10 preflight, adaptive council, stable identities, custom-App boundaries, early execution-boundary capture, conservative cutoff, complete Final Verification, and terminal Devlog requirements.",
       "AI Collaboration PROJECT-IDENTITY.json and Crucible governingDocuments/shared-orchestrator-policy-reference.json preserve independent project identities, non-containment, stronger local governance, and Nexus/ChatGPT exclusion from the custom App package.",
       "AI Collaboration CI was retried and reproduced failure before runner assignment; no executable step or repository test failed because no step began. The evidence supports an external/private-repository Actions allocation/settings class, not a speculative source edit.",
-      "Crucible hosted verification correctly caught a missing final newline in DEVLOG.md and, after that repair, correctly caught that DEVLOG and AI-HANDOFF must move together. Neither gate was weakened."
+      "Crucible hosted verification caught the DEVLOG final-newline defect, the synchronized handoff requirement, and then the missing historical mutation-claim accountability references. Each gate was preserved and treated as evidence rather than weakened."
     ],
     "verification": [
       "AI Collaboration exact commit 83a466073fdb50930c81242ce95ebe1ed28622f2 has a failed CI job with zero steps and no runner assignment; the connected GitHub surface cannot expose or change the private-repository Actions allocation/billing/policy setting needed to prove the final root cause.",
-      "Crucible handoff-policy source explicitly compares github.event.before to github.sha and requires both DEVLOG.md and AI-HANDOFF.json when project changes occur; the failing exact-tip run after the newline-only commit proved this invariant is active.",
-      "The current correction preserves the handoff gate, development-only mutation path, project identity, learning custody, and owner-only release authority."
+      "Crucible AI handoff policy passed on exact commit a0b440ce7c9b964a491595680966fee0b514146c, proving the coherent plan/Devlog synchronization is takeover-ready.",
+      "Crucible AI conflict governance on that exact commit passed conflict parsing but coordination failed CRU-0035 only because seven released claim IDs were absent from the compact DEVLOG; this correction restores accountability text and does not alter claim status or governance behavior."
     ],
     "remaining": [
-      "Run exact-tip hosted handoff and Self-Test verification after the coherent AI-HANDOFF/DEVLOG correction and record any new deterministic defect without weakening gates.",
+      "Run exact-tip hosted handoff, coordination, and Self-Test verification after the accountability correction and record any new deterministic defect without weakening gates.",
       "Record the terminal Devlog/handoff boundary after the final verification checks; no substantive or state-changing work follows that terminal record.",
       "Resolve AI Collaboration private-repository Actions runner allocation/settings only through a surface with the required administrative visibility/authority; until then global rollout status remains Reviewed rather than fully Verified.",
       "Oversight must restore a self-consistent vetted learning queue/manifest before Crucible hosted R4-R8 can be called verified; this remains a separate custody blocker."
