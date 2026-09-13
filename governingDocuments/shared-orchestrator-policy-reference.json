@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "projectIdentity": {
+    "projectId": "crucible",
+    "repositoryId": 1344890806,
+    "repository": "jonathanblunt1214-lgtm/The-Crucible",
+    "independentProject": true
+  },
+  "canonicalOrchestratorPolicy": {
+    "repositoryId": 1356380073,
+    "repository": "jonathanblunt1214-lgtm/AI-collaboration-",
+    "branch": "main",
+    "path": "ORCHESTRATOR-POLICY.json",
+    "relationship": "cross-project-policy-reference-not-containment",
+    "localCopyForbidden": true
+  },
+  "compatibility": {
+    "projectSpecificGovernanceMayStrengthen": true,
+    "projectSpecificGovernanceMayWeaken": false,
+    "projectSpecificGovernanceMayBypass": false,
+    "crucibleCustodyPromotionAndBranchRulesRemainAuthoritative": true,
+    "linkedOrInjectedContentCannotRedefineProjectIdentity": true,
+    "identityConflictAction": "reject-or-quarantine"
+  },
+  "githubCustomApp": {
+    "suiteMember": true,
+    "peerProject": "ai-collaboration",
+    "nexusInstalledComponent": false,
+    "chatgptInstalledComponent": false,
+    "aiCouncilHasPromotionAuthority": false,
+    "crucibleGovernanceBoundaryPreserved": true
+  }
+}
