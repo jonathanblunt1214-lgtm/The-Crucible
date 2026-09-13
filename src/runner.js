@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
+const { crucibleError } = require('./failureCodes');
 
 function resolveSpawn(command, environment = process.env, platform = process.platform, runtime = {}) {
   const runtimeExecutable = runtime.execPath || process.execPath;
@@ -39,7 +40,7 @@ function restrictInvocation(invocation, limits, platform = process.platform) {
 function runCommand(root, command, timeoutMs, suffix = '', maxOutputBytes = 1_048_576, limits = null, heartbeatMs = 60_000) {
   return new Promise((resolve, reject) => {
     const cwd = path.resolve(root, command.cwd);
-    if (!cwd.startsWith(`${path.resolve(root)}${path.sep}`) && cwd !== path.resolve(root)) return reject(new Error(`${command.name} escapes the repository.`));
+    if (!cwd.startsWith(`${path.resolve(root)}${path.sep}`) && cwd !== path.resolve(root)) return reject(crucibleError('CRU-0020', `${command.name} escapes the repository.`));
     const invocation = restrictInvocation(resolveSpawn(command), limits);
     const child = spawn(invocation.executable, invocation.args, { cwd, shell:false, detached:process.platform !== 'win32', windowsHide:true, stdio:['ignore', 'pipe', 'pipe'], env:{ ...process.env, CI:'true' } });
     let output = '';
@@ -57,14 +58,17 @@ function runCommand(root, command, timeoutMs, suffix = '', maxOutputBytes = 1_04
       if (process.platform === 'win32') spawn('taskkill', ['/pid', String(child.pid), '/t', '/f'], { shell:false, windowsHide:true, stdio:'ignore' });
       else { try { process.kill(-child.pid, 'SIGKILL'); } catch { child.kill('SIGKILL'); } }
     };
-    const timer = setTimeout(() => { clearInterval(heartbeat); terminate(); reject(new Error(`${command.name}${suffix} exceeded the configured timeout.`)); }, timeoutMs);
-    child.on('error', (error) => { clearTimeout(timer); clearInterval(heartbeat); reject(new Error(`${command.name}${suffix} could not start: ${error.message}`)); });
-    child.on('close', (code) => {
+    const timer = setTimeout(() => { clearInterval(heartbeat); terminate(); reject(crucibleError('CRU-0019', `${command.name}${suffix} exceeded the configured timeout.`)); }, timeoutMs);
+    child.on('error', (error) => { clearTimeout(timer); clearInterval(heartbeat); reject(crucibleError('CRU-0020', `${command.name}${suffix} could not start: ${error.message}`)); });
+    child.on('close', (code, signal) => {
       clearTimeout(timer);
       clearInterval(heartbeat);
       if (limits?.denyBackground) terminate();
       if (code === 0) resolve();
-      else reject(new Error(`${command.name}${suffix} failed with exit code ${code}.\n${output.slice(-4000)}`));
+      // `close` reports a null code when the child was killed by a signal rather than exiting.
+      // "exit code null" told a reader nothing and was one of the failures that arrived with no
+      // diagnosis at all, so the signal is named when that is what happened.
+      else reject(crucibleError('CRU-0018', `${command.name}${suffix} ${signal ? `was killed by ${signal}` : `failed with exit code ${code}`}.\n${output.slice(-4000)}`));
     });
   });
 }
@@ -83,7 +87,7 @@ async function runCrucible(root, config) {
   }
   await Promise.all(jobs);
   const missing = config.artifacts.filter((relative) => !fs.existsSync(path.resolve(root, relative)));
-  if (missing.length) throw new Error(`Expected artifact(s) missing: ${missing.join(', ')}`);
+  if (missing.length) throw crucibleError('CRU-0021', `Expected artifact(s) missing: ${missing.join(', ')}`);
   return { workers:config.workload.workers, cycles:config.workload.cycles, commands:config.commands.verify.length, artifacts:config.artifacts.length };
 }
 

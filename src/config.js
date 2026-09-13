@@ -21,6 +21,17 @@ function validateCommand(command, section, index) {
   return { name:command.name.trim(), run:command.run.trim(), args:command.args || [], cwd:command.cwd || '.', evidence };
 }
 
+function validateAuthenticityClaim(command, index) {
+  const checked = validateCommand(command, 'authenticity.claims', index);
+  if (command.learning === undefined) return checked;
+  assert(isObject(command.learning), `authenticity.claims[${index}].learning must be an object.`);
+  const allowed = ['claimBoundary', 'generalizationBoundary', 'expectedOutcome', 'environment'];
+  const extras = Object.keys(command.learning).filter((key) => !allowed.includes(key));
+  assert(!extras.length, `authenticity.claims[${index}].learning contains unknown field(s): ${extras.join(', ')}.`);
+  for (const key of allowed) assert(typeof command.learning[key] === 'string' && command.learning[key].trim(), `authenticity.claims[${index}].learning.${key} is required.`);
+  return { ...checked, learning:Object.fromEntries(allowed.map((key) => [key, command.learning[key].trim()])) };
+}
+
 function validateExceptions(entries, label) {
   assert(Array.isArray(entries) && entries.length <= 100, `${label} must contain at most 100 path exceptions.`);
   for (const entry of entries) {
@@ -142,7 +153,7 @@ function validateConfig(input) {
       dependencyPolicy:{ enabled:Boolean(dependencyPolicy.enabled), denyGit:dependencyPolicy.denyGit !== false, denyHttp:dependencyPolicy.denyHttp !== false, denyLocal:Boolean(dependencyPolicy.denyLocal), allowedRegistryHosts:dependencyPolicy.allowedRegistryHosts || [], denyLicenses:dependencyPolicy.denyLicenses || [] },
       malwareScan:{ enabled:Boolean(malwareScan.enabled) },
     },
-    authenticity:{ claims:claims.map((item, index) => validateCommand(item, 'authenticity.claims', index)), requireArtifacts:Boolean(authenticity.requireArtifacts) },
+    authenticity:{ claims:claims.map((item, index) => validateAuthenticityClaim(item, index)), requireArtifacts:Boolean(authenticity.requireArtifacts) },
     githubSecurity:{ enabled:githubSecurity.enabled !== false },
     codeCheck:{ commands:validatedCodeCommands },
     governance:{ requireExceptionMetadata:Boolean(input.governance?.requireExceptionMetadata), failOnDisabledSecurity:input.governance?.failOnDisabledSecurity !== false },

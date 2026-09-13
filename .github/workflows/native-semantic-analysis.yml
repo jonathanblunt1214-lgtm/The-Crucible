@@ -1,0 +1,67 @@
+name: Native semantic analysis
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [development]
+    paths:
+      - "src/semanticAnalysis.js"
+      - "scripts/*SemanticAnalyzer.*"
+      - "tools/roslynSemanticAnalyzer/**"
+      - "test/semanticAnalysis.test.js"
+      - "package.json"
+      - "package-lock.json"
+
+permissions:
+  contents: read
+
+jobs:
+  native-analysis:
+    name: Native analyzers (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    env:
+      CRUCIBLE_HOSTED_NATIVE_ANALYSIS: "1"
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Confirm execution is an ephemeral GitHub-hosted runner
+        shell: bash
+        run: |
+          test "$GITHUB_ACTIONS" = "true"
+          test -n "$RUNNER_TEMP"
+      # The redirected .NET home and package cache must exist before restore runs. Without
+      # them, NuGet on Windows resolved a null path inside NuGet.targets and the build
+      # failed before any analyzer ran. Creating them is cheaper than leaving the redirect
+      # off, which would put the toolchain back on the shared profile.
+      - name: Prepare isolated .NET toolchain directories
+        shell: bash
+        run: mkdir -p "${RUNNER_TEMP}/crucible-dotnet-home" "${RUNNER_TEMP}/crucible-nuget" "${RUNNER_TEMP}/crucible-nuget-http"
+      - name: Prove native semantic adapters
+        env:
+          DOTNET_CLI_HOME: ${{ runner.temp }}/crucible-dotnet-home
+          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: "1"
+          DOTNET_NOLOGO: "1"
+          # The redirected home makes the SDK's workload integrity check fail on Windows
+          # ("An issue was encountered verifying workloads"), which surfaced as the NuGet
+          # restore error. This analyzer uses no workloads, so the check has nothing to
+          # verify for it; it is skipped rather than the isolation being given up.
+          DOTNET_SKIP_WORKLOAD_INTEGRITY_CHECK: "1"
+          # Skipping the integrity check was not enough on Windows: the workload *resolver*
+          # still runs during restore and is what feeds a null path into NuGet.targets. This
+          # analyzer declares no workloads, so the resolver has nothing to contribute and is
+          # turned off. Coverage is untouched - both operating systems still run every adapter.
+          MSBuildEnableWorkloadResolver: "false"
+          NUGET_PACKAGES: ${{ runner.temp }}/crucible-nuget
+          NUGET_HTTP_CACHE_PATH: ${{ runner.temp }}/crucible-nuget-http
+        run: node --test test/semanticAnalysis.test.js

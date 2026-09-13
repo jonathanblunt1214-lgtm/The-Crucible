@@ -35,6 +35,7 @@ jobs:
           npm test
           npm run validate
           npm run lint:workflows
+          npm run audit:circulation
           npm run audit:clutter
           npm run audit:privacy
           npm run audit:security

@@ -63,6 +63,16 @@ test('requires shell-free evidence commands for declared claims', () => {
   assert.throws(() => validateConfig(value), /executable name/);
 });
 
+test('authenticity learning eligibility requires explicit bounded fields and rejects extras', () => {
+  const value = fixture();
+  value.authenticity = { claims:[{ name:'Bounded suite claim', run:'node', args:['--test'], learning:{ claimBoundary:'exact commit and runtime', generalizationBoundary:'no wider than the exact commit and runtime', expectedOutcome:'configured tests pass', environment:'governed test runner' } }] };
+  assert.deepEqual(validateConfig(value).authenticity.claims[0].learning, value.authenticity.claims[0].learning);
+  delete value.authenticity.claims[0].learning.claimBoundary;
+  assert.throws(() => validateConfig(value), /learning\.claimBoundary is required/);
+  value.authenticity.claims[0].learning.claimBoundary = 'exact commit'; value.authenticity.claims[0].learning.confidence = 1;
+  assert.throws(() => validateConfig(value), /learning contains unknown field.*confidence/);
+});
+
 test('validates narrow privacy path exemptions', () => {
   const value = fixture();
   value.privacy.allow = ['src/data/**'];

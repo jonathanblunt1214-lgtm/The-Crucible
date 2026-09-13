@@ -1,0 +1,201 @@
+{
+  "schemaVersion": 1,
+  "canonical": {
+    "repositoryId": 1344890806,
+    "repository": "jonathanblunt1214-lgtm/The-Crucible",
+    "branch": "development",
+    "path": "TASK-ROUTING.json",
+    "reference": "development:TASK-ROUTING.json"
+  },
+  "repositories": [
+    {
+      "id": 1344890806,
+      "name": "jonathanblunt1214-lgtm/The-Crucible",
+      "projectNames": [
+        "The Crucible",
+        "Crucible"
+      ],
+      "branches": {
+        "development": {
+          "role": "development",
+          "access": "write"
+        },
+        "Plug-in": {
+          "role": "integration",
+          "access": "write"
+        },
+        "ci-monitor": {
+          "role": "monitor-snapshot",
+          "access": "automation-only"
+        },
+        "Archive": {
+          "role": "historical",
+          "access": "read-only-unless-owner-approved"
+        },
+        "release": {
+          "role": "release-staging",
+          "access": "promotion-workflow-only"
+        },
+        "main": {
+          "role": "production",
+          "access": "promotion-workflow-only"
+        }
+      }
+    }
+  ],
+  "sharedEvidencePaths": [
+    "AGENTS.md",
+    "AI-CONFLICTS.json",
+    "AI-HANDOFF.json",
+    "CLAUDE.md",
+    "DEVLOG.md",
+    "README.md",
+    "TASK-ROUTING.json",
+    "package.json",
+    ".githooks/pre-push",
+    ".github/workflows/self-test.yml",
+    "src/circulationLinkage.js",
+    "src/failureCodes.js",
+    "src/taskRouting.js",
+    "src/taskRoutingCli.js",
+    "src/testCadenceCoreLegacy.js",
+    "test/_testCadenceCore.js",
+    "test/failureCodes.test.js",
+    "test/taskRouting.test.js",
+    "test/workflow.test.js"
+  ],
+  "categories": [
+    {
+      "id": "crucible-plugin",
+      "label": "MCP and AI-provider integrations",
+      "destination": {
+        "repositoryId": 1344890806,
+        "branch": "Plug-in"
+      },
+      "access": "write",
+      "promptTerms": [
+        "mcp",
+        "chatgpt",
+        "perplexity plugin",
+        "gemini",
+        "nexus integration",
+        "nexus plugin",
+        "claude plugin",
+        "plugin integration"
+      ],
+      "pathPrefixes": [
+        ".claude-plugin/",
+        "chatgpt-mcp/",
+        "claude-code-plugin/",
+        "gemini-plugin/",
+        "perplexity-plugin/"
+      ],
+      "pathExact": [
+        "HOST-CONTRACT.md",
+        "nexus.plugin.json"
+      ]
+    },
+    {
+      "id": "crucible-ci-monitor",
+      "label": "CI-monitor snapshots",
+      "destination": {
+        "repositoryId": 1344890806,
+        "branch": "ci-monitor"
+      },
+      "access": "automation-only",
+      "requiredOperation": "snapshot-sync",
+      "promptTerms": [
+        "ci-monitor snapshot",
+        "sync ci monitor",
+        "monitoring snapshot"
+      ],
+      "pathPrefixes": [],
+      "pathExact": []
+    },
+    {
+      "id": "crucible-archive",
+      "label": "Historical material",
+      "destination": {
+        "repositoryId": 1344890806,
+        "branch": "Archive"
+      },
+      "access": "read-only-unless-owner-approved",
+      "promptTerms": [
+        "historical material",
+        "archive history",
+        "archived reference",
+        "devlog-pruned"
+      ],
+      "pathPrefixes": [],
+      "pathExact": [
+        "Devlog-Pruned"
+      ]
+    },
+    {
+      "id": "crucible-release",
+      "label": "Release and production promotion",
+      "destination": {
+        "repositoryId": 1344890806,
+        "branch": "release"
+      },
+      "nextBranch": "main",
+      "access": "promotion-workflow-only",
+      "requiredOperation": "promotion",
+      "promptTerms": [
+        "promote to main",
+        "production promotion",
+        "release promotion",
+        "release to main"
+      ],
+      "pathPrefixes": [],
+      "pathExact": []
+    },
+    {
+      "id": "crucible-core",
+      "label": "Core engine, governance, testing, and learning",
+      "destination": {
+        "repositoryId": 1344890806,
+        "branch": "development"
+      },
+      "access": "write",
+      "projectTerms": [
+        "The Crucible",
+        "Crucible"
+      ],
+      "promptTerms": [
+        "core engine",
+        "governance",
+        "testing",
+        "scientific learning",
+        "learning pipeline",
+        "knowledge database",
+        "durable knowledge",
+        "task routing"
+      ],
+      "pathPrefixes": [
+        ".github/",
+        ".githooks/",
+        "governingDocuments/",
+        "scripts/",
+        "src/",
+        "templates/",
+        "test/",
+        "tools/"
+      ],
+      "pathExact": [
+        ".gitignore",
+        ".thecrucible.json",
+        ".thecrucible.schema.json"
+      ]
+    }
+  ],
+  "policies": {
+    "explicitDestinationOverridesClassification": true,
+    "multiCategory": "split-into-repository-scoped-commits",
+    "unknownOrConflicting": "ask-one-focused-question-and-do-not-write-or-push",
+    "branchCreation": "never-automatic",
+    "branchDeletion": "never-authorized-by-routing",
+    "productionPromotion": "release-to-main-workflow-only",
+    "canonicalCopies": "forbidden"
+  }
+}

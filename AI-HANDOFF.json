@@ -6,6 +6,9 @@
     "AI-CONFLICTS.json": "Auditable AI conflict ledger; never bypass or disable it.",
     "CLAUDE.md": "Claude entry point to AGENTS.md.",
     "README.md": "Project documentation.",
+    "TASK-ROUTING.json": "Canonical stable-repository task-category registry. Governed checkouts reference this development-owned file; they do not copy or silently fork it.",
+    "src/taskRouting.js": "Fail-closed task classifier and repository/branch routing verifier for prompts, affected paths, project context, explicit overrides, protected routes, and repository-scoped commit splitting.",
+    "src/taskRoutingCli.js": "Pre-write, pre-push, and CI entry point for the canonical task-routing decision.",
     "templates/ai-conflict-resolution.md": "Conflict-resolution procedure.",
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
@@ -24,19 +27,107 @@
     "src/testFeatureClassifier.js": "Independent closest-feature classifier for newly discovered unmapped tests. Explicit mappings remain authoritative; a unique evidence-backed closest match supplies a category. Unresolved ambiguity is isolated to the affected test, safe classified tests continue, and incomplete requested coverage must be reported rather than faked.",
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
+    "src/ciDiagnosticOrgan.js": "Dependency-free project-bound hosted CI failure capture, typed diagnosis, organism-health inhibition, and non-proof evidence reporting.",
+    "src/hostedLearningProof.js": "GitHub-hosted, project-bound R4-R8 proof runner with encrypted restart-safe durable-state transport and no release authority.",
+    "src/hostedSourceBundle.js": "Development-bound authenticated encryption, local-path scrubbing, content-hash manifesting, restore, and verification for owner training queues hosted on GitHub.",
+    ".github/workflows/hosted-source-bootstrap.yml": "Read-only GitHub runner ciphertext custody proof; Crucible receives no decryption key and retains only a bounded hash report.",
+    ".github/workflows/hosted-learning-proof.yml": "Development-only hourly/manual GitHub host for encrypted durable R4-R8 proof and retained bounded evidence.",
     "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
     "governingDocuments/scientific-learning-policy.md": "Permanent autonomous scientific-learning invariants, promotion boundary, project isolation, contradiction handling, rollback, and weekly transport policy.",
-    "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, project-isolated evidence and versioned knowledge stores, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
+    "governingDocuments/scientific-learning-release-plan.md": "Gate-driven rolling release plan for scientific learning; dates forecast readiness but never authorize promotion or weaken proof.",
+    "governingDocuments/scientific-learning-release-status.json": "Machine-readable current gate state, rolling target, forecast confidence, blocker, and target-change history.",
+    "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, atomic durable project-isolated evidence and independent-lineage versioned knowledge, restart-safe autonomous orchestration, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
+    "src/learningExperience.js": "Strict project-bound learning-by-doing adapter that records content-addressed successful and failed task attempts only as non-promotable candidate evidence.",
+    "src/codeSecurityOrganism.js": "Language-specific code-assistive security profiles, repository threat context, dependency-bound reversible repairs, distinct verification, rollback, regression feedback, and organ health/recovery.",
+    "governingDocuments/host-isolation-policy.md": "Permanent non-assimilation boundary for the operator machine and GitHub execution hosts.",
+    "src/hostIsolation.js": "Mechanical deny-by-default execution-host boundary with explicit Crucible repository opt-in.",
+    "src/offlineGpuGate.js": "Owner-signed project/workload GPU permit with an overriding offline hard stop.",
+    "src/externalAiFirewall.js": "Default-deny, owner-signed, payload-hash-bound external AI egress firewall.",
+    "src/semanticAnalysis.js": "Compiler-native semantic adapters, normalized findings, secure workers, and explicit cross-language graphs.",
+    "src/knowledgeLifecycle.js": "Review routing for aged or challenged active knowledge and proof-bound supersession confirmation.",
+    "src/scientificLearningCli.js": "Fail-closed operator readiness, candidate ingestion, custody-state inspection, and verified-only retrieval for explicitly configured project-scoped durable learning stores.",
+    "src/safeInformationRetrieval.js": "Owner-approved credential-free HTTPS evidence retrieval, passive trusted-domain Google result parsing, auditable kill switch and denylist, network/content limits, provenance hashing, and prompt-injection/executable quarantine.",
+    "src/automatedGoogleResearch.js": "Bounded credential-free Google discovery automation with allow-listed topics and suffixes, project-bound atomic query/result audit, due scheduling, kill switch, network limits, and URL deduplication before candidate registration.",
+    "src/automatedGoogleResearchCli.js": "Fail-closed operator entry point for explicitly configured repository-bound automated Google research readiness and due-topic runs.",
+    "src/providerCirculation.js": "Circulation boundary for provider-backed candidate discovery; discards generated prose and carries only bounded citation URLs plus non-secret audit hashes into local vetting.",
+    "src/automatedPerplexityResearch.js": "Daily, project-bound Perplexity citation discovery with a 50-topic run ceiling, local URL admission, atomic audit, deduplication, and candidate-only queue registration.",
+    "src/automatedPerplexityResearchCli.js": "Fail-closed operator entry point for Perplexity holding-queue initialization, readiness, daily due-topic runs, and structured partial failure reports.",
+    "src/ownerFileIntake.js": "Project-bound, content-addressed owner-file intake that validates untrusted PDFs and text, deduplicates by SHA-256, publishes complete immutable source bytes, and registers candidate-only extraction work under the source queue lock.",
+    "src/ownerFileIntakeCli.js": "Fail-closed operator entry point for exact owner-supplied source files; reports admitted and already-present identities without interpreting file contents as instructions.",
+    ".github/workflows/perplexity-research.yml": "Read-only daily trigger that checks out development and retains the project-bound Perplexity discovery audit, structured report, and candidate-only holding queue in Actions cache and artifacts.",
+    "src/claimExtractionWorker.js": "Restart-safe atomic source-queue worker that extracts bounded assertions, persists deterministic Insufficient Evidence candidates, advances PDF windows, and never satisfies proof or promotion gates.",
+    "src/claimExtractionWorkerCli.js": "Fail-closed project-bound readiness and bounded execution entry point for durable claim extraction.",
+    "scripts/extractPdfText.py": "Bounded-page PDF text fallback for trusted Python runtimes when pdftotext is unavailable.",
+    "src/monthlyKnowledgeRefresh.js": "Atomic project-bound URL refresh registry that makes every logged source due within 30 days, suppresses unchanged and previously seen content, and emits only novel bounded candidate claims without bypassing scientific promotion gates.",
     "src/security.js": "Security Gate. Detects secrets, unsafe behavior, and public API-key-shaped identifiers and forces review without persisting detected values.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
     ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport; it never chooses test files.",
     "governingDocuments/known-bugs/README.md": "Known-bug governance policy.",
     "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger.",
-    "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity, America/New_York timestamping, completion/interruption check-ins, and continue-until-done behavior."
+    "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity, America/New_York timestamping, completion/interruption check-ins, and continue-until-done behavior.",
+    "src/durableLock.js": "Owner-recording durable lock shared by the source queue and the durable learning store. Reclaims a lock only from a process proven dead on the same host past a bounded staleness floor, fails closed on live, foreign-host, unreadable, too-recent, and lost-race conditions, and reports every reclamation so recovery from a forced interruption is never invisible.",
+    "src/durableLockRecoveryCli.js": "Fail-closed operator entry point for the one narrow legacy zero-byte extraction-lock recovery path. It derives the lock from a project-bound source queue and requires explicit authorization, no-live-worker confirmation, and an exact hash and modification-time fingerprint before preserving quarantine and audit evidence.",
+    "src/soakGate.js": "Executable R9 soak definition. One data point per verified knowledge version, candidate record, and queued source; an owner-set ceiling of 1000 observed at once with the remainder held rather than discarded; a deterministic replayable observation window; the owner-set 72-96 hour duration band; and a fail-closed hold when the current data cannot exhibit the failures R9 names. It never reports a pass - passing is what the soak itself establishes over its duration.",
+    "src/soakRun.js": "Executable R9 soak run. Freezes the observed population at the start, records hourly sweeps, resets the clock for a failed data point only, recycles a data point to the collection pool after three failures and marks it trash after three more, orders recirculated sources behind new data, voids the soak on a store-level failure, restarts every surviving clock across an unobserved gap, and reaches a verdict only after the full chosen duration.",
+    "src/preSoakReadiness.js": "Read-only pre-soak gate reporter. Judges R2-R8 from durable state, reports manual-evidence-required rather than inferring a combined R8 cycle from unit coverage, and authorizes nothing.",
+    "src/learningGovernance.js": "Governance monitoring of the learning gates with indirect pipeline control only. Detects blockages from gate state, analyzer health, store health, contradictions, and backlog, then emits adjustments from a closed allow-list of flow controls: reprioritize, hold, throttle, route, deprioritize. It may never promote, verify, mark a gate passed, authorize a release, start a held soak, repair the durable store, shorten a soak, or discard evidence, and it is never a truth source. What it cannot clear by moving work is escalated to the owner.",
+    "src/learningCycle.js": "Executable R4 to R5 cycle. Accepts a claim as candidate evidence only when the exact assertion is present in that source own content through the same bounded extraction the worker uses, then runs the controlled evaluation pipeline with a distinct verifier identity to a verified knowledge version. Keeps claim scope and per-source provenance separate, which is what lets two independent sources corroborate at all.",
+    "src/realCorpusLearning.js": "Learns from the real restored corpus. Finds claims two independently identified real sources assert, requires an owner-declared scope that is never inferred, runs the controlled pipeline, and fails closed with a stated reason when the corpus cannot supply. Has no synthetic fallback.",
+    "governingDocuments/learning-scope-declarations.json": "Owner-declared claim scopes and optional source pairings for real-corpus learning. A declaration selects which claim is evaluated and, with pairedAssertions, records sameness of meaning as the owner judgement; it never authorizes promotion.",
+    "src/semanticCorroboration.js": "Deterministic, dependency-free same-meaning test for claim text. Reduces a claim to polarity, committed numbers, and stemmed content terms, and accepts paraphrase only above a term-overlap threshold. Never crosses a negation or a changed number, is symmetric and repeatable, and never reports proof, independent verification, or promotion.",
+    "src/pairedCorroboration.js": "Owner-paired corroboration. Verifies a nominated pairing against the restored corpus: both source ids present, content matching the hash the queue recorded, each declared sentence verbatim among that document own bounded assertions, and the two sources not one mirrored document. Carries each document own sentence forward, never the owner wording, and authorizes evaluation only.",
+    "src/sourceIndependence.js": "Deterministic independence test for two sources. Identical content, one publisher site, or one declared author each break independence, so two editions of a book or two pages of a site cannot corroborate each other.",
+    "src/realCorpusSafety.js": "R8 derived from the real corpus and a real retriever with no stubs. Each of the eight safety and deduplication behaviours reports evidence or the reason the corpus cannot demonstrate it; only demonstrated behaviours are passed to the readiness gate.",
+    "src/realSupersession.js": "R7 on real evidence. A further corpus source, independent of both already behind a promoted claim and asserting it verbatim, supersedes it and the prior version is restored with history intact. Fails closed with a precise reason rather than superseding a self-made candidate.",
+    "src/documentFurniture.js": "Structural rejection of document furniture at extraction and at corroboration. Navigation runs, table-of-contents rows, fixed legal boilerplate, scraped heading duplication, and reader-addressed interface text are rejected by form, never by subject, source, or publisher. Ordinary prose that is merely untestable still passes: refusing that is the critical reviewer and hypothesis contract, not a wording filter.",
+    "src/repairEvidence.js": "Joins the immune system to the learner. A defect found, repaired, and confirmed by a distinct verifier enters candidate custody as non-promotable experience evidence stating what the construct does, never what the repair did. A rolled-back repair is recorded as a failure; a repair that never ran observed nothing and is not evidence.",
+    "src/intakePathways.js": "Separates digestion two outputs. Candidate evidence goes to the learner and awaits proof; the health of digestion itself goes to the senses, is never a claim about the world, and can never be corroborated into knowledge. Names which pathway is blocked so an impeded intake is not read as an empty result.",
+    "src/hypothesisTestPlan.js": "Strict hash-bound falsifiable hypothesis and test-variable plan schema.",
+    "src/languageHypothesisVariables.js": "Governed language-specific independent, dependent, controlled, measurement, and falsification variable profiles.",
+    "src/languageExperimentRegistry.js": "Pinned trusted experiment registry requiring distinct executor and verifier identities.",
+    "src/concreteLanguageHarness.js": "Concrete content-addressed fixtures and separate executable compiler/parser adapters for every governed language.",
+    "src/organismCirculation.js": "Typed project-bound signal bus that routes work but cannot satisfy proof or promotion.",
+    "src/organismRuntime.js": "Durable heartbeat, deduplication, backpressure, fault isolation, throttling, recovery, and exact-boundary memory routing.",
+    "src/productionOrganism.js": "Production nervous, brain, immune, digestive, learning, and reporting pathways.",
+    "src/organismHealth.js": "Concise continuous organ health and exact missing-dependency view.",
+    "src/oversightReflex.js": "Independent signed STOP and dual-authorized CLEAR reflex bound to the exact organism state.",
+    "src/contradictionAudit.js": "Audits a contradiction between verified knowledge and new evidence instead of quarantining the newcomer by default. Assembles everything in custody bearing on the claim, weighs each side by genuinely independent sources, enumerates the six ways it can resolve with what would settle each, and proposes a reconciling perspective only when provenance itself grounds one. Source counts prioritise investigation and never authorise a conclusion; the audit decides nothing.",
+    "src/contradictionReopening.js": "Reopens candidates quarantined on contradiction before the audit existed. They go to the front of the pipeline ahead of all new work, oldest quarantine first, because they were set aside by a default rather than adjudicated - unlike a recirculated soak source, which failed on its merits and correctly ranks below new data. Reopening audits and never clears, promotes, or reverses anything.",
+    "src/circulationLinkage.js": "Fly-by-wire enforcement. A ratchet on direct cross-system imports that bypass circulation - the count may fall and may never rise, so every new connection between organs must go through the typed signal bus - plus a runtime assertion that refuses to start an organism with a missing organ handler, because a signal to an unhandled organ never arrives and nothing reports its absence. Runs on every push.",
+    "governingDocuments/circulation-linkage-baseline.json": "The recorded fly-by-wire baseline: how many direct cross-system imports currently bypass circulation. Measured from the tree, never estimated. May be lowered when linkage is removed and may never be raised.",
+    "src/gradedOversightResponse.js": "Crucible half of oversight graduated response. Records a finding before any repair is offered, decides whether it may have one bounded reversible attempt, and hands oversight an evidence package. Four rules rather than intentions: the finding cannot be hidden by a successful repair, Crucible cannot verify its own repair, a returning fault escalates rather than buying another window, and a critical finding gets no repair window at all. It requests; oversight decides.",
+    "src/mutationClaims.js": "Exclusive mutation ownership: several AIs may work one project, but only one may mutate a given scope at a time.",
+    "src/mutationClaimStore.js": "Persists claim acquisition, release and handoff into AI-HANDOFF.json, the only state agents share.",
+    "src/multiAiDeliberation.js": "Cross-AI proposals, positions, evidence and corroboration, recorded inside AI-CONFLICTS.json. There is deliberately no AI-DELIBERATION.json.",
+    "src/aiProviderRegistry.js": "The four governed providers, the environment variables their credentials come from, and the credential-leak check.",
+    "src/aiProviderAdapters.js": "Real HTTP adapters that call OpenAI, Anthropic, Perplexity and NVIDIA NIM.",
+    "src/multiAiOrchestrator.js": "Distributes one bounded task to several providers and keeps their answers separate with provenance.",
+    "src/devlogAccountability.js": "What each AI actually did, enforced against DEVLOG.md.",
+    "src/coordinationGate.js": "The gate: exclusive ownership, DEVLOG accountability, and no credential in any governance artifact.",
+    "src/aiHandoffContinuation.js": "How a successor AI reads the governed state and resumes from the last confirmed good point.",
+    "src/coordinationCli.js": "Agent-facing commands: continue, claims, claim, release, handoff, providers, consult."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-29T19:11:00Z"
+    "lastActionAt": "2026-09-13T05:25:00Z"
+  },
+  "repairSelectionPolicy": {
+    "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
+    "appliesTo": "Every agent working in this repository, on every change, including ones a reviewer, a scanner, a failing check or the owner appears to be asking for.",
+    "whatThisForbids": [
+      "Relaxing, deleting, skipping or narrowing a test, an assertion or a gate so that a change can pass.",
+      "Adjusting a baseline, threshold or allow-list to accommodate your own change rather than because the underlying fact changed.",
+      "Applying a reviewer's or scanner's suggested patch without first establishing that it fixes the described defect - a suggested remedy can be wrong, or can leave the defect in place while looking addressed.",
+      "Taking a cheaper fix at one layer because another layer happens to mask the case today; verify the masking layer actually covers it, and if it does not, say so and fix the right layer.",
+      "Silencing a checker without removing the condition it reports."
+    ],
+    "whatThisRequires": [
+      "Reproduce the defect first, so the fix is aimed at a measured cause rather than a suspected one.",
+      "State why the chosen fix is correct and what it rules out, in the code where a later reader will meet it.",
+      "Verify by reverting the source alone with the tests in place: the test must fail without the fix and pass with it.",
+      "When the correct fix is larger than the task, or is a design decision rather than a defect, record it and raise it rather than shipping the convenient one."
+    ],
+    "whenTheCorrectFixIsNotYoursToMake": "Say so plainly, record the analysis and the proposed change in activePlan.steps, and leave the defect standing rather than papering over it. An honest open item is worth more than a change that hides the problem."
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -75,7 +166,12 @@
     "orchestratorAuthority": "The Orchestrator alone selects categories/subcategories/test files and execution scope from explicit requests, change impact, dependencies, cadence obligations, and validated classifications.",
     "balanceRule": "Cadence declares due categories; the Orchestrator resolves them into concrete tests; reconciliation rejects incomplete coverage.",
     "explicitRequestRule": "A specific owner test request is interpreted and run immediately by the Orchestrator; cadence cannot narrow or replace it.",
-    "categoryCadence": { "code": "every-push", "security": "daily", "utility": "twice-weekly", "maintenance": "weekly" },
+    "categoryCadence": {
+      "code": "every-push",
+      "security": "daily",
+      "utility": "twice-weekly",
+      "maintenance": "weekly"
+    },
     "standingTestExpansionRule": "New standing test cases may be added inside an already explicitly categorized test file when they belong to that same category.",
     "codeCriticalityRule": "Code is due on every push and pull request.",
     "scheduledCumulativeRule": "Cadence obligations are cumulative.",
@@ -89,50 +185,97 @@
     "mechanicalEnforcement": "The reusable Crucible workflow executes src/injectionMonitor.js. Active manifests fail closed unless the monitor is actually running with verified evidence retrieval and repair capability; terminal manifests fail if the monitor or injection credential remains active.",
     "repairRule": "For an applicable failure during the active injection window, retrieve the exact failure evidence, diagnose against current source and governing configuration, autonomously apply safe deterministic repairs inside injection scope through the development-first path, retest, and repeat until resolved or a real boundary blocks repair. Diagnosis/status alone never satisfies the repair obligation when safe authorized repair remains executable.",
     "dedupeRule": "Maintain one repair record per underlying defect; repeated failing runs update that record rather than creating a report/comment per commit.",
-    "shutdownRule": "Disable at successful assimilation, cancellation, blocking boundary, or 24-hour expiration; do not become persistent project monitoring.",
+    "shutdownRule": "Disable at successful injection completion, cancellation, blocking boundary, or 24-hour expiration; do not become persistent project monitoring.",
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "Codex",
-    "objective": "Correct the false third-branch integrity failure caused by an Archive-only governing artifact being represented as an unqualified main path.",
-    "currentPrompt": "Fix the remaining red third-branch integrity check for the Plug-in branch reference to the nonexistent main:Devlog-Pruned (Archive branch).",
+    "agent": "ChatGPT automation",
+    "objective": "Complete the owner-approved cross-project canonical Orchestrator Policy rollout and repair the evidence-backed CI and handoff deviations that are safely correctable without weakening project identity, governance, custody, or authorization boundaries.",
+    "currentPrompt": "Work autonomously on the user's established 1:01 plan across all authorized projects/repos, using Work mode when available. Preserve all previously established priorities and canonical rules, including bounded preflight, universal cross-project Canonical Orchestrator Policy, stable project identities, AI Collaboration + Crucible GitHub App scope, adaptive council, CI/self-repair, digest, backlog continuation, and full automation unless user authority is truly required. ABSOLUTE EXECUTION-BOUNDARY AND COMPLETION GUARANTEE: every worker/session/run/retry/resume/repair/handoff/council implementation MUST identify and record its execution boundary/start as soon as substantive execution begins, including worker/project identity, task/run/session id when available, start timestamp, current verified continuation point, and reserved capacity for terminal verification. From execution start, continuously protect enough remaining time/token/compute/capacity for FINAL VERIFICATION + terminal canonical Devlog write to COMPLETE, not merely start. New substantive work MUST stop at a conservative cutoff early enough to finish the full verification suite and Devlog before the execution/session/resource boundary. Prefer leaving substantive backlog unfinished over risking incomplete Final Verification. If remaining capacity approaches the reserved verification requirement, immediately stop substantive work and enter Final Verification. FINAL VERIFICATION ALWAYS RUNS, MUST COMPLETE to the strongest available evidence-backed boundary, and is ALWAYS THE LAST PHASE. Verify all state/actions/changes reached using strongest available executable/operational evidence. The Devlog update is part of Final Verification and its terminal record: after verification checks complete, write/update the canonical Devlog with execution start/boundary, work performed, exact evidence, verification outcome, blocked/unverified portions, commits/runs/tests/logs/config evidence, rollback/continuation boundary, and Reasoned/Reviewed/Verified status. Final Verification is not complete until this terminal Devlog record is successfully written or, if genuinely impossible due to external/auth/capability boundary, the exact failure is captured in the strongest available durable record and affected portion is not called fully Verified. No substantive/state-changing operation may occur after the terminal Devlog record in that execution boundary. If verification discovers a defect requiring repair, mark verification failed/incomplete; repair only if there remains enough capacity to perform the repair AND a complete NEW Final Verification + terminal Devlog afterward. Otherwise preserve the defect/blocker for continuation and finish the current verification boundary without attempting a repair that would jeopardize verification completion. Any repair starts a new verification requirement. Final Devlog entries must be evidence-based, reuse the canonical Devlog, and preserve project identity/provenance. The scheduler/worker must bias the cutoff earlier whenever duration/resource uncertainty exists; FINAL VERIFICATION COMPLETION has priority over starting or finishing additional substantive backlog work.",
     "executionMode": {
-      "mode": "regular/default",
-      "agent": "Codex",
-      "purpose": "Apply and verify a focused governance-reference correction through the development-first protected promotion path.",
-      "selectionReason": "The defect is narrow and has a deterministic metadata correction plus one regression test.",
-      "distinction": "Execution mode is separate from agent identity and workflow; Codex is operating in regular/default mode."
+      "mode": "work",
+      "agent": "ChatGPT automation",
+      "purpose": "Coordinate bounded multi-repository policy, CI diagnosis, safe repair, exact-tip hosted verification, and terminal chain-of-custody recording.",
+      "selectionReason": "The task spans independent repositories, policy/governance records, hosted CI evidence, multiple correction cycles, and a mandatory terminal verification boundary.",
+      "distinction": "Execution mode is separate from agent identity and workflow; Work mode changes orchestration depth, not repository identity, branch authority, governance, or promotion authority."
+    },
+    "taskRouting": {
+      "category": "crucible-core",
+      "repositoryId": 1344890806,
+      "repository": "jonathanblunt1214-lgtm/The-Crucible",
+      "branch": "development",
+      "reason": "The Crucible-side work updates governance handoff and Devlog records on the owner-approved development path while AI Collaboration remains an independent peer project.",
+      "explicitOverride": false,
+      "selectedAt": "2026-09-13T01:06:01-04:00"
     },
     "steps": [
-      "Represent the Archive-only Devlog-Pruned ledger with an explicit branch-qualified handoff key.",
-      "Add regression coverage proving branch-qualified governance is excluded while repository-relative main governance remains checked.",
-      "Run focused and full governance verification, commit atomically on development, promote through release, and verify the repaired exact-main integrity run."
+      "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
+      "[done] Strengthened AI Collaboration ORCHESTRATOR-POLICY.json to mechanically require early execution-boundary identification, continuously reserved terminal-verification capacity, conservative cutoff, complete Final Verification, and terminal Devlog recording.",
+      "[done] Re-verified AI Collaboration and Crucible remain independent projects joined by a non-containment cross-project policy reference; Nexus and ChatGPT remain excluded from the custom GitHub App package boundary.",
+      "[done] Re-ran AI Collaboration CI and reproduced the same pre-runner failure: no steps, runner_id 0, empty runner identity, and no job log. A separate Crucible workflow received a GitHub-hosted runner at the same time. No further speculative application/workflow mutation is justified from this evidence.",
+      "[done] Diagnosed the Crucible DEVLOG final-newline regression from hosted Self-Test evidence and repaired exactly that formatting defect.",
+      "[done] Final Verification exposed the handoff-policy invariant and the coherent AI-HANDOFF.json + DEVLOG.md correction at a0b440ce7c9b964a491595680966fee0b514146c passed the takeover-ready handoff check.",
+      "[done] Final Verification then exposed CRU-0035 because seven released historical mutation-claim identifiers had been pruned from the compact DEVLOG even though the claims remained in AI-HANDOFF.json; the coordination gate was preserved.",
+      "[in progress] Restore those seven released claim identifiers as a compact accountability ledger in DEVLOG.md while keeping this plan synchronized in the same commit, then restart exact-tip Final Verification.",
+      "[next] If verification is stable, write the terminal canonical Devlog/handoff record as the final state-changing operation and stop substantive work.",
+      "[blocked-external] AI Collaboration private-repository Actions runner allocation/settings cannot be diagnosed or changed through the connected GitHub surface; the exact failure remains before runner assignment and is not represented as a source-code defect.",
+      "[blocked-external] Crucible hosted scientific-learning proof remains blocked by the separately governed vetted-custody queue/manifest inconsistency; this task does not weaken or bypass that custody boundary.",
+      "[standing] Do not close, exclude, or weaken locked PR/conflict/governance surfaces merely to clear diagnostics such as CRU-0015; executable evidence and owner boundaries outrank green cosmetics."
     ],
     "status": "active",
-    "startedAt": "2026-08-29T19:02:00Z",
-    "lastUpdatedAt": "2026-08-29T19:11:00Z"
+    "startedAt": "2026-09-13T05:06:01Z",
+    "lastUpdatedAt": "2026-09-13T05:25:00Z",
+    "currentStep": "Restore the missing historical mutation-claim accountability references in DEVLOG.md without changing or weakening the coordination gate, then restart Final Verification on the exact resulting development commit."
   },
   "handoffNotes": {
     "completed": [
-      "Re-read the shared handoff, conflict ledger, and every current governing document.",
-      "Fetched origin/development and fast-forwarded the clean checkout from 81fead2 to exact tip 0f66d3b05989d10580ae22b3202d22ad3cf108d0 before writing.",
-      "Reviewed the referenced scientific-learning discussion and retained its vetted material as candidate input only, not verified knowledge.",
-      "Confirmed the repository contains no scientific-learning implementation or earlier draft blobs to reuse as-is and no open AI conflict."
-      ,"Implemented the strict scientific-learning state machine, project-isolated candidate and verified-knowledge stores, contradiction quarantine, rollback, project-bound weekly encryption, OIDC identity verification, permanent policy, and adversarial tests."
-      ,"Repaired pre-existing test categorization debt and a fail-closed injection collision regression discovered by the full suite."
-      ,"Corrected the transport tamper regression to flip an actual ciphertext bit deterministically on every supported Node version instead of replacing the first base64url character with a value that could already be identical."
-      ,"Promoted development tip 8fd433ec835ea4bf2111a4b5d76b0ef9a57d21a4 through release and protected PR #16 to main merge commit 32cf371ff344f8f45f61ec885faa8a4fc4a30d06; its tree is identical to development and exact-main Self-Test, CodeQL, and handoff checks passed."
-      ,"Diagnosed the remaining third-branch failure as a false main-path expansion of the Archive-only Devlog-Pruned ledger and prepared an explicit branch-qualified handoff correction with regression coverage."
+      "AI Collaboration canonical policy v2 is published at commit 83a466073fdb50930c81242ce95ebe1ed28622f2 with universal present/future scope, 5/8/10 preflight, adaptive council, stable identities, custom-App boundaries, early execution-boundary capture, conservative cutoff, complete Final Verification, and terminal Devlog requirements.",
+      "AI Collaboration PROJECT-IDENTITY.json and Crucible governingDocuments/shared-orchestrator-policy-reference.json preserve independent project identities, non-containment, stronger local governance, and Nexus/ChatGPT exclusion from the custom App package.",
+      "AI Collaboration CI was retried and reproduced failure before runner assignment; no executable step or repository test failed because no step began. The evidence supports an external/private-repository Actions allocation/settings class, not a speculative source edit.",
+      "Crucible hosted verification caught the DEVLOG final-newline defect, the synchronized handoff requirement, and then the missing historical mutation-claim accountability references. Each gate was preserved and treated as evidence rather than weakened."
     ],
     "verification": [
-      "Pre-write branch and remote-tip verification completed at 0f66d3b05989d10580ae22b3202d22ad3cf108d0.",
-      "Focused tests pass 49/49; full governed suite and the mandatory known-bug re-test pass 337/337; configuration, docs, workflow lint, clutter, privacy, security, conflict governance, general governance, design-brief, core-reference, authenticity, and diff checks pass.",
-      "Exact development tip 8fd433ec and exact main merge commit 32cf371 passed Self-Test and CodeQL; PR #16 checks passed before protected merge.",
-      "The failed third-branch run 33269032123 reported only Plug-in via AI-HANDOFF.json governingDocuments -> main:Devlog-Pruned (Archive branch); the ledger is intentionally on Archive, not main."
-      ,"Focused reference-integrity and handoff tests pass 40/40; full governed suite passes 338/338; validation, docs, workflow lint, clutter, privacy, security, conflict governance, general governance, design-brief, core-reference, authenticity, and diff checks pass."
+      "AI Collaboration exact commit 83a466073fdb50930c81242ce95ebe1ed28622f2 has a failed CI job with zero steps and no runner assignment; the connected GitHub surface cannot expose or change the private-repository Actions allocation/billing/policy setting needed to prove the final root cause.",
+      "Crucible AI handoff policy passed on exact commit a0b440ce7c9b964a491595680966fee0b514146c, proving the coherent plan/Devlog synchronization is takeover-ready.",
+      "Crucible AI conflict governance on that exact commit passed conflict parsing but coordination failed CRU-0035 only because seven released claim IDs were absent from the compact DEVLOG; this correction restores accountability text and does not alter claim status or governance behavior."
     ],
     "remaining": [
-      "Run focused and full verification, fetch/reconcile immediately before the atomic development commit and push, promote the authorized repair through release, and verify exact-main third-branch integrity plus the normal hosted checks until green."
+      "Run exact-tip hosted handoff, coordination, and Self-Test verification after the accountability correction and record any new deterministic defect without weakening gates.",
+      "Record the terminal Devlog/handoff boundary after the final verification checks; no substantive or state-changing work follows that terminal record.",
+      "Resolve AI Collaboration private-repository Actions runner allocation/settings only through a surface with the required administrative visibility/authority; until then global rollout status remains Reviewed rather than fully Verified.",
+      "Oversight must restore a self-consistent vetted learning queue/manifest before Crucible hosted R4-R8 can be called verified; this remains a separate custody blocker."
+    ],
+    "open": [
+      "Exact administrative cause of AI Collaboration's pre-runner GitHub Actions failure remains unobservable through the current connector.",
+      "The canonical policy rollout is evidence-backed at the policy/reference layer, but full GitHub App control-plane mechanics and shared CI/digest backlog remain continuation work after the terminal verified boundary."
     ]
-  }
+  },
+  "mutationOwnershipPolicy": {
+    "rule": "Discussion is shared; mutation is exclusive. Any AI may read, test, review, critique and propose against any scope. Exactly one AI may mutate a given scope, and only while holding an active claim.",
+    "scopeShape": "A claim locks paths and/or explicit line regions. Overlap is structural: a directory claim locks every file beneath it, and a region inside an already-claimed file is covered.",
+    "transferRule": "Ownership changes only by explicit release or handoff. Winning a technical argument does not transfer it; the current owner may implement another AI's accepted proposal.",
+    "conflictRule": "A conflict naming contestedScope freezes only that scope. A conflict naming no scope, or marked repositoryWide, stops everything - the safe reading when the record does not say what is disputed.",
+    "canonicalStreamRule": "One canonical mutation stream per claimed scope. Other providers act as reviewers, investigators, testers or proposal sources until ownership changes.",
+    "enforcement": "src/mutationClaims.js and src/coordinationGate.js; npm run audit:coordination fails the build on overlap."
+  },
+  "providerPolicy": {
+    "providers": ["openai", "anthropic", "perplexity", "nvidia-nim"],
+    "canonicalSet": "aiProviderRegistry.PROVIDER_IDS is canonical. aiProviderAdapters.DIALECTS carries protocol metadata only and is asserted at load to cover exactly that set, so a dialect variant can never quietly become a fifth provider that gets consulted and counted.",
+    "credentialRule": "Credentials come only from environment variables or repository secrets. Never in source, a committed prompt, AI-HANDOFF.json, AI-CONFLICTS.json, DEVLOG.md, or a workflow log.",
+    "modelRule": "General multi-provider deliberation has no default model: each provider reads its model from the environment and a missing one is reported as configuration. The separate Perplexity citation-discovery transport explicitly pins the current supported search model sonar when PERPLEXITY_MODEL is absent, because that bounded workflow makes the model optional by owner direction; this does not create a default for provider voting or review.",
+    "provenanceRule": "Every response is kept separately with provider, model, timestamp, taskId, prompt hash and response hash. Responses are never merged into one authorless answer.",
+    "failureRule": "A provider that could not be reached is recorded as failed, never dropped, and lowers corroboration to insufficient-evidence. An unreachable provider is unknown, not agreeing.",
+    "authorityRule": "Cross-model agreement is evidence, not proof. No AI may declare its own work approved, and no AI may be the only reviewer of its own material change. Tests, security, governance, integrity checks and OWNER authority all outrank model consensus."
+  },
+  "mutationClaims": [
+    {"taskId":"multi-ai-coordination","owner":{"provider":"anthropic","model":"claude-opus-5","agent":"session_01Ggfg1gzuSLTQwTgUejXQ7V"},"scope":{"paths":["src/mutationClaims.js","src/mutationClaimStore.js","src/multiAiDeliberation.js","src/aiProviderRegistry.js","src/aiProviderAdapters.js","src/multiAiOrchestrator.js","src/devlogAccountability.js","src/coordinationGate.js","src/aiHandoffContinuation.js","src/coordinationCli.js"],"regions":[]},"purpose":"Extend the Crucible Orchestrator into the governed multi-AI coordinator: exclusive mutation ownership, AI-CONFLICTS deliberation, DEVLOG accountability, and four governed provider adapters.","status":"released","acquiredAt":"2026-09-03T17:10:00Z","handedOffTo":null,"releasedAt":"2026-09-03T18:05:00Z"},
+    {"taskId":"resolve-additive-diagnostics-conflict","owner":{"provider":"openai","model":"codex","agent":"codex-root"},"scope":{"paths":["AI-CONFLICTS.json","AI-HANDOFF.json","DEVLOG.md",".github/workflows/handoff-policy.yml","src/devlogPruneArchive.js","src/testCadenceCoreLegacy.js","test/devlogPruneArchive.test.js","test/workflow.test.js","src/failureCodes.js","src/circulationLinkage.js"],"regions":[]},"purpose":"Record the owner-approved additive diagnostics ruling and automate the standing Devlog-Pruned Archive synchronization exception.","status":"released","acquiredAt":"2026-09-04T16:18:55Z","handedOffTo":null,"releasedAt":"2026-09-04T16:18:55Z"},
+    {"taskId":"crucible-rolling-learning-release-review-20260906","owner":{"provider":"openai","model":"codex","agent":"codex-root"},"scope":{"paths":["AI-HANDOFF.json","DEVLOG.md","governingDocuments/scientific-learning-release-status.json"],"regions":[]},"purpose":"Record the material 2026-09-06 scientific-learning release forecast and gate evidence update on development only.","status":"released","acquiredAt":"2026-09-06T16:15:41Z","handedOffTo":null,"releasedAt":"2026-09-07T02:47:14Z"},
+    {"taskId":"daily-google-research-and-lock-recovery-20260908","owner":{"provider":"openai","model":"gpt-5","agent":"codex-root"},"scope":{"paths":["AI-HANDOFF.json","DEVLOG.md","package.json","src/automatedGoogleResearch.js","src/automatedGoogleResearchCli.js","src/durableLock.js","src/durableLockRecoveryCli.js","src/circulationLinkage.js","src/failureCodes.js","test/automatedGoogleResearch.test.js","test/durableLock.test.js"],"regions":[]},"purpose":"Run up to 50 due research topics daily, prevent zero-byte canonical locks, recover the exact owner-authorized legacy extraction lock with preserved evidence, and report post-search extraction blockage as a structured failing partial result.","status":"released","acquiredAt":"2026-09-08T17:56:00Z","handedOffTo":null,"releasedAt":"2026-09-08T18:28:00Z"},
+    {"taskId":"crucible-rolling-learning-release-review-20260909","owner":{"provider":"openai","model":"gpt-5","agent":"codex-root"},"scope":{"paths":["AI-HANDOFF.json","DEVLOG.md","governingDocuments/scientific-learning-release-status.json"],"regions":[]},"purpose":"Record the material 2026-09-09 exact-tip CI, custody, and rolling scientific-learning forecast evidence on development only.","status":"released","acquiredAt":"2026-09-09T16:12:14Z","handedOffTo":null,"releasedAt":"2026-09-09T16:12:14Z"},
+    {"taskId":"crucible-rolling-learning-release-review-20260910-1600","owner":{"provider":"openai","model":"gpt-5","agent":"codex-root"},"scope":{"paths":["AI-HANDOFF.json","DEVLOG.md","governingDocuments/scientific-learning-release-plan.md","governingDocuments/scientific-learning-release-status.json"],"regions":[]},"purpose":"Record the material 2026-09-10 scheduler, vetted-custody, exact-tip CI, and rolling scientific-learning forecast evidence on development only.","status":"released","acquiredAt":"2026-09-10T20:07:39.795Z","handedOffTo":null,"releasedAt":"2026-09-10T20:09:30.249Z"},
+    {"taskId":"crucible-rolling-learning-release-review-20260910-proof-correction","owner":{"provider":"openai","model":"gpt-5","agent":"codex-root"},"scope":{"paths":["AI-HANDOFF.json","DEVLOG.md","governingDocuments/scientific-learning-release-status.json"],"regions":[]},"purpose":"Correct the 2026-09-10 rolling review with the exact-tip hosted proof that consumed the new vetted publication and still failed queue-hash verification.","status":"released","acquiredAt":"2026-09-10T20:19:22.533Z","handedOffTo":null,"releasedAt":"2026-09-10T20:20:27.385Z"},
+    {"taskId":"perplexity-r3-discovery-and-self-test-repair-20260910","owner":{"provider":"openai","model":"gpt-5","agent":"codex-root"},"scope":{"paths":["AI-HANDOFF.json","DEVLOG.md","README.md","package.json",".github/workflows/perplexity-research.yml","src/aiProviderAdapters.js","src/automatedGoogleResearch.js","src/providerCirculation.js","src/automatedPerplexityResearch.js","src/automatedPerplexityResearchCli.js","src/sourceRetrievalWorker.js","src/sourceRetrievalWorkerCli.js","src/ownerFileIntake.js","src/ownerFileIntakeCli.js","src/claimExtractionWorker.js","src/claimExtractionWorkerCli.js","src/safeInformationRetrieval.js","src/semanticCorroboration.js","src/pairedCorroboration.js","src/realCorpusLearning.js","src/hostedLearningProof.js","src/preSoakReadiness.js","src/circulationLinkage.js","src/failureCodes.js","src/testCadenceCoreLegacy.js","test/_testCadenceCore.js","test/aiProviderAdapters.test.js","test/automatedPerplexityResearch.test.js","test/sourceRetrievalWorker.test.js","test/claimExtractionWorker.test.js","test/safeInformationRetrieval.test.js","test/semanticCorroboration.test.js","test/pairedCorroboration.test.js","test/hostedLearningProof.test.js","test/ownerFileIntake.test.js","test/pdfTextExtraction.test.js","test/failureCodes.test.js","test/preSoakReadiness.test.js","test/scientificLearning.test.js","test/workflow.test.js","governingDocuments/scientific-learning-policy.md","governingDocuments/learning-scope-declarations.json","governingDocuments/scientific-learning-release-plan.md","governingDocuments/scientific-learning-release-status.json"],"regions":[]},"purpose":"Complete the governed research-to-learning path: repair the random ciphertext assertion; add daily 50-topic candidate-only Perplexity discovery and safe URL retrieval; and prove one independently corroborated real-corpus claim through controlled testing, durable memory, restart restoration, and bounded use without claiming hosted release evidence.","status":"released","acquiredAt":"2026-09-11T02:15:00Z","handedOffTo":null,"releasedAt":"2026-09-12T19:34:00Z"},
+    {"taskId":"canonical-task-routing-20260912","owner":{"provider":"openai","model":"gpt-5","agent":"codex-root"},"scope":{"paths":["TASK-ROUTING.json","AGENTS.md","AI-HANDOFF.json","DEVLOG.md","README.md","package.json",".githooks/pre-push",".github/workflows/self-test.yml","src/taskRouting.js","src/taskRoutingCli.js","src/failureCodes.js","src/circulationLinkage.js","src/testCadenceCoreLegacy.js","test/_testCadenceCore.js","test/taskRouting.test.js","test/workflow.test.js","test/failureCodes.test.js"],"regions":[]},"purpose":"Classify each task once, route it by stable repository ID to an owner-approved branch, require repository-scoped commits, and fail closed before writes or pushes when routing is unknown, conflicting, protected, or mismatched.","status":"released","acquiredAt":"2026-09-12T19:34:00Z","handedOffTo":null,"releasedAt":"2026-09-13T00:21:00Z"}
+  ]
 }

@@ -124,6 +124,10 @@ cannot verify that literally every command in a session is listed -
 that is on the agent's own honesty, the same as every other rule in
 this file.
 
+## README brevity
+
+Keep README changes concise and operator-facing. Summarize capabilities, setup, and boundaries; put detailed architecture, threat models, proof rules, implementation rationale, and edge cases in the relevant governing document, source documentation, or tests. Do not turn the README into a design-history narrative.
+
 ## Test and audit cadence
 
 `src/testCadence.js` classifies every `test/*.js` file and every CLI audit
@@ -171,6 +175,35 @@ anything that already runs:
   `ERROR_TRIGGERS` in `src/testCadence.js` directly; `test/testCadence.test.js`
   checks the registry stays internally consistent (every referenced file
   exists, every referenced script is real, every tier is valid).
+
+## Task routing
+
+`TASK-ROUTING.json` on literal `development` is the one canonical task-category
+registry. Governed checkouts and repositories reference
+`development:TASK-ROUTING.json`; never copy it into another branch or silently
+fork its rules. Repository destinations are bound to immutable numeric GitHub
+repository IDs as well as their current exact names, so a rename, transfer, or
+name reuse fails closed instead of silently changing the destination.
+
+Before editing, run `npm run route:prewrite -- --prompt "<exact task>"
+--project "<project>" --path "<affected path>"` with every currently known
+affected path. Task wording, paths, and project context select a category.
+An explicit repository and branch instruction wins over automatic wording, but
+it cannot widen that branch's access policy. A `ready` result supplies the
+repository, branch, reason, and durable `activePlan.taskRouting` record. A
+`reroute-required` result supplies the matching existing checkout when one is
+available; move the task there before writing. `unknown` or `ambiguous` means
+no write or push and exactly one focused owner question. `split-required` means
+separate commits, each containing only one category's paths and shared handoff
+evidence.
+
+Every commit records the selected category, stable repository ID, repository,
+branch, and reason in both `AI-HANDOFF.json` and `DEVLOG.md`. The local pre-push
+hook verifies proposed refs and changed paths before the existing full safety
+suite, and development Self-Test repeats the stable-ID/branch/path check on the
+host. Routing never creates or deletes a branch, authorizes a manual
+`ci-monitor` write, writes Archive without exact owner approval, or promotes
+production. Promotion remains the explicit `release` to `main` system workflow.
 
 ## Branch policy
 

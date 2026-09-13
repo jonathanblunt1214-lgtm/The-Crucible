@@ -9,7 +9,12 @@
     "governingDocuments/templates/injection-chain-of-command.md": "Universal rule for every future injection: every tracked change traverses the designated development branch and required gates before production promotion.",
     "governingDocuments/templates/injection-security-gates.md": "Universal fail-closed security and governance gate policy for every future injection.",
     ".github/workflows/ai-conflict-governance.yml": "Publishes the required AI conflict governance status check.",
-    ".github/workflows/ai-handoff-policy.yml": "Publishes the required AI handoff policy status check."
+    ".github/workflows/ai-handoff-policy.yml": "Publishes the required AI handoff policy status check.",
+    "src/mutationClaims.js": "Exclusive mutation ownership: several AIs may work one project, but only one may mutate a given scope at a time.",
+    "src/multiAiDeliberation.js": "Cross-AI proposals, positions, evidence and corroboration - recorded inside AI-CONFLICTS.json, never in a separate deliberation file.",
+    "src/aiProviderRegistry.js": "The four governed providers and the environment variables their credentials come from.",
+    "src/multiAiOrchestrator.js": "Distributes one bounded task to several providers and keeps their answers separate with provenance.",
+    "src/devlogAccountability.js": "What each AI actually did, enforced against DEVLOG.md."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since the plan's lastUpdatedAt, even if it is the same agent continuing the same conversation."
@@ -36,18 +41,76 @@
     "agent": "unassigned",
     "objective": "Adopt The Crucible and publish the first repository development plan.",
     "steps": [
-      "Assign the starting AI agent.",
-      "Replace this plan before making project changes."
+      "Read the governed state before changing anything: run npm run handoff:continue, then read AI-HANDOFF.json, AI-CONFLICTS.json and DEVLOG.md.",
+      "Assign the starting AI agent and replace this example plan with the real objective and steps.",
+      "Acquire an exclusive mutation claim for each scope this agent will change, with npm run coordination:claims to see what is already held.",
+      "Record what was actually done in DEVLOG.md, and release or hand off every claim when finished."
     ],
     "status": "handoff-ready",
     "startedAt": "1970-01-01T00:00:00Z",
-    "lastUpdatedAt": "1970-01-01T00:00:00Z"
+    "lastUpdatedAt": "1970-01-01T00:00:00Z",
+    "currentPrompt": "Adopt The Crucible, publish the first repository development plan, and take an exclusive mutation claim before changing any file.",
+    "executionMode": {
+      "mode": "regular/default",
+      "agent": "unassigned",
+      "purpose": "Adopt The Crucible and establish governed multi-AI coordination before any project change.",
+      "selectionReason": "Adoption is ordinary governed development work; it needs no separate Work mode.",
+      "distinction": "Execution mode is how this agent runs. It is separate from agent identity (who is working) and from the workflow (what CI executes on a push)."
+    }
   },
   "handoffNotes": {
     "completed": [],
     "verification": [],
     "remaining": [
-      "Starting AI must replace this placeholder with its real plan."
-    ]
-  }
+      "Starting AI must replace this example plan with its real objective, steps and claims.",
+      "Supply provider credentials and models as environment variables or repository secrets before any provider can be consulted."
+    ],
+    "open": []
+  },
+  "mutationOwnershipPolicy": {
+    "rule": "Discussion is shared; mutation is exclusive. Any AI may read, test, review, critique and propose against any scope. Exactly one AI may mutate a given scope at a time, and only while it holds an active claim here.",
+    "scopeShape": "A claim locks paths and/or explicit line regions. Overlap is structural: claiming a directory locks every file beneath it, and a region inside a claimed file is already covered.",
+    "transferRule": "Ownership changes only by explicit release or handoff. Winning a technical argument does not transfer it - the current owner may implement another AI's accepted proposal.",
+    "conflictRule": "An unresolved conflict freezes only the contested scope named in AI-CONFLICTS.json contestedScope. Unrelated scopes, and read-only work anywhere, continue.",
+    "canonicalStreamRule": "One canonical mutation stream per claimed scope. Other providers act as reviewers, investigators, testers or proposal sources until ownership changes."
+  },
+  "providerPolicy": {
+    "providers": [
+      "openai",
+      "anthropic",
+      "perplexity",
+      "nvidia-nim"
+    ],
+    "credentialRule": "Credentials come only from environment variables or repository secrets. Never write one into source, a committed prompt, AI-HANDOFF.json, AI-CONFLICTS.json, DEVLOG.md, or a workflow log.",
+    "provenanceRule": "Every response is kept separately with provider, model, timestamp, taskId and prompt hash. Responses are never merged into a single authorless answer.",
+    "failureRule": "A provider that could not be reached is recorded as failed, never dropped. A provider that is unknown is not agreeing.",
+    "authorityRule": "Cross-model agreement is evidence, not proof. No AI may declare its own work approved, and no AI may be the only reviewer of its own material change. Tests, security, governance, integrity checks and OWNER authority all outrank model consensus."
+  },
+  "mutationClaims": [
+    {
+      "taskId": "example-extractor-repair",
+      "owner": {
+        "provider": "anthropic",
+        "model": "example-model",
+        "agent": "session-or-agent-identity"
+      },
+      "scope": {
+        "paths": [
+          "src/example.js"
+        ],
+        "regions": [
+          {
+            "path": "src/other.js",
+            "startLine": 40,
+            "endLine": 90
+          }
+        ]
+      },
+      "purpose": "Repair the extractor; other providers review and test this scope while it is held.",
+      "status": "active",
+      "acquiredAt": "2026-09-03T17:00:00Z",
+      "handedOffTo": null,
+      "releasedAt": null
+    }
+  ]
 }

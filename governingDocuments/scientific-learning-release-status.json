@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
+  "branch": "development",
+  "developmentSha": "4f0bdb378a15343c310e9e4fa1a5d5f4ea407df6",
+  "updatedAt": "2026-09-12T12:02:00Z",
+  "rollingTarget": null,
+  "rollingTargetState": "indeterminate-until-nonzero-hosted-throughput",
+  "timezone": "America/New_York",
+  "confidence": "low",
+  "releaseAuthorized": false,
+  "promotionPerformed": false,
+  "gates": {
+    "R1": "passed",
+    "R2": "passed; forced-interruption recovery is durable. A local owner-authorized intake/extraction pass on 2026-09-11 admitted 4 novel files, skipped 10 content-identical files, completed those 4 plus 21 older queued sources, emitted 253 candidate IDs in the batch including 58 from the 4 new sources, and left 154 local sources extraction-pending with no active lock. This local throughput does not substitute for independently published Worker custody.",
+    "R3": "pending; the first scheduler-originated Google run completed all 16 due topics but admitted 0 URLs because data-centre egress was refused. A daily at-most-50-topic Perplexity citation-discovery implementation is prepared with local URL admission and structured failing partial reports, but PERPLEXITY_API_KEY is absent, so no live provider run has admitted a governed URL and R3 remains pending.",
+    "R4": "pending hosted; passed locally on real custody. The local corpus paired GoalKicker candidate extracted-6e63f5d20038b1a127742bb8137e85da with independently retrieved MDN candidate extracted-6e640fb76734ddacec1741722c148542 after verifying both source hashes and extraction custody. Hosted proof remains blocked because the current vetted publication pairs canonical queue SHA-256 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef with manifest value 96f13274cf8c57d717e6f581cbe3c38bdcb6d52ad7e56a5fac51fd18eeefb50e. Oversight must republish the self-consistent pair.",
+    "R5": "pending hosted; passed locally on real corpus. The owner-declared Node.js dense-numeric-array scope completed the controlled experiment and distinct independent verifier, producing active durable knowledge version 1 with proof SHA-256 2f0ba6995432f34715867eb4e3945bb9d5e789241e0e66be7a835291b62fd3cf.",
+    "R6": "pending hosted; passed locally. After the learning process exited, a fresh process restored version 1 and exact-boundary retrieval returned it; a separate authenticity consumer selected it as bounded regression context with knowledgeIsProofForCurrentRun false and maySkipTest false.",
+    "R7": "pending; the mechanism is locally proven, but no real promoted version from the current custody chain exists to supersede and roll back in hosted evidence.",
+    "R8": "pending; no complete combined live cycle currently demonstrates every required safety, quarantine, deduplication, contradiction, and rollback behaviour on the current real corpus.",
+    "R9": "held; soak band 72-96 continuous hours, observation ceiling 1000 data points, and the soak does not start while the data cannot exhibit the failures it checks",
+    "R10": "pending; exact development SHA 4f0bdb378a15343c310e9e4fa1a5d5f4ea407df6 currently has 19 successful, 1 failed, and 1 skipped checks with 9 matrix jobs still in progress. Hosted learning proof 34525272883 has completed and fails closed during restore on 'Restored queue hash mismatch.' after the new vetted publication.",
+    "R11": "pending"
+  },
+  "blockingReason": "Local retained scientific-learning throughput is now nonzero: one real independently corroborated claim completed R4-R6, survived restart, and entered the normal bounded-use path. Release remains blocked because this is not hosted evidence: live Perplexity discovery still needs PERPLEXITY_API_KEY, the independently published vetted bundle is internally inconsistent, R7 has no real supersession/rollback cycle, R8 lacks its complete combined live safety cycle, and R9 cannot start until R2-R8 are simultaneously green.",
+  "history": [
+    {
+      "recordedAt": "2026-08-30T20:33:00Z",
+      "priorTarget": null,
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Initial low-confidence forecast; mandatory extraction, live-cycle, rollback, 72-hour soak, exact-tip CI, and owner-authorization gates remain."
+    },
+    {
+      "recordedAt": "2026-08-30T21:13:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Extraction throughput is now measurable: forced web sources fell from 393 to 288 and all seven PDFs advanced to page 11. Confidence increased to medium; remaining live-cycle and soak gates keep the target unchanged."
+    },
+    {
+      "recordedAt": "2026-08-31T17:49:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Gate change without a date change: R2 restart proof passed via a live SIGKILL recovery cycle now permanently covered by test/durableLock.test.js, and exact tip 492c8fe1d5944b41088a839e5aefdfb8c02aef19 is hosted-green across all nine Self-Test jobs, CodeQL, and every governance workflow. R3-R8 still require live retrieval and the operator durable store, and the mandatory 72-hour soak has not started, so the target does not move earlier."
+    },
+    {
+      "recordedAt": "2026-08-31T18:45:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Owner decision, not a forecast recalculation: the mandatory soak is raised from 72 to 96 continuous hours, and the durable-lock staleness floor is set to 30 seconds with 60 seconds as the ceiling no agent may exceed without the owner saying so. The target does not move, because R3-R8 remain unproven and their completion, not the soak length, is what currently bounds the date; the extra 24 hours is absorbed well inside the existing forecast."
+    },
+    {
+      "recordedAt": "2026-08-31T19:00:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Owner clarification superseding the earlier same-day entry: the soak is a 72-96 hour band, not a single 96-hour duration. 72 is a hard floor rather than a default, the duration is chosen from evidence before the clock starts and never revised downward mid-soak, and forecasting continues to use 96. The target does not move, because R3-R8 remain unproven and their completion, not the soak length, is what bounds the date."
+    },
+    {
+      "recordedAt": "2026-08-31T19:30:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Owner decision closing the R9 definition gap: an observation ceiling of 1000 data points, and an explicit hold rather than a vacuous run when the current data would return no result. The target does not move; if anything this makes the dependency on R5 and R7 explicit, since verified knowledge versions and supersessions are what make a soak observable at all."
+    },
+    {
+      "recordedAt": "2026-08-31T22:09:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Hosted evidence changed R4-R8 to passed without changing the forecast: run 33444444978 at exact development SHA 5ed69f6dcc319f1050b45cfcf84d2108863d5f9a passed twice, and execution two restored the authenticated encrypted state from execution one. R2 live backlog evidence and R3 live discovery remain open, so R9 remains held and the target does not move earlier."
+    },
+    {
+      "recordedAt": "2026-09-01T00:10:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Gate correction under the owner decision of 2026-08-31 to build a real learning machine. R4-R8 had been recorded passed on a hosted proof that built its sources in code and never read the restored corpus. R4-R6 are now wired to the real corpus with no fallback and are pending hosted re-proof; R7 and R8 are recorded as fixture-based. The target does not move: the corrected gates are no further from completion than the real work was before, only more accurately described."
+    },
+    {
+      "recordedAt": "2026-09-07T02:47:14Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
+      "reason": "The September 14 forecast is withdrawn rather than rolled forward by an invented rate. Learning-Worker recovery and candidate export now succeed, but Oversight repeatedly fails before returning merged vetted ciphertext, the vetted-state tip remains unchanged, R3 has no scheduled run, and the exact development tip is red. A finite target can be recalculated only after measurable end-to-end throughput resumes; forecasting must still include the full 96-hour soak."
+    },
+    {
+      "recordedAt": "2026-09-09T16:12:14Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
+      "reason": "Development advanced to 2bf95fc7620d6c8001afd8396b935bfb0c61f154 and exact-tip CI improved to 31 successful, 1 failed, and 1 skipped checks, clearing the prior Self-Test and CodeQL blockers. Daily research capacity and a real manual 16-topic cycle are now proven, but R3 still lacks scheduler-originated evidence, scheduled Worker throughput remains zero, Oversight still fails before vetted publication, and the hosted real corpus still has zero independent corroboration with 278 sources awaiting extraction. The target remains indeterminate at low confidence rather than inventing an end-to-end rate; any future finite forecast still includes the full 96-hour soak."
+    },
+    {
+      "recordedAt": "2026-09-10T20:07:44Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
+      "reason": "Development advanced through 4f0bdb378a15343c310e9e4fa1a5d5f4ea407df6. The first scheduler-originated research run completed all 16 due topics and Oversight successfully published independently validated vetted commit 4c4297f, clearing two prior custody unknowns. They do not establish end-to-end throughput: research admitted zero URLs, scheduled Worker run 34522273359 still processed zero work after publication, and exact-tip hosted proof 34525272883 consumed the current vetted custody but still failed on a restored queue hash mismatch. The target remains indeterminate at low confidence; any future finite forecast still includes the full 96-hour soak."
+    },
+    {
+      "recordedAt": "2026-09-11T02:44:00Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
+      "reason": "Owner-file intake measured 14 requested sources as 10 exact SHA-256 matches already fully extracted and 4 novel files. The 4 new records completed local bounded extraction with 58 candidate IDs and no blocker, while the same batch advanced 21 older sources. This proves useful local candidate throughput, not retained or independently vetted knowledge. The current bundle is still internally inconsistent and live Perplexity discovery still lacks its secret, so no release gate advances and the target remains indeterminate. The active rolling review now preserves a one-time hash-bound rescan obligation for all 14 sources after real retention and self-consistent custody are proven."
+    },
+    {
+      "recordedAt": "2026-09-12T12:02:00Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-hosted-throughput",
+      "reason": "Local end-to-end retention is no longer zero. Two independent real sources carried the bounded Array.prototype.map claim through controlled testing and a distinct verifier into durable version 1; fresh-process retrieval and the normal authenticity consumer both restored and used it without skipping tests. This advances local R4-R6 only. The target remains indeterminate because Oversight must republish the inconsistent vetted bundle before hosted R4-R6 can repeat, and R7-R9 remain unsatisfied."
+    }
+  ]
+}
