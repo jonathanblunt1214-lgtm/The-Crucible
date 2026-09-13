@@ -4,7 +4,7 @@
 
 - **Agent:** ChatGPT automation, cross-project canonical-orchestrator policy boundary.
 - **Execution mode:** `work`.
-- **Dev plan:** The Crucible remains independent and consumes the shared canonical orchestrator policy only by an explicit cross-project reference in `governingDocuments/shared-orchestrator-policy-reference.json`; Crucible custody, promotion, branch, and learning gates remain authoritative.
+- **Dev plan:** Follow the canonical dev plan in `AI-HANDOFF.json`: `activePlan.currentPrompt` is the exact request driving current work, and `activePlan.handoffNotes.completed` / `activePlan.handoffNotes.remaining` are the authoritative finished/remaining boundaries. This DEVLOG records evidence and status rather than restating that plan.
 - **Actual current step:** Final verification completed for this bounded policy-reference change. AI Collaboration now hosts the canonical policy and stable AI Collaboration identity metadata. The Crucible handoff-policy workflow passed on exact Crucible commit `02f0d783c91328630bf48db60c89c1cc83eacaa5`. The pre-existing hosted-learning proof remains separately blocked at vetted-custody hash verification and was not weakened or represented as fixed.
 - **Task route:** category `crucible-core`; stable repository ID `1344890806`; repository `jonathanblunt1214-lgtm/The-Crucible`; branch `development`.
 - **Verification state:** Reviewed, not globally Verified. The new Crucible reference is readable at the exact development tip and AI handoff policy passed, but AI Collaboration CI is currently failing before steps start and the GitHub connector does not expose sufficient check-run diagnostics to prove its root cause. No promotion or protected-branch action was taken.
