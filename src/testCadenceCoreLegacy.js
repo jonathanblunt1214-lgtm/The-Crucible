@@ -11,6 +11,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/code-check.test.js',
     'test/codeSecurityOrganism.test.js',
     'test/ciDiagnosticOrgan.test.js',
+    'test/hostedRunStartupDiagnosis.test.js',
     'test/circulationLinkage.test.js',
     'test/contradictionAudit.test.js',
     'test/contradictionReopening.test.js',
