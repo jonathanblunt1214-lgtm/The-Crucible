@@ -36,6 +36,32 @@ test('endpoint and model are overridable by environment without editing source',
   assert.equal(modelFor('openai', { ...ENV, OPENAI_MODEL: 'pinned-model' }), 'pinned-model');
 });
 
+test('an API root is completed with the provider path, and an explicit endpoint is left alone', () => {
+  // The AI Collaboration project configures every provider with the API *root* and appends the
+  // path itself. Reusing one already-provisioned base URL across both projects is the point of
+  // sharing a free credential, so the root form has to reach the right path here too.
+  assert.equal(
+    endpointFor('nvidia-nim', { ...ENV, NVIDIA_NIM_BASE_URL: 'https://integrate.api.nvidia.com/v1' }),
+    'https://integrate.api.nvidia.com/v1/chat/completions',
+  );
+  assert.equal(
+    endpointFor('nvidia-nim', { ...ENV, NVIDIA_NIM_BASE_URL: 'https://integrate.api.nvidia.com/v1/' }),
+    'https://integrate.api.nvidia.com/v1/chat/completions',
+  );
+  // Idempotent: the complete form this registry has always used must not gain a second path.
+  assert.equal(
+    endpointFor('nvidia-nim', { ...ENV, NVIDIA_NIM_BASE_URL: 'https://integrate.api.nvidia.com/v1/chat/completions' }),
+    'https://integrate.api.nvidia.com/v1/chat/completions',
+  );
+  // Per dialect, not one global path: Anthropic's Messages API is not chat/completions.
+  assert.equal(
+    endpointFor('anthropic', { ...ENV, ANTHROPIC_BASE_URL: 'https://api.anthropic.com/v1' }),
+    'https://api.anthropic.com/v1/messages',
+  );
+  // An operator who pointed at a gateway path meant that path; rewriting it would break them.
+  assert.equal(endpointFor('openai', { ...ENV, OPENAI_BASE_URL: 'https://gateway.internal/v1/chat' }), 'https://gateway.internal/v1/chat');
+});
+
 test('a live credential value is redacted out of any text', () => {
   assert.equal(redact(`key=${FAKE} rest`, ENV), 'key=[redacted:OPENAI_API_KEY] rest');
   assert.equal(redact('nothing secret here', ENV), 'nothing secret here');
