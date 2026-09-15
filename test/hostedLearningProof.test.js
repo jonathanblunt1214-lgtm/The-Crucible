@@ -5,13 +5,28 @@ const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { ClaimExtractionWorker } = require('../src/claimExtractionWorker');
-const { harnesses, runHostedProof } = require('../src/hostedLearningProof');
+const { runHostedProof } = require('../src/hostedLearningProof');
+const { harnessesForDeclaration } = require('../src/hostedExperimentHarnesses');
 
-test('hosted and local proofs can share one controlled harness definition', () => {
-  const pair = harnesses('2026-09-12T12:00:00.000Z');
-  assert.equal(pair.experiment.id, 'github-controlled-runner');
-  assert.equal(pair.verifier.id, 'github-independent-runner');
-  assert.notEqual(pair.experiment.id, pair.verifier.id);
+// This replaces an assertion that the two hardcoded harness ids differed - which was true, and
+// was the only thing separating a "controlled experiment" from its "independent verifier" while
+// both ran the same array-map closure. Two ids that differ is not independence, so what is
+// asserted now is that the pair differs in measurement method and that the closure is gone.
+test('the hosted proof resolves a real harness per language instead of one closure for every claim', () => {
+  const java = harnessesForDeclaration({ language: 'java' }, { projectId: 'github:owner/repo' });
+  assert.equal(java.experiment.id, 'jdk-compile-and-execute', 'the experiment executes the fixture');
+  assert.equal(java.verifier.id, 'jdk-compiler-tree', 'the verifier reads its source tree instead');
+  const javascript = harnessesForDeclaration({ language: 'javascript' }, { projectId: 'github:owner/repo' });
+  assert.equal(javascript.experiment.id, 'node-execute');
+  assert.equal(javascript.verifier.id, 'typescript-compiler-api');
+  // Different languages must not collapse onto one harness, which is exactly what made a Java
+  // claim testable by a JavaScript snippet.
+  assert.notEqual(java.experiment.id, javascript.experiment.id);
+  assert.throws(() => harnessesForDeclaration({ language: 'cobol' }, { projectId: 'github:owner/repo' }), /CRU-0050/);
+
+  const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'hostedLearningProof.js'), 'utf8');
+  assert.doesNotMatch(source, /github-controlled-runner|github-independent-runner/, 'the hardcoded pair must stay deleted');
+  assert.doesNotMatch(source, /input\.map\(\(value\)=>value\*2\)/, 'the array-map closure must stay deleted');
 });
 
 const AT = '2026-08-31T21:00:00.000Z';

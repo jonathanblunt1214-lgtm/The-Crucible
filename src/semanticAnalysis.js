@@ -1,4 +1,4 @@
-const crypto=require('node:crypto');const fs=require('node:fs');const os=require('node:os');const path=require('node:path');const {execFile}=require('node:child_process');const ts=require('typescript');
+const crypto=require('node:crypto');const fs=require('node:fs');const os=require('node:os');const path=require('node:path');const {execFile}=require('node:child_process');const ts=require('typescript');const {crucibleError}=require('./failureCodes');
 const sha=(value)=>crypto.createHash('sha256').update(value).digest('hex');
 const SOURCE_NAMES=new Set(['request','req','body','query','params','input','userInput','stdin']);
 const SINK_NAMES=new Set(['eval','exec','execute','query','system','spawn','innerHTML','writeFile']);
@@ -52,4 +52,48 @@ class JavaSemanticAdapter{
 }
 function composeSemanticGraph({projectId,reports,bindings=[]}){if(!Array.isArray(reports)||reports.some((item)=>item.projectId!==projectId))throw new Error('Semantic graph requires project-bound reports.');const nodes=new Map(),edges=[];for(const report of reports){for(const fn of report.functions||[])nodes.set(fn.id,{id:fn.id,language:report.findings?.[0]?.language||report.adapter.id,file:fn.file,sources:fn.sources||[],sinks:fn.sinks||[]});for(const call of report.calls||[])if(call.caller&&call.target)edges.push({from:call.caller,to:call.target,kind:'native-call',proofStageSatisfied:false});}for(const binding of bindings){if(!nodes.has(binding.from)||!nodes.has(binding.to)||typeof binding.kind!=='string'||!binding.kind)throw new Error('Cross-language bindings must reference exact known symbols.');edges.push({from:binding.from,to:binding.to,kind:binding.kind,proofStageSatisfied:false});}const paths=[];for(const node of nodes.values())if(node.sources.length){const queue=[[node.id]],seen=new Set([node.id]);while(queue.length){const chain=queue.shift(),last=chain.at(-1),target=nodes.get(last);if(target?.sinks.length){paths.push({functions:chain,source:node.sources[0],sink:target.sinks[0],proofStageSatisfied:false});continue;}for(const edge of edges.filter((item)=>item.from===last))if(!seen.has(edge.to)){seen.add(edge.to);queue.push([...chain,edge.to]);}}}return{schemaVersion:1,projectId,nodes:[...nodes.values()],edges,paths,proofStageSatisfied:false,promotionAuthorized:false};}
 class SemanticAnalysisCoordinator{constructor({projectId,adapters={}}){this.projectId=projectId;this.adapters=adapters;}health(){const organs={};for(const [language,adapter] of Object.entries(this.adapters))organs[language]=adapter?'healthy':'blocked';const blocked=Object.values(organs).filter((state)=>state==='blocked').length;return{projectId:this.projectId,state:blocked===0?'healthy':blocked===Object.keys(organs).length?'inhibited':'degraded',organs};}analyze(language,input){const adapter=this.adapters[language];if(!adapter)throw new Error(`Semantic adapter unavailable for ${language}.`);return adapter.analyze(input);}}
-module.exports={normalizedFinding,SecureCompilerWorker,TypeScriptSemanticAdapter,PythonSemanticAdapter,WebStandardsSemanticAdapter,ShellSemanticAdapter,PowerShellSemanticAdapter,ClangSemanticAdapter,RoslynSemanticAdapter,JavaSemanticAdapter,composeSemanticGraph,SemanticAnalysisCoordinator};
+// Runtime experiment adapters. These exist so a controlled experiment can measure what a
+// toolchain actually did, rather than asserting what its author expected - the hosted learning
+// proof previously ran one fixed JavaScript snippet for every claim and had the same closure
+// "independently" confirm it.
+//
+// They live here, beside SecureCompilerWorker, because sandboxed toolchain execution is an
+// immune-system capability: allow-listed absolute executable, no shell, bounded timeout, capped
+// output, and both streams content-addressed. The learning system reaches them across the
+// circulation bus rather than importing this module directly.
+//
+// Each returns the same shape as the static adapters plus `observations`, parsed from the
+// fixture's own KEY|value lines. Fixtures report what the runtime saw - a JVM reflection count,
+// an array identity comparison - so the measurement belongs to the runtime and not the harness.
+function observationsFrom(stdout){const observations=[];for(const line of String(stdout).trim().split(/\r?\n/)){const index=line.indexOf('|');if(index<0)continue;observations.push({key:line.slice(0,index),value:line.slice(index+1)});}return observations;}
+function fixtureRecords(root,files){return files.map((item)=>({file:item,sha256:sha(fs.readFileSync(path.resolve(root,item)))}));}
+
+class JavaRuntimeAdapter{
+  constructor({projectId,root,javacExecutable,javaExecutable,timeoutMs=120000}){this.projectId=projectId;this.root=path.resolve(root);this.javac=path.resolve(javacExecutable);this.java=path.resolve(javaExecutable);this.id='jdk-compile-and-execute';this.worker=new SecureCompilerWorker({root:this.root,allowExecutables:[this.javac,this.java],timeoutMs});}
+  async analyze({files,mainClass}){
+    if(typeof mainClass!=='string'||!mainClass.trim())throw crucibleError('CRU-0050','Java runtime analysis requires the main class to execute.');
+    for(const item of files)inside(this.root,item);
+    // Class files land in a fresh temporary directory so a measurement never writes into the
+    // repository it is measuring.
+    const out=fs.mkdtempSync(path.join(os.tmpdir(),'crucible-java-'));
+    try{
+      const version=await this.worker.run(this.javac,['-version']);
+      await this.worker.run(this.javac,['-d',out,...files.map((item)=>path.resolve(this.root,item))]);
+      const executed=await this.worker.run(this.java,['-cp',out,mainClass]);
+      const reported=(version.stdout+version.stderr).trim().split(/\r?\n/)[0]||'unknown';
+      return {schemaVersion:1,projectId:this.projectId,adapter:{id:this.id,version:reported},files:fixtureRecords(this.root,files),diagnostics:[],observations:observationsFrom(executed.stdout),custody:{stdoutSha256:executed.stdoutSha256,stderrSha256:executed.stderrSha256}};
+    }finally{fs.rmSync(out,{recursive:true,force:true});}
+  }
+}
+
+class NodeRuntimeAdapter{
+  constructor({projectId,root,nodeExecutable=process.execPath,timeoutMs=60000}){this.projectId=projectId;this.root=path.resolve(root);this.node=path.resolve(nodeExecutable);this.id='node-execute';this.worker=new SecureCompilerWorker({root:this.root,allowExecutables:[this.node],timeoutMs});}
+  async analyze({files}){
+    if(!Array.isArray(files)||!files.length)throw crucibleError('CRU-0050','Node runtime analysis requires a fixture file to execute.');
+    for(const item of files)inside(this.root,item);
+    const executed=await this.worker.run(this.node,[path.resolve(this.root,files[0])]);
+    return {schemaVersion:1,projectId:this.projectId,adapter:{id:this.id,version:process.version},files:fixtureRecords(this.root,files),diagnostics:[],observations:observationsFrom(executed.stdout),custody:{stdoutSha256:executed.stdoutSha256,stderrSha256:executed.stderrSha256}};
+  }
+}
+
+module.exports={normalizedFinding,SecureCompilerWorker,JavaRuntimeAdapter,NodeRuntimeAdapter,TypeScriptSemanticAdapter,PythonSemanticAdapter,WebStandardsSemanticAdapter,ShellSemanticAdapter,PowerShellSemanticAdapter,ClangSemanticAdapter,RoslynSemanticAdapter,JavaSemanticAdapter,composeSemanticGraph,SemanticAnalysisCoordinator};

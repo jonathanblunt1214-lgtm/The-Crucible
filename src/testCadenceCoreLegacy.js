@@ -46,6 +46,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/realCorpusLearning.test.js',
     'test/scopePreRegistration.test.js',
     'test/durableGateEvidence.test.js',
+    'test/hostedExperimentHarnesses.test.js',
     'test/semanticCorroboration.test.js',
     'test/corroborationSensitivity.test.js',
     'test/sourceIndependence.test.js',
