@@ -109,7 +109,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-15T03:29:05Z"
+    "lastActionAt": "2026-09-15T05:00:00Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -189,13 +189,13 @@
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "ChatGPT automation",
-    "objective": "Complete the owner-approved cross-project canonical Orchestrator Policy rollout and repair the evidence-backed CI and handoff deviations that are safely correctable without weakening project identity, governance, custody, or authorization boundaries.",
+    "agent": "Claude",
+    "objective": "Clear the blockers keeping the scientific-learning pipeline from producing evidence, without spending money: tell a refused hosted job apart from a failed one, move governed discovery onto a free provider, make governed records state what actually happened, and run the rolling release review from the literal development tip.",
     "currentPrompt": "Fix the two failed hosted runs, rewrite governed discovery onto a free provider, and run the scientific-learning rolling release review on development.",
     "executionMode": {
       "mode": "work",
-      "agent": "ChatGPT automation",
-      "purpose": "Coordinate bounded multi-repository policy, CI diagnosis, safe repair, exact-tip hosted verification, and terminal chain-of-custody recording.",
+      "agent": "Claude",
+      "purpose": "Multi-repository blocker diagnosis, a new governed discovery path with its tests and workflow, three governed-record repairs, and the scientific-learning rolling release review - long-running, file-heavy, and deliverable-oriented.",
       "selectionReason": "The task spans independent repositories, policy/governance records, hosted CI evidence, multiple correction cycles, and a mandatory terminal verification boundary.",
       "distinction": "Execution mode is separate from agent identity and workflow; Work mode changes orchestration depth, not repository identity, branch authority, governance, or promotion authority."
     },
@@ -224,28 +224,31 @@
       "[blocked-external] Crucible hosted scientific-learning proof remains blocked by the separately governed vetted-custody queue/manifest inconsistency; this task does not weaken or bypass that custody boundary.",
       "[standing] Do not close, exclude, or weaken locked PR/conflict/governance surfaces merely to clear diagnostics such as CRU-0015; executable evidence and owner boundaries outrank green cosmetics."
     ],
-    "status": "active",
+    "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-13T05:25:00Z",
-    "currentStep": "Restore the missing historical mutation-claim accountability references in DEVLOG.md without changing or weakening the coordination gate, then restart Final Verification on the exact resulting development commit."
+    "lastUpdatedAt": "2026-09-15T05:00:00Z",
+    "currentStep": "Discovery runs on a free provider, refused runs are diagnosable, the known-bug ledger is truthful, and the routing test red since a0b440c is repaired. No learning gate advanced. The remaining blockers are not code: private-repository jobs are refused before startup, the discovery schedule cannot fire from development, and NVIDIA_NIM_API_KEY is not set."
   },
   "handoffNotes": {
     "completed": [
-      "AI Collaboration canonical policy v2 is published at commit 83a466073fdb50930c81242ce95ebe1ed28622f2 with universal present/future scope, 5/8/10 preflight, adaptive council, stable identities, custom-App boundaries, early execution-boundary capture, conservative cutoff, complete Final Verification, and terminal Devlog requirements.",
-      "AI Collaboration PROJECT-IDENTITY.json and Crucible governingDocuments/shared-orchestrator-policy-reference.json preserve independent project identities, non-containment, stronger local governance, and Nexus/ChatGPT exclusion from the custom App package.",
-      "AI Collaboration CI was retried and reproduced failure before runner assignment; no executable step or repository test failed because no step began. The evidence supports an external/private-repository Actions allocation/settings class, not a speculative source edit.",
-      "Crucible hosted verification caught the DEVLOG final-newline defect, the synchronized handoff requirement, and then the missing historical mutation-claim accountability references. Each gate was preserved and treated as evidence rather than weakened."
+      "A hosted job refused before startup is distinguishable from one that ran and failed. src/hostedRunStartupDiagnosis.js requires no runner assigned, no step executed, and nothing billed; the first two discriminate and the third deliberately does not, because the successful runs report total_ms 0 as well. A refusal carries no verdict on the code and authorizes no gate change in either direction.",
+      "Governed discovery runs on NVIDIA NIM, which is free and already governed, instead of Perplexity, whose API billing a Perplexity Pro subscription does not cover. Every governed bound is unchanged. NIM returns no citations, so URLs are read from the completion text and carried as providerKind model-proposed-pointers, and the candidate sink refuses a pointer candidate that does not state its kind.",
+      "endpointFor completes an API root with the provider's own path, so one NVIDIA_NIM_BASE_URL value can be reused verbatim from AI Collaboration instead of silently posting to /v1. An explicit gateway path is still used exactly as configured.",
+      "The known-bug ledger records the tests that actually failed, attributed from the TAP location of each failing block, and fails closed to the whole selection marked selection-unattributed when attribution is impossible. A real run now writes one category and one test where it previously claimed four categories and 102 tests.",
+      "test/taskRouting.test.js, red on the development tip since a0b440c, checks that the route was computed rather than described: the dispatcher's own bounded wording plus both hash bindings. The record was restored by running the dispatcher, not by editing the reason string."
     ],
     "verification": [
-      "AI Collaboration exact commit 83a466073fdb50930c81242ce95ebe1ed28622f2 has a failed CI job with zero steps and no runner assignment; the connected GitHub surface cannot expose or change the private-repository Actions allocation/billing/policy setting needed to prove the final root cause.",
-      "Crucible AI handoff policy passed on exact commit a0b440ce7c9b964a491595680966fee0b514146c, proving the coherent plan/Devlog synchronization is takeover-ready.",
-      "Crucible AI conflict governance on that exact commit passed conflict parsing but coordination failed CRU-0035 only because seven released claim IDs were absent from the compact DEVLOG; this correction restores accountability text and does not alter claim status or governance behavior."
+      "npm run test:all 846/847 at this change. The single failure is test/semanticAnalysis.test.js, proven pre-existing by stashing every change and re-running at 40c9836, where it fails identically; this host has no TypeScript toolchain.",
+      "validate, docs:check, lint:workflows, audit:clutter, audit:privacy, audit:security, audit:ai-conflict-governance, audit:governance, audit:design-brief, audit:core-ref, audit:failure-codes, audit:circulation and git diff --check all exit 0. Uncoded throw-site baseline unchanged at 581; fly-by-wire ratchet unchanged at 57 with 36 edges through the bus.",
+      "At exact tip d51344ef522e95dbf4f3128513497f8e12a5f2d5 the three ubuntu-latest Self-Test legs, CodeQL, AI conflict governance and the locked-PR guard passed; Windows and macOS legs were still running. The hosted AI handoff policy refused that push because it updated AI-HANDOFF.json without DEVLOG.md, which this record corrects.",
+      "No learning gate advanced and none was marked passed. The hosted learning proof remains red on the restored queue hash mismatch, whose repair belongs to Oversight."
     ],
     "remaining": [
-      "Run exact-tip hosted handoff, coordination, and Self-Test verification after the accountability correction and record any new deterministic defect without weakening gates.",
-      "Record the terminal Devlog/handoff boundary after the final verification checks; no substantive or state-changing work follows that terminal record.",
-      "Resolve AI Collaboration private-repository Actions runner allocation/settings only through a surface with the required administrative visibility/authority; until then global rollout status remains Reviewed rather than fully Verified.",
-      "Oversight must restore a self-consistent vetted learning queue/manifest before Crucible hosted R4-R8 can be called verified; this remains a separate custody blocker."
+      "Owner action, no payment: make Learning-Worker and Vetting-and-Governance-oversite. public so their jobs stop being refused, and leave Crucible-Learning-State and Crucible-Vetted-Learning-State private, because they execute no workflows and hold the corpus ciphertext. Then verify from the API that a dispatched run actually received a runner.",
+      "Merge the prepared dispatcher to main so the daily discovery schedule can fire at all. GitHub schedules workflows only from the default branch, so the cron in model-pointer-research.yml cannot fire while that file exists only on development. The dispatcher contains no learning code.",
+      "Set NVIDIA_NIM_API_KEY and NVIDIA_NIM_MODEL so R3 can admit a real URL. Until then the readiness command fails closed naming the exact variable and R3 stays pending; no admission may be fabricated.",
+      "Retain gate evidence durably outside the evictable Actions caches, so R3, R7 and R8 stop being recomputed from a cache that expires, with each record invalidated when the implementation that produced it changes.",
+      "The 14-source owner rescan obligation stays pending and unperformed while R4 custody is blocked. On the first exact-tip review where the vetted bundle is self-consistent and the hosted retention path can consume it, verify the 14 hashes and re-evaluate their candidate records through the full gate set, reusing content hashes and extraction-window history."
     ],
     "open": [
       "Exact administrative cause of AI Collaboration's pre-runner GitHub Actions failure remains unobservable through the current connector.",

@@ -14,6 +14,7 @@ const {
   readKnownBugLedger,
   writeKnownBugLedger,
   recordKnownBug,
+  failingTestFilesFromTap,
 } = require('./testRunGovernance');
 
 function productionRunner() {
@@ -102,6 +103,7 @@ module.exports = {
   readKnownBugLedger,
   writeKnownBugLedger,
   recordKnownBug,
+  failingTestFilesFromTap,
   verifyKnownBugFix,
   runTier,
   runScheduledTests,
