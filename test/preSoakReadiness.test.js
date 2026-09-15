@@ -15,17 +15,54 @@ const everythingDone = () => ({
     ],
     activeVersion: 'v-2',
   },
-  queue: { documents: [], links: [{ id: 's-1', state: 'claim-extraction-complete' }] },
+  queue: { documents: [], links: [{ id: 's-1', state: 'claim-extraction-complete', contentSha256: sha }] },
   research: { topics: [{ topic: 'node', runs: 1 }], discoveredUrls: ['https://example.edu/a'], auditLog: [{ topic: 'node', state: 'completed', discovered: 1 }] },
   combinedSafetyEvidence: ALL_EIGHT,
 });
 
 test('R2 tracks the live drain and does not claim the restart proof it does not own', () => {
   assert.equal(evaluateR2({ links: [{ id: 's-1', state: 'claim-extraction-forced-pending' }] }).state, 'pending');
-  const done = evaluateR2({ links: [{ id: 's-1', state: 'claim-extraction-complete' }] });
+  const done = evaluateR2({ links: [{ id: 's-1', state: 'claim-extraction-complete', contentSha256: sha }] });
   assert.equal(done.state, 'satisfied');
   assert.match(done.detail, /durableLock\.test\.js/);
   assert.equal(evaluateR2({}).state, 'unknown', 'an absent queue is unknown, never satisfied');
+});
+
+// The real hosted corpus of 2026-09-15: hosted proof run 34947395586 restored 534 sources of
+// which none sat in either extraction state, because 381 had been extracted and the rest had
+// never been retrievable. Counting only the extraction states cannot tell those two apart, and
+// the difference is the whole meaning of the gate.
+const HOSTED_2026_09_15 = () => ({
+  documents: Array.from({ length: 8 }, (item, index) => ({ id: `owner-file:doc-${index}`, state: 'claim-extraction-complete', contentSha256: sha })),
+  links: [
+    ...Array.from({ length: 373 }, (item, index) => ({ id: `linked-source:done-${index}`, state: 'claim-extraction-complete', contentSha256: sha })),
+    ...Array.from({ length: 109 }, (item, index) => ({ id: `linked-source:blocked-${index}`, state: 'retrieval-blocked', contentSha256: null })),
+    // A state this repository does not define anywhere: the Learning Worker writes it. The gate
+    // must not bucket an unknown state by guessing, which is why custody decides instead.
+    ...Array.from({ length: 25 }, (item, index) => ({ id: `linked-source:vetting-${index}`, state: 'oversight-vetting-pending', contentSha256: sha })),
+    ...Array.from({ length: 19 }, (item, index) => ({ id: `linked-source:awaiting-${index}`, state: 'research-approved-pending-retrieval', contentSha256: null })),
+  ],
+});
+
+test('R2 separates a drained backlog from one nothing could ever enter', () => {
+  const hosted = HOSTED_2026_09_15();
+  assert.equal(hosted.documents.length + hosted.links.length, 534, 'the fixture is the real population or it proves nothing');
+  const report = evaluateR2(hosted);
+  // 381 completions genuinely satisfy what R2 asks of the worker, so the verdict stands.
+  assert.equal(report.state, 'satisfied');
+  assert.match(report.detail, /381 of 534/, 'the detail has to say how many were actually extracted');
+  assert.match(report.detail, /128/, 'and how many never became retrievable');
+  assert.doesNotMatch(report.detail, /all 534/, 'never report 534 sources as having left a backlog 128 of them never entered');
+
+  // The pure form of the same defect: an empty extraction backlog because nothing was ever
+  // extractable. That must not read satisfied, and did before this test existed.
+  const nothingRetrievable = evaluateR2({ links: [
+    { id: 'linked-source:a', state: 'retrieval-blocked', contentSha256: null },
+    { id: 'linked-source:b', state: 'research-approved-pending-retrieval', contentSha256: null },
+  ] });
+  assert.equal(nothingRetrievable.state, 'pending');
+  assert.notEqual(nothingRetrievable.state, 'satisfied', 'an empty backlog is not a drained one');
+  assert.match(nothingRetrievable.detail, /nothing ever entered it/);
 });
 
 test('R3 requires a completed bounded run that admitted a governed candidate URL', () => {
