@@ -191,7 +191,7 @@
   "activePlan": {
     "agent": "Claude",
     "objective": "Clear the blockers keeping the scientific-learning pipeline from producing evidence, without spending money: tell a refused hosted job apart from a failed one, move governed discovery onto a free provider, make governed records state what actually happened, and run the rolling release review from the literal development tip.",
-    "currentPrompt": "Fix the two failed hosted runs, rewrite governed discovery onto a free provider, and run the scientific-learning rolling release review on development.",
+    "currentPrompt": "Fix the clock-ordering race that makes a never-run discovery topic miss its first due window, which turns the whole Self-Test matrix red",
     "executionMode": {
       "mode": "work",
       "agent": "Claude",
@@ -206,9 +206,9 @@
       "branch": "development",
       "reason": "Affected paths select crucible-core.",
       "explicitOverride": false,
-      "selectedAt": "2026-09-15T03:29:05.802Z",
-      "promptSha256": "6d56d7d53eb865285166a1833febd345943a85be67c4896f673ef4872f7959e1",
-      "affectedPathsSha256": "c0e8de1295bf75625d2ee5ff492ae356a59582d26724e830ca69460baf0e62f4"
+      "selectedAt": "2026-09-15T03:54:28.897Z",
+      "promptSha256": "61310340bcaabc2544551c8e669fb9b9a56fcd24cdd5956028bf20d8d8ddc51a",
+      "affectedPathsSha256": "21a566ce9b74c0dd967aa0f5b7f710237e3199d07ce4746ecd3ae17dfa1ece81"
     },
     "steps": [
       "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
@@ -222,12 +222,13 @@
       "[next] If verification is stable, write the terminal canonical Devlog/handoff record as the final state-changing operation and stop substantive work.",
       "[blocked-external] AI Collaboration private-repository Actions runner allocation/settings cannot be diagnosed or changed through the connected GitHub surface; the exact failure remains before runner assignment and is not represented as a source-code defect.",
       "[blocked-external] Crucible hosted scientific-learning proof remains blocked by the separately governed vetted-custody queue/manifest inconsistency; this task does not weaken or bypass that custody boundary.",
-      "[standing] Do not close, exclude, or weaken locked PR/conflict/governance surfaces merely to clear diagnostics such as CRU-0015; executable evidence and owner boundaries outrank green cosmetics."
+      "[standing] Do not close, exclude, or weaken locked PR/conflict/governance surfaces merely to clear diagnostics such as CRU-0015; executable evidence and owner boundaries outrank green cosmetics.",
+      "[done] Close the first-due clock-ordering race in all three governed discovery stores, keyed on lastRunAt rather than on comparing two clock readings, with a deterministic ticking-clock regression test in each that was shown failing before the repair existed."
     ],
-    "status": "handoff-ready",
+    "status": "active",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-15T05:35:00Z",
-    "currentStep": "Learning-Worker run 559 succeeded end to end on a real runner, the first success since 2026-09-12, so the extraction leg is unblocked. Discovery is registered and its API key reaches the job; it needs NVIDIA_NIM_MODEL set as a repository variable, and the daily schedule needs pull request #22."
+    "lastUpdatedAt": "2026-09-15T06:40:00Z",
+    "currentStep": "Every Self-Test matrix leg was red from d51344e on a clock-ordering race in governed discovery, not on the work that tip landed. due() evaluated its default `at` from one clock reading and read() seeded an unseen topic's nextRunAt from a later one, so a topic the store had just invented was scheduled a millisecond past the deadline it was measured against and reported as not due. Repaired in the model-pointer, Google and Perplexity stores; awaiting hosted confirmation on the pushed tip before the claim is released."
   },
   "handoffNotes": {
     "completed": [
@@ -236,15 +237,17 @@
       "endpointFor completes an API root with the provider's own path, so one NVIDIA_NIM_BASE_URL value can be reused verbatim from AI Collaboration instead of silently posting to /v1. An explicit gateway path is still used exactly as configured.",
       "The known-bug ledger records the tests that actually failed, attributed from the TAP location of each failing block, and fails closed to the whole selection marked selection-unattributed when attribution is impossible. A real run now writes one category and one test where it previously claimed four categories and 102 tests.",
       "test/taskRouting.test.js, red on the development tip since a0b440c, checks that the route was computed rather than described: the dispatcher's own bounded wording plus both hash bindings. The record was restored by running the dispatcher, not by editing the reason string.",
-      "A governed discovery workflow cannot start itself: GitHub refuses a workflow_dispatch for a workflow it never registered, and registers one only when a trigger actually fires. perplexity-research.yml has zero runs for exactly this reason. model-pointer-research.yml now carries a push trigger scoped to discovery's own implementation, so it registers once and re-runs only when discovery changes."
+      "A governed discovery workflow cannot start itself: GitHub refuses a workflow_dispatch for a workflow it never registered, and registers one only when a trigger actually fires. perplexity-research.yml has zero runs for exactly this reason. model-pointer-research.yml now carries a push trigger scoped to discovery's own implementation, so it registers once and re-runs only when discovery changes.",
+      "The Self-Test matrix was red on every leg from d51344e, and not for any reason that tip's change log names. ModelPointerResearchStore.due() read the clock twice - once for its own default `at`, then again inside read(), which seeds an unseen topic's nextRunAt - so whenever those readings straddled a millisecond the store reported the topic it had just created as not yet due, runDue() returned nothing, and the CLI's providerKind came back null. Measured at 15 of 2000 fresh stores on an idle host and 0 of 2000 after the repair. A topic that has never run is now due without consulting a deadline it never earned. GoogleResearchStore and PerplexityResearchStore carried the identical three lines and were repaired with it."
     ],
     "verification": [
-      "npm run test:all 846/847 at this change. The single failure is test/semanticAnalysis.test.js, proven pre-existing by stashing every change and re-running at 40c9836, where it fails identically; this host has no TypeScript toolchain.",
-      "validate, docs:check, lint:workflows, audit:clutter, audit:privacy, audit:security, audit:ai-conflict-governance, audit:governance, audit:design-brief, audit:core-ref, audit:failure-codes, audit:circulation and git diff --check all exit 0. Uncoded throw-site baseline unchanged at 581; fly-by-wire ratchet unchanged at 57 with 36 edges through the bus.",
-      "At exact tip d51344ef522e95dbf4f3128513497f8e12a5f2d5 the three ubuntu-latest Self-Test legs, CodeQL, AI conflict governance and the locked-PR guard passed; Windows and macOS legs were still running. The hosted AI handoff policy refused that push because it updated AI-HANDOFF.json without DEVLOG.md, which this record corrects.",
-      "No learning gate advanced and none was marked passed. The hosted learning proof remains red on the restored queue hash mismatch, whose repair belongs to Oversight."
+      "npm run test:all 862/862 at this change, including three new regression tests - one per discovery store - each reproduced with a ticking clock and shown failing before the repair existed.",
+      "validate, docs:check, lint:workflows, audit:clutter, audit:privacy, audit:security, audit:ai-conflict-governance, audit:governance, audit:design-brief, audit:core-ref, audit:failure-codes, audit:circulation, audit:coordination and git diff --check all exit 0.",
+      "The failing leg was identified from the Windows Self-Test tail, which still carried `# fail 1` and `saved known bug KB-local-7d02a3ddd7`; re-deriving that digest over the 102 test files named test/automatedModelPointerResearch.test.js alone. The ubuntu tails began after their own failure and the run-log archive and artifact blobs are both unreachable from this host.",
+      "The hosted Prove R4-R8 on encrypted durable state check is separately red on the pre-existing CRU-0023 corpus-throughput blocker and is untouched by this change. No learning gate advanced and none was marked passed."
     ],
     "remaining": [
+      "Confirm the Self-Test matrix is green on the pushed tip, then release mutation claim discovery-first-due-race-20260915. Until that confirmation the claim stays active.",
       "Owner action, no payment: make Learning-Worker and Vetting-and-Governance-oversite. public so their jobs stop being refused, and leave Crucible-Learning-State and Crucible-Vetted-Learning-State private, because they execute no workflows and hold the corpus ciphertext. Then verify from the API that a dispatched run actually received a runner.",
       "Merge pull request #22 so the daily discovery schedule can fire. It adds one workflow to main whose only action is to dispatch a development workflow; it carries no learning code. Registration is a separate prerequisite and is now solved, so once #22 merges the schedule has something dispatchable to call.",
       "Set NVIDIA_NIM_MODEL in The-Crucible under Settings, Secrets and variables, Actions, on the Variables tab, to a model id such as meta/llama-3.3-70b-instruct. NVIDIA_NIM_API_KEY is already set correctly and reaches the job masked. The workflow now accepts the model from either tab, so only the value itself is missing. Until it is set, readiness fails closed naming it and R3 stays pending.",
@@ -545,6 +548,32 @@
       "acquiredAt": "2026-09-12T19:34:00Z",
       "handedOffTo": null,
       "releasedAt": "2026-09-13T00:21:00Z"
+    },
+    {
+      "taskId": "discovery-first-due-race-20260915",
+      "owner": {
+        "provider": "anthropic",
+        "model": "claude-opus-5",
+        "agent": "session_01Ggfg1gzuSLTQwTgUejXQ7V"
+      },
+      "scope": {
+        "paths": [
+          "src/automatedModelPointerResearch.js",
+          "src/automatedGoogleResearch.js",
+          "src/automatedPerplexityResearch.js",
+          "test/automatedModelPointerResearch.test.js",
+          "test/automatedGoogleResearch.test.js",
+          "test/automatedPerplexityResearch.test.js",
+          "AI-HANDOFF.json",
+          "DEVLOG.md"
+        ],
+        "regions": []
+      },
+      "purpose": "Close the clock-ordering race that lets a never-run discovery topic miss its first due window, which is turning every Self-Test matrix leg red.",
+      "status": "active",
+      "acquiredAt": "2026-09-15T03:51:10.192Z",
+      "handedOffTo": null,
+      "releasedAt": null
     }
   ]
 }

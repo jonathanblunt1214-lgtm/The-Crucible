@@ -86,3 +86,17 @@ test('CLI initializes the holding queue and readiness fails honestly without the
   const readiness = []; await assert.rejects(() => runCli(['readiness'], env, (line) => readiness.push(JSON.parse(line))), /PERPLEXITY_API_KEY/);
   assert.deepEqual(readiness[0].missing, ['PERPLEXITY_API_KEY']); assert.equal(readiness[0].ready, false);
 });
+
+// Regression, 2026-09-15. Same defect as the Google and model-pointer stores: `due()` evaluates its
+// default `at` from one clock reading and `read()` seeds an unseen topic's `nextRunAt` from a later
+// one, so a topic the store has just invented can be scheduled a millisecond past its own deadline
+// and report as not due. On the model-pointer path that reddened nine Self-Test jobs at once.
+test('a never-run topic is due even when the clock ticks between the deadline and the seeding of it', (t) => {
+  const { root } = fixture(t);
+  let readings = 0;
+  const store = new PerplexityResearchStore(path.join(root, 'ticking'), 'github:owner/repository', ['JavaScript'], {
+    now:() => new Date(Date.parse('2026-09-10T12:00:00.000Z') + (readings += 1)).toISOString(),
+  });
+  assert.equal(store.due().length, 1);
+  assert.equal(readings >= 2, true, 'the two clock readings this guards against must both have happened');
+});

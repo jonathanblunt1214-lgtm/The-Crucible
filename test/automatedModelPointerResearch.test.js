@@ -176,3 +176,30 @@ test('the CLI run path registers real candidates and reports them without author
   assert.equal(report.outcomes[0].candidateIds.length, 1);
   assert.equal(report.authorizesPromotion, false);
 });
+
+// Regression, 2026-09-15. Every leg of the Self-Test matrix went red on the tip that added this
+// module, against a suite that was 859/859 locally. The failing assertion was `report.providerKind`
+// coming back null out of the CLI, which happens only when `runDue()` found nothing to run - so a
+// store that had just invented a topic decided that topic was not due yet.
+//
+// `due()` reads the clock twice. Its own default `at` is evaluated first, and `read()` then seeds an
+// unseen topic's `nextRunAt` from a second, later reading. Whenever those two land in different
+// milliseconds the topic is scheduled one tick after the deadline it is being measured against.
+// Measured on an idle machine here: 15 of 2000 fresh stores. On a runner executing the whole suite
+// in two parallel workers it is common enough to redden nine jobs at once.
+test('a never-run topic is due even when the clock ticks between the deadline and the seeding of it', (t) => {
+  const { root } = fixture(t);
+  let readings = 0;
+  const ticking = () => new Date(Date.parse('2026-09-15T12:00:00.000Z') + (readings += 1)).toISOString();
+
+  const fresh = new ModelPointerResearchStore(path.join(root, 'fresh'), PROJECT, ['JavaScript'], { now: ticking });
+  assert.equal(fresh.due().length, 1);
+  assert.equal(readings >= 2, true, 'the two clock readings this guards against must both have happened');
+
+  // The same ordering applies to a topic approved after the store already exists: it is seeded by
+  // the read that `due()` performs, which is again the later of the two readings.
+  const { store } = fixture(t, ['JavaScript']);
+  store.recordRun('JavaScript', { searchedAt: '2026-09-14T12:00:00.000Z', intervalMs: DEFAULT_RESEARCH_INTERVAL_MS, candidates: [], state: 'completed' });
+  const widened = new ModelPointerResearchStore(store.root, PROJECT, ['JavaScript', 'Rust'], { now: ticking });
+  assert.deepEqual(widened.due().map((item) => item.topic), ['JavaScript', 'Rust']);
+});
