@@ -49,7 +49,13 @@ class PerplexityResearchStore {
     if (!Number.isSafeInteger(maximum) || maximum < 1 || maximum > MAXIMUM_QUERIES_PER_RUN) throw crucibleError('CRU-0042', `maximum due searches must be between 1 and ${MAXIMUM_QUERIES_PER_RUN}.`);
     const timestamp = Date.parse(at);
     if (!Number.isFinite(timestamp)) throw crucibleError('CRU-0042', 'A valid due timestamp is required.');
-    return this.read().topics.filter((item) => Date.parse(item.nextRunAt) <= timestamp).slice(0, maximum).map((item) => structuredClone(item));
+    // A topic that has never run is due, full stop, without consulting its deadline. `nextRunAt`
+    // for such a topic is not a schedule anybody chose: it is whatever the clock said inside the
+    // `read()` below, which happens after the reading that produced `timestamp`. Comparing the two
+    // asked whether one clock reading was later than the next, and on 2026-09-15 the answer was
+    // often enough yes to take all nine Self-Test legs red at once. `lastRunAt` is set by, and only
+    // by, `recordRun`, so its absence is the honest record that no deadline has been earned yet.
+    return this.read().topics.filter((item) => !item.lastRunAt || Date.parse(item.nextRunAt) <= timestamp).slice(0, maximum).map((item) => structuredClone(item));
   }
 
   recordRun(topic, { searchedAt, intervalMs, candidates, state, reason = null, cited = 0, provider = 'perplexity', model = null, promptSha256 = null, responseSha256 = null }) {

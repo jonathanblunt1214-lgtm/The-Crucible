@@ -130,3 +130,18 @@ test('CLI rejects a query capacity above the owner-set 50 topic ceiling', async 
   const queue = path.join(root, 'queue.json'); fs.writeFileSync(queue, JSON.stringify({ schemaVersion:1, projectId:'github:owner/repository', updatedAt:null, protocol:{}, documents:[], links:[] }));
   await assert.rejects(() => runCli(['run', 'JavaScript'], { CRUCIBLE_LEARNING_PROJECT_ID:'github:owner/repository', CRUCIBLE_LEARNING_ROOT:root, CRUCIBLE_SOURCE_QUEUE:queue, CRUCIBLE_GOOGLE_MAX_QUERIES:'51' }, () => {}), /between 1 and 50/);
 });
+
+// Regression, 2026-09-15. `due()` reads the clock twice - once for its own default `at`, then again
+// inside `read()`, which seeds an unseen topic's `nextRunAt`. When those readings straddle a
+// millisecond the topic is scheduled one tick after the deadline it is measured against, and a
+// store that has just invented a topic reports nothing due. The model-pointer store carries the
+// same code and that is what took every Self-Test matrix leg red; this path had it too.
+test('a never-run topic is due even when the clock ticks between the deadline and the seeding of it', (t) => {
+  const { root } = storeFixture(t);
+  let readings = 0;
+  const store = new GoogleResearchStore(path.join(root, 'ticking'), 'github:owner/repository', ['JavaScript language specification'], {
+    now:() => new Date(Date.parse('2026-08-30T20:00:00.000Z') + (readings += 1)).toISOString(),
+  });
+  assert.equal(store.due().length, 1);
+  assert.equal(readings >= 2, true, 'the two clock readings this guards against must both have happened');
+});
