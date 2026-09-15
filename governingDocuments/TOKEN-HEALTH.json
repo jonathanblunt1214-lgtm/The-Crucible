@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "project": {
+    "name": "The Crucible",
+    "repository": "jonathanblunt1214-lgtm/The-Crucible",
+    "repositoryId": 1344890806,
+    "branch": "development"
+  },
+  "purpose": "Non-secret health declaration for the credentials The Crucible itself consumes. It records whether each credential is present, authenticates, and still performs the one capability it exists for, so an expired or revoked credential is diagnosed as a credential fault rather than misread as a code defect or a learning regression.",
+  "scope": {
+    "ownCredentialsOnly": true,
+    "adoptingProjectCredentialsOutOfScope": true,
+    "credentialValueStorageForbidden": true,
+    "applicationOrWorkflowMutationAuthorized": false,
+    "readsNoCredentialItIsNotAlreadyGiven": true,
+    "absentCredentialIsIndeterminateNotFailed": true
+  },
+  "credentials": [
+    {
+      "env": "GITHUB_TOKEN",
+      "source": "github.token",
+      "usedFor": "Gate runs and the visible failure issue in the scanned repository.",
+      "ownerSupplied": false,
+      "recurringWriteScope": "issues: write"
+    },
+    {
+      "env": "SECURITY_READ_TOKEN",
+      "source": "repository secret",
+      "usedFor": "Reading GitHub repository security settings for the security-settings gate.",
+      "ownerSupplied": true
+    },
+    {
+      "env": "MULTI_REPOSITORY_READ_TOKEN",
+      "source": "repository secret",
+      "usedFor": "Read-only multi-repository integration checks.",
+      "ownerSupplied": true
+    },
+    {
+      "env": "CRUCIBLE_LEARNING_STATE_DEPLOY_KEY",
+      "source": "repository secret",
+      "usedFor": "Cloning the encrypted learning-state repository during the hosted proof.",
+      "ownerSupplied": true
+    },
+    {
+      "env": "CRUCIBLE_VETTED_BUNDLE_KEY",
+      "source": "repository secret",
+      "usedFor": "Decrypting the oversight-vetted source bundle.",
+      "ownerSupplied": true,
+      "predecessor": "CRUCIBLE_VETTED_BUNDLE_KEY_PREVIOUS"
+    },
+    {
+      "env": "CRUCIBLE_VETTED_STATE_READ_KEY",
+      "source": "repository secret",
+      "usedFor": "Reading vetted learning state.",
+      "ownerSupplied": true
+    },
+    {
+      "env": "CRUCIBLE_HOSTED_STORE_KEY",
+      "source": "repository secret",
+      "usedFor": "Encrypting and decrypting the hosted durable learning store.",
+      "ownerSupplied": true
+    },
+    {
+      "env": "NVIDIA_NIM_API_KEY",
+      "source": "repository secret",
+      "usedFor": "Governed model-pointer discovery. Never evidence; discovered URLs are candidates only.",
+      "ownerSupplied": true
+    },
+    {
+      "env": "PERPLEXITY_API_KEY",
+      "source": "repository secret",
+      "usedFor": "Governed citation discovery. Never evidence; discovered URLs are candidates only.",
+      "ownerSupplied": true
+    }
+  ],
+  "notCredentials": {
+    "values": ["NVIDIA_NIM_MODEL", "NVIDIA_NIM_BASE_URL", "PERPLEXITY_MODEL"],
+    "rule": "A model id and a base URL are configuration, not credentials. Masking them buys nothing and costs diagnosis: a withdrawn model returned HTTP 410 about a masked name on 2026-09-15 and could not be read from the log. Configuration belongs in version control or a repository variable where a reviewer can read, diff, and date it."
+  },
+  "healthContract": {
+    "checks": [
+      "credential-present-at-runtime",
+      "authentication-succeeds",
+      "required-capability-succeeds",
+      "expiration-observed-when-provider-exposes-it",
+      "expired-or-expiring-state"
+    ],
+    "persistOnly": [
+      "env",
+      "status",
+      "checkedAt",
+      "present",
+      "authenticated",
+      "capabilityVerified",
+      "expiresAt",
+      "daysRemaining",
+      "expiresSoon",
+      "healthy",
+      "renewalRequired",
+      "reason"
+    ],
+    "neverPersist": [
+      "token",
+      "token-value",
+      "key-material",
+      "authorization-header",
+      "credential-payload",
+      "decrypted-bundle-content"
+    ]
+  },
+  "lifecycle": {
+    "maximumLifetimeDays": 90,
+    "expiryAction": "Rotate the credential at its source and re-run the capability check. Rotation renews access; it never widens authority.",
+    "renewalDoesNotExpandAuthority": true,
+    "predecessorKeyRule": "A previous bundle key is retained only to decrypt state written before a rotation, and never to encrypt new state."
+  },
+  "authority": {
+    "authorizesPromotion": false,
+    "satisfiesNoProofStage": true,
+    "cannotMarkALearningGatePassed": true,
+    "cannotOverrideAGateFailure": true,
+    "rule": "A healthy credential proves that a door opens. It proves nothing about what was found on the other side."
+  },
+  "currentHealth": {
+    "status": "unverified",
+    "checkedAt": "2026-09-15",
+    "credentials": [],
+    "reason": "This declaration was installed as a governing document. No credential value was supplied to the write that created it, so none was read, and no health result is fabricated. A later authorized runtime that holds a credential may update only the non-secret fields listed in healthContract.persistOnly, after the presence, authentication, capability, and expiration checks actually run."
+  }
+}
