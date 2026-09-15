@@ -109,7 +109,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-15T05:20:00Z"
+    "lastActionAt": "2026-09-15T05:35:00Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -226,8 +226,8 @@
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-15T05:20:00Z",
-    "currentStep": "Both executing repositories are public and a real runner is now assigned: Learning-Worker run 559 reached the custody step instead of being refused in two seconds. Discovery is registered so it can be dispatched, and its credential is set. The remaining blocker is the schedule itself, which needs the dispatcher on main, pull request #22."
+    "lastUpdatedAt": "2026-09-15T05:35:00Z",
+    "currentStep": "Learning-Worker run 559 succeeded end to end on a real runner, the first success since 2026-09-12, so the extraction leg is unblocked. Discovery is registered and its API key reaches the job; it needs NVIDIA_NIM_MODEL set as a repository variable, and the daily schedule needs pull request #22."
   },
   "handoffNotes": {
     "completed": [
@@ -247,7 +247,7 @@
     "remaining": [
       "Owner action, no payment: make Learning-Worker and Vetting-and-Governance-oversite. public so their jobs stop being refused, and leave Crucible-Learning-State and Crucible-Vetted-Learning-State private, because they execute no workflows and hold the corpus ciphertext. Then verify from the API that a dispatched run actually received a runner.",
       "Merge pull request #22 so the daily discovery schedule can fire. It adds one workflow to main whose only action is to dispatch a development workflow; it carries no learning code. Registration is a separate prerequisite and is now solved, so once #22 merges the schedule has something dispatchable to call.",
-      "Set NVIDIA_NIM_API_KEY and NVIDIA_NIM_MODEL so R3 can admit a real URL. Until then the readiness command fails closed naming the exact variable and R3 stays pending; no admission may be fabricated.",
+      "Set NVIDIA_NIM_MODEL in The-Crucible under Settings, Secrets and variables, Actions, on the Variables tab, to a model id such as meta/llama-3.3-70b-instruct. NVIDIA_NIM_API_KEY is already set correctly and reaches the job masked. The workflow now accepts the model from either tab, so only the value itself is missing. Until it is set, readiness fails closed naming it and R3 stays pending.",
       "Retain gate evidence durably outside the evictable Actions caches, so R3, R7 and R8 stop being recomputed from a cache that expires, with each record invalidated when the implementation that produced it changes.",
       "The 14-source owner rescan obligation stays pending and unperformed while R4 custody is blocked. On the first exact-tip review where the vetted bundle is self-consistent and the hosted retention path can consume it, verify the 14 hashes and re-evaluate their candidate records through the full gate set, reusing content hashes and extraction-window history."
     ],
