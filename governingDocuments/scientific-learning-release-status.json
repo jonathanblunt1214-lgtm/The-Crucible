@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
   "branch": "development",
-  "developmentSha": "4f0bdb378a15343c310e9e4fa1a5d5f4ea407df6",
-  "updatedAt": "2026-09-12T12:02:00Z",
+  "developmentSha": "d51344ef522e95dbf4f3128513497f8e12a5f2d5",
+  "updatedAt": "2026-09-15T05:00:00Z",
   "rollingTarget": null,
   "rollingTargetState": "indeterminate-until-nonzero-hosted-throughput",
   "timezone": "America/New_York",
@@ -12,18 +12,18 @@
   "promotionPerformed": false,
   "gates": {
     "R1": "passed",
-    "R2": "passed; forced-interruption recovery is durable. A local owner-authorized intake/extraction pass on 2026-09-11 admitted 4 novel files, skipped 10 content-identical files, completed those 4 plus 21 older queued sources, emitted 253 candidate IDs in the batch including 58 from the 4 new sources, and left 154 local sources extraction-pending with no active lock. This local throughput does not substitute for independently published Worker custody.",
-    "R3": "pending; the first scheduler-originated Google run completed all 16 due topics but admitted 0 URLs because data-centre egress was refused. A daily at-most-50-topic Perplexity citation-discovery implementation is prepared with local URL admission and structured failing partial reports, but PERPLEXITY_API_KEY is absent, so no live provider run has admitted a governed URL and R3 remains pending.",
+    "R2": "pending hosted; unchanged locally. Hosted worker throughput is zero because GitHub refuses to start the Learning-Worker job before any step runs: no runner assigned, no step executed, two to four seconds, on windows-latest and ubuntu-latest alike, while the public repository keeps passing. Last success was run 542 at 2026-09-12T18:32:56Z. This is an infrastructure condition and carries no verdict on the worker, so no gate state is inferred from it in either direction.",
+    "R3": "pending; the paid-key blocker is removed but two blockers remain. Discovery now runs on NVIDIA NIM, which is free and already governed, instead of Perplexity, whose API billing a Perplexity Pro subscription does not cover. No governed URL has been admitted yet: NVIDIA_NIM_API_KEY and NVIDIA_NIM_MODEL are not set, so the readiness command fails closed naming them, and the daily schedule cannot fire at all because GitHub schedules workflows only from the default branch while model-pointer-research.yml exists only on development. Model-proposed URLs are recorded as providerKind model-proposed-pointers and are never evidence.",
     "R4": "pending hosted; passed locally on real custody. The local corpus paired GoalKicker candidate extracted-6e63f5d20038b1a127742bb8137e85da with independently retrieved MDN candidate extracted-6e640fb76734ddacec1741722c148542 after verifying both source hashes and extraction custody. Hosted proof remains blocked because the current vetted publication pairs canonical queue SHA-256 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef with manifest value 96f13274cf8c57d717e6f581cbe3c38bdcb6d52ad7e56a5fac51fd18eeefb50e. Oversight must republish the self-consistent pair.",
     "R5": "pending hosted; passed locally on real corpus. The owner-declared Node.js dense-numeric-array scope completed the controlled experiment and distinct independent verifier, producing active durable knowledge version 1 with proof SHA-256 2f0ba6995432f34715867eb4e3945bb9d5e789241e0e66be7a835291b62fd3cf.",
     "R6": "pending hosted; passed locally. After the learning process exited, a fresh process restored version 1 and exact-boundary retrieval returned it; a separate authenticity consumer selected it as bounded regression context with knowledgeIsProofForCurrentRun false and maySkipTest false.",
     "R7": "pending; the mechanism is locally proven, but no real promoted version from the current custody chain exists to supersede and roll back in hosted evidence.",
     "R8": "pending; no complete combined live cycle currently demonstrates every required safety, quarantine, deduplication, contradiction, and rollback behaviour on the current real corpus.",
     "R9": "held; soak band 72-96 continuous hours, observation ceiling 1000 data points, and the soak does not start while the data cannot exhibit the failures it checks",
-    "R10": "pending; exact development SHA 4f0bdb378a15343c310e9e4fa1a5d5f4ea407df6 currently has 19 successful, 1 failed, and 1 skipped checks with 9 matrix jobs still in progress. Hosted learning proof 34525272883 has completed and fails closed during restore on 'Restored queue hash mismatch.' after the new vetted publication.",
+    "R10": "pending; exact development SHA d51344ef522e95dbf4f3128513497f8e12a5f2d5 passed the three ubuntu-latest Self-Test legs, CodeQL, AI conflict governance and the locked-PR guard, with the Windows and macOS legs still running at review time. The hosted AI handoff policy refused that push because it updated AI-HANDOFF.json without DEVLOG.md; that is corrected in this same change. The hosted learning proof remains red on the restored queue hash mismatch.",
     "R11": "pending"
   },
-  "blockingReason": "Local retained scientific-learning throughput is now nonzero: one real independently corroborated claim completed R4-R6, survived restart, and entered the normal bounded-use path. Release remains blocked because this is not hosted evidence: live Perplexity discovery still needs PERPLEXITY_API_KEY, the independently published vetted bundle is internally inconsistent, R7 has no real supersession/rollback cycle, R8 lacks its complete combined live safety cycle, and R9 cannot start until R2-R8 are simultaneously green.",
+  "blockingReason": "No gate advanced. Three governed-record defects were repaired and one paid-provider dependency removed, but none of that is learning evidence. The hosted chain is blocked at its producer: the vetted bundle still pairs canonical queue SHA-256 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef with manifest value 96f13274cf8c57d717e6f581cbe3c38bdcb6d52ad7e56a5fac51fd18eeefb50e, the Oversight fix for it exists but cannot publish while that repository's jobs are refused before startup, and the same refusal keeps Worker throughput at zero. R3 additionally needs a provider credential and a schedule that can fire. R7 and R8 still have no real cycle, and R9 cannot start until R2-R8 are simultaneously green.",
   "history": [
     {
       "recordedAt": "2026-08-30T20:33:00Z",
@@ -107,6 +107,13 @@
       "newTarget": null,
       "newTargetState": "indeterminate-until-nonzero-hosted-throughput",
       "reason": "Local end-to-end retention is no longer zero. Two independent real sources carried the bounded Array.prototype.map claim through controlled testing and a distinct verifier into durable version 1; fresh-process retrieval and the normal authenticity consumer both restored and used it without skipping tests. This advances local R4-R6 only. The target remains indeterminate because Oversight must republish the inconsistent vetted bundle before hosted R4-R6 can repeat, and R7-R9 remain unsatisfied."
+    },
+    {
+      "recordedAt": "2026-09-15T05:00:00Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-hosted-throughput",
+      "reason": "Development advanced from 4f0bdb37 through d51344ef. This review changed no gate to passed and removed no blocker that gates evidence. What it did establish is that the recurring blockers had three distinct causes, none of them the learning system: GitHub refuses to start every private-repository job before any step runs, which is why Worker and Oversight throughput are zero and why the vetted bundle cannot be republished; R3 was waiting on a Perplexity API key that a Perplexity Pro subscription never covered, now replaced by a free governed provider; and the discovery schedule cannot fire at all because GitHub schedules only from the default branch. Two governed records were also found to be false rather than merely stale - the known-bug ledger was marking four categories failed when one test failed, and the routing test had been red on the tip since a0b440c while checking for a phrase the dispatcher never writes - and both are repaired at their cause. The target stays indeterminate because hosted throughput is still zero and inventing a rate is forbidden; any future finite forecast still includes the full 96-hour soak."
     }
   ]
 }
