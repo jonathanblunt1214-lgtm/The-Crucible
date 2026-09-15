@@ -91,6 +91,7 @@ test('current suite classification is stable across the four governed buckets', 
   assert.deepEqual(TEST_MAIN_CATEGORIES.security, [
     'test/automatedGoogleResearch.test.js',
     'test/automatedPerplexityResearch.test.js',
+    'test/automatedModelPointerResearch.test.js',
     'test/ownerFileIntake.test.js',
     'test/sourceRetrievalWorker.test.js',
     'test/aiProviderAdapters.test.js',

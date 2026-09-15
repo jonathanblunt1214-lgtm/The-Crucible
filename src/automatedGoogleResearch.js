@@ -148,18 +148,24 @@ class AtomicSourceQueueCandidateSink {
     const methods = {
       'automated-google-discovery': 'google-research',
       'automated-perplexity-discovery': 'perplexity-research',
+      'automated-model-pointer-discovery': 'model-pointer-research',
     };
     if (!methods[method]) throw crucibleError('CRU-0042', 'Candidate discovery method is not governed.');
     const hash = /^[a-f0-9]{64}$/i;
     if (method === 'automated-google-discovery' && !hash.test(String(candidate.querySha256 || ''))) throw crucibleError('CRU-0042', 'Google discovery requires its exact query hash.');
     if (method === 'automated-perplexity-discovery' && (candidate.provider !== 'perplexity' || typeof candidate.model !== 'string' || !candidate.model.trim() || !hash.test(String(candidate.promptSha256 || '')) || !hash.test(String(candidate.responseSha256 || '')))) throw crucibleError('CRU-0042', 'Perplexity discovery requires provider, model, prompt hash, and response hash provenance.');
+    // A chat model that has no search behind it produces pointers, not citations. Recording
+    // which of the two a candidate came from is mandatory rather than optional: the whole risk
+    // of this discovery path is that a guess is later read as a source, and an absent field
+    // would be read as "not stated" by a future consumer instead of stopping it here.
+    if (method === 'automated-model-pointer-discovery' && (typeof candidate.provider !== 'string' || !candidate.provider.trim() || !['model-proposed-pointers', 'provider-citations'].includes(candidate.providerKind) || typeof candidate.model !== 'string' || !candidate.model.trim() || !hash.test(String(candidate.promptSha256 || '')) || !hash.test(String(candidate.responseSha256 || '')))) throw crucibleError('CRU-0042', 'Model-pointer discovery requires provider, providerKind, model, prompt hash, and response hash provenance.');
     const queue = JSON.parse(fs.readFileSync(this.file, 'utf8'));
     if (queue?.schemaVersion !== 1 || queue.projectId !== this.projectId || !Array.isArray(queue.links)) throw new Error('Source queue is invalid or belongs to another project.');
     const existing = queue.links.find((item) => item.url === url.toString() || item.finalUrl === url.toString());
     if (existing) return { created:false, id:existing.id };
     const discoveredAt = this.now(); const id = `${methods[method]}:${sha256(url.toString())}`;
     const discovery = { method, discoveredAt };
-    for (const field of ['querySha256', 'promptSha256', 'responseSha256', 'provider', 'model']) if (candidate[field] != null) discovery[field] = candidate[field];
+    for (const field of ['querySha256', 'promptSha256', 'responseSha256', 'provider', 'providerKind', 'model']) if (candidate[field] != null) discovery[field] = candidate[field];
     queue.links.push({ id, catalogSourceId:null, ordinal:null, url:url.toString(), author:'unknown until retrieved', license:'not declared; verify source terms before redistribution', retrievedAt:null, contentSha256:null, classification:'Insufficient Evidence', state:'research-approved-pending-retrieval', retrievalStartedAt:null, finalUrl:null, httpStatus:null, contentType:null, contentLength:null, durablePath:null, publisher:null, blocker:null, discovery });
     queue.updatedAt = discoveredAt;
     const temporary = `${this.file}.${process.pid}.${crypto.randomUUID()}.tmp`;
