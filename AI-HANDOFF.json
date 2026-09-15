@@ -191,7 +191,7 @@
   "activePlan": {
     "agent": "Claude",
     "objective": "Clear the blockers keeping the scientific-learning pipeline from producing evidence, without spending money: tell a refused hosted job apart from a failed one, move governed discovery onto a free provider, make governed records state what actually happened, and run the rolling release review from the literal development tip.",
-    "currentPrompt": "Record the resolved custody blocker and the two owner actions the learning release now turns on",
+    "currentPrompt": "Stop counting a source that was never retrieved as one the extraction worker drained",
     "executionMode": {
       "mode": "work",
       "agent": "Claude",
@@ -206,9 +206,9 @@
       "branch": "development",
       "reason": "Affected paths select crucible-core.",
       "explicitOverride": false,
-      "selectedAt": "2026-09-15T08:40:01.075Z",
-      "promptSha256": "84a68e3601f3442240f4c87dc8d22c6790db65846a07b04028964999bd50870f",
-      "affectedPathsSha256": "afd52538de0e70d7e648bae1601594ad6b58262309e4454bc4e448b807b0ed4f"
+      "selectedAt": "2026-09-15T08:47:26.790Z",
+      "promptSha256": "7ecb3cf589fa3636534fdff3b2fa2f489ec3c182293cd71214453e37e7f71a87",
+      "affectedPathsSha256": "9662e2a0df9e8c14a741e07b98eff3b5932fb2d8a608c6f34385351ac029acdf"
     },
     "steps": [
       "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
@@ -226,12 +226,13 @@
       "[done] Close the first-due clock-ordering race in all three governed discovery stores, keyed on lastRunAt rather than on comparing two clock readings, with a deterministic ticking-clock regression test in each that was shown failing before the repair existed.",
       "[done] Confirm the first-due repair across all eighteen hosted Self-Test legs at 259cf60 and release claim discovery-first-due-race-20260915.",
       "[open] Owner or Oversight: get owner-delegated-url:11bfade7 into the vetted corpus, or pair the Array.prototype.map declaration to a source that is in it. Until then R4-R8 fails closed on CRU-0026 with one claim corroborated and no declaration usable.",
-      "[done] Dispatched oversight, confirmed it published a self-consistent vetted bundle, re-ran the hosted proof, and recorded the resolved custody blocker plus the two owner actions the release now turns on in the release status file."
+      "[done] Dispatched oversight, confirmed it published a self-consistent vetted bundle, re-ran the hosted proof, and recorded the resolved custody blocker plus the two owner actions the release now turns on in the release status file.",
+      "[done] Repaired evaluateR2 so an unretrieved source is no longer counted as one the extraction worker drained, with the real hosted population as a regression fixture shown failing first."
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-15T09:10:00Z",
-    "currentStep": 16
+    "lastUpdatedAt": "2026-09-15T09:30:00Z",
+    "currentStep": 17
   },
   "handoffNotes": {
     "completed": [
@@ -245,7 +246,8 @@
       "Eighteen of eighteen Self-Test legs pass at exact tip 259cf60ce2fc9127a2a8277df172dff39d3b59a0 - nine on push run 34926863414 and nine on pull-request run 34926865280 - across ubuntu, windows-2022 and macOS on Node 20, 22 and 24. Every leg was red on the four preceding tips. Mutation claim discovery-first-due-race-20260915 released at 2026-09-15T08:33:50Z; no claim is now active.",
       "Dispatched the oversight workflow and confirmed from the API that it ran rather than being refused: run 34938208295 assigned runners 1000022397 and 1000022400, executed every step, and return-vetted-data published vetted commit ef2d3b3 to Crucible-Vetted-Learning-State after running the post-merge custody vet ahead of encryption. Re-ran the Crucible hosted proof on that bundle as run 34947395586 and quoted both hashes rather than asserting a match: the restore succeeds and queue SHA-256 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef now equals the manifest value that previously read 96f13274cf8c57d717e6f581cbe3c38bdcb6d52ad7e56a5fac51fd18eeefb50e. The restored-queue-hash mismatch that had blocked hosted R4-R6 since 2026-09-10 is closed.",
       "Established that the discovery blocker is no longer a missing credential. NVIDIA_NIM_MODEL now reaches the job and the readiness step passes; dispatched run 34947505096 executed all 16 due topics and every one was blocked identically with HTTP 410, \"The model has reached its end of life on 2026-08-26T09:00:00Z and is no longer available.\" A 410 is a model-lifecycle answer rather than an authentication failure, so the key works and the configured model is withdrawn. Recorded in the release status rather than retried, and noted that each blocked topic consumed its daily slot so the topics are not due again until 24 hours after 2026-09-15T08:32:29Z.",
-      "Updated governingDocuments/scientific-learning-release-status.json, which the preceding push left untouched, and changed the rolling target state from indeterminate-until-nonzero-hosted-throughput to indeterminate-until-a-pairable-owner-declaration-exists. Hosted throughput is no longer zero, so the old state name had become false; the target is still indeterminate because what now bounds it is an owner action with no measurable rate. No gate is marked passed: src/hostedLearningProof.js exited 1 under CRU-0026 before emitting a verdict, and a reading of log lines is not a substitute for the proof own outcome."
+      "Updated governingDocuments/scientific-learning-release-status.json, which the preceding push left untouched, and changed the rolling target state from indeterminate-until-nonzero-hosted-throughput to indeterminate-until-a-pairable-owner-declaration-exists. Hosted throughput is no longer zero, so the old state name had become false; the target is still indeterminate because what now bounds it is an owner action with no measurable rate. No gate is marked passed: src/hostedLearningProof.js exited 1 under CRU-0026 before emitting a verdict, and a reading of log lines is not a substitute for the proof own outcome.",
+      "Repaired the evaluateR2 reporting defect recorded as remaining in the preceding push. A source that never reached extraction was counted as having left the extraction backlog, because PENDING_EXTRACTION_STATES covers only the two extraction states: on the real hosted population the gate read \"all 534 queued sources have left the extraction backlog\" while 128 of them had never been retrieved. Custody now decides which population a source belongs to rather than a list of state names, because the queue carries states this repository does not define - the Learning Worker writes oversight-vetting-pending - and a state allow-list here would have to guess where an unfamiliar name belongs. The satisfied verdict is unchanged on real completions, since R2 asks what the worker does with the work it is given and coverage is judged by R4 and R5; the detail now names both populations. A new branch reads pending where an empty backlog carries no completions at all, which is strictly stricter than before and the only branch whose verdict changed. npm run test:all 863/863 with the regression test shown failing against the old implementation first."
     ],
     "verification": [
       "npm run test:all 862/862 at this change, including the three ticking-clock regression tests.",
@@ -258,8 +260,8 @@
       "Owner action for R3: replace the configured NVIDIA NIM model id with one that is currently available, since the present value was withdrawn on 2026-08-26. Filing it on the Variables tab rather than Secrets would let the run log name the model instead of masking it, which is appropriate for configuration and would have identified this in one run.",
       "Owner action for R5: either republish Crucible-Learning-State including owner-delegated-url:11bfade7a586952ee66669380ffef05fb567a48589b59c33159b275c47e44eb4 so the existing declaration becomes pairable, or declare a scope, experiment and distinct verifier for a claim the hosted corpus already corroborates - \"Any class can have more than one constructor.\" is corroborated at the configured threshold by linked-source:28503d6f and owner-file:7a409be1. Declaring a scope is the owner judgement and is never inferred.",
       "Retain gate evidence durably outside the evictable Actions caches, with per-gate invalidation when the relevant implementation changes.",
-      "Repair the R2 reporting defect in src/preSoakReadiness.js: evaluateR2 counts a source as having left the extraction backlog when it never entered it, so the restored corpus would read satisfied as \"all 534 queued sources have left the extraction backlog\" while 109 are retrieval-blocked and 19 still await retrieval - the same 128 the proof reports as having no stored content. The empty-queue branch is already correct and reads unknown; this is the never-retrieved case only.",
-      "Do not weaken handoff, coordination, learning-custody, collision, security, or promotion gates to obtain green cosmetics, and never mark a gate passed on a run that was refused before it started or that exited before emitting a verdict."
+      "Do not weaken handoff, coordination, learning-custody, collision, security, or promotion gates to obtain green cosmetics, and never mark a gate passed on a run that was refused before it started or that exited before emitting a verdict.",
+      "Re-check the corpus arithmetic when the queue is next readable. The hosted custody report records 403 of 534 sources with stored content, which implies 131 without, while the same run diagnoses sources-without-content as 128. The three-source difference is unexplained and neither number was taken on trust: the repaired evaluateR2 derives its own count from contentSha256 rather than from either figure."
     ],
     "open": [
       "The 14-source owner rescan obligation stays pending and unperformed. Its trigger condition is now partly met: custody is self-consistent and retention is provable. It stays pending because R5 has produced no retained hosted knowledge version yet, so there is no retained-state evidence to record completion against. When it is performed, reuse content hashes and extraction-window history; do not duplicate source bytes, reset custody, or re-extract unchanged windows.",

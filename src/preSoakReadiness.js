@@ -8,6 +8,19 @@
 const { soakReadiness } = require('./soakGate');
 
 const PENDING_EXTRACTION_STATES = new Set(['claim-extraction-forced-pending', 'claim-extraction-in-progress']);
+const EXTRACTED_STATE = 'claim-extraction-complete';
+
+// A source leaves the extraction backlog two very different ways: the worker extracted it, or
+// it never became extractable at all. Both leave PENDING_EXTRACTION_STATES empty, so counting
+// that set alone cannot tell a drained queue from one nothing could ever enter.
+//
+// Custody decides which it was, not a list of state names. A source with no content SHA-256 was
+// never retrieved whatever state it carries, and that matters because the queue carries states
+// this repository does not define - the Learning Worker writes oversight-vetting-pending, and a
+// state allow-list here would have to guess which bucket an unfamiliar name belongs in.
+function retrieved(source) {
+  return /^[a-f0-9]{64}$/i.test(String(source?.contentSha256 || ''));
+}
 
 function gate(id, title, state, detail) {
   return { id, title, state, detail };
@@ -17,11 +30,23 @@ function gate(id, title, state, detail) {
 // separately and permanently by test/durableLock.test.js, so only the live drain is open.
 function evaluateR2(queue) {
   const sources = [...(queue.documents || []), ...(queue.links || [])];
-  const pending = sources.filter((item) => PENDING_EXTRACTION_STATES.has(item.state));
   if (!sources.length) return gate('R2', 'Extraction worker', 'unknown', 'the source queue is empty or was not supplied, so the live drain cannot be judged from here');
-  return pending.length
-    ? gate('R2', 'Extraction worker', 'pending', `${pending.length} of ${sources.length} sources are still awaiting bounded claim extraction`)
-    : gate('R2', 'Extraction worker', 'satisfied', `all ${sources.length} queued sources have left the extraction backlog; the forced-interruption restart proof is covered permanently by test/durableLock.test.js`);
+  const pending = sources.filter((item) => PENDING_EXTRACTION_STATES.has(item.state));
+  if (pending.length) return gate('R2', 'Extraction worker', 'pending', `${pending.length} of ${sources.length} sources are still awaiting bounded claim extraction`);
+  const extracted = sources.filter((item) => item.state === EXTRACTED_STATE);
+  const unretrieved = sources.filter((item) => !retrieved(item));
+  // An empty backlog with nothing extracted is the degenerate case: the worker has not been
+  // shown to consume anything, so there is no drain to judge as complete.
+  if (!extracted.length) {
+    return gate('R2', 'Extraction worker', 'pending', `no source has reached ${EXTRACTED_STATE}, so the extraction backlog is empty because nothing ever entered it rather than because the worker drained it; ${unretrieved.length} of ${sources.length} sources have never been retrieved`);
+  }
+  // The verdict stays satisfied on real completions, because R2 asks what the worker does with
+  // the work it is given - consume the forced-pending queue, persist bounded candidate IDs, and
+  // resume after interruption - and not how much of the corpus became retrievable in the first
+  // place. Coverage is judged by R4 on the provenance chain and by R5 on what can be paired, so
+  // folding it in here would double-count it and blur which gate is actually short. What the
+  // detail must never do is let a reader read a drained backlog as a fully extracted corpus.
+  return gate('R2', 'Extraction worker', 'satisfied', `${extracted.length} of ${sources.length} sources completed bounded claim extraction and none is awaiting it; ${unretrieved.length} were never retrieved, so they left the backlog without entering it rather than being drained from it; the forced-interruption restart proof is covered permanently by test/durableLock.test.js`);
 }
 
 // R3: one real bounded discovery run admitted at least one locally governed URL. A blocked
