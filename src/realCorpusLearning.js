@@ -534,7 +534,7 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
       // broken harness, and arming the pre-registration refusal on an ambiguous signal would
       // block the owner from correcting a declaration because of a defect of ours. The claim
       // stays pending, which is the weaker and safer of the two.
-      evaluations.push({ claim: ready.claim, claimScope: ready.declaration.claimScope, corroborationRoute: ready.route, sourceIds: ready.sourceIds, candidateIds: ready.candidateIds, ingestedFromCorpus, learned: false, reason: `the controlled pipeline stopped on this claim: ${error.message}`, verifiedVersion: null, promotionAuthorized: false });
+      evaluations.push({ claim: ready.claim, claimScope: ready.declaration.claimScope, corroborationRoute: ready.route, sourceIds: ready.sourceIds, candidateIds: ready.candidateIds, ingestedFromCorpus, language: ready.declaration.language || 'javascript', learned: false, reason: `the controlled pipeline stopped on this claim: ${error.message}`, verifiedVersion: null, promotionAuthorized: false });
       continue;
     }
 
@@ -566,6 +566,7 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     evaluations.push({
       contradictionAudit,
       claim: ready.claim,
+      language: ready.declaration.language || 'javascript',
       claimScope: ready.declaration.claimScope,
       corroborationRoute: ready.route,
       agreement: ready.agreement,
@@ -601,6 +602,7 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     learned: promoted.length > 0,
     reason: promoted.length ? null : `no declared claim was promoted: ${evaluations.map((item) => `"${item.claim.slice(0, 60)}" - ${item.reason}`).join('; ')}`,
     claim: first ? first.claim : null,
+    language: first ? first.language : null,
     claimScope: first ? first.claimScope : null,
     corroborationRoute: first ? first.corroborationRoute : null,
     agreement: first ? first.agreement : null,

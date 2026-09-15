@@ -636,6 +636,18 @@ const FAILURE_CODES = Object.freeze({
       forbidden: 'Never fall back to the evictable Actions cache when the durable store is unreachable - a silent fallback restores exactly the invisible eviction this store exists to remove, and the gate then reads pending for a storage reason that looks scientific. Never rebuild or delete the store to clear the error: it holds the accumulated prior versions R7 supersedes, and rebuilding it destroys the only evidence that they ever existed.',
     },
   },
+  'CRU-0050': {
+    code: 'CRU-0050',
+    category: 'learning-blockage',
+    meaning: 'A controlled experiment could not be run honestly for a declared claim: no harness is registered for that language, the toolchain it needs is unavailable on this runner, the fixture assertions did not pass, or the independent verifier did not confirm the experiment. There is deliberately no default harness, because a default is how a Java claim came to be "proved" by a JavaScript array-map script.',
+    next: 'Read the message: it names which of those applies. An unregistered language needs a real harness in src/hostedExperimentHarnesses.js - a runtime adapter and a static adapter with genuinely different measurement methods, a fixture, and a negative control that fails the expected property. A failed fixture assertion is a result about the claim, not an error to route around: the claim did not hold within the boundary it was declared for, and that is the honest outcome.',
+    remedy: {
+      kind: 'owner-decision',
+      command: null,
+      verifyWith: { tests: ['test/hostedExperimentHarnesses.test.js'] },
+      forbidden: 'Never add a fallback harness, never let one language\'s fixture stand in for another, and never weaken a negative control so an experiment passes. An experiment whose control cannot fail has isolated nothing, and a proof that does not run the claim\'s own fixture is not a proof of that claim.',
+    },
+  },
   'CRU-0022': {
     code: 'CRU-0022',
     category: 'diagnosis-coverage',

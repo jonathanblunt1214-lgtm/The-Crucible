@@ -8,26 +8,20 @@ const path = require('node:path');
 const { DurableScientificLearningStore, encryptWeeklyEnvelope, decryptWeeklyEnvelope, sha } = require('./scientificLearning');
 const { runLearningCycle } = require('./learningCycle');
 const { preSoakReadiness } = require('./preSoakReadiness');
-const { learnFromRealCorpus, hasRealCorpusKnowledge, readBundle, corpusCandidateStore, allCandidateRecords } = require('./realCorpusLearning');
+const { learnFromRealCorpus, hasRealCorpusKnowledge, readBundle, corpusCandidateStore, allCandidateRecords, readScopeDeclarations } = require('./realCorpusLearning');
 const { realCorpusSafety } = require('./realCorpusSafety');
 const { DurableGateEvidenceStore, invalidateStaleGates } = require('./durableGateEvidence');
 const { realSupersession } = require('./realSupersession');
 const { intakePathways } = require('./intakePathways');
+const { harnessesForDeclaration, lazyHarnessPair } = require('./hostedExperimentHarnesses');
 
-const BOUNDARY = 'Node.js ordinary dense arrays of numbers';
-const GENERALIZATION = 'Does not cover sparse arrays, proxies, subclasses, or host objects.';
 const STATE_CONTEXT = 'github-hosted-learning-state-v1';
 
-function proof(candidate, hypothesis, at, testPlan, claimScope) {
-  return { schemaVersion:1, candidateId:candidate.id, projectId:candidate.projectId, hypothesis, testedProperty:candidate.claim, experimentBoundary:(testPlan&&testPlan.experimentBoundary)||claimScope||candidate.claimBoundary, controls:['output identity differs from input','input snapshot remains unchanged'], causalIsolation:{method:'single mapped operation with identity and mutation controls',result:'only the returned array differs',correlationOnly:false}, negativeTests:['empty input returns a distinct empty array'], regressionTests:['dense numeric mapping preserves input values'], scopeProof:BOUNDARY, generalizationResult:GENERALIZATION, contradictionResult:'none', completedAt:at };
-}
-function harnesses(at) {
-  const execute = () => { const input=[1,2,3]; const output=input.map((value)=>value*2); assert.notEqual(output,input); assert.deepEqual(input,[1,2,3]); assert.deepEqual(output,[2,4,6]); assert.deepEqual([].map((value)=>value),[]); };
-  return {
-    experiment:{ id:'github-controlled-runner', run:async({candidate,hypothesis,testPlanSha256,testPlan,claimScope})=>{ execute(); return {...proof(candidate,hypothesis,at,testPlan,claimScope),testPlanSha256}; } },
-    verifier:{ id:'github-independent-runner', run:async({candidate,experimentalProof,testPlanSha256, testPlan})=>{ execute(); return { verifierId:'github-independent-runner', independent:true, testedProperty:candidate.claim, experimentBoundary:experimentalProof.experimentBoundary, result:'passed', verifiedAt:at, testPlanSha256 }; } },
-  };
-}
+// The hardcoded harness pair that used to live here ran one fixed JavaScript array-map snippet
+// for every claim, and had the same closure "independently" confirm it. Real per-language
+// harnesses are built in hostedExperimentHarnesses.js, where independence is a different
+// measurement method rather than a different id string, and every proof field is derived from
+// the analysis that actually ran.
 function withoutPlanBinding(harness) {
   return { id:harness.id, run:async(input)=>{const result=await harness.run(input);const bounded={...result};delete bounded.testPlanSha256;return bounded;} };
 }
@@ -56,7 +50,7 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   const masterKey=Buffer.from(key,'base64'); if(masterKey.length<32)throw new Error('CRUCIBLE_HOSTED_STORE_KEY must decode to at least 32 bytes.');
   const projectId=`github:${repository}`, subject=`repo:${repository}:ref:${ref}`, binding={projectId,repository,subject};
   const storeRoot=path.join(root,'store'); fs.mkdirSync(storeRoot,{recursive:true});
-  const store=new DurableScientificLearningStore({root:storeRoot,projectId}); const restored=restore(store,encryptedFile,masterKey,binding); const at=now(); const {experiment,verifier}=harnesses(at);
+  const store=new DurableScientificLearningStore({root:storeRoot,projectId}); const restored=restore(store,encryptedFile,masterKey,binding); const at=now();
   // R4-R6 are learned from the real restored corpus. There is deliberately no synthetic
   // fallback: this previously built two "sources" in code out of the claim string itself,
   // which proved the pipeline ran and proved nothing about learning. If the real corpus
@@ -65,7 +59,7 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   const restoredBundle = bundleRoot && fs.existsSync(path.join(bundleRoot,'manifest.json')) ? readBundle(bundleRoot) : null;
   if (!hasRealCorpusKnowledge(store, restoredBundle)) {
     if (!bundleRoot) throw new Error('CRUCIBLE_HOSTED_BUNDLE_ROOT is required: the hosted proof learns from the restored real corpus and has no fixture fallback.');
-    realLearning = await learnFromRealCorpus({ bundleRoot, learningRoot:storeRoot, projectId, scopeDeclarationFile, harnessesFor:()=>({experiment,verifier}), now:()=>at });
+    realLearning = await learnFromRealCorpus({ bundleRoot, learningRoot:storeRoot, projectId, scopeDeclarationFile, harnessesFor:(declaration)=>harnessesForDeclaration(declaration,{projectId,at}), now:()=>at });
     if (!realLearning.learned) {
       const stopped = { schemaVersion:1, projectId, repository, ref, runId:String(runId), completedAt:at, restoredEncryptedState:restored,
         learnedFromRealCorpus:false, reason:realLearning.reason, corpus:realLearning.corpus,
@@ -126,12 +120,31 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   // built a candidate out of the same hardcoded claim string it had just promoted, labelled it
   // a repository test fixture, and superseded a version it had made for itself.
   const corpusStore = restoredBundle ? corpusCandidateStore(restoredBundle, bundleRoot, projectId) : null;
+  // Resolved lazily from the declaration whose claim was promoted, because R7 re-tests that
+  // claim and must use its language. realSupersession returns unsatisfied before touching a
+  // harness while no verified knowledge exists, so nothing is built in that case.
+  // Resolved in order, because R7 must use the harness for the claim it is re-testing and that
+  // claim may have been promoted by an earlier run rather than this one. A restart-safe run
+  // restores active knowledge while promoting nothing, so this run's own promotion is not always
+  // available. Falling through to null throws CRU-0050 rather than substituting a harness.
+  const supersessionHarnesses = lazyHarnessPair({ projectId, at, resolveLanguage: () => {
+    if (realLearning && realLearning.language) return realLearning.language;
+    const active = store.activeKnowledge();
+    if (!active.length) return null;
+    const flatten = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
+    const declarations = readScopeDeclarations(scopeDeclarationFile);
+    for (const version of active) {
+      const match = declarations.find((item) => flatten(item.claim) === flatten(version.claim));
+      if (match) return match.language || 'javascript';
+    }
+    return null;
+  } });
   const supersession = await realSupersession({
     store,
     available: allCandidateRecords(store, corpusStore),
     bundle: restoredBundle,
-    experiment:withoutPlanBinding(experiment),
-    verifier:withoutPlanBinding(verifier),
+    experiment:withoutPlanBinding(supersessionHarnesses.experiment),
+    verifier:withoutPlanBinding(supersessionHarnesses.verifier),
     excludeSourceIds: (realLearning && realLearning.sourceIds) || [],
     now: () => at,
   });
@@ -189,4 +202,4 @@ if(require.main===module){runHostedProof({root:process.env.RUNNER_TEMP||process.
 // The local real-corpus proof reuses the exact controlled behaviour checks that hosted evidence
 // uses. Exporting the factory prevents a second, quietly divergent definition of "map worked"
 // from becoming local proof while the hosted gate measures something else.
-module.exports={harnesses,runHostedProof};
+module.exports={runHostedProof};
