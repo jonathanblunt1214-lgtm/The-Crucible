@@ -109,7 +109,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-15T05:00:00Z"
+    "lastActionAt": "2026-09-15T05:20:00Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -226,8 +226,8 @@
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-15T05:00:00Z",
-    "currentStep": "Discovery runs on a free provider, refused runs are diagnosable, the known-bug ledger is truthful, and the routing test red since a0b440c is repaired. No learning gate advanced. The remaining blockers are not code: private-repository jobs are refused before startup, the discovery schedule cannot fire from development, and NVIDIA_NIM_API_KEY is not set."
+    "lastUpdatedAt": "2026-09-15T05:20:00Z",
+    "currentStep": "Both executing repositories are public and a real runner is now assigned: Learning-Worker run 559 reached the custody step instead of being refused in two seconds. Discovery is registered so it can be dispatched, and its credential is set. The remaining blocker is the schedule itself, which needs the dispatcher on main, pull request #22."
   },
   "handoffNotes": {
     "completed": [
@@ -235,7 +235,8 @@
       "Governed discovery runs on NVIDIA NIM, which is free and already governed, instead of Perplexity, whose API billing a Perplexity Pro subscription does not cover. Every governed bound is unchanged. NIM returns no citations, so URLs are read from the completion text and carried as providerKind model-proposed-pointers, and the candidate sink refuses a pointer candidate that does not state its kind.",
       "endpointFor completes an API root with the provider's own path, so one NVIDIA_NIM_BASE_URL value can be reused verbatim from AI Collaboration instead of silently posting to /v1. An explicit gateway path is still used exactly as configured.",
       "The known-bug ledger records the tests that actually failed, attributed from the TAP location of each failing block, and fails closed to the whole selection marked selection-unattributed when attribution is impossible. A real run now writes one category and one test where it previously claimed four categories and 102 tests.",
-      "test/taskRouting.test.js, red on the development tip since a0b440c, checks that the route was computed rather than described: the dispatcher's own bounded wording plus both hash bindings. The record was restored by running the dispatcher, not by editing the reason string."
+      "test/taskRouting.test.js, red on the development tip since a0b440c, checks that the route was computed rather than described: the dispatcher's own bounded wording plus both hash bindings. The record was restored by running the dispatcher, not by editing the reason string.",
+      "A governed discovery workflow cannot start itself: GitHub refuses a workflow_dispatch for a workflow it never registered, and registers one only when a trigger actually fires. perplexity-research.yml has zero runs for exactly this reason. model-pointer-research.yml now carries a push trigger scoped to discovery's own implementation, so it registers once and re-runs only when discovery changes."
     ],
     "verification": [
       "npm run test:all 846/847 at this change. The single failure is test/semanticAnalysis.test.js, proven pre-existing by stashing every change and re-running at 40c9836, where it fails identically; this host has no TypeScript toolchain.",
@@ -245,7 +246,7 @@
     ],
     "remaining": [
       "Owner action, no payment: make Learning-Worker and Vetting-and-Governance-oversite. public so their jobs stop being refused, and leave Crucible-Learning-State and Crucible-Vetted-Learning-State private, because they execute no workflows and hold the corpus ciphertext. Then verify from the API that a dispatched run actually received a runner.",
-      "Merge the prepared dispatcher to main so the daily discovery schedule can fire at all. GitHub schedules workflows only from the default branch, so the cron in model-pointer-research.yml cannot fire while that file exists only on development. The dispatcher contains no learning code.",
+      "Merge pull request #22 so the daily discovery schedule can fire. It adds one workflow to main whose only action is to dispatch a development workflow; it carries no learning code. Registration is a separate prerequisite and is now solved, so once #22 merges the schedule has something dispatchable to call.",
       "Set NVIDIA_NIM_API_KEY and NVIDIA_NIM_MODEL so R3 can admit a real URL. Until then the readiness command fails closed naming the exact variable and R3 stays pending; no admission may be fabricated.",
       "Retain gate evidence durably outside the evictable Actions caches, so R3, R7 and R8 stop being recomputed from a cache that expires, with each record invalidated when the implementation that produced it changes.",
       "The 14-source owner rescan obligation stays pending and unperformed while R4 custody is blocked. On the first exact-tip review where the vetted bundle is self-consistent and the hosted retention path can consume it, verify the 14 hashes and re-evaluate their candidate records through the full gate set, reusing content hashes and extraction-window history."
