@@ -10,6 +10,7 @@ const { runLearningCycle } = require('./learningCycle');
 const { preSoakReadiness } = require('./preSoakReadiness');
 const { learnFromRealCorpus, hasRealCorpusKnowledge, readBundle, corpusCandidateStore, allCandidateRecords } = require('./realCorpusLearning');
 const { realCorpusSafety } = require('./realCorpusSafety');
+const { DurableGateEvidenceStore, invalidateStaleGates } = require('./durableGateEvidence');
 const { realSupersession } = require('./realSupersession');
 const { intakePathways } = require('./intakePathways');
 
@@ -167,7 +168,19 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   for (const gate of gateStates) if (gate.state !== 'satisfied') console.log(`[The Crucible] ${gate.id} ${gate.state}: ${gate.detail}`);
 
   persist(store,encryptedFile,masterKey,binding);
-  const report={schemaVersion:1,projectId,repository,ref,runId:String(runId),completedAt:at,restoredEncryptedState:restored,revision:payload.revision,candidateRecords:payload.candidateRecords.length,knowledgeVersions:payload.knowledgeVersions.length,activeVersion:payload.activeVersion,activeBoundary:(payload.knowledgeVersions.find((item)=>item.version===payload.activeVersion)||{}).boundary||null,outOfScopeRetrievalCount:store.retrieve({boundary:'outside hosted proof boundary'}).length,gates:gateStates,intakePathways:intakePathways({sources:(restoredBundle&&restoredBundle.sources)||[],candidateRecords:[...everyRecord.values()]}),safetyEvidence:safety,safetyBehaviours:safetyResult.behaviours,safetyUnsatisfied:safetyResult.unsatisfied,supersession,encryptedStateSha256:sha(fs.readFileSync(encryptedFile)),authorizesPromotion:false};
+
+  // Gate evidence is recorded beside the encrypted store and travels with it, so a later run
+  // inherits what this one observed instead of re-deriving it from a store that may have been
+  // evicted. Each outcome is bound to a fingerprint of the code that decided it, and any
+  // inherited outcome whose deciders have since changed is dropped to unproven rather than
+  // carried forward - evidence that outlives its own implementation reads as current and is
+  // worse than none. This records and invalidates; preSoakReadiness still decides the gates.
+  const evidenceStore = new DurableGateEvidenceStore({ root: path.dirname(path.resolve(encryptedFile)), projectId });
+  const staleCheck = invalidateStaleGates(evidenceStore.read(), path.join(__dirname), at);
+  for (const item of staleCheck.invalidated) console.log(`[The Crucible] inherited ${item.gateId} evidence invalidated: ${item.reason}`);
+  const gateEvidence = evidenceStore.record({ gateStates, sourceRoot: path.join(__dirname), runId, at });
+
+  const report={schemaVersion:1,projectId,repository,ref,runId:String(runId),completedAt:at,restoredEncryptedState:restored,revision:payload.revision,candidateRecords:payload.candidateRecords.length,knowledgeVersions:payload.knowledgeVersions.length,activeVersion:payload.activeVersion,activeBoundary:(payload.knowledgeVersions.find((item)=>item.version===payload.activeVersion)||{}).boundary||null,outOfScopeRetrievalCount:store.retrieve({boundary:'outside hosted proof boundary'}).length,gates:gateStates,gateEvidence:{revision:gateEvidence.revision,recorded:Object.fromEntries(Object.entries(gateEvidence.gates).map(([id,entry])=>[id,{state:entry.state,fingerprint:entry.fingerprint,runId:entry.runId}])),invalidatedOnRestore:staleCheck.invalidated},intakePathways:intakePathways({sources:(restoredBundle&&restoredBundle.sources)||[],candidateRecords:[...everyRecord.values()]}),safetyEvidence:safety,safetyBehaviours:safetyResult.behaviours,safetyUnsatisfied:safetyResult.unsatisfied,supersession,encryptedStateSha256:sha(fs.readFileSync(encryptedFile)),authorizesPromotion:false};
   fs.mkdirSync(path.dirname(reportFile),{recursive:true}); fs.writeFileSync(reportFile,`${JSON.stringify(report,null,2)}\n`,{mode:0o600}); return report;
 }
 

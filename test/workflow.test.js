@@ -189,14 +189,25 @@ test('GitHub hosts encrypted restart-safe R4-R8 proof without production authori
   const workflow = fs.readFileSync(path.join(root, '.github', 'workflows', 'hosted-learning-proof.yml'), 'utf8');
   assert.match(workflow, /push:\s*\n\s*branches:\s*\n\s*- development/);
   assert.match(workflow, /github\.ref == 'refs\/heads\/development'/);
-  assert.match(workflow, /actions\/cache\/restore@0057852bfaa89a56745cba8c7296529d2fc39830/);
+  // State used to return through an actions/cache entry, which GitHub evicts after seven
+  // untouched days - so R7 could never accumulate the prior promoted version it must supersede.
+  // The restore path is now the previous run's own retained artifact, which is kept for 90 days
+  // and written even by a failed run. These assertions are what stop that silently regressing:
+  // the read-back has to exist, it has to be reachable (actions: read), and the dot-directory
+  // the state lives in has to be retained explicitly rather than by the upload default.
+  assert.match(workflow, /Restore retained learning state from the previous run/);
+  assert.match(workflow, /actions\/runs\/\$id\/artifacts/);
+  assert.match(workflow, /store\.envelope\.json/);
+  assert.match(workflow, /^\s*actions: read$/m);
+  assert.match(workflow, /include-hidden-files: true/);
+  assert.doesNotMatch(workflow, /actions\/cache\/(restore|save)@/, 'the evictable cache must not come back as the restore path');
   assert.match(workflow, /CRUCIBLE_HOSTED_STORE_KEY: \$\{\{ secrets\.CRUCIBLE_HOSTED_STORE_KEY \}\}/);
   assert.match(workflow, /CRUCIBLE_VETTED_STATE_READ_KEY/);
   assert.match(workflow, /CRUCIBLE_VETTED_BUNDLE_KEY/);
   assert.match(workflow, /Crucible-Vetted-Learning-State\.git/);
   assert.doesNotMatch(workflow, /CRUCIBLE_LEARNING_STATE_DEPLOY_KEY|secrets\.CRUCIBLE_SOURCE_BUNDLE_KEY|Crucible-Learning-State\.git/);
   assert.match(workflow, /node src\/hostedLearningProof\.js/);
-  assert.match(workflow, /actions\/cache\/save@0057852bfaa89a56745cba8c7296529d2fc39830/);
+  assert.match(workflow, /gate-evidence\.json/, 'gate evidence travels with the retained state');
   assert.match(workflow, /retention-days: 90/);
   assert.doesNotMatch(workflow, /contents: write|pull-requests: write|issues: write/);
 });

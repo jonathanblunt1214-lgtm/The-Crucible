@@ -45,6 +45,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/realSupersession.test.js',
     'test/realCorpusLearning.test.js',
     'test/scopePreRegistration.test.js',
+    'test/durableGateEvidence.test.js',
     'test/semanticCorroboration.test.js',
     'test/corroborationSensitivity.test.js',
     'test/sourceIndependence.test.js',

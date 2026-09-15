@@ -10,6 +10,11 @@ on:
 
 permissions:
   contents: read
+  # Read-only, and only so a run can fetch the previous run's retained state. Nothing here is
+  # granted write anywhere: Crucible stays a consumer of vetted custody, and
+  # test/workflow.test.js enforces that by scanning this file for any write back to a state
+  # repository at all.
+  actions: read
 
 concurrency:
   group: hosted-learning-proof-development
@@ -27,13 +32,56 @@ jobs:
         with:
           node-version: 22
           cache: npm
-      - name: Restore encrypted project-bound learning state
-        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: .hosted-learning-cache
-          key: hosted-learning-${{ github.repository_id }}-${{ github.run_id }}
-          restore-keys: |
-            hosted-learning-${{ github.repository_id }}-
+      # R6, R7 and R8 all need state to survive between runs, and R7 in particular needs a real
+      # promoted version from an earlier run to supersede. That state used to return only
+      # through an actions/cache entry, which GitHub evicts LRU against a repository quota and
+      # deletes after seven untouched days - so the store could silently reset and R7 could
+      # never accumulate the prior version its own definition requires. The gate then read
+      # "pending live proof" for a storage reason that looked like a scientific one.
+      #
+      # The retained artifact was already the durable copy: this job has uploaded
+      # store.envelope.json with retention-days 90 all along, on failed runs too. What was
+      # missing was a way to read it back. So the cache is gone and the previous run's own
+      # artifact is the restore path - 90 days instead of 7, rolled forward by every run.
+      #
+      # Deliberately done with the REST API rather than a download-artifact action: this job
+      # needs no new action pin, and the same token that lists runs cannot write anything.
+      - name: Restore retained learning state from the previous run
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          mkdir -p .hosted-learning-cache
+          api() { curl -fsSL -H "Accept: application/vnd.github+json" -H "Authorization: Bearer $GH_TOKEN" -H "X-GitHub-Api-Version: 2022-11-28" "$@"; }
+          runs="$(api "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/hosted-learning-proof.yml/runs?branch=development&status=completed&per_page=20" || echo '{}')"
+          # Several candidates, not just the newest: an artifact can have expired or been
+          # deleted, and falling back to the run before it keeps the chain intact.
+          candidates="$(printf '%s' "$runs" | node -e 'let s="";process.stdin.on("data",(d)=>s+=d).on("end",()=>{const r=(JSON.parse(s||"{}").workflow_runs||[]).filter((x)=>String(x.id)!==process.env.GITHUB_RUN_ID).map((x)=>x.id);process.stdout.write(r.slice(0,10).join("\n"));})')"
+          restored=no
+          for id in $candidates; do
+            url="$(api "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/runs/$id/artifacts" | node -e 'let s="";process.stdin.on("data",(d)=>s+=d).on("end",()=>{const a=(JSON.parse(s||"{}").artifacts||[]).find((x)=>x.name.startsWith("hosted-learning-proof-")&&!x.expired);process.stdout.write(a?a.archive_download_url:"");})' || true)"
+            [ -n "$url" ] || continue
+            if ! curl -fsSL -H "Authorization: Bearer $GH_TOKEN" -o "$RUNNER_TEMP/prior.zip" "$url"; then continue; fi
+            unzip -o -q "$RUNNER_TEMP/prior.zip" -d "$RUNNER_TEMP/prior" || continue
+            if [ -f "$RUNNER_TEMP/prior/.hosted-learning-cache/store.envelope.json" ]; then
+              cp "$RUNNER_TEMP/prior/.hosted-learning-cache/store.envelope.json" .hosted-learning-cache/
+              echo "[The Crucible] restored store.envelope.json from run $id ($(sha256sum .hosted-learning-cache/store.envelope.json | cut -d' ' -f1))"
+              if [ -f "$RUNNER_TEMP/prior/.hosted-learning-cache/gate-evidence.json" ]; then
+                cp "$RUNNER_TEMP/prior/.hosted-learning-cache/gate-evidence.json" .hosted-learning-cache/
+                echo "[The Crucible] restored gate-evidence.json from run $id"
+              fi
+              restored=yes
+              break
+            fi
+            # An artifact that exists but carries no store is a defect in the retention path,
+            # not an empty history. Say so distinctly: a silent reset here is the exact failure
+            # the cache used to produce, and it must not be reintroduced quietly.
+            echo "[The Crucible] WARNING run $id retained an artifact with no store.envelope.json inside; retention path may be broken." >&2
+          done
+          rm -rf "$RUNNER_TEMP/prior" "$RUNNER_TEMP/prior.zip"
+          if [ "$restored" = no ]; then
+            echo "[The Crucible] no retained state was recoverable from the last 10 completed runs; this run establishes it."
+          fi
       - name: Install locked dependencies
         run: npm ci
       # The corpus has to be here, in this job, but Crucible may consume only the
@@ -95,11 +143,6 @@ jobs:
       - name: Destroy runner plaintext
         if: always()
         run: rm -rf "$RUNNER_TEMP/crucible-source-restore" "$RUNNER_TEMP/crucible-state-ssh"
-      - name: Save encrypted project-bound learning state
-        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
-        with:
-          path: .hosted-learning-cache
-          key: hosted-learning-${{ github.repository_id }}-${{ github.run_id }}
       - name: Retain bounded proof and ciphertext
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -109,5 +152,10 @@ jobs:
             hosted-learning-proof/report.json
             hosted-learning-proof/corpus-custody.json
             .hosted-learning-cache/store.envelope.json
+            .hosted-learning-cache/gate-evidence.json
           if-no-files-found: error
           retention-days: 90
+          # The state lives under a dot-directory and this artifact is now the restore path, so
+          # its inclusion is stated rather than left to the default. Without this the chain
+          # would break silently, which is the one failure mode this change exists to remove.
+          include-hidden-files: true
