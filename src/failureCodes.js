@@ -600,6 +600,30 @@ const FAILURE_CODES = Object.freeze({
       forbidden: 'Never infer a startup refusal from a red check, a short duration, or a notification email alone, and never let a refusal mark any gate passed or regressed.',
     },
   },
+  'CRU-0047': {
+    code: 'CRU-0047',
+    category: 'learning-blockage',
+    meaning: 'An owner-declared scope changed after a controlled experiment on that same claim ran and did not verify it. The declaration is the hypothesis - the tested hypothesis is a template over the declared scope and the claim - so changing it after seeing a failure cannot be told apart from narrowing the boundary until the claim stopped failing.',
+    next: 'Read the refusal: it names the pre-registered hash, when the experiment reported not-verified, the new hash, and which fields moved. If the new boundary is a genuinely different question, declare it as a different claim so it pre-registers on its own and is tested on its own. If the pre-registered boundary was simply wrong, the honest record is that the claim failed within the boundary it was declared for.',
+    remedy: {
+      kind: 'owner-decision',
+      command: null,
+      verifyWith: { tests: ['test/scopePreRegistration.test.js'] },
+      forbidden: 'Never delete or rewrite the pre-registration ledger to clear this, and never relax the rule to accept the changed declaration; the ledger is the only record that the boundary was fixed before the result was known. A declaration that was never evaluated, or one already verified, is not blocked by this - so a refusal here always means an experiment really did run and really did not verify the claim.',
+    },
+  },
+  'CRU-0048': {
+    code: 'CRU-0048',
+    category: 'learning-blockage',
+    meaning: 'The scope pre-registration ledger refused to operate: its integrity envelope or project binding failed, it was given an invalid identity, or it was asked to record an outcome for a claim it holds no pre-registration for. That ledger is the only record that a declared boundary was fixed before the experiment result was known, so it fails closed rather than letting a run continue without it.',
+    next: 'Read the message: it says which invariant failed. An integrity or project-binding failure means the ledger file was edited, truncated, or belongs to another project - restore it from the run artifact that wrote it rather than regenerating it, because a regenerated ledger pre-registers today\'s declarations as though they had always been the declared ones. A missing pre-registration for a claim being recorded means the screening step was skipped.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run learning:pre-soak',
+      verifyWith: { tests: ['test/scopePreRegistration.test.js'] },
+      forbidden: 'Never delete or rebuild this ledger to get past the error. Rebuilding it destroys exactly the evidence it exists to hold and silently converts post-hoc boundaries into pre-registered ones.',
+    },
+  },
   'CRU-0022': {
     code: 'CRU-0022',
     category: 'diagnosis-coverage',
