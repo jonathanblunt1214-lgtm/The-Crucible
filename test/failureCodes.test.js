@@ -171,3 +171,21 @@ test('each hosted-proof stop carries a code that says which blockage it is', () 
     assert.equal(repairableByImmuneSystem(code), false, `${code} must escalate rather than self-repair`);
   }
 });
+
+// Found by mutation: flipping the `&&` in failureCode to `||` left the whole suite green, so
+// nothing checked that a code has to be in the registry to count as one. Both guards matter -
+// the property path and the message-text path - because an unregistered code reported as
+// governed is exactly what the registry exists to prevent.
+test('a code that is not in the registry is not a code, whichever way it arrives', () => {
+  const onProperty = new Error('something went wrong');
+  onProperty.crucibleCode = 'CRU-9999';
+  assert.equal(failureCode(onProperty), null, 'an unregistered code on the property must not be reported as governed');
+  assert.equal(failureCode(new Error('[CRU-9999] crossed a process boundary')), null, 'nor when it survived only as message text');
+  assert.equal(describeCode('CRU-9999'), null);
+
+  // Asserted in both directions on purpose. Without these a function that always returned null
+  // would satisfy the assertions above, which is the same masked-assertion trap that let the
+  // original mutation survive.
+  assert.equal(failureCode(crucibleError('CRU-0014', 'a real governed failure')), 'CRU-0014');
+  assert.equal(failureCode(new Error('[CRU-0014] recovered from text alone')), 'CRU-0014');
+});
