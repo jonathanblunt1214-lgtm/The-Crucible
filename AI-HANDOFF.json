@@ -191,7 +191,7 @@
   "activePlan": {
     "agent": "Claude",
     "objective": "Clear the blockers keeping the scientific-learning pipeline from producing evidence, without spending money: tell a refused hosted job apart from a failed one, move governed discovery onto a free provider, make governed records state what actually happened, and run the rolling release review from the literal development tip.",
-    "currentPrompt": "Confirm the first-due repair on the hosted matrix, release its mutation claim, and record what the R4-R8 gate now actually fails on",
+    "currentPrompt": "Record the resolved custody blocker and the two owner actions the learning release now turns on",
     "executionMode": {
       "mode": "work",
       "agent": "Claude",
@@ -204,11 +204,11 @@
       "repositoryId": 1344890806,
       "repository": "jonathanblunt1214-lgtm/The-Crucible",
       "branch": "development",
-      "reason": "Project context selects crucible-core.",
+      "reason": "Affected paths select crucible-core.",
       "explicitOverride": false,
-      "selectedAt": "2026-09-15T08:34:46.106Z",
-      "promptSha256": "d4dcdac4b0dc45947fee06617b761a1e71c6a4966a315a366f84835ba2767c42",
-      "affectedPathsSha256": "94ba672b6cc5a9947754e5b18f7e92edbf3b4fdada8797fe38966211c972d429"
+      "selectedAt": "2026-09-15T08:40:01.075Z",
+      "promptSha256": "84a68e3601f3442240f4c87dc8d22c6790db65846a07b04028964999bd50870f",
+      "affectedPathsSha256": "afd52538de0e70d7e648bae1601594ad6b58262309e4454bc4e448b807b0ed4f"
     },
     "steps": [
       "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
@@ -225,12 +225,13 @@
       "[standing] Do not close, exclude, or weaken locked PR/conflict/governance surfaces merely to clear diagnostics such as CRU-0015; executable evidence and owner boundaries outrank green cosmetics.",
       "[done] Close the first-due clock-ordering race in all three governed discovery stores, keyed on lastRunAt rather than on comparing two clock readings, with a deterministic ticking-clock regression test in each that was shown failing before the repair existed.",
       "[done] Confirm the first-due repair across all eighteen hosted Self-Test legs at 259cf60 and release claim discovery-first-due-race-20260915.",
-      "[open] Owner or Oversight: get owner-delegated-url:11bfade7 into the vetted corpus, or pair the Array.prototype.map declaration to a source that is in it. Until then R4-R8 fails closed on CRU-0026 with one claim corroborated and no declaration usable."
+      "[open] Owner or Oversight: get owner-delegated-url:11bfade7 into the vetted corpus, or pair the Array.prototype.map declaration to a source that is in it. Until then R4-R8 fails closed on CRU-0026 with one claim corroborated and no declaration usable.",
+      "[done] Dispatched oversight, confirmed it published a self-consistent vetted bundle, re-ran the hosted proof, and recorded the resolved custody blocker plus the two owner actions the release now turns on in the release status file."
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-15T08:45:00Z",
-    "currentStep": "The first-due clock race is repaired and confirmed hosted: eighteen of eighteen Self-Test legs green at 259cf60, where every leg was red on the four preceding tips. Claim discovery-first-due-race-20260915 is released. Oversight has republished the vetted bundle, so Prove R4-R8 now reaches corroboration and fails on CRU-0026 - the one owner-paired declaration names a source absent from the restored corpus - rather than on the CRU-0023 the pull request body still describes."
+    "lastUpdatedAt": "2026-09-15T09:10:00Z",
+    "currentStep": 16
   },
   "handoffNotes": {
     "completed": [
@@ -241,7 +242,10 @@
       "test/taskRouting.test.js, red on the development tip since a0b440c, checks that the route was computed rather than described: the dispatcher's own bounded wording plus both hash bindings. The record was restored by running the dispatcher, not by editing the reason string.",
       "A governed discovery workflow cannot start itself: GitHub refuses a workflow_dispatch for a workflow it never registered, and registers one only when a trigger actually fires. perplexity-research.yml has zero runs for exactly this reason. model-pointer-research.yml now carries a push trigger scoped to discovery's own implementation, so it registers once and re-runs only when discovery changes.",
       "The Self-Test matrix was red on every leg from d51344e, and not for any reason that tip's change log names. ModelPointerResearchStore.due() read the clock twice - once for its own default `at`, then again inside read(), which seeds an unseen topic's nextRunAt - so whenever those readings straddled a millisecond the store reported the topic it had just created as not yet due, runDue() returned nothing, and the CLI's providerKind came back null. Measured at 15 of 2000 fresh stores on an idle host and 0 of 2000 after the repair. A topic that has never run is now due without consulting a deadline it never earned. GoogleResearchStore and PerplexityResearchStore carried the identical three lines and were repaired with it.",
-      "Eighteen of eighteen Self-Test legs pass at exact tip 259cf60ce2fc9127a2a8277df172dff39d3b59a0 - nine on push run 34926863414 and nine on pull-request run 34926865280 - across ubuntu, windows-2022 and macOS on Node 20, 22 and 24. Every leg was red on the four preceding tips. Mutation claim discovery-first-due-race-20260915 released at 2026-09-15T08:33:50Z; no claim is now active."
+      "Eighteen of eighteen Self-Test legs pass at exact tip 259cf60ce2fc9127a2a8277df172dff39d3b59a0 - nine on push run 34926863414 and nine on pull-request run 34926865280 - across ubuntu, windows-2022 and macOS on Node 20, 22 and 24. Every leg was red on the four preceding tips. Mutation claim discovery-first-due-race-20260915 released at 2026-09-15T08:33:50Z; no claim is now active.",
+      "Dispatched the oversight workflow and confirmed from the API that it ran rather than being refused: run 34938208295 assigned runners 1000022397 and 1000022400, executed every step, and return-vetted-data published vetted commit ef2d3b3 to Crucible-Vetted-Learning-State after running the post-merge custody vet ahead of encryption. Re-ran the Crucible hosted proof on that bundle as run 34947395586 and quoted both hashes rather than asserting a match: the restore succeeds and queue SHA-256 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef now equals the manifest value that previously read 96f13274cf8c57d717e6f581cbe3c38bdcb6d52ad7e56a5fac51fd18eeefb50e. The restored-queue-hash mismatch that had blocked hosted R4-R6 since 2026-09-10 is closed.",
+      "Established that the discovery blocker is no longer a missing credential. NVIDIA_NIM_MODEL now reaches the job and the readiness step passes; dispatched run 34947505096 executed all 16 due topics and every one was blocked identically with HTTP 410, \"The model has reached its end of life on 2026-08-26T09:00:00Z and is no longer available.\" A 410 is a model-lifecycle answer rather than an authentication failure, so the key works and the configured model is withdrawn. Recorded in the release status rather than retried, and noted that each blocked topic consumed its daily slot so the topics are not due again until 24 hours after 2026-09-15T08:32:29Z.",
+      "Updated governingDocuments/scientific-learning-release-status.json, which the preceding push left untouched, and changed the rolling target state from indeterminate-until-nonzero-hosted-throughput to indeterminate-until-a-pairable-owner-declaration-exists. Hosted throughput is no longer zero, so the old state name had become false; the target is still indeterminate because what now bounds it is an owner action with no measurable rate. No gate is marked passed: src/hostedLearningProof.js exited 1 under CRU-0026 before emitting a verdict, and a reading of log lines is not a substitute for the proof own outcome."
     ],
     "verification": [
       "npm run test:all 862/862 at this change, including the three ticking-clock regression tests.",
@@ -251,16 +255,15 @@
       "Fill the candidate URL holding queue fails closed with NVIDIA_NIM_MODEL empty in the job environment. That is the designed refusal, and the remedy is the repository variable already listed under remaining."
     ],
     "remaining": [
-      "Owner or Oversight: the R4-R8 blocker has moved. The restore and custody halves now pass; what blocks the gate is that the single owner-paired scope declaration - the Array.prototype.map claim - names source owner-delegated-url:11bfade7a586952ee66669380ffef05fb567a48589b59c33159b275c47e44eb4, which is not in the restored corpus. Either admit that source or pair the declaration to one already vetted. The pull request body still describes the superseded CRU-0023 reason.",
-      "Owner action, no payment: make Learning-Worker and Vetting-and-Governance-oversite. public so their jobs stop being refused, and leave Crucible-Learning-State and Crucible-Vetted-Learning-State private, because they execute no workflows and hold the corpus ciphertext. Then verify from the API that a dispatched run actually received a runner.",
-      "Merge pull request #22 so the daily discovery schedule can fire. It adds one workflow to main whose only action is to dispatch a development workflow; it carries no learning code. Registration is a separate prerequisite and is now solved, so once #22 merges the schedule has something dispatchable to call.",
-      "Set NVIDIA_NIM_MODEL in The-Crucible under Settings, Secrets and variables, Actions, on the Variables tab, to a model id such as meta/llama-3.3-70b-instruct. NVIDIA_NIM_API_KEY is already set correctly and reaches the job masked. The workflow now accepts the model from either tab, so only the value itself is missing. Until it is set, readiness fails closed naming it and R3 stays pending.",
-      "Retain gate evidence durably outside the evictable Actions caches, so R3, R7 and R8 stop being recomputed from a cache that expires, with each record invalidated when the implementation that produced it changes.",
-      "The 14-source owner rescan obligation stays pending and unperformed while R4 custody is blocked. On the first exact-tip review where the vetted bundle is self-consistent and the hosted retention path can consume it, verify the 14 hashes and re-evaluate their candidate records through the full gate set, reusing content hashes and extraction-window history."
+      "Owner action for R3: replace the configured NVIDIA NIM model id with one that is currently available, since the present value was withdrawn on 2026-08-26. Filing it on the Variables tab rather than Secrets would let the run log name the model instead of masking it, which is appropriate for configuration and would have identified this in one run.",
+      "Owner action for R5: either republish Crucible-Learning-State including owner-delegated-url:11bfade7a586952ee66669380ffef05fb567a48589b59c33159b275c47e44eb4 so the existing declaration becomes pairable, or declare a scope, experiment and distinct verifier for a claim the hosted corpus already corroborates - \"Any class can have more than one constructor.\" is corroborated at the configured threshold by linked-source:28503d6f and owner-file:7a409be1. Declaring a scope is the owner judgement and is never inferred.",
+      "Retain gate evidence durably outside the evictable Actions caches, with per-gate invalidation when the relevant implementation changes.",
+      "Repair the R2 reporting defect in src/preSoakReadiness.js: evaluateR2 counts a source as having left the extraction backlog when it never entered it, so the restored corpus would read satisfied as \"all 534 queued sources have left the extraction backlog\" while 109 are retrieval-blocked and 19 still await retrieval - the same 128 the proof reports as having no stored content. The empty-queue branch is already correct and reads unknown; this is the never-retrieved case only.",
+      "Do not weaken handoff, coordination, learning-custody, collision, security, or promotion gates to obtain green cosmetics, and never mark a gate passed on a run that was refused before it started or that exited before emitting a verdict."
     ],
     "open": [
-      "Exact administrative cause of AI Collaboration's pre-runner GitHub Actions failure remains unobservable through the current connector.",
-      "The canonical policy rollout is evidence-backed at the policy/reference layer, but full GitHub App control-plane mechanics and shared CI/digest backlog remain continuation work after the terminal verified boundary."
+      "The 14-source owner rescan obligation stays pending and unperformed. Its trigger condition is now partly met: custody is self-consistent and retention is provable. It stays pending because R5 has produced no retained hosted knowledge version yet, so there is no retained-state evidence to record completion against. When it is performed, reuse content hashes and extraction-window history; do not duplicate source bytes, reset custody, or re-extract unchanged windows.",
+      "Pull request 19 promotes development to main. Making its checks green does not make it mergeable, and nothing here merges it. Learning scope stays blocked from main until every learning gate passes and the owner authorizes promotion."
     ]
   },
   "mutationOwnershipPolicy": {
