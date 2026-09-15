@@ -624,6 +624,18 @@ const FAILURE_CODES = Object.freeze({
       forbidden: 'Never delete or rebuild this ledger to get past the error. Rebuilding it destroys exactly the evidence it exists to hold and silently converts post-hoc boundaries into pre-registered ones.',
     },
   },
+  'CRU-0049': {
+    code: 'CRU-0049',
+    category: 'hosted-verification',
+    meaning: 'The durable hosted gate-evidence store refused to operate: its integrity envelope or project binding failed, a gate declared a decider file that does not exist, a gate reported an unrecognised state, or the state repository rejected the push that would have persisted it. R6, R7 and R8 all depend on state surviving between runs - R7 cannot supersede a prior version that is not there - so the run fails rather than proceeding on state it cannot persist.',
+    next: 'Read the message: it says which invariant failed. A rejected push almost always means the deploy key for Crucible-Learning-State is read-only; tick "Allow write access" on it, or give the proof job its own write-enabled key. A missing decider means a gate\'s implementation was renamed or deleted and GATE_DECIDERS in src/durableGateEvidence.js has to be reconciled with it deliberately.',
+    remedy: {
+      kind: 'owner-decision',
+      command: null,
+      verifyWith: { tests: ['test/durableGateEvidence.test.js'] },
+      forbidden: 'Never fall back to the evictable Actions cache when the durable store is unreachable - a silent fallback restores exactly the invisible eviction this store exists to remove, and the gate then reads pending for a storage reason that looks scientific. Never rebuild or delete the store to clear the error: it holds the accumulated prior versions R7 supersedes, and rebuilding it destroys the only evidence that they ever existed.',
+    },
+  },
   'CRU-0022': {
     code: 'CRU-0022',
     category: 'diagnosis-coverage',
