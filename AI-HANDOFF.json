@@ -109,7 +109,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-15T05:35:00Z"
+    "lastActionAt": "2026-09-15T15:10:00Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -191,7 +191,7 @@
   "activePlan": {
     "agent": "Claude",
     "objective": "Clear the blockers keeping the scientific-learning pipeline from producing evidence, without spending money: tell a refused hosted job apart from a failed one, move governed discovery onto a free provider, make governed records state what actually happened, and run the rolling release review from the literal development tip.",
-    "currentPrompt": "Audit the suite for tests that protect nothing, and close what the audit found instead",
+    "currentPrompt": "Record the trusted verification boundary and continuity fields from the owner-supplied 6:07 plan, and record which steps of it were refused rather than installed",
     "executionMode": {
       "mode": "work",
       "agent": "Claude",
@@ -204,11 +204,11 @@
       "repositoryId": 1344890806,
       "repository": "jonathanblunt1214-lgtm/The-Crucible",
       "branch": "development",
-      "reason": "Affected paths select crucible-core.",
+      "reason": "Project context selects crucible-core.",
       "explicitOverride": false,
-      "selectedAt": "2026-09-15T14:36:15.467Z",
-      "promptSha256": "11f92ec887ef2a9d2b0fa22dd164c7bbd1662713ef775fa3d914703fdfc5b662",
-      "affectedPathsSha256": "85bc51707f33f39f10897ff3562f4ff928f98645768132f4a6f7dbded0a32166"
+      "selectedAt": "2026-09-15T19:10:50.031Z",
+      "promptSha256": "c474ede575b70a33d609b4b0a48b710938bc550ba41ed7330761e99afc720d9d",
+      "affectedPathsSha256": "94ba672b6cc5a9947754e5b18f7e92edbf3b4fdada8797fe38966211c972d429"
     },
     "steps": [
       "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
@@ -235,8 +235,63 @@
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-15T14:45:00Z",
-    "currentStep": 21
+    "lastUpdatedAt": "2026-09-15T15:10:00Z",
+    "currentStep": 21,
+    "priority": "Execute the owner-authorized 6:07 plan in order 2A-2E, then Steps 3-7.",
+    "ownership": {
+      "currentClaim": null,
+      "owner": null,
+      "mutationScope": [],
+      "rule": "Discussion is shared; mutation is exclusive. Ownership transfers only by explicit release or handoff."
+    },
+    "trustedBoundary": {
+      "commit": "259cf60ce2fc9127a2a8277df172dff39d3b59a0",
+      "branch": "development",
+      "establishedBy": "hosted Crucible Self-Test",
+      "evidence": [
+        "Eighteen of eighteen Self-Test legs green: push run 34926863414 and pull-request run 34926865280.",
+        "Local: npm run test:all 862/862; thirteen governance gates and git diff --check exit 0."
+      ],
+      "note": "Commits d9a91da through d21be9a land after this boundary and are the delta a successor must verify.",
+      "establishedAt": "2026-09-15T04:03:54Z",
+      "supersededBy": null
+    },
+    "previousAgent": {
+      "agent": "Codex",
+      "provider": "openai",
+      "handedOverAt": "2026-09-15T09:20:00Z",
+      "note": "Codex advanced development from 259cf60 to d21be9a. No claim was held by either agent across that handover."
+    },
+    "verificationStatus": {
+      "state": "verified-at-trusted-boundary-with-unverified-delta",
+      "lastFullLocalSuite": "862/862 at 259cf60",
+      "outstandingRedChecks": [
+        "Prove R4-R8 on encrypted durable state: fails closed on CRU-0026; the sole owner-paired scope declaration names owner-delegated-url:11bfade7a586952ee66669380ffef05fb567a48589b59c33159b275c47e44eb4, which is not in the restored corpus."
+      ],
+      "rule": "Crucible verification, not AI confidence, establishes a trusted boundary."
+    },
+    "blockers": [
+      {
+        "id": "r5-declaration-not-pairable",
+        "summary": "R5 cannot proceed hosted until owner-delegated-url:11bfade7 reaches Crucible-Learning-State, or a scope is declared for a claim the hosted corpus already corroborates.",
+        "owner": "user-or-oversight"
+      },
+      {
+        "id": "r3-topics-not-due",
+        "summary": "The pinned discovery model nvidia/nemotron-3-nano-30b-a3b has never been called. All 16 topics consumed their daily slots at 2026-09-15T08:32:29Z against the withdrawn model, so discovery is a no-op until roughly 24 hours later unless discovery state is discarded.",
+        "owner": "user"
+      },
+      {
+        "id": "plan-6-07-partially-blocked",
+        "summary": "This entry records only the factual continuity fields of the owner-supplied 6:07 plan Step 2B. Step 2A (a trusted-verification-boundary principle in AI-collaboration- ORCHESTRATOR-POLICY.json), Step 2C (automated council invocation) and Step 2D (usage-limit continuation) were refused by the session permission classifier as externally-sourced governance content and are NOT installed. The drafted text was handed to the owner for manual review instead.",
+        "owner": "user"
+      }
+    ],
+    "nextAction": "Owner decision on Steps 2A, 2C and 2D, which are drafted but refused by the session permission layer. Steps 2E and 3-7 remain unstarted.",
+    "evidenceReferences": {
+      "plan": "Owner-supplied ChatGPT share 6aa654ab-27f4-83ea-857d-a81324160ea6, title 'Work Refresh Probe 6:04', 726 messages spanning 2026-09-07 to 2026-09-13.",
+      "mergedPromotion": "Pull request 19 merged 2026-09-15T09:29Z; main is 8162707."
+    }
   },
   "handoffNotes": {
     "completed": [
@@ -601,6 +656,27 @@
       "acquiredAt": "2026-09-15T03:51:10.192Z",
       "handedOffTo": null,
       "releasedAt": "2026-09-15T08:33:50.781Z"
+    },
+    {
+      "taskId": "orchestrator-continuity-upgrade-20260915",
+      "owner": {
+        "provider": "anthropic",
+        "model": "claude-opus-5",
+        "agent": "session_01Ggfg1gzuSLTQwTgUejXQ7V"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "AI-CONFLICTS.json",
+          "DEVLOG.md"
+        ],
+        "regions": []
+      },
+      "purpose": "Execute the owner-authorized 6:07 plan Step 2B-2D: continuity fields, council invocation rules, and five-hour/weekly/monthly usage-limit continuation.",
+      "status": "released",
+      "acquiredAt": "2026-09-15T19:08:36.723Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-15T19:11:49.410Z"
     }
   ]
 }
