@@ -8,6 +8,7 @@ const { execFileSync } = require('node:child_process');
 const { ClaimExtractionWorker } = require('../src/claimExtractionWorker');
 const { DurableScientificLearningStore } = require('../src/scientificLearning');
 const { readBundle, corpusCandidateStore, corroboratedClaims, reviewCorroborated, readScopeDeclarations, learnFromRealCorpus } = require('../src/realCorpusLearning');
+const { ScopePreRegistrationLedger, screenDeclarations, declarationSha256 } = require('../src/scopePreRegistration');
 
 const PROJECT = 'github:owner/repo';
 const AT = '2026-09-01T00:00:00.000Z';
@@ -313,4 +314,56 @@ test('every corroborated claim gets a verdict from the real critical reviewer', 
   assert.match(flagged.nextAction, /measurable terms/);
 
   assert.equal(store.read().candidateRecords.length, records.length, 'the review pass wrote nothing');
+});
+
+test('a declaration is pre-registered by the run that first sees it, and its outcome is recorded', async (t) => {
+  const dir = workspace(t);
+  const { bundleRoot, learningRoot } = buildBundle(dir, twoRealDocuments());
+
+  const result = await learnFromRealCorpus({ bundleRoot, learningRoot, projectId: PROJECT, scopeDeclarationFile: writeDeclaration(dir), harnessesFor, now: () => AT });
+  assert.equal(result.learned, true, result.reason);
+
+  const registered = result.scopePreRegistration.registrations;
+  assert.equal(registered.length, 1);
+  assert.equal(registered[0].state, 'first-pre-registration');
+  assert.equal(registered[0].declarationSha256, declarationSha256({ claim: CLAIM, claimScope: SCOPE, generalizationBoundary: 'Does not cover sparse arrays, proxies, subclasses, or host objects.', language: 'javascript' }));
+  assert.equal(result.scopePreRegistration.refused.length, 0);
+  assert.equal(result.scopePreRegistration.authorizesPromotion, false);
+
+  // The run reached a verdict, so the pre-registration carries it. This is what a later boundary
+  // change is measured against.
+  const entry = new ScopePreRegistrationLedger({ root: learningRoot, projectId: PROJECT }).find(CLAIM.trim().replace(/\s+/g, ' ').toLowerCase());
+  assert.equal(entry.outcome, 'verified');
+  assert.equal(entry.firstRegisteredAt, AT);
+});
+
+test('the proof refuses a boundary that moved after an experiment on the same claim failed', async (t) => {
+  const dir = workspace(t);
+  const { bundleRoot, learningRoot } = buildBundle(dir, twoRealDocuments());
+
+  // Pre-register the declaration exactly as a first run would, then record the verdict a
+  // completed-but-unpromoting run leaves behind.
+  const ledger = new ScopePreRegistrationLedger({ root: learningRoot, projectId: PROJECT });
+  const key = CLAIM.trim().replace(/\s+/g, ' ').toLowerCase();
+  screenDeclarations({ declarations: [{ claim: CLAIM, claimScope: SCOPE, generalizationBoundary: 'Does not cover sparse arrays, proxies, subclasses, or host objects.', language: 'javascript', claimKey: key }], ledger, at: AT });
+  ledger.recordOutcome(key, 'not-verified', AT);
+
+  // Now the boundary narrows. The corpus is unchanged and the harness still passes, so without
+  // the pre-registration this run would promote on a boundary chosen after the failure.
+  const narrowed = writeDeclaration(dir, { claimScope: 'Node.js dense arrays of three small positive integers' });
+  const report = await learnFromRealCorpus({ bundleRoot, learningRoot, projectId: PROJECT, scopeDeclarationFile: narrowed, harnessesFor, now: () => AT });
+
+  assert.equal(report.learned, false, 'a post-hoc boundary must not reach an experiment');
+  assert.equal(report.stopCode, 'CRU-0047');
+  assert.match(report.reason, /declared after its own result was known/);
+  assert.equal(report.scopePreRegistration.refused.length, 1);
+  assert.deepEqual(report.scopePreRegistration.refused[0].changedFields, ['claimScope']);
+  assert.equal(report.evaluations.length, 0);
+  assert.equal(report.promotionAuthorized, false);
+
+  // And the unchanged declaration still works, so the refusal is about the change and not about
+  // the claim being poisoned.
+  const same = await learnFromRealCorpus({ bundleRoot, learningRoot, projectId: PROJECT, scopeDeclarationFile: writeDeclaration(dir), harnessesFor, now: () => AT });
+  assert.equal(same.scopePreRegistration.refused.length, 0);
+  assert.equal(same.scopePreRegistration.registrations[0].state, 'unchanged');
 });

@@ -25,6 +25,7 @@ const { verifyPairedDeclaration } = require('./pairedCorroboration');
 const { sourceIndex, independentSubset } = require('./sourceIndependence');
 const { documentFurniture } = require('./documentFurniture');
 const { intakePathways } = require('./intakePathways');
+const { ScopePreRegistrationLedger, screenDeclarations } = require('./scopePreRegistration');
 const { auditContradiction } = require('./contradictionAudit');
 const { reopenContradictions } = require('./contradictionReopening');
 
@@ -392,6 +393,16 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
   const available = allCandidateRecords(store, corpusStore);
   const corroborated = corroboratedClaims(available, { ...corroborationOptions, sourceIndex: sourceIndex(bundle) });
   const declarations = readScopeDeclarations(scopeDeclarationFile);
+  // A declaration is the hypothesis - the tested hypothesis is a template over the declared
+  // scope and the claim - so it is pre-registered before it may be evaluated. This screens out a
+  // declaration whose boundary moved after a controlled experiment on the same claim ran and did
+  // not verify it, which after the fact is indistinguishable from narrowing until it stopped
+  // failing. A claim that was never evaluated is untouched, so correcting an unpairable
+  // declaration stays possible.
+  const preRegistrationLedger = new ScopePreRegistrationLedger({ root: learningRoot, projectId });
+  const preRegistration = screenDeclarations({ declarations, ledger: preRegistrationLedger, at: now() });
+  const usable = preRegistration.usable;
+  for (const item of preRegistration.refused) console.log(`[The Crucible] scope pre-registration refused "${item.claim.slice(0, 60)}": ${item.changedFields.join(', ')} changed after a failed experiment (${item.priorDeclarationSha256.slice(0, 12)} -> ${item.declarationSha256.slice(0, 12)}).`);
 
   const corpus = {
     sources: bundle.sources.length,
@@ -426,8 +437,8 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     for (const item of reopened.audits) console.log(`[The Crucible]   ${item.candidateId}: ${item.route}${item.incumbentChangedSinceQuarantine ? ' (incumbent changed since quarantine)' : ''}`);
   }
 
-  const selection = selectAllEvaluable({ store, available, corroborated, declarations, bundle, bundleRoot, options: corroborationOptions });
-  const reviews = reviewCorroborated(corroborated, available, { declarations, at: now(), projectId });
+  const selection = selectAllEvaluable({ store, available, corroborated, declarations: usable, bundle, bundleRoot, options: corroborationOptions });
+  const reviews = reviewCorroborated(corroborated, available, { declarations: usable, at: now(), projectId });
 
   const intake = intakePathways({ sources: bundle.sources, candidateRecords: available });
 
@@ -438,7 +449,12 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     // pattern-matching the failure-code registry exists to replace.
     let reason;
     let stopCode;
-    if (selection.pairedFailures.length) {
+    if (preRegistration.refused.length && !usable.length) {
+      // Said first and on its own, because it is the only stop whose cause is the declaration
+      // having moved rather than the corpus being short of something.
+      stopCode = 'CRU-0047';
+      reason = `no declaration is usable yet; every declaration was refused as declared after its own result was known: ${preRegistration.refused.map((item) => `"${item.claim}" - ${item.reason}`).join('; ')}`;
+    } else if (selection.pairedFailures.length) {
       stopCode = 'CRU-0026';
       reason = `no declaration is usable yet; the owner-paired declaration(s) were not supported by the corpus: ${selection.pairedFailures.map((item) => `"${item.claim}" - ${item.reason}`).join('; ')}`;
     } else if (corroborated.length === 0) {
@@ -464,14 +480,14 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
       reason = undigested
         ? `nothing can be corroborated yet, and digestion is the likely cause rather than the corpus: ${undigested.detail}, while only ${extracted} source(s) have produced any candidate still available to corroboration. Corroboration needs two independent sources to have been extracted, so drain the extraction backlog before concluding anything about what the corpus contains or changing what is ingested`
         : 'the real corpus contains no claim asserted by two or more independently identified sources, and every source has been digested, so this is the corpus rather than the pipeline';
-    } else if (!declarations.length) {
+    } else if (!usable.length) {
       stopCode = 'CRU-0025';
       reason = `${corroborated.length} corroborated claim(s) exist in the real corpus but none has an owner-declared scope, and a scope is never inferred`;
     } else {
       stopCode = 'CRU-0026';
       reason = `${corroborated.length} corroborated claim(s) exist in the real corpus but none matches a declaration, and no declaration nominates a pairing the corpus supports`;
     }
-    return { schemaVersion: 1, projectId, corpus, learned: false, reason, stopCode, corroborated: corroborated.slice(0, 25), reviews, pairedFailures: selection.pairedFailures, evaluations: [], reopenedContradictions: reopened, intake, gates: { R4: false, R5: false, R6: false }, promotionAuthorized: false };
+    return { schemaVersion: 1, projectId, corpus, learned: false, reason, stopCode, corroborated: corroborated.slice(0, 25), reviews, pairedFailures: selection.pairedFailures, scopePreRegistration: preRegistration, evaluations: [], reopenedContradictions: reopened, intake, gates: { R4: false, R5: false, R6: false }, promotionAuthorized: false };
   }
 
   // Every usable declaration is carried through on its own. One may promote while another is
@@ -514,11 +530,18 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     } catch (error) {
       // One claim failing its controlled test is a result about that claim, not a reason to
       // abandon the others.
+      // Deliberately not recorded as not-verified. A throw here cannot be told apart from a
+      // broken harness, and arming the pre-registration refusal on an ambiguous signal would
+      // block the owner from correcting a declaration because of a defect of ours. The claim
+      // stays pending, which is the weaker and safer of the two.
       evaluations.push({ claim: ready.claim, claimScope: ready.declaration.claimScope, corroborationRoute: ready.route, sourceIds: ready.sourceIds, candidateIds: ready.candidateIds, ingestedFromCorpus, learned: false, reason: `the controlled pipeline stopped on this claim: ${error.message}`, verifiedVersion: null, promotionAuthorized: false });
       continue;
     }
 
     const verified = evaluation.verifiedKnowledge;
+    // The pipeline completed and returned a verdict, so the pre-registration now carries a real
+    // outcome. not-verified is what makes a later boundary change refusable.
+    preRegistrationLedger.recordOutcome(ready.declaration.claimKey || ready.claim.trim().replace(/\s+/g, ' ').toLowerCase(), verified ? 'verified' : 'not-verified', now());
 
     // A contradiction is audited, not just quarantined. When the controlled pipeline routes this
     // claim against existing knowledge, the audit assembles everything in custody that bears on
@@ -569,6 +592,7 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
     projectId,
     corpus,
     reviews,
+    scopePreRegistration: preRegistration,
     // Each declaration's own outcome, so a run that promotes one claim and refuses four says so.
     evaluations,
     reopenedContradictions: reopened,
