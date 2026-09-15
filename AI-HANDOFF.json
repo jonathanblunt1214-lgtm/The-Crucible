@@ -191,7 +191,7 @@
   "activePlan": {
     "agent": "Claude",
     "objective": "Clear the blockers keeping the scientific-learning pipeline from producing evidence, without spending money: tell a refused hosted job apart from a failed one, move governed discovery onto a free provider, make governed records state what actually happened, and run the rolling release review from the literal development tip.",
-    "currentPrompt": "Pin the governed discovery model in version control instead of behind a mask",
+    "currentPrompt": "Correct the two verification claims that the model pin made false",
     "executionMode": {
       "mode": "work",
       "agent": "Claude",
@@ -204,11 +204,11 @@
       "repositoryId": 1344890806,
       "repository": "jonathanblunt1214-lgtm/The-Crucible",
       "branch": "development",
-      "reason": "Affected paths select crucible-core.",
+      "reason": "Project context selects crucible-core.",
       "explicitOverride": false,
-      "selectedAt": "2026-09-15T08:54:16.727Z",
-      "promptSha256": "425b98b5c5abbc6d7702bdf58294fa6de8f9aba36b7016b29c219d9ed8770af1",
-      "affectedPathsSha256": "258d5541c160772dec7e453430e22fd08de287e5de5c6f57f2a8d90289f3995a"
+      "selectedAt": "2026-09-15T09:02:49.684Z",
+      "promptSha256": "ff8ccf07092f0cbe6bad13ce4c58486afca467f6db41d5e20ead24a70990166d",
+      "affectedPathsSha256": "94ba672b6cc5a9947754e5b18f7e92edbf3b4fdada8797fe38966211c972d429"
     },
     "steps": [
       "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
@@ -232,7 +232,7 @@
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-15T09:45:00Z",
+    "lastUpdatedAt": "2026-09-15T10:00:00Z",
     "currentStep": 18
   },
   "handoffNotes": {
@@ -252,11 +252,11 @@
       "Switched governed discovery to nvidia/nemotron-3-nano-30b-a3b on the owner's instruction, and pinned it in .github/workflows/model-pointer-research.yml rather than asking for another setting change. The retired id was in Secrets, not Variables - GitHub masks secrets and prints variables, and the failing run showed NVIDIA_NIM_MODEL as *** - so the workflow can override it from version control and no longer consults Secrets for the model at all. A repository variable still wins over the pinned default, and prints in the log. NVIDIA_NIM_API_KEY is unchanged and is still read from Secrets only. lint:workflows passes across 20 files and test/workflow.test.js is 32/32."
     ],
     "verification": [
-      "npm run test:all 862/862 at this change, including the three ticking-clock regression tests.",
+      "npm run test:all 863/863 at this change. The count rose by one with the evaluateR2 regression test, which was shown failing against the previous implementation before the repair existed.",
       "validate, docs:check, lint:workflows, audit:clutter, audit:privacy, audit:security, audit:ai-conflict-governance, audit:governance, audit:design-brief, audit:core-ref, audit:failure-codes, audit:circulation, audit:coordination and git diff --check all exit 0.",
       "Hosted at 259cf60: eighteen of eighteen Self-Test legs green, CodeQL and both Analyze jobs green, both AI handoff policy and AI conflict governance runs green, both locked-PR guards, monitor sync and the DEVLOG archive job green.",
       "Prove R4-R8 was read rather than assumed and has changed. Custody now verifies oversight-vetted with queue hash 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef over 403 stored source files, 8 documents and 526 links; the job reaches corroboration and uploads three artifact files. 25,981 usable candidates from 297 sources; one claim corroborated by two independent sources (\"Any class can have more than one constructor.\"); independent-source counts 1 at 0.8, 1 at the configured 0.74, 2 at 0.7, 10 at 0.6, 34 at 0.5. It fails closed on CRU-0026, not CRU-0023. No gate advanced and none was marked passed.",
-      "Fill the candidate URL holding queue fails closed with NVIDIA_NIM_MODEL empty in the job environment. That is the designed refusal, and the remedy is the repository variable already listed under remaining."
+      "Fill the candidate URL holding queue is green. It no longer fails closed on an empty NVIDIA_NIM_MODEL: the model is pinned in the workflow and run 34949648646 printed it unmasked as nvidia/nemotron-3-nano-30b-a3b. That run searched 0 topics because all 16 recorded a blocked run at 2026-09-15T08:32:29Z and a blocked topic consumes its daily slot, so a green check here is not evidence that R3 admitted anything and evaluateR3 still reads pending."
     ],
     "remaining": [
       "Owner action for R5: either republish Crucible-Learning-State including owner-delegated-url:11bfade7a586952ee66669380ffef05fb567a48589b59c33159b275c47e44eb4 so the existing declaration becomes pairable, or declare a scope, experiment and distinct verifier for a claim the hosted corpus already corroborates - \"Any class can have more than one constructor.\" is corroborated at the configured threshold by linked-source:28503d6f and owner-file:7a409be1. Declaring a scope is the owner judgement and is never inferred.",
@@ -267,8 +267,8 @@
     "open": [
       "The 14-source owner rescan obligation stays pending and unperformed. Its trigger condition is now partly met: custody is self-consistent and retention is provable. It stays pending because R5 has produced no retained hosted knowledge version yet, so there is no retained-state evidence to record completion against. When it is performed, reuse content hashes and extraction-window history; do not duplicate source bytes, reset custody, or re-extract unchanged windows.",
       "Pull request 19 promotes development to main. Making its checks green does not make it mergeable, and nothing here merges it. Learning scope stays blocked from main until every learning gate passes and the owner authorizes promotion.",
-      "The stale NVIDIA_NIM_MODEL repository secret is now unused. Nothing reads it, so it is harmless, but deleting it removes the chance of a later reader believing it is what discovery runs on. That deletion is the owner's to make; no agent deletes a secret on its own initiative.",
-      "The first real discovery attempt on the new model is not the run this push triggers. All 16 topics recorded a blocked run at 2026-09-15T08:32:29Z, and a blocked topic consumes its daily slot exactly as the Google and Perplexity paths behave, so nothing is due again until 2026-09-16T08:32:29Z. The triggered run will therefore report searched 0 and exit 0, which is the workflow behaving correctly and is not evidence that R3 admitted anything. evaluateR3 decides R3 from the audit log rather than from the check colour, and it still reads pending."
+      "The first real discovery attempt on the new model is not the run this push triggers. All 16 topics recorded a blocked run at 2026-09-15T08:32:29Z, and a blocked topic consumes its daily slot exactly as the Google and Perplexity paths behave, so nothing is due again until 2026-09-16T08:32:29Z. The triggered run will therefore report searched 0 and exit 0, which is the workflow behaving correctly and is not evidence that R3 admitted anything. evaluateR3 decides R3 from the audit log rather than from the check colour, and it still reads pending.",
+      "The stale NVIDIA_NIM_MODEL repository secret still exists and is still unused. Verified unreferenced at 3a70af7: no workflow reads secrets.NVIDIA_NIM_MODEL, and the only live reference is vars.NVIDIA_NIM_MODEL in model-pointer-research.yml behind the pinned default. The owner asked for it to be deleted and it could not be done from this session: there is no Actions secret-management tool available here and the gh CLI is not present, so deletion remains an owner action in Settings, Secrets and variables, Actions, Secrets tab."
     ]
   },
   "mutationOwnershipPolicy": {
