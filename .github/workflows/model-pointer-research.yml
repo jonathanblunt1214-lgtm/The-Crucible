@@ -51,11 +51,16 @@ jobs:
       CRUCIBLE_DISCOVERY_MAX_QUERIES: '50'
       CRUCIBLE_DISCOVERY_PROVIDER: nvidia-nim
       NVIDIA_NIM_API_KEY: ${{ secrets.NVIDIA_NIM_API_KEY }}
-      # A model id and a base URL are configuration rather than secrets, but GitHub keeps
-      # Variables and Secrets in separate tabs and it is easy to file one under the other.
-      # Reading both costs nothing and turns a mis-filed setting into a non-event. The API key
-      # is deliberately read from secrets only.
-      NVIDIA_NIM_MODEL: ${{ vars.NVIDIA_NIM_MODEL || secrets.NVIDIA_NIM_MODEL }}
+      # The model id is pinned here, in version control, on purpose. Reading it from Secrets was
+      # a mistake that cost a run: a model id is configuration rather than a credential, so
+      # masking it bought nothing, and when NVIDIA withdrew the configured model the log could
+      # only say HTTP 410 about '***'. A withdrawn model is a normal, dated event - this one
+      # ended its life on 2026-08-26 - so the id has to be somewhere a reviewer can read it,
+      # diff it, and date it. Secrets is no longer consulted for it at all; a repository
+      # variable still overrides this default, and it prints in the log the way this one does.
+      NVIDIA_NIM_MODEL: ${{ vars.NVIDIA_NIM_MODEL || 'nvidia/nemotron-3-nano-30b-a3b' }}
+      # The base URL stays readable from either tab: it is configuration too, but unlike the
+      # model there is a working default in the registry, so a missing value is not a failure.
       NVIDIA_NIM_BASE_URL: ${{ vars.NVIDIA_NIM_BASE_URL || secrets.NVIDIA_NIM_BASE_URL }}
     steps:
       - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6

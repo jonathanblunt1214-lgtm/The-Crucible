@@ -191,7 +191,7 @@
   "activePlan": {
     "agent": "Claude",
     "objective": "Clear the blockers keeping the scientific-learning pipeline from producing evidence, without spending money: tell a refused hosted job apart from a failed one, move governed discovery onto a free provider, make governed records state what actually happened, and run the rolling release review from the literal development tip.",
-    "currentPrompt": "Stop counting a source that was never retrieved as one the extraction worker drained",
+    "currentPrompt": "Pin the governed discovery model in version control instead of behind a mask",
     "executionMode": {
       "mode": "work",
       "agent": "Claude",
@@ -206,9 +206,9 @@
       "branch": "development",
       "reason": "Affected paths select crucible-core.",
       "explicitOverride": false,
-      "selectedAt": "2026-09-15T08:47:26.790Z",
-      "promptSha256": "7ecb3cf589fa3636534fdff3b2fa2f489ec3c182293cd71214453e37e7f71a87",
-      "affectedPathsSha256": "9662e2a0df9e8c14a741e07b98eff3b5932fb2d8a608c6f34385351ac029acdf"
+      "selectedAt": "2026-09-15T08:54:16.727Z",
+      "promptSha256": "425b98b5c5abbc6d7702bdf58294fa6de8f9aba36b7016b29c219d9ed8770af1",
+      "affectedPathsSha256": "258d5541c160772dec7e453430e22fd08de287e5de5c6f57f2a8d90289f3995a"
     },
     "steps": [
       "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
@@ -227,12 +227,13 @@
       "[done] Confirm the first-due repair across all eighteen hosted Self-Test legs at 259cf60 and release claim discovery-first-due-race-20260915.",
       "[open] Owner or Oversight: get owner-delegated-url:11bfade7 into the vetted corpus, or pair the Array.prototype.map declaration to a source that is in it. Until then R4-R8 fails closed on CRU-0026 with one claim corroborated and no declaration usable.",
       "[done] Dispatched oversight, confirmed it published a self-consistent vetted bundle, re-ran the hosted proof, and recorded the resolved custody blocker plus the two owner actions the release now turns on in the release status file.",
-      "[done] Repaired evaluateR2 so an unretrieved source is no longer counted as one the extraction worker drained, with the real hosted population as a regression fixture shown failing first."
+      "[done] Repaired evaluateR2 so an unretrieved source is no longer counted as one the extraction worker drained, with the real hosted population as a regression fixture shown failing first.",
+      "[done] Switched governed discovery to nvidia/nemotron-3-nano-30b-a3b at the owner's instruction, pinning the model id in the workflow and removing the Secrets path that had masked a withdrawn model."
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-15T09:30:00Z",
-    "currentStep": 17
+    "lastUpdatedAt": "2026-09-15T09:45:00Z",
+    "currentStep": 18
   },
   "handoffNotes": {
     "completed": [
@@ -247,7 +248,8 @@
       "Dispatched the oversight workflow and confirmed from the API that it ran rather than being refused: run 34938208295 assigned runners 1000022397 and 1000022400, executed every step, and return-vetted-data published vetted commit ef2d3b3 to Crucible-Vetted-Learning-State after running the post-merge custody vet ahead of encryption. Re-ran the Crucible hosted proof on that bundle as run 34947395586 and quoted both hashes rather than asserting a match: the restore succeeds and queue SHA-256 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef now equals the manifest value that previously read 96f13274cf8c57d717e6f581cbe3c38bdcb6d52ad7e56a5fac51fd18eeefb50e. The restored-queue-hash mismatch that had blocked hosted R4-R6 since 2026-09-10 is closed.",
       "Established that the discovery blocker is no longer a missing credential. NVIDIA_NIM_MODEL now reaches the job and the readiness step passes; dispatched run 34947505096 executed all 16 due topics and every one was blocked identically with HTTP 410, \"The model has reached its end of life on 2026-08-26T09:00:00Z and is no longer available.\" A 410 is a model-lifecycle answer rather than an authentication failure, so the key works and the configured model is withdrawn. Recorded in the release status rather than retried, and noted that each blocked topic consumed its daily slot so the topics are not due again until 24 hours after 2026-09-15T08:32:29Z.",
       "Updated governingDocuments/scientific-learning-release-status.json, which the preceding push left untouched, and changed the rolling target state from indeterminate-until-nonzero-hosted-throughput to indeterminate-until-a-pairable-owner-declaration-exists. Hosted throughput is no longer zero, so the old state name had become false; the target is still indeterminate because what now bounds it is an owner action with no measurable rate. No gate is marked passed: src/hostedLearningProof.js exited 1 under CRU-0026 before emitting a verdict, and a reading of log lines is not a substitute for the proof own outcome.",
-      "Repaired the evaluateR2 reporting defect recorded as remaining in the preceding push. A source that never reached extraction was counted as having left the extraction backlog, because PENDING_EXTRACTION_STATES covers only the two extraction states: on the real hosted population the gate read \"all 534 queued sources have left the extraction backlog\" while 128 of them had never been retrieved. Custody now decides which population a source belongs to rather than a list of state names, because the queue carries states this repository does not define - the Learning Worker writes oversight-vetting-pending - and a state allow-list here would have to guess where an unfamiliar name belongs. The satisfied verdict is unchanged on real completions, since R2 asks what the worker does with the work it is given and coverage is judged by R4 and R5; the detail now names both populations. A new branch reads pending where an empty backlog carries no completions at all, which is strictly stricter than before and the only branch whose verdict changed. npm run test:all 863/863 with the regression test shown failing against the old implementation first."
+      "Repaired the evaluateR2 reporting defect recorded as remaining in the preceding push. A source that never reached extraction was counted as having left the extraction backlog, because PENDING_EXTRACTION_STATES covers only the two extraction states: on the real hosted population the gate read \"all 534 queued sources have left the extraction backlog\" while 128 of them had never been retrieved. Custody now decides which population a source belongs to rather than a list of state names, because the queue carries states this repository does not define - the Learning Worker writes oversight-vetting-pending - and a state allow-list here would have to guess where an unfamiliar name belongs. The satisfied verdict is unchanged on real completions, since R2 asks what the worker does with the work it is given and coverage is judged by R4 and R5; the detail now names both populations. A new branch reads pending where an empty backlog carries no completions at all, which is strictly stricter than before and the only branch whose verdict changed. npm run test:all 863/863 with the regression test shown failing against the old implementation first.",
+      "Switched governed discovery to nvidia/nemotron-3-nano-30b-a3b on the owner's instruction, and pinned it in .github/workflows/model-pointer-research.yml rather than asking for another setting change. The retired id was in Secrets, not Variables - GitHub masks secrets and prints variables, and the failing run showed NVIDIA_NIM_MODEL as *** - so the workflow can override it from version control and no longer consults Secrets for the model at all. A repository variable still wins over the pinned default, and prints in the log. NVIDIA_NIM_API_KEY is unchanged and is still read from Secrets only. lint:workflows passes across 20 files and test/workflow.test.js is 32/32."
     ],
     "verification": [
       "npm run test:all 862/862 at this change, including the three ticking-clock regression tests.",
@@ -257,7 +259,6 @@
       "Fill the candidate URL holding queue fails closed with NVIDIA_NIM_MODEL empty in the job environment. That is the designed refusal, and the remedy is the repository variable already listed under remaining."
     ],
     "remaining": [
-      "Owner action for R3: replace the configured NVIDIA NIM model id with one that is currently available, since the present value was withdrawn on 2026-08-26. Filing it on the Variables tab rather than Secrets would let the run log name the model instead of masking it, which is appropriate for configuration and would have identified this in one run.",
       "Owner action for R5: either republish Crucible-Learning-State including owner-delegated-url:11bfade7a586952ee66669380ffef05fb567a48589b59c33159b275c47e44eb4 so the existing declaration becomes pairable, or declare a scope, experiment and distinct verifier for a claim the hosted corpus already corroborates - \"Any class can have more than one constructor.\" is corroborated at the configured threshold by linked-source:28503d6f and owner-file:7a409be1. Declaring a scope is the owner judgement and is never inferred.",
       "Retain gate evidence durably outside the evictable Actions caches, with per-gate invalidation when the relevant implementation changes.",
       "Do not weaken handoff, coordination, learning-custody, collision, security, or promotion gates to obtain green cosmetics, and never mark a gate passed on a run that was refused before it started or that exited before emitting a verdict.",
@@ -265,7 +266,9 @@
     ],
     "open": [
       "The 14-source owner rescan obligation stays pending and unperformed. Its trigger condition is now partly met: custody is self-consistent and retention is provable. It stays pending because R5 has produced no retained hosted knowledge version yet, so there is no retained-state evidence to record completion against. When it is performed, reuse content hashes and extraction-window history; do not duplicate source bytes, reset custody, or re-extract unchanged windows.",
-      "Pull request 19 promotes development to main. Making its checks green does not make it mergeable, and nothing here merges it. Learning scope stays blocked from main until every learning gate passes and the owner authorizes promotion."
+      "Pull request 19 promotes development to main. Making its checks green does not make it mergeable, and nothing here merges it. Learning scope stays blocked from main until every learning gate passes and the owner authorizes promotion.",
+      "The stale NVIDIA_NIM_MODEL repository secret is now unused. Nothing reads it, so it is harmless, but deleting it removes the chance of a later reader believing it is what discovery runs on. That deletion is the owner's to make; no agent deletes a secret on its own initiative.",
+      "The first real discovery attempt on the new model is not the run this push triggers. All 16 topics recorded a blocked run at 2026-09-15T08:32:29Z, and a blocked topic consumes its daily slot exactly as the Google and Perplexity paths behave, so nothing is due again until 2026-09-16T08:32:29Z. The triggered run will therefore report searched 0 and exit 0, which is the workflow behaving correctly and is not evidence that R3 admitted anything. evaluateR3 decides R3 from the audit log rather than from the check colour, and it still reads pending."
     ]
   },
   "mutationOwnershipPolicy": {
