@@ -1,4 +1,5 @@
 const fs = require('node:fs');
+const os = require('node:os');
 const path = require('node:path');
 const crypto = require('node:crypto');
 const { spawn, spawnSync } = require('node:child_process');
@@ -73,8 +74,9 @@ function bugIdFor(tests, headSha = process.env.CRUCIBLE_HEAD_SHA || 'local') {
   return `KB-${String(headSha).slice(0, 8) || 'local'}-${digest}`;
 }
 
-function recordKnownBug({ tests, mainCategoryForTest, status = 1, ledgerPath = DEFAULT_KNOWN_BUGS_PATH, headSha = process.env.CRUCIBLE_HEAD_SHA || 'local', now = new Date().toISOString() }) {
+function recordKnownBug({ tests, mainCategoryForTest, status = 1, ledgerPath = DEFAULT_KNOWN_BUGS_PATH, headSha = process.env.CRUCIBLE_HEAD_SHA || 'local', now = new Date().toISOString(), selectedTests = null, attribution = 'failing-tests' }) {
   const normalizedTests = [...new Set(tests || [])].sort();
+  const normalizedSelection = [...new Set(selectedTests || tests || [])].sort();
   const mainCategories = [...new Set(normalizedTests.map(mainCategoryForTest))];
   const severity = severityForMainCategories(mainCategories);
   const ledger = readKnownBugLedger(ledgerPath);
@@ -97,6 +99,11 @@ function recordKnownBug({ tests, mainCategoryForTest, status = 1, ledgerPath = D
     categoryResults,
     mainCategories,
     tests: normalizedTests,
+    // Which tests the run selected, and whether the failures above are the proven
+    // failing files or the whole selection because attribution was unavailable. A
+    // reader must be able to tell those two apart without re-running anything.
+    selectedTests: normalizedSelection,
+    attribution,
     lastFailure: { at: now, exitStatus: status },
   });
   if (!existing) ledger.bugs.push(record);
@@ -124,6 +131,38 @@ function stopProgressHeartbeat(child) {
   try { child.kill(); } catch (_) { /* best-effort companion cleanup */ }
 }
 
+// A run's exit status says that something failed, never what. Recording the whole
+// selection therefore marked every selected category as failed - security, utility and
+// maintenance included - when a single test in one category was the only thing broken,
+// which puts failures that did not happen into a governed ledger. Node's TAP output
+// carries a 'location:' for every failure, so the failing file is recoverable exactly.
+const TAP_FAILURE = /^not ok \d+ - (.*)$/;
+const TAP_LOCATION = /^\s+location: '(.+?)(?::\d+)*'\s*$/;
+const TAP_BLOCK_END = /^\s+\.\.\.\s*$/;
+
+function failingTestFilesFromTap(tapOutput, selectedTests, root = process.cwd()) {
+  const selected = new Set(selectedTests || []);
+  const relative = (candidate) => path.relative(root, candidate).split(path.sep).join('/');
+  const failing = [];
+  const claim = (candidate) => {
+    if (candidate && selected.has(candidate) && !failing.includes(candidate)) failing.push(candidate);
+  };
+  const lines = String(tapOutput || '').split(/\r?\n/);
+  for (let index = 0; index < lines.length; index += 1) {
+    const failure = TAP_FAILURE.exec(lines[index]);
+    if (!failure) continue;
+    // A file that fails to load is reported by path; a failing assertion is reported by
+    // test name, and only the block's location names the file it came from.
+    claim(failure[1].trim());
+    for (let cursor = index + 1; cursor < lines.length; cursor += 1) {
+      if (TAP_FAILURE.test(lines[cursor]) || TAP_BLOCK_END.test(lines[cursor])) break;
+      const location = TAP_LOCATION.exec(lines[cursor]);
+      if (location) { claim(path.isAbsolute(location[1]) ? relative(location[1]) : location[1]); break; }
+    }
+  }
+  return failing;
+}
+
 function createGovernedRunner({ mainCategoryForTest, ledgerPath = DEFAULT_KNOWN_BUGS_PATH } = {}) {
   if (typeof mainCategoryForTest !== 'function') throw new Error('Governed runner requires mainCategoryForTest.');
   return function governedRun(executable, args, options = {}) {
@@ -132,15 +171,47 @@ function createGovernedRunner({ mainCategoryForTest, ledgerPath = DEFAULT_KNOWN_
     const tests = isTestInvocation ? args.slice(1).filter((arg) => typeof arg === 'string' && arg.endsWith('.test.js')) : [];
     const categories = isTestInvocation ? [...new Set(tests.map(mainCategoryForTest))] : [];
     const heartbeat = isTestInvocation ? startProgressHeartbeat(`${categories.join(', ') || 'selected'} tests`) : null;
+    // A second TAP reporter into a file, so failures are attributable without changing
+    // what the operator sees: stdout keeps the reporter Node would have chosen anyway.
+    const alreadyReported = args.some((arg) => typeof arg === 'string' && arg.startsWith('--test-reporter'));
+    const tapDirectory = isTestInvocation && !alreadyReported
+      ? fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-test-attribution-'))
+      : null;
+    const tapPath = tapDirectory ? path.join(tapDirectory, 'run.tap') : null;
+    const spawnArgs = tapPath
+      ? [
+        args[0],
+        `--test-reporter=${process.stdout.isTTY ? 'spec' : 'tap'}`,
+        '--test-reporter-destination=stdout',
+        '--test-reporter=tap',
+        `--test-reporter-destination=${tapPath}`,
+        ...args.slice(1),
+      ]
+      : args;
     let result;
     try {
-      result = spawnSync(executable, args, options);
+      result = spawnSync(executable, spawnArgs, options);
     } finally {
       stopProgressHeartbeat(heartbeat);
     }
     if (isTestInvocation && result && result.status !== 0) {
-      recordKnownBug({ tests, mainCategoryForTest, status: result.status, ledgerPath });
+      let failing = [];
+      try {
+        if (tapPath && fs.existsSync(tapPath)) failing = failingTestFilesFromTap(fs.readFileSync(tapPath, 'utf8'), tests);
+      } catch (_) { failing = []; }
+      // Fail closed on attribution: if the failing files cannot be established - a crash
+      // before any test ran, an unreadable report - record the whole selection exactly as
+      // before and mark it, rather than narrowing a record on a guess.
+      recordKnownBug({
+        tests: failing.length ? failing : tests,
+        selectedTests: tests,
+        attribution: failing.length ? 'failing-tests' : 'selection-unattributed',
+        mainCategoryForTest,
+        status: result.status,
+        ledgerPath,
+      });
     }
+    if (tapDirectory) fs.rmSync(tapDirectory, { recursive: true, force: true });
     return result;
   };
 }
@@ -169,6 +240,7 @@ function verifyKnownBugFix(id, { ledgerPath = DEFAULT_KNOWN_BUGS_PATH, run = spa
 }
 
 module.exports = {
+  failingTestFilesFromTap,
   TEST_PROGRESS_INTERVAL_MS,
   TEST_PROGRESS_MAX_INTERVAL_MS,
   KNOWN_BUG_SEVERITY_ORDER,
