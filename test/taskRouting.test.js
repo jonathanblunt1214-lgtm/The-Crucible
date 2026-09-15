@@ -1,6 +1,7 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
+const { createHash } = require('node:crypto');
 const {
   loadTaskRouting,
   validateTaskRouting,
@@ -173,5 +174,18 @@ test('the checked-in active handoff records the same canonical route', () => {
   assert.equal(record.repositoryId, repositoryId);
   assert.equal(record.repository, repository);
   assert.equal(record.branch, 'development');
-  assert.match(record.reason, /task-category dispatcher/);
+  // The route has to be one the dispatcher decided, not a sentence someone wrote in passing.
+  // The earlier assertion looked for the phrase "task-category dispatcher", which the dispatcher
+  // never emits - it only ever passed because the reason had been hand-written, and it went red
+  // the moment a later session hand-wrote a different, perfectly accurate summary of the work.
+  // Two properties actually distinguish a computed route, and both are checked here instead: a
+  // `ready` decision states which signal selected the category, in the dispatcher's own bounded
+  // wording, and a recorded decision carries the hashes binding it to the exact prompt and
+  // affected paths. A prose summary has neither.
+  assert.match(record.reason, new RegExp(`^(Affected paths select|Task wording selects|Project context selects) ${record.category}\\.$`));
+  assert.match(String(record.promptSha256 || ''), /^[a-f0-9]{64}$/);
+  assert.match(String(record.affectedPathsSha256 || ''), /^[a-f0-9]{64}$/);
+  assert.equal(record.explicitOverride, false);
+  // The binding is only worth anything if it binds to this file's own prompt.
+  assert.equal(record.promptSha256, createHash('sha256').update(String(handoff.activePlan.currentPrompt || '')).digest('hex'));
 });

@@ -588,6 +588,18 @@ const FAILURE_CODES = Object.freeze({
       forbidden: 'Never guess an ambiguous route, create or delete a branch, write to Archive without exact owner approval, push a manual ci-monitor snapshot, push directly to main, or combine multiple route categories in one commit.',
     },
   },
+  'CRU-0046': {
+    code: 'CRU-0046',
+    category: 'hosted-verification',
+    meaning: 'A hosted run could not be diagnosed for startup refusal, because the jobs or the usage record needed to tell "refused before startup" apart from "executed and failed" were not supplied.',
+    next: 'Supply the run\'s jobs as GitHub returned them, with their steps, plus the run usage record. An undiagnosed run is not an excused run: never record a gate as regressed, and never excuse a failure as infrastructure, without the three signals - no runner assigned, nothing billed, and no step executed.',
+    remedy: {
+      kind: 'guided',
+      command: 'npm run learning:pre-soak',
+      verifyWith: { tests: ['test/hostedRunStartupDiagnosis.test.js'] },
+      forbidden: 'Never infer a startup refusal from a red check, a short duration, or a notification email alone, and never let a refusal mark any gate passed or regressed.',
+    },
+  },
   'CRU-0022': {
     code: 'CRU-0022',
     category: 'diagnosis-coverage',

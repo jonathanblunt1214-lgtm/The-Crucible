@@ -1,0 +1,88 @@
+name: Daily governed model-pointer discovery
+
+# R3 needs one real scheduled discovery run that admits a governed URL. The Perplexity path
+# cannot provide it without a paid key, so this runs the same governed pipeline on a free
+# provider. It holds no state-repository credential and pushes nothing: its entire output is a
+# candidate-only holding queue of URLs that are still Insufficient Evidence until something
+# else retrieves and hashes them.
+#
+# The cron below cannot fire while this file exists only on `development` - GitHub schedules
+# workflows from the default branch only - so the dispatcher prepared for `main` is what
+# actually makes R3 reachable. The schedule is kept here so that, once dispatched, the run is
+# identical to the one the schedule would have produced.
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '45 11 * * *'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: model-pointer-research-development
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    name: Fill the candidate URL holding queue
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      CRUCIBLE_LEARNING_PROJECT_ID: github:jonathanblunt1214-lgtm/The-Crucible
+      CRUCIBLE_LEARNING_ROOT: .hosted-pointer-research
+      CRUCIBLE_SOURCE_QUEUE: .hosted-pointer-research/source-queue.json
+      CRUCIBLE_DISCOVERY_MAX_QUERIES: '50'
+      CRUCIBLE_DISCOVERY_PROVIDER: nvidia-nim
+      NVIDIA_NIM_API_KEY: ${{ secrets.NVIDIA_NIM_API_KEY }}
+      NVIDIA_NIM_MODEL: ${{ vars.NVIDIA_NIM_MODEL }}
+      NVIDIA_NIM_BASE_URL: ${{ vars.NVIDIA_NIM_BASE_URL }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          ref: development
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+      - name: Restore project-bound discovery state and holding queue
+        uses: actions/cache/restore@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .hosted-pointer-research
+          key: model-pointer-research-${{ github.repository_id }}-${{ github.run_id }}
+          restore-keys: |
+            model-pointer-research-${{ github.repository_id }}-
+      - name: Install locked dependencies
+        run: npm ci
+      # Fails closed and names the exact missing variable, so an unconfigured provider is
+      # reported as configuration rather than discovered as zero admitted URLs - which would be
+      # indistinguishable from having looked and found nothing.
+      - name: Refuse to run unconfigured
+        run: npm run learning:pointer-research-readiness
+      - name: Initialize the candidate-only holding queue
+        run: npm run learning:pointer-research-init
+      - name: Run up to 50 due topics, each due once daily
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run learning:pointer-research -- \
+            'Android' 'JavaScript' 'HTML' 'CSS' 'Batchfile' 'PowerShell' 'Python' 'TypeScript' \
+            'Shell and Bash' 'C' 'C#' 'C++' 'Django' 'Java' 'React' 'React Native' \
+            | tee .hosted-pointer-research/latest-report.json
+      - name: Save project-bound discovery state and holding queue
+        if: always()
+        uses: actions/cache/save@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: .hosted-pointer-research
+          key: model-pointer-research-${{ github.repository_id }}-${{ github.run_id }}
+      - name: Retain the bounded candidate holding report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: model-pointer-research-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            .hosted-pointer-research/latest-report.json
+            .hosted-pointer-research/automated-model-pointer-research.json
+            .hosted-pointer-research/source-queue.json
+          if-no-files-found: error
+          retention-days: 30

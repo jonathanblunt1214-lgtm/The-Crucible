@@ -11,6 +11,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/code-check.test.js',
     'test/codeSecurityOrganism.test.js',
     'test/ciDiagnosticOrgan.test.js',
+    'test/hostedRunStartupDiagnosis.test.js',
     'test/circulationLinkage.test.js',
     'test/contradictionAudit.test.js',
     'test/contradictionReopening.test.js',
@@ -67,6 +68,7 @@ const TEST_MAIN_CATEGORIES = {
   security: [
     'test/automatedGoogleResearch.test.js',
     'test/automatedPerplexityResearch.test.js',
+    'test/automatedModelPointerResearch.test.js',
     'test/ownerFileIntake.test.js',
     'test/sourceRetrievalWorker.test.js',
     'test/aiProviderAdapters.test.js',

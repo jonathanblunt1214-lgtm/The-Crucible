@@ -22,6 +22,7 @@ const PROVIDERS = Object.freeze({
     modelEnv: 'OPENAI_MODEL',
     endpointEnv: 'OPENAI_BASE_URL',
     defaultEndpoint: 'https://api.openai.com/v1/chat/completions',
+    apiPath: '/chat/completions',
   }),
   anthropic: Object.freeze({
     id: 'anthropic',
@@ -30,6 +31,7 @@ const PROVIDERS = Object.freeze({
     modelEnv: 'ANTHROPIC_MODEL',
     endpointEnv: 'ANTHROPIC_BASE_URL',
     defaultEndpoint: 'https://api.anthropic.com/v1/messages',
+    apiPath: '/messages',
   }),
   perplexity: Object.freeze({
     id: 'perplexity',
@@ -38,6 +40,7 @@ const PROVIDERS = Object.freeze({
     modelEnv: 'PERPLEXITY_MODEL',
     endpointEnv: 'PERPLEXITY_BASE_URL',
     defaultEndpoint: 'https://api.perplexity.ai/chat/completions',
+    apiPath: '/chat/completions',
   }),
   'nvidia-nim': Object.freeze({
     id: 'nvidia-nim',
@@ -46,6 +49,7 @@ const PROVIDERS = Object.freeze({
     modelEnv: 'NVIDIA_NIM_MODEL',
     endpointEnv: 'NVIDIA_NIM_BASE_URL',
     defaultEndpoint: 'https://integrate.api.nvidia.com/v1/chat/completions',
+    apiPath: '/chat/completions',
   }),
 });
 
@@ -72,9 +76,27 @@ function credentialFor(id, env = process.env) {
   return value;
 }
 
+// One configured value, two things people mean by it. Every vendor documents an API *root*
+// (`https://integrate.api.nvidia.com/v1`) and the AI Collaboration project configures its
+// providers that way, appending the path itself. This registry has always treated the value as
+// the *complete* endpoint. So reusing one already-provisioned base URL across both projects -
+// which is the whole point of sharing a free credential rather than provisioning a second one -
+// silently POSTs to `/v1` and fails at the vendor, months of debugging away from the paste that
+// caused it.
+//
+// The root form is recognised narrowly, by the `/v1` version segment that marks an API root, and
+// the provider's own path is appended. Anything else stays verbatim, because an operator who
+// points at a gateway path meant that path: `https://gateway.internal/v1/chat` is an endpoint,
+// not a root, and rewriting it would break the deployment it was written for.
+const API_ROOT_PATTERN = /\/v\d+\/?$/;
+
 function endpointFor(id, env = process.env) {
   const provider = describeProvider(id);
-  return String(env[provider.endpointEnv] || '').trim() || provider.defaultEndpoint;
+  const configured = String(env[provider.endpointEnv] || '').trim();
+  if (!configured) return provider.defaultEndpoint;
+  if (configured.endsWith(provider.apiPath)) return configured;
+  if (API_ROOT_PATTERN.test(configured)) return `${configured.replace(/\/$/, '')}${provider.apiPath}`;
+  return configured;
 }
 
 function modelFor(id, env = process.env) {
