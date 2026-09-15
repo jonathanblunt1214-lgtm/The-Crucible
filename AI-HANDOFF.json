@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "governingDocuments": {
     "AGENTS.md": "Repository owner standing branch and agent policy.",
+    "CONSTITUTION.md": "The Crucible's own operational constitution: the mandates every run, worker, organ and AI participant is bound by, the powers deliberately withheld, and the owner-only amendment rule. Each mandate is already enforced by a gate, a test or a refusal in this repository.",
     "DEVLOG.md": "Repository-visible chain of custody and current shared AI handoff.",
     "AI-CONFLICTS.json": "Auditable AI conflict ledger; never bypass or disable it.",
     "CLAUDE.md": "Claude entry point to AGENTS.md.",
@@ -105,11 +106,12 @@
     "src/devlogAccountability.js": "What each AI actually did, enforced against DEVLOG.md.",
     "src/coordinationGate.js": "The gate: exclusive ownership, DEVLOG accountability, and no credential in any governance artifact.",
     "src/aiHandoffContinuation.js": "How a successor AI reads the governed state and resumes from the last confirmed good point.",
-    "src/coordinationCli.js": "Agent-facing commands: continue, claims, claim, release, handoff, providers, consult."
+    "src/coordinationCli.js": "Agent-facing commands: continue, claims, claim, release, handoff, providers, consult.",
+    "governingDocuments/TOKEN-HEALTH.json": "Non-secret health declaration for the credentials The Crucible itself consumes. Records presence, authentication, capability and expiry only; never a credential value. A healthy credential proves a door opens and nothing about what is behind it, so it authorizes no promotion and satisfies no proof stage."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-15T15:10:00Z"
+    "lastActionAt": "2026-09-15T20:20:00Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -191,7 +193,7 @@
   "activePlan": {
     "agent": "Claude",
     "objective": "Clear the blockers keeping the scientific-learning pipeline from producing evidence, without spending money: tell a refused hosted job apart from a failed one, move governed discovery onto a free provider, make governed records state what actually happened, and run the rolling release review from the literal development tip.",
-    "currentPrompt": "Land the approved Java scope declaration and run the first real experiment",
+    "currentPrompt": "Write The Crucible's own operational constitution and credential token-health declaration, and register the constitution with the canonical router",
     "executionMode": {
       "mode": "work",
       "agent": "Claude",
@@ -206,9 +208,9 @@
       "branch": "development",
       "reason": "Affected paths select crucible-core.",
       "explicitOverride": false,
-      "selectedAt": "2026-09-15T19:23:10.443Z",
-      "promptSha256": "a461e55d6599c5bd407eebd96fe383446fd6ae72aa3af71c1281ee235ac43f4d",
-      "affectedPathsSha256": "fb51f08e7b4e0aaf3678806ee97289993b51ebf23f9842ea89510f70abb4491f"
+      "selectedAt": "2026-09-15T20:20:00Z",
+      "promptSha256": "d7dd7c370ac6eb2ba45cdc9129b758a66ae2c170543fedf98ace894684a8c381",
+      "affectedPathsSha256": "29b0501250b0eea6c05c08ae1822060d21c4729b189e5703cba7c521797ec51a"
     },
     "steps": [
       "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
@@ -237,7 +239,7 @@
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-15T20:00:00Z",
+    "lastUpdatedAt": "2026-09-15T20:20:00Z",
     "currentStep": 23,
     "priority": "Execute the owner-authorized 6:07 plan in order 2A-2E, then Steps 3-7.",
     "ownership": {
@@ -684,6 +686,27 @@
       "acquiredAt": "2026-09-15T19:08:36.723Z",
       "handedOffTo": null,
       "releasedAt": "2026-09-15T19:11:49.410Z"
+    },
+    {
+      "taskId": "crucible-constitution-routing-registration-20260915",
+      "owner": {
+        "provider": "anthropic",
+        "model": "claude-opus-5",
+        "agent": "session_01Ggfg1gzuSLTQwTgUejXQ7V"
+      },
+      "scope": {
+        "paths": [
+          "TASK-ROUTING.json",
+          "AI-HANDOFF.json",
+          "DEVLOG.md"
+        ],
+        "regions": []
+      },
+      "purpose": "Register CONSTITUTION.md as a shared evidence path so the canonical router recognises the new root governance document.",
+      "status": "released",
+      "acquiredAt": "2026-09-15T19:31:51.657Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-15T19:31:57.672Z"
     }
   ]
 }
