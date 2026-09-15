@@ -1,0 +1,81 @@
+name: Dispatch learning schedules
+
+# GitHub fires `schedule:` only for workflows on the default branch. The learning workflows
+# live on `development` and must stay there: promoting them would put scientific-learning
+# scope on `main`, which the release plan forbids until every release gate passes and the
+# owner authorizes it. So their crons have never fired, and R3 - which requires a real
+# scheduler-originated discovery run - has been unreachable rather than merely pending.
+#
+# This file is the smallest thing that closes that gap: a schedule that lives where schedules
+# work, whose only action is to ask the development workflows to run. It contains no learning
+# implementation, reads no corpus, holds no state-repository credential, and cannot promote
+# anything. It is a clock, not a participant.
+#
+# `actions: write` is the one permission a dispatch needs, and it is the only one granted.
+
+on:
+  schedule:
+    # Daily governed discovery, matching the cron inside model-pointer-research.yml so a
+    # dispatched run is identical to the one that workflow's own schedule would have produced.
+    - cron: '45 11 * * *'
+    # Hourly durable R4-R8 proof, matching hosted-learning-proof.yml.
+    - cron: '17 * * * *'
+  workflow_dispatch:
+    inputs:
+      workflow:
+        description: Development workflow file to dispatch
+        required: true
+        default: model-pointer-research.yml
+        type: choice
+        options:
+          - model-pointer-research.yml
+          - hosted-learning-proof.yml
+
+permissions:
+  actions: write
+  contents: read
+
+concurrency:
+  group: dispatch-learning-schedules-${{ github.event.schedule || inputs.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  dispatch:
+    name: Ask a development workflow to run
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Dispatch the development workflow this schedule stands in for
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIRED_CRON: ${{ github.event.schedule }}
+          REQUESTED: ${{ inputs.workflow }}
+        run: |
+          set -euo pipefail
+          # Which workflow depends on which cron fired; a manual run names it explicitly.
+          case "${FIRED_CRON:-}" in
+            '45 11 * * *') target='model-pointer-research.yml' ;;
+            '17 * * * *')  target='hosted-learning-proof.yml' ;;
+            '')            target="${REQUESTED:?a manual dispatch must name a workflow}" ;;
+            *)
+              echo "Unrecognized schedule '${FIRED_CRON}'; refusing to guess which workflow it stands for." >&2
+              exit 1
+              ;;
+          esac
+          echo "[The Crucible] dispatching ${target} on development"
+          # Fail loudly rather than silently: a dispatch that is refused must not look like a
+          # run that happened and found nothing, which is the exact confusion this repository
+          # has already paid for once.
+          status="$(curl -sS -o /tmp/dispatch-response.json -w '%{http_code}' \
+            -X POST \
+            -H "Accept: application/vnd.github+json" \
+            -H "Authorization: Bearer ${GH_TOKEN}" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            "https://api.github.com/repos/${GITHUB_REPOSITORY}/actions/workflows/${target}/dispatches" \
+            -d '{"ref":"development"}')"
+          if [ "${status}" != "204" ]; then
+            echo "Dispatch of ${target} was refused with HTTP ${status}:" >&2
+            cat /tmp/dispatch-response.json >&2 || true
+            exit 1
+          fi
+          echo "[The Crucible] ${target} dispatched on development"
