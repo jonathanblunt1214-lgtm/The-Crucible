@@ -15,6 +15,22 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '45 11 * * *'
+  # GitHub will not accept a workflow_dispatch for a workflow it has never registered, and it
+  # registers one only once a trigger has actually fired. A workflow carrying only
+  # workflow_dispatch and schedule is therefore unreachable by both: the schedule cannot fire
+  # from a non-default branch, and the dispatch 404s because the schedule never registered it.
+  # That is exactly why perplexity-research.yml has zero runs to this day.
+  #
+  # This push trigger breaks that circle, and is scoped to discovery's own implementation so it
+  # re-runs when discovery changes rather than on every unrelated push.
+  push:
+    branches:
+      - development
+    paths:
+      - '.github/workflows/model-pointer-research.yml'
+      - 'src/automatedModelPointerResearch.js'
+      - 'src/automatedModelPointerResearchCli.js'
+      - 'src/providerCirculation.js'
 
 permissions:
   contents: read
