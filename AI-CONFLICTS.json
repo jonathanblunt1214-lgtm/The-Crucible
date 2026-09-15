@@ -1,4 +1,91 @@
 {
   "schemaVersion": 1,
-  "conflicts": []
+  "conflicts": [
+    {
+      "id": "hosted-learning-gates-passed-on-fixtures",
+      "timestamp": "2026-08-31T00:00:00Z",
+      "type": "gate-status-vs-evidence",
+      "description": "Codex recorded release gates R4-R8 as passed on the strength of a hosted proof that built its own sources in code; Claude contested that the gates could be passed on evidence the proof generated for itself. The owner ruled that the hosted proof be wired to the real restored corpus with the synthetic fallback removed.",
+      "status": "resolved",
+      "detectedAt": "2026-08-31",
+      "contestedAction": "Recording R4 through R8 as passed in governingDocuments/scientific-learning-release-status.json on the basis of a hosted proof whose sources were constructed in code rather than read from the real corpus.",
+      "rationaleSummary": "Two agents worked the same gates concurrently. Codex built the GitHub-hosted encrypted state boundary, the private Crucible-Learning-State repository, and migrated the real 221.69 MiB encrypted extraction queue, then marked R4-R8 passed using src/hostedLearningProof.js. Claude reviewed that commit and found that the hosted proof built its two independent sources in code from the claim string itself, superseded a candidate it generated for itself and labelled a repository test fixture, exercised the R8 safety cases against a stubbed fetch, and never referenced the restored real corpus. R4 requires at least one real source and R8 requires live cases, so the recorded gate states and the release plan requirements could not both be true. Claude froze its competing implementation rather than overwrite Codex's and escalated the matter to the owner.",
+      "evidence": [
+        "src/hostedLearningProof.js at 53c2694 built R4 sources in code using proof.example.edu and proof.example.org source identifiers plus a hardcoded claim string.",
+        "The R7 supersession candidate was self-generated with provenance sourceType:'github-hosted-proof', sourceId:`github-run:${runId}`, and license:'repository test fixture'.",
+        "The R8 safety cases used fetchImpl:async()=>response(body,type), a stub, while the release plan required live kill-switch, duplicate, injection, executable, and blocked-source cases.",
+        "A search for the restored corpus inside src/hostedLearningProof.js returned zero matches: the migrated queue was not read by the proof that marked the gates passed.",
+        "governingDocuments/scientific-learning-release-status.json recorded R4 through R8 as passed while R2 live drain and R3 discovery remained open.",
+        "Both agents independently created src/hostedLearningProof.js and test/hostedLearningProof.test.js with different designs, producing a direct concurrent filename collision."
+      ],
+      "sides": [
+        {
+          "source": "Codex, development commits 0079a12 through 53c2694",
+          "instruction": "Record R4-R8 as passed on the strength of a GitHub-hosted run that exercises the pipeline end to end with encrypted, restart-safe, project-bound durable state."
+        },
+        {
+          "source": "governingDocuments/scientific-learning-release-plan.md, gates R4 and R8",
+          "instruction": "R4 requires at least one real source through retrieval, provenance hashing, bounded extraction, deduplication, and candidate custody; R8 requires live safety and deduplication cases."
+        },
+        {
+          "source": "Claude, 2026-08-31 review",
+          "instruction": "Do not mark a gate passed on data the proof generated for itself; wire the proof to the restored corpus or return R4-R8 to pending."
+        }
+      ],
+      "alternatives": [
+        "Revert R4-R8 to pending while preserving the hosted infrastructure.",
+        "Wire the hosted proof to the real restored corpus, remove the synthetic fallback, and allow the gates to earn a pass or fail closed on real evidence.",
+        "Leave the markings in place but disclose the fixture basis, preventing downstream consumers from mistaking them for real learning."
+      ],
+      "resolution": {
+        "decision": "Wire the hosted proof to the real restored corpus and remove the synthetic fallback entirely, so R4-R6 are learned from real extracted sources or the run fails closed with the gates reported unsatisfied.",
+        "rationaleSummary": "The encrypted durable-state infrastructure was retained, but the fixture basis for gate claims was removed. The repair also separated an owner-declared claim scope from source-derived provenance so independently written sources could be evaluated under a common tested boundary. R7 supersession and R8 safety cases remained explicitly bounded until they could be demonstrated on real evidence.",
+        "decidedBy": "repository-owner",
+        "decidedAt": "2026-08-31"
+      }
+    },
+    {
+      "id": "self-test-on-error-diagnostics-overriding-real-failure",
+      "timestamp": "2026-09-03T00:00:00Z",
+      "type": "governance-rule-vs-enforcement",
+      "description": "AGENTS.md required on-error diagnosis to be additive so it could never alter a Self-Test job's true pass/fail result, but two on-error Self-Test steps ran without continue-on-error: true. The artifact-upload step also used if-no-files-found: error, allowing a missing diagnostic report to replace the actual underlying failure with an artifact failure.",
+      "status": "resolved",
+      "detectedAt": "2026-09-03",
+      "contestedAction": "Allowing on-error diagnostic steps in .github/workflows/self-test.yml to fail the Self-Test job, while the conflict ledger was expected to provide a complete, machine-readable account of the issue.",
+      "rationaleSummary": "The governing rule says diagnosis must be additive and must never change the job's pass/fail result. A diagnostic step without continue-on-error: true can fail after the original failure, and an artifact upload configured with if-no-files-found: error can replace the original cause with an artifact error. Those behaviors conflict directly with the stated governance boundary.",
+      "evidence": [
+        "AGENTS.md states that on-error diagnosis is additive and can never change the job's own pass/fail result: 'wired as an additive `if: failure()`, `continue-on-error: true` step at the end of the Self-Test job, so it can never change that job's own pass/fail result.'",
+        ".github/workflows/self-test.yml contained failure-triggered steps without continue-on-error: true.",
+        "The diagnostic artifact-upload step used if-no-files-found: error, meaning a missing report could fail the job and obscure the originating failure.",
+        "Repair SHA 87de153. The audit at that commit found SIX non-additive on-error steps, not the two the original entry described: self-test.yml 'Save quarantined flagged files' and 'Save governed known-bug results', and the-crucible.yml 'Diagnose opted-in project failure without repair or proof authority', 'Preserve opted-in project diagnosis', 'Create or update the Crucible failure issue', and 'Save quarantined flagged files'. The four in the-crucible.yml matter beyond this repository: it is the reusable workflow opted-in projects consume, so a non-additive step there would replace a consumer project's real failure with our diagnostic's.",
+        "Workflow diff at 87de153: exactly one line, 'continue-on-error: true', added after the 'if: failure()' of each of the six steps. Two lines in .github/workflows/self-test.yml, four in .github/workflows/the-crucible.yml, no other workflow change.",
+        "The class had already recurred before this entry was written: three on-error steps in self-test.yml were made additive in an earlier session while two others in the same file were missed. The repair therefore adds the rule to src/workflowLint.js as 'on-error-additive' with failure code CRU-0028, so a future non-additive step is refused at the gate rather than discovered after it has hidden a failure.",
+        "Verification, by the repository's own standard of reverting one file at a time: reverting src/workflowLint.js alone with the tests in place fails 'an on-error step that can decide the job result is refused'; restoring it passes. Reverting the two workflow files alone with the linter in place fails 'every workflow in this repository keeps on-error diagnosis additive' and the gate reports CRU-0028 naming all six steps; restoring them passes. Full suite 713/713 at 87de153, with lint:workflows, audit:failure-codes, audit:circulation, audit:clutter and docs:check all passing.",
+        "Hosted verification, run 33778719652 on SHA f2930be, job 'The Crucible (ubuntu-latest, 22)' (id 100726825064): step 19 'Run verification and bounded workload' FAILED, and every on-error step after it - 20 'Save quarantined flagged files', 21 'Save governed known-bug results', 22 'Run on-error diagnostics', 23 'Diagnose the exact hosted failure', 24 'Preserve the typed CI diagnosis' - completed with conclusion success. The diagnosis ran, produced its artifacts, and did not become the job's result: the job fails on the step that really failed. That is the property this conflict is about, demonstrated on a hosted runner rather than argued. Steps 5 (workflow lint) and 13 (failure-code coverage) also passed, and all 9 matrix jobs were created, so the workflow files still compile after the edit.",
+        "conflicts[1].status was recorded as 'active', which src/aiConflictLedger.js does not accept - it validates against 'open' or 'resolved'. The gate could not read the record at all, so it reported an invalid entry rather than an unresolved conflict. Corrected to 'open' in 87de153; the meaning is unchanged and matches this entry's own prose that the conflict 'remains active'.",
+        "Step 19 fails with CRU-0010 because this conflict is open. That is the ledger blocking the build until the owner rules, not a regression: it is the same exit the local reproduction gives, and it will clear when the conflict is resolved."
+      ],
+      "sides": [
+        {
+          "source": "AGENTS.md, governing workflow rule",
+          "instruction": "On-error diagnosis is additive only and can never change that job's own pass/fail result."
+        },
+        {
+          "source": ".github/workflows/self-test.yml, pre-repair workflow behavior",
+          "instruction": "Run diagnostic steps after failure without continue-on-error: true and fail artifact upload when expected diagnostic output is absent."
+        }
+      ],
+      "alternatives": [
+        "Leave the workflow unchanged and accept that diagnostic collection can mask the original test failure.",
+        "Make all diagnostic and artifact-collection steps additive with continue-on-error: true and ensure missing optional output cannot replace the original failure.",
+        "Require mandatory diagnostic output to be produced by the original failing check rather than by a post-failure upload step."
+      ],
+      "resolution": {
+        "decision": "Approve the repair requiring every post-failure diagnostic and artifact-collection step to remain additive and never replace the originating job failure.",
+        "rationaleSummary": "The repository owner approved the already implemented fail-preserving boundary: post-failure diagnosis and artifact collection retain continue-on-error: true, while optional artifact absence cannot replace the original failure. Local reverting proof and hosted run 33778719652 established that the originating failed step remained the job's failure while all later diagnostic steps completed successfully. The owner-directed follow-up is exact-tip hosted CI on the development commit carrying this resolution.",
+        "decidedBy": "repository-owner",
+        "decidedAt": "2026-09-04"
+      }
+    }
+  ]
 }

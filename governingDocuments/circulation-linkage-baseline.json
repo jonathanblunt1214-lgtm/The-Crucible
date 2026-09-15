@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "$comment": "Fly-by-wire ratchet. These are the direct module-to-module imports that cross a system boundary and BYPASS circulation - the mechanical linkage the bus exists to replace. This number may fall and may never rise: every new connection between organs must go through the typed signal bus. An edge into circulation is the wire rather than the cable and never counts against the ratchet. Recorded from the tree, never estimated; when it falls, record the lower number so the ratchet tightens.",
+  "recordedAt": "2026-09-01T14:34:19.951Z",
+  "directCrossSystemImports": 57,
+  "throughCirculation": 1,
+  "byPair": {
+    "immune->learning": 2,
+    "immune->nerves": 3,
+    "digestive->boundary": 1,
+    "digestive->learning": 1,
+    "nerves->brain": 6,
+    "nerves->immune": 20,
+    "immune->brain": 2,
+    "brain->immune": 3,
+    "learning->digestive": 7,
+    "digestive->immune": 2,
+    "digestive->brain": 1,
+    "learning->brain": 6,
+    "brain->learning": 2,
+    "learning->boundary": 1
+  }
+}

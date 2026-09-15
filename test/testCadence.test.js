@@ -30,6 +30,7 @@ const {
   recordKnownBug,
   verifyKnownBugFix,
   mainCategoryForTest,
+  failingTestFilesFromTap,
 } = require('../src/testCadence');
 const { GOVERNING_PRINCIPLES, AUTHORITATIVE_EVIDENCE_ORDER, reconcileDecision } = require('../src/governingDecision');
 
@@ -278,4 +279,54 @@ test('CI bypass guard keeps required testing on the Orchestrator path and promot
   assert.match(promote, /gh pr merge/);
   assert.match(block, /LOCKED_PR_NUMBERS:\s*"7 9 11"/);
   assert.match(block, /pull_request:/);
+});
+
+test('a known bug records the tests that actually failed, not every test that was selected', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-attribution-'));
+  const ledgerPath = path.join(dir, 'KNOWN-BUGS.json');
+  writeKnownBugLedger(emptyKnownBugLedger(), ledgerPath);
+
+  // One failing file out of four, spanning two categories. Node reports an assertion failure by
+  // test name, so the file is only recoverable from the block's `location:` - which is why this
+  // is parsed rather than read off the `not ok` line.
+  const tap = [
+    'TAP version 13',
+    'ok 1 - a passing case',
+    'not ok 2 - a failing case',
+    '  ---',
+    '  duration_ms: 1',
+    `  location: '${path.join(process.cwd(), 'test/workflow.test.js')}:12:1'`,
+    '  ...',
+    'ok 3 - another passing case',
+    '1..3',
+  ].join('\n');
+  const selected = ['test/workflow.test.js', 'test/security.test.js', 'test/commit.test.js', 'test/engine.test.js'];
+  assert.deepEqual(failingTestFilesFromTap(tap, selected), ['test/workflow.test.js']);
+
+  const record = recordKnownBug({ tests: failingTestFilesFromTap(tap, selected), selectedTests: selected, mainCategoryForTest, status: 1, ledgerPath, headSha: '33333333cccc', now: '2026-09-15T00:01:00Z' });
+  // The defect this fixes: every selected category used to be marked failed, so a single
+  // maintenance failure claimed security, utility and code failures that never happened.
+  assert.deepEqual(record.categoryResults.map((item) => item.category), ['maintenance']);
+  assert.deepEqual(record.tests, ['test/workflow.test.js']);
+  assert.equal(record.attribution, 'failing-tests');
+  assert.equal(record.selectedTests.length, 4);
+  assert.equal(record.severity, 'low');
+});
+
+test('a file that fails to load is attributed by its path, and an unattributable run is marked as such', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'crucible-attribution-2-'));
+  const ledgerPath = path.join(dir, 'KNOWN-BUGS.json');
+  writeKnownBugLedger(emptyKnownBugLedger(), ledgerPath);
+  const selected = ['test/workflow.test.js', 'test/security.test.js'];
+
+  // A file that throws on require is reported by path on the `not ok` line itself.
+  assert.deepEqual(failingTestFilesFromTap('not ok 2 - test/security.test.js', selected), ['test/security.test.js']);
+  // A failure in a file nobody selected is not silently attributed to one that was.
+  assert.deepEqual(failingTestFilesFromTap('not ok 1 - test/elsewhere.test.js', selected), []);
+
+  // When nothing can be attributed, the whole selection is recorded and labelled, so a narrowed
+  // record is never produced from a guess.
+  const record = recordKnownBug({ tests: selected, selectedTests: selected, attribution: 'selection-unattributed', mainCategoryForTest, status: 1, ledgerPath, headSha: '44444444dddd', now: '2026-09-15T00:02:00Z' });
+  assert.equal(record.attribution, 'selection-unattributed');
+  assert.equal(record.categoryResults.length, 2);
 });

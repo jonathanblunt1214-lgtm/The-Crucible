@@ -1,0 +1,139 @@
+name: Temporary handoff route repair
+
+on:
+  push:
+    branches:
+      - development
+    paths:
+      - .github/workflows/temporary-handoff-repair.yml
+
+permissions:
+  contents: write
+
+jobs:
+  repair-and-verify:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact development tip
+        uses: actions/checkout@v6
+        with:
+          ref: development
+          fetch-depth: 0
+
+      - name: Use Node 24
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Apply the evidence-backed handoff correction
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const handoff = JSON.parse(fs.readFileSync('AI-HANDOFF.json', 'utf8'));
+          const oldReason = 'The Crucible-side work updates governance handoff and Devlog records on the owner-approved development path while AI Collaboration remains an independent peer project.';
+          if (handoff.activePlan?.taskRouting?.reason !== oldReason) {
+            throw new Error(`Refusing stale repair: unexpected taskRouting.reason: ${handoff.activePlan?.taskRouting?.reason}`);
+          }
+          handoff.activePlan.taskRouting.reason = 'The canonical task-category dispatcher selected crucible-core for stable repository ID 1344890806 on the owner-approved development branch; this Crucible-side governance work remains independent from the peer AI Collaboration project.';
+          handoff.activePlan.lastUpdatedAt = new Date().toISOString();
+          handoff.activePlan.currentStep = 'Run bounded executable verification for the canonical task-category dispatcher handoff correction; preserve unrelated AI Collaboration and vetted-custody blockers.';
+          handoff.activePlan.steps = handoff.activePlan.steps.map((step) =>
+            step.startsWith('[in progress] Restore those seven released claim identifiers') ? step.replace('[in progress]', '[done]') : step
+          );
+          if (!handoff.activePlan.steps.some((step) => step.includes('canonical task-category dispatcher wording'))) {
+            handoff.activePlan.steps.push('[in progress] Restore the exact canonical task-category dispatcher wording required by the checked-in routing invariant, then rerun executable verification without weakening the checker.');
+          }
+          fs.writeFileSync('AI-HANDOFF.json', `${JSON.stringify(handoff, null, 2)}\n`);
+
+          let devlog = fs.readFileSync('DEVLOG.md', 'utf8');
+          devlog = devlog.replace(/- \*\*Actual current step:\*\*.*\n/, '- **Actual current step:** Exact hosted Self-Test evidence found one correctable route-accountability mismatch: the active handoff retained the canonical category/repository/branch but its reason no longer named the canonical task-category dispatcher. This repair restores that wording without changing routing logic or weakening the test.\n');
+          devlog = devlog.replace(/- \*\*Verification state:\*\*.*\n/, '- **Verification state:** Final Verification restarted from exact commit `4352ddcaa44a88c7a8fa23321ad74c6dfc89b1ba`. Hosted Self-Test run `34740323675` failed only the checked-in active-handoff canonical-route assertion after the broader affected suite passed. Temporary repair run `34740845228` proved the wording correction makes `test/taskRouting.test.js` pass 12/12; that run then failed only because `audit:handoff` was invoked without its required explicit SHA range. This retry supplies the exact committed range rather than weakening the policy.\n');
+          const evidence = '- Temporary hosted repair run `34740845228` proved the canonical route correction itself: `test/taskRouting.test.js` passed 12/12 after the reason text was repaired. Its next check failed closed because `audit:handoff` requires explicit 40-character base/head SHAs; this retry stages the handoff/Devlog correction locally and audits that exact committed range — correction continues.\n';
+          if (!devlog.includes(evidence.trim())) {
+            const heading = '### Session: canonical orchestrator correction cycle — 2026-09-13T05:06:01Z — ChatGPT automation — mode:work';
+            const start = devlog.indexOf(heading);
+            const insert = start === -1 ? -1 : devlog.indexOf('\n', start) + 1;
+            if (insert <= 0) throw new Error('Current correction-cycle session heading not found');
+            devlog = `${devlog.slice(0, insert)}${evidence}${devlog.slice(insert)}`;
+          }
+          fs.writeFileSync('DEVLOG.md', devlog.endsWith('\n') ? devlog : `${devlog}\n`);
+          NODE
+
+      - name: Stage the exact range for handoff policy verification
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add AI-HANDOFF.json DEVLOG.md
+          git diff --cached --check
+          git commit -m 'Stage canonical task route handoff repair'
+
+      - name: Focused route and custody verification
+        shell: bash
+        env:
+          HANDOFF_BASE_SHA: ${{ github.event.before }}
+        run: |
+          export HANDOFF_HEAD_SHA="$(git rev-parse HEAD)"
+          node --test test/taskRouting.test.js
+          npm run audit:handoff
+          npm run audit:coordination
+          npm run audit:ai-conflict-governance
+
+      - name: Full governed verification
+        run: |
+          npm run test:all
+          npm run validate
+          npm run lint:workflows
+          npm run docs:check
+          npm run audit:privacy
+          npm run audit:security
+          npm run audit:github-security
+          npm run audit:circulation
+          npm run audit:failure-codes
+          npm run audit:governance
+
+      - name: Remove temporary transport
+        run: rm .github/workflows/temporary-handoff-repair.yml
+
+      - name: Write terminal verification boundary
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const runId = process.env.RUN_ID;
+          const handoff = JSON.parse(fs.readFileSync('AI-HANDOFF.json', 'utf8'));
+          handoff.activePlan.steps = handoff.activePlan.steps.map((step) => step.startsWith('[in progress] Restore the exact canonical task-category dispatcher wording') ? step.replace('[in progress]', '[done]') : step);
+          handoff.activePlan.currentStep = 'Terminal verified boundary reached for the safely correctable Crucible route/handoff defect. Preserve the separately evidenced AI Collaboration pre-runner Actions blocker and Crucible vetted-custody blocker for continuation; no additional substantive mutation is authorized by this repair.';
+          handoff.activePlan.lastUpdatedAt = new Date().toISOString();
+          handoff.handoffNotes.verification.push(`Hosted repair run ${runId} completed focused task-routing, handoff, coordination, conflict-governance, full governed tests, validation, workflow lint, docs, privacy, security, GitHub-security, circulation, failure-code, and governance checks before this terminal boundary.`);
+          fs.writeFileSync('AI-HANDOFF.json', `${JSON.stringify(handoff, null, 2)}\n`);
+
+          let devlog = fs.readFileSync('DEVLOG.md', 'utf8');
+          devlog = devlog.replace(/- \*\*Actual current step:\*\*.*\n/, '- **Actual current step:** Terminal verified boundary reached for the safely correctable Crucible route/handoff regression. Remaining work is limited to separately evidenced external/custody blockers and later authorized backlog.\n');
+          devlog = devlog.replace(/- \*\*Verification state:\*\*.*\n/, `- **Verification state:** **Verified** for the safely correctable Crucible route/handoff correction. Hosted repair run \`${runId}\` passed focused task-routing, handoff, coordination, AI-conflict governance, the full governed test suite, validate, workflow lint, docs, privacy, security, GitHub-security, circulation, failure-code, and governance checks before this terminal record. Overall cross-project rollout remains **Reviewed** only where AI Collaboration still fails before runner assignment and Crucible hosted learning remains held by its independent vetted-custody boundary.\n`);
+          devlog = devlog.replace(/- \*\*Continuation boundary:\*\*.*\n/, '- **Continuation boundary:** Resume only from this verified Crucible repository boundary. Do not repeat the corrected route/handoff work. Continue AI Collaboration only from its independently evidenced pre-runner Actions blocker, and continue Crucible hosted learning only from its independent vetted-custody boundary. Preserve all gates and project identities.\n');
+          const heading = '### Session: canonical orchestrator correction cycle — 2026-09-13T05:06:01Z — ChatGPT automation — mode:work';
+          const start = devlog.indexOf(heading);
+          const next = start === -1 ? -1 : devlog.indexOf('\n### Session:', start + heading.length);
+          if (next === -1) throw new Error('Current session boundary not found');
+          const line = `- Final Verification completed in hosted repair run \`${runId}\` after the canonical task-category dispatcher wording was restored. Focused and full governed verification exited 0 before this terminal record. AI Collaboration's pre-runner Actions failure and Crucible's vetted-custody learning blocker remain explicitly unverified rather than being papered over — verified boundary.\n`;
+          if (!devlog.includes(line.trim())) devlog = `${devlog.slice(0, next)}${line}\n${devlog.slice(next + 1)}`;
+          fs.writeFileSync('DEVLOG.md', devlog.endsWith('\n') ? devlog : `${devlog}\n`);
+          NODE
+
+      - name: Publish the verified boundary
+        shell: bash
+        run: |
+          git add AI-HANDOFF.json DEVLOG.md .github/workflows/temporary-handoff-repair.yml
+          git diff --cached --check
+          git commit -m 'Complete verified task route handoff repair'
+          git push origin HEAD:development

@@ -6,6 +6,9 @@
     "AI-CONFLICTS.json": "Auditable AI conflict ledger; never bypass or disable it.",
     "CLAUDE.md": "Claude entry point to AGENTS.md.",
     "README.md": "Project documentation.",
+    "TASK-ROUTING.json": "Canonical stable-repository task-category registry. Governed checkouts reference this development-owned file; they do not copy or silently fork it.",
+    "src/taskRouting.js": "Fail-closed task classifier and repository/branch routing verifier for prompts, affected paths, project context, explicit overrides, protected routes, and repository-scoped commit splitting.",
+    "src/taskRoutingCli.js": "Pre-write, pre-push, and CI entry point for the canonical task-routing decision.",
     "templates/ai-conflict-resolution.md": "Conflict-resolution procedure.",
     "templates/required-check-rollout.md": "Required-check rollout boundary.",
     "templates/agent-boundaries.md": "Adopter-project AI boundaries.",
@@ -24,19 +27,107 @@
     "src/testFeatureClassifier.js": "Independent closest-feature classifier for newly discovered unmapped tests. Explicit mappings remain authoritative; a unique evidence-backed closest match supplies a category. Unresolved ambiguity is isolated to the affected test, safe classified tests continue, and incomplete requested coverage must be reported rather than faked.",
     "src/testCadenceCoreLegacy.js": "Preserved mature Orchestrator natural-language and change-impact selection core.",
     "src/testRunGovernance.js": "Orchestrator progress, known-bug persistence, severity ordering, and mandatory passing re-tests.",
+    "src/ciDiagnosticOrgan.js": "Dependency-free project-bound hosted CI failure capture, typed diagnosis, organism-health inhibition, and non-proof evidence reporting.",
+    "src/hostedLearningProof.js": "GitHub-hosted, project-bound R4-R8 proof runner with encrypted restart-safe durable-state transport and no release authority.",
+    "src/hostedSourceBundle.js": "Development-bound authenticated encryption, local-path scrubbing, content-hash manifesting, restore, and verification for owner training queues hosted on GitHub.",
+    ".github/workflows/hosted-source-bootstrap.yml": "Read-only GitHub runner ciphertext custody proof; Crucible receives no decryption key and retains only a bounded hash report.",
+    ".github/workflows/hosted-learning-proof.yml": "Development-only hourly/manual GitHub host for encrypted durable R4-R8 proof and retained bounded evidence.",
     "src/governingDecision.js": "Executable Adapt, Persevere, Overcome decision contract shared by pre-check and code-check evidence reconciliation, recovery verification, and human-review boundaries.",
     "governingDocuments/scientific-learning-policy.md": "Permanent autonomous scientific-learning invariants, promotion boundary, project isolation, contradiction handling, rollback, and weekly transport policy.",
-    "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, project-isolated evidence and versioned knowledge stores, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
+    "governingDocuments/scientific-learning-release-plan.md": "Gate-driven rolling release plan for scientific learning; dates forecast readiness but never authorize promotion or weaken proof.",
+    "governingDocuments/scientific-learning-release-status.json": "Machine-readable current gate state, rolling target, forecast confidence, blocker, and target-change history.",
+    "src/scientificLearning.js": "Strict candidate/proof schemas, fail-closed state machine, atomic durable project-isolated evidence and independent-lineage versioned knowledge, restart-safe autonomous orchestration, contradiction quarantine, OIDC verification, and project-bound authenticated encryption.",
+    "src/learningExperience.js": "Strict project-bound learning-by-doing adapter that records content-addressed successful and failed task attempts only as non-promotable candidate evidence.",
+    "src/codeSecurityOrganism.js": "Language-specific code-assistive security profiles, repository threat context, dependency-bound reversible repairs, distinct verification, rollback, regression feedback, and organ health/recovery.",
+    "governingDocuments/host-isolation-policy.md": "Permanent non-assimilation boundary for the operator machine and GitHub execution hosts.",
+    "src/hostIsolation.js": "Mechanical deny-by-default execution-host boundary with explicit Crucible repository opt-in.",
+    "src/offlineGpuGate.js": "Owner-signed project/workload GPU permit with an overriding offline hard stop.",
+    "src/externalAiFirewall.js": "Default-deny, owner-signed, payload-hash-bound external AI egress firewall.",
+    "src/semanticAnalysis.js": "Compiler-native semantic adapters, normalized findings, secure workers, and explicit cross-language graphs.",
+    "src/knowledgeLifecycle.js": "Review routing for aged or challenged active knowledge and proof-bound supersession confirmation.",
+    "src/scientificLearningCli.js": "Fail-closed operator readiness, candidate ingestion, custody-state inspection, and verified-only retrieval for explicitly configured project-scoped durable learning stores.",
+    "src/safeInformationRetrieval.js": "Owner-approved credential-free HTTPS evidence retrieval, passive trusted-domain Google result parsing, auditable kill switch and denylist, network/content limits, provenance hashing, and prompt-injection/executable quarantine.",
+    "src/automatedGoogleResearch.js": "Bounded credential-free Google discovery automation with allow-listed topics and suffixes, project-bound atomic query/result audit, due scheduling, kill switch, network limits, and URL deduplication before candidate registration.",
+    "src/automatedGoogleResearchCli.js": "Fail-closed operator entry point for explicitly configured repository-bound automated Google research readiness and due-topic runs.",
+    "src/providerCirculation.js": "Circulation boundary for provider-backed candidate discovery; discards generated prose and carries only bounded citation URLs plus non-secret audit hashes into local vetting.",
+    "src/automatedPerplexityResearch.js": "Daily, project-bound Perplexity citation discovery with a 50-topic run ceiling, local URL admission, atomic audit, deduplication, and candidate-only queue registration.",
+    "src/automatedPerplexityResearchCli.js": "Fail-closed operator entry point for Perplexity holding-queue initialization, readiness, daily due-topic runs, and structured partial failure reports.",
+    "src/ownerFileIntake.js": "Project-bound, content-addressed owner-file intake that validates untrusted PDFs and text, deduplicates by SHA-256, publishes complete immutable source bytes, and registers candidate-only extraction work under the source queue lock.",
+    "src/ownerFileIntakeCli.js": "Fail-closed operator entry point for exact owner-supplied source files; reports admitted and already-present identities without interpreting file contents as instructions.",
+    ".github/workflows/perplexity-research.yml": "Read-only daily trigger that checks out development and retains the project-bound Perplexity discovery audit, structured report, and candidate-only holding queue in Actions cache and artifacts.",
+    "src/claimExtractionWorker.js": "Restart-safe atomic source-queue worker that extracts bounded assertions, persists deterministic Insufficient Evidence candidates, advances PDF windows, and never satisfies proof or promotion gates.",
+    "src/claimExtractionWorkerCli.js": "Fail-closed project-bound readiness and bounded execution entry point for durable claim extraction.",
+    "scripts/extractPdfText.py": "Bounded-page PDF text fallback for trusted Python runtimes when pdftotext is unavailable.",
+    "src/monthlyKnowledgeRefresh.js": "Atomic project-bound URL refresh registry that makes every logged source due within 30 days, suppresses unchanged and previously seen content, and emits only novel bounded candidate claims without bypassing scientific promotion gates.",
     "src/security.js": "Security Gate. Detects secrets, unsafe behavior, and public API-key-shaped identifiers and forces review without persisting detected values.",
     ".github/workflows/self-test.yml": "Required Self-Test path. Workflows invoke the governed system but do not choose test files.",
     ".github/workflows/scheduled-diagnostics.yml": "Cadence trigger transport; it never chooses test files.",
     "governingDocuments/known-bugs/README.md": "Known-bug governance policy.",
     "governingDocuments/known-bugs/KNOWN-BUGS.json": "Governed severity-sorted known-bug ledger.",
-    "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity, America/New_York timestamping, completion/interruption check-ins, and continue-until-done behavior."
+    "governingDocuments/agent-progress-policy.md": "Mandatory attended-agent progress continuity, America/New_York timestamping, completion/interruption check-ins, and continue-until-done behavior.",
+    "src/durableLock.js": "Owner-recording durable lock shared by the source queue and the durable learning store. Reclaims a lock only from a process proven dead on the same host past a bounded staleness floor, fails closed on live, foreign-host, unreadable, too-recent, and lost-race conditions, and reports every reclamation so recovery from a forced interruption is never invisible.",
+    "src/durableLockRecoveryCli.js": "Fail-closed operator entry point for the one narrow legacy zero-byte extraction-lock recovery path. It derives the lock from a project-bound source queue and requires explicit authorization, no-live-worker confirmation, and an exact hash and modification-time fingerprint before preserving quarantine and audit evidence.",
+    "src/soakGate.js": "Executable R9 soak definition. One data point per verified knowledge version, candidate record, and queued source; an owner-set ceiling of 1000 observed at once with the remainder held rather than discarded; a deterministic replayable observation window; the owner-set 72-96 hour duration band; and a fail-closed hold when the current data cannot exhibit the failures R9 names. It never reports a pass - passing is what the soak itself establishes over its duration.",
+    "src/soakRun.js": "Executable R9 soak run. Freezes the observed population at the start, records hourly sweeps, resets the clock for a failed data point only, recycles a data point to the collection pool after three failures and marks it trash after three more, orders recirculated sources behind new data, voids the soak on a store-level failure, restarts every surviving clock across an unobserved gap, and reaches a verdict only after the full chosen duration.",
+    "src/preSoakReadiness.js": "Read-only pre-soak gate reporter. Judges R2-R8 from durable state, reports manual-evidence-required rather than inferring a combined R8 cycle from unit coverage, and authorizes nothing.",
+    "src/learningGovernance.js": "Governance monitoring of the learning gates with indirect pipeline control only. Detects blockages from gate state, analyzer health, store health, contradictions, and backlog, then emits adjustments from a closed allow-list of flow controls: reprioritize, hold, throttle, route, deprioritize. It may never promote, verify, mark a gate passed, authorize a release, start a held soak, repair the durable store, shorten a soak, or discard evidence, and it is never a truth source. What it cannot clear by moving work is escalated to the owner.",
+    "src/learningCycle.js": "Executable R4 to R5 cycle. Accepts a claim as candidate evidence only when the exact assertion is present in that source own content through the same bounded extraction the worker uses, then runs the controlled evaluation pipeline with a distinct verifier identity to a verified knowledge version. Keeps claim scope and per-source provenance separate, which is what lets two independent sources corroborate at all.",
+    "src/realCorpusLearning.js": "Learns from the real restored corpus. Finds claims two independently identified real sources assert, requires an owner-declared scope that is never inferred, runs the controlled pipeline, and fails closed with a stated reason when the corpus cannot supply. Has no synthetic fallback.",
+    "governingDocuments/learning-scope-declarations.json": "Owner-declared claim scopes and optional source pairings for real-corpus learning. A declaration selects which claim is evaluated and, with pairedAssertions, records sameness of meaning as the owner judgement; it never authorizes promotion.",
+    "src/semanticCorroboration.js": "Deterministic, dependency-free same-meaning test for claim text. Reduces a claim to polarity, committed numbers, and stemmed content terms, and accepts paraphrase only above a term-overlap threshold. Never crosses a negation or a changed number, is symmetric and repeatable, and never reports proof, independent verification, or promotion.",
+    "src/pairedCorroboration.js": "Owner-paired corroboration. Verifies a nominated pairing against the restored corpus: both source ids present, content matching the hash the queue recorded, each declared sentence verbatim among that document own bounded assertions, and the two sources not one mirrored document. Carries each document own sentence forward, never the owner wording, and authorizes evaluation only.",
+    "src/sourceIndependence.js": "Deterministic independence test for two sources. Identical content, one publisher site, or one declared author each break independence, so two editions of a book or two pages of a site cannot corroborate each other.",
+    "src/realCorpusSafety.js": "R8 derived from the real corpus and a real retriever with no stubs. Each of the eight safety and deduplication behaviours reports evidence or the reason the corpus cannot demonstrate it; only demonstrated behaviours are passed to the readiness gate.",
+    "src/realSupersession.js": "R7 on real evidence. A further corpus source, independent of both already behind a promoted claim and asserting it verbatim, supersedes it and the prior version is restored with history intact. Fails closed with a precise reason rather than superseding a self-made candidate.",
+    "src/documentFurniture.js": "Structural rejection of document furniture at extraction and at corroboration. Navigation runs, table-of-contents rows, fixed legal boilerplate, scraped heading duplication, and reader-addressed interface text are rejected by form, never by subject, source, or publisher. Ordinary prose that is merely untestable still passes: refusing that is the critical reviewer and hypothesis contract, not a wording filter.",
+    "src/repairEvidence.js": "Joins the immune system to the learner. A defect found, repaired, and confirmed by a distinct verifier enters candidate custody as non-promotable experience evidence stating what the construct does, never what the repair did. A rolled-back repair is recorded as a failure; a repair that never ran observed nothing and is not evidence.",
+    "src/intakePathways.js": "Separates digestion two outputs. Candidate evidence goes to the learner and awaits proof; the health of digestion itself goes to the senses, is never a claim about the world, and can never be corroborated into knowledge. Names which pathway is blocked so an impeded intake is not read as an empty result.",
+    "src/hypothesisTestPlan.js": "Strict hash-bound falsifiable hypothesis and test-variable plan schema.",
+    "src/languageHypothesisVariables.js": "Governed language-specific independent, dependent, controlled, measurement, and falsification variable profiles.",
+    "src/languageExperimentRegistry.js": "Pinned trusted experiment registry requiring distinct executor and verifier identities.",
+    "src/concreteLanguageHarness.js": "Concrete content-addressed fixtures and separate executable compiler/parser adapters for every governed language.",
+    "src/organismCirculation.js": "Typed project-bound signal bus that routes work but cannot satisfy proof or promotion.",
+    "src/organismRuntime.js": "Durable heartbeat, deduplication, backpressure, fault isolation, throttling, recovery, and exact-boundary memory routing.",
+    "src/productionOrganism.js": "Production nervous, brain, immune, digestive, learning, and reporting pathways.",
+    "src/organismHealth.js": "Concise continuous organ health and exact missing-dependency view.",
+    "src/oversightReflex.js": "Independent signed STOP and dual-authorized CLEAR reflex bound to the exact organism state.",
+    "src/contradictionAudit.js": "Audits a contradiction between verified knowledge and new evidence instead of quarantining the newcomer by default. Assembles everything in custody bearing on the claim, weighs each side by genuinely independent sources, enumerates the six ways it can resolve with what would settle each, and proposes a reconciling perspective only when provenance itself grounds one. Source counts prioritise investigation and never authorise a conclusion; the audit decides nothing.",
+    "src/contradictionReopening.js": "Reopens candidates quarantined on contradiction before the audit existed. They go to the front of the pipeline ahead of all new work, oldest quarantine first, because they were set aside by a default rather than adjudicated - unlike a recirculated soak source, which failed on its merits and correctly ranks below new data. Reopening audits and never clears, promotes, or reverses anything.",
+    "src/circulationLinkage.js": "Fly-by-wire enforcement. A ratchet on direct cross-system imports that bypass circulation - the count may fall and may never rise, so every new connection between organs must go through the typed signal bus - plus a runtime assertion that refuses to start an organism with a missing organ handler, because a signal to an unhandled organ never arrives and nothing reports its absence. Runs on every push.",
+    "governingDocuments/circulation-linkage-baseline.json": "The recorded fly-by-wire baseline: how many direct cross-system imports currently bypass circulation. Measured from the tree, never estimated. May be lowered when linkage is removed and may never be raised.",
+    "src/gradedOversightResponse.js": "Crucible half of oversight graduated response. Records a finding before any repair is offered, decides whether it may have one bounded reversible attempt, and hands oversight an evidence package. Four rules rather than intentions: the finding cannot be hidden by a successful repair, Crucible cannot verify its own repair, a returning fault escalates rather than buying another window, and a critical finding gets no repair window at all. It requests; oversight decides.",
+    "src/mutationClaims.js": "Exclusive mutation ownership: several AIs may work one project, but only one may mutate a given scope at a time.",
+    "src/mutationClaimStore.js": "Persists claim acquisition, release and handoff into AI-HANDOFF.json, the only state agents share.",
+    "src/multiAiDeliberation.js": "Cross-AI proposals, positions, evidence and corroboration, recorded inside AI-CONFLICTS.json. There is deliberately no AI-DELIBERATION.json.",
+    "src/aiProviderRegistry.js": "The four governed providers, the environment variables their credentials come from, and the credential-leak check.",
+    "src/aiProviderAdapters.js": "Real HTTP adapters that call OpenAI, Anthropic, Perplexity and NVIDIA NIM.",
+    "src/multiAiOrchestrator.js": "Distributes one bounded task to several providers and keeps their answers separate with provenance.",
+    "src/devlogAccountability.js": "What each AI actually did, enforced against DEVLOG.md.",
+    "src/coordinationGate.js": "The gate: exclusive ownership, DEVLOG accountability, and no credential in any governance artifact.",
+    "src/aiHandoffContinuation.js": "How a successor AI reads the governed state and resumes from the last confirmed good point.",
+    "src/coordinationCli.js": "Agent-facing commands: continue, claims, claim, release, handoff, providers, consult."
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-08-29T19:11:00Z"
+    "lastActionAt": "2026-09-15T05:35:00Z"
+  },
+  "repairSelectionPolicy": {
+    "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
+    "appliesTo": "Every agent working in this repository, on every change, including ones a reviewer, a scanner, a failing check or the owner appears to be asking for.",
+    "whatThisForbids": [
+      "Relaxing, deleting, skipping or narrowing a test, an assertion or a gate so that a change can pass.",
+      "Adjusting a baseline, threshold or allow-list to accommodate your own change rather than because the underlying fact changed.",
+      "Applying a reviewer's or scanner's suggested patch without first establishing that it fixes the described defect - a suggested remedy can be wrong, or can leave the defect in place while looking addressed.",
+      "Taking a cheaper fix at one layer because another layer happens to mask the case today; verify the masking layer actually covers it, and if it does not, say so and fix the right layer.",
+      "Silencing a checker without removing the condition it reports."
+    ],
+    "whatThisRequires": [
+      "Reproduce the defect first, so the fix is aimed at a measured cause rather than a suspected one.",
+      "State why the chosen fix is correct and what it rules out, in the code where a later reader will meet it.",
+      "Verify by reverting the source alone with the tests in place: the test must fail without the fix and pass with it.",
+      "When the correct fix is larger than the task, or is a design decision rather than a defect, record it and raise it rather than shipping the convenient one."
+    ],
+    "whenTheCorrectFixIsNotYoursToMake": "Say so plainly, record the analysis and the proposed change in activePlan.steps, and leave the defect standing rather than papering over it. An honest open item is worth more than a change that hides the problem."
   },
   "agentCommunicationPolicy": {
     "timezone": "America/New_York",
@@ -75,7 +166,12 @@
     "orchestratorAuthority": "The Orchestrator alone selects categories/subcategories/test files and execution scope from explicit requests, change impact, dependencies, cadence obligations, and validated classifications.",
     "balanceRule": "Cadence declares due categories; the Orchestrator resolves them into concrete tests; reconciliation rejects incomplete coverage.",
     "explicitRequestRule": "A specific owner test request is interpreted and run immediately by the Orchestrator; cadence cannot narrow or replace it.",
-    "categoryCadence": { "code": "every-push", "security": "daily", "utility": "twice-weekly", "maintenance": "weekly" },
+    "categoryCadence": {
+      "code": "every-push",
+      "security": "daily",
+      "utility": "twice-weekly",
+      "maintenance": "weekly"
+    },
     "standingTestExpansionRule": "New standing test cases may be added inside an already explicitly categorized test file when they belong to that same category.",
     "codeCriticalityRule": "Code is due on every push and pull request.",
     "scheduledCumulativeRule": "Cadence obligations are cumulative.",
@@ -89,50 +185,411 @@
     "mechanicalEnforcement": "The reusable Crucible workflow executes src/injectionMonitor.js. Active manifests fail closed unless the monitor is actually running with verified evidence retrieval and repair capability; terminal manifests fail if the monitor or injection credential remains active.",
     "repairRule": "For an applicable failure during the active injection window, retrieve the exact failure evidence, diagnose against current source and governing configuration, autonomously apply safe deterministic repairs inside injection scope through the development-first path, retest, and repeat until resolved or a real boundary blocks repair. Diagnosis/status alone never satisfies the repair obligation when safe authorized repair remains executable.",
     "dedupeRule": "Maintain one repair record per underlying defect; repeated failing runs update that record rather than creating a report/comment per commit.",
-    "shutdownRule": "Disable at successful assimilation, cancellation, blocking boundary, or 24-hour expiration; do not become persistent project monitoring.",
+    "shutdownRule": "Disable at successful injection completion, cancellation, blocking boundary, or 24-hour expiration; do not become persistent project monitoring.",
     "productionBoundary": "Never touch production directly, widen authority, weaken gates, expose credentials, modify unrelated work, invent business logic, or silently resolve governance conflicts."
   },
   "activePlan": {
-    "agent": "Codex",
-    "objective": "Correct the false third-branch integrity failure caused by an Archive-only governing artifact being represented as an unqualified main path.",
-    "currentPrompt": "Fix the remaining red third-branch integrity check for the Plug-in branch reference to the nonexistent main:Devlog-Pruned (Archive branch).",
+    "agent": "Claude",
+    "objective": "Clear the blockers keeping the scientific-learning pipeline from producing evidence, without spending money: tell a refused hosted job apart from a failed one, move governed discovery onto a free provider, make governed records state what actually happened, and run the rolling release review from the literal development tip.",
+    "currentPrompt": "Pre-register the scope declaration, because the scope is the hypothesis",
     "executionMode": {
-      "mode": "regular/default",
-      "agent": "Codex",
-      "purpose": "Apply and verify a focused governance-reference correction through the development-first protected promotion path.",
-      "selectionReason": "The defect is narrow and has a deterministic metadata correction plus one regression test.",
-      "distinction": "Execution mode is separate from agent identity and workflow; Codex is operating in regular/default mode."
+      "mode": "work",
+      "agent": "Claude",
+      "purpose": "Multi-repository blocker diagnosis, a new governed discovery path with its tests and workflow, three governed-record repairs, and the scientific-learning rolling release review - long-running, file-heavy, and deliverable-oriented.",
+      "selectionReason": "The task spans independent repositories, policy/governance records, hosted CI evidence, multiple correction cycles, and a mandatory terminal verification boundary.",
+      "distinction": "Execution mode is separate from agent identity and workflow; Work mode changes orchestration depth, not repository identity, branch authority, governance, or promotion authority."
+    },
+    "taskRouting": {
+      "category": "crucible-core",
+      "repositoryId": 1344890806,
+      "repository": "jonathanblunt1214-lgtm/The-Crucible",
+      "branch": "development",
+      "reason": "Affected paths select crucible-core.",
+      "explicitOverride": false,
+      "selectedAt": "2026-09-15T09:17:15.648Z",
+      "promptSha256": "d7e2c4674a50ee6924ba0aa57a1e3630007710c03095bee5a45f7efedddab67a",
+      "affectedPathsSha256": "268dd86889841b9e56a776b3bf59f67ead67aca08d83f54f3dbebe08c6c1d65f"
     },
     "steps": [
-      "Represent the Archive-only Devlog-Pruned ledger with an explicit branch-qualified handoff key.",
-      "Add regression coverage proving branch-qualified governance is excluded while repository-relative main governance remains checked.",
-      "Run focused and full governance verification, commit atomically on development, promote through release, and verify the repaired exact-main integrity run."
+      "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
+      "[done] Strengthened AI Collaboration ORCHESTRATOR-POLICY.json to mechanically require early execution-boundary identification, continuously reserved terminal-verification capacity, conservative cutoff, complete Final Verification, and terminal Devlog recording.",
+      "[done] Re-verified AI Collaboration and Crucible remain independent projects joined by a non-containment cross-project policy reference; Nexus and ChatGPT remain excluded from the custom GitHub App package boundary.",
+      "[done] Re-ran AI Collaboration CI and reproduced the same pre-runner failure: no steps, runner_id 0, empty runner identity, and no job log. A separate Crucible workflow received a GitHub-hosted runner at the same time. No further speculative application/workflow mutation is justified from this evidence.",
+      "[done] Diagnosed the Crucible DEVLOG final-newline regression from hosted Self-Test evidence and repaired exactly that formatting defect.",
+      "[done] Final Verification exposed the handoff-policy invariant and the coherent AI-HANDOFF.json + DEVLOG.md correction at a0b440ce7c9b964a491595680966fee0b514146c passed the takeover-ready handoff check.",
+      "[done] Final Verification then exposed CRU-0035 because seven released historical mutation-claim identifiers had been pruned from the compact DEVLOG even though the claims remained in AI-HANDOFF.json; the coordination gate was preserved.",
+      "[in progress] Restore those seven released claim identifiers as a compact accountability ledger in DEVLOG.md while keeping this plan synchronized in the same commit, then restart exact-tip Final Verification.",
+      "[next] If verification is stable, write the terminal canonical Devlog/handoff record as the final state-changing operation and stop substantive work.",
+      "[blocked-external] AI Collaboration private-repository Actions runner allocation/settings cannot be diagnosed or changed through the connected GitHub surface; the exact failure remains before runner assignment and is not represented as a source-code defect.",
+      "[blocked-external] Crucible hosted scientific-learning proof remains blocked by the separately governed vetted-custody queue/manifest inconsistency; this task does not weaken or bypass that custody boundary.",
+      "[standing] Do not close, exclude, or weaken locked PR/conflict/governance surfaces merely to clear diagnostics such as CRU-0015; executable evidence and owner boundaries outrank green cosmetics.",
+      "[done] Close the first-due clock-ordering race in all three governed discovery stores, keyed on lastRunAt rather than on comparing two clock readings, with a deterministic ticking-clock regression test in each that was shown failing before the repair existed.",
+      "[done] Confirm the first-due repair across all eighteen hosted Self-Test legs at 259cf60 and release claim discovery-first-due-race-20260915.",
+      "[open] Owner or Oversight: get owner-delegated-url:11bfade7 into the vetted corpus, or pair the Array.prototype.map declaration to a source that is in it. Until then R4-R8 fails closed on CRU-0026 with one claim corroborated and no declaration usable.",
+      "[done] Dispatched oversight, confirmed it published a self-consistent vetted bundle, re-ran the hosted proof, and recorded the resolved custody blocker plus the two owner actions the release now turns on in the release status file.",
+      "[done] Repaired evaluateR2 so an unretrieved source is no longer counted as one the extraction worker drained, with the real hosted population as a regression fixture shown failing first.",
+      "[done] Switched governed discovery to nvidia/nemotron-3-nano-30b-a3b at the owner's instruction, pinning the model id in the workflow and removing the Secrets path that had masked a withdrawn model.",
+      "[done] Made the scope declaration a real pre-registration on the owner's instruction: a per-claim hash ledger against the run clock, CRU-0047 refusing a boundary that moved after a failed experiment, CRU-0048 for the ledger failing closed, and the governing document rewritten away from the post-hoc order it used to instruct."
     ],
-    "status": "active",
-    "startedAt": "2026-08-29T19:02:00Z",
-    "lastUpdatedAt": "2026-08-29T19:11:00Z"
+    "status": "handoff-ready",
+    "startedAt": "2026-09-13T05:06:01Z",
+    "lastUpdatedAt": "2026-09-15T10:30:00Z",
+    "currentStep": 19
   },
   "handoffNotes": {
     "completed": [
-      "Re-read the shared handoff, conflict ledger, and every current governing document.",
-      "Fetched origin/development and fast-forwarded the clean checkout from 81fead2 to exact tip 0f66d3b05989d10580ae22b3202d22ad3cf108d0 before writing.",
-      "Reviewed the referenced scientific-learning discussion and retained its vetted material as candidate input only, not verified knowledge.",
-      "Confirmed the repository contains no scientific-learning implementation or earlier draft blobs to reuse as-is and no open AI conflict."
-      ,"Implemented the strict scientific-learning state machine, project-isolated candidate and verified-knowledge stores, contradiction quarantine, rollback, project-bound weekly encryption, OIDC identity verification, permanent policy, and adversarial tests."
-      ,"Repaired pre-existing test categorization debt and a fail-closed injection collision regression discovered by the full suite."
-      ,"Corrected the transport tamper regression to flip an actual ciphertext bit deterministically on every supported Node version instead of replacing the first base64url character with a value that could already be identical."
-      ,"Promoted development tip 8fd433ec835ea4bf2111a4b5d76b0ef9a57d21a4 through release and protected PR #16 to main merge commit 32cf371ff344f8f45f61ec885faa8a4fc4a30d06; its tree is identical to development and exact-main Self-Test, CodeQL, and handoff checks passed."
-      ,"Diagnosed the remaining third-branch failure as a false main-path expansion of the Archive-only Devlog-Pruned ledger and prepared an explicit branch-qualified handoff correction with regression coverage."
+      "A hosted job refused before startup is distinguishable from one that ran and failed. src/hostedRunStartupDiagnosis.js requires no runner assigned, no step executed, and nothing billed; the first two discriminate and the third deliberately does not, because the successful runs report total_ms 0 as well. A refusal carries no verdict on the code and authorizes no gate change in either direction.",
+      "Governed discovery runs on NVIDIA NIM, which is free and already governed, instead of Perplexity, whose API billing a Perplexity Pro subscription does not cover. Every governed bound is unchanged. NIM returns no citations, so URLs are read from the completion text and carried as providerKind model-proposed-pointers, and the candidate sink refuses a pointer candidate that does not state its kind.",
+      "endpointFor completes an API root with the provider's own path, so one NVIDIA_NIM_BASE_URL value can be reused verbatim from AI Collaboration instead of silently posting to /v1. An explicit gateway path is still used exactly as configured.",
+      "The known-bug ledger records the tests that actually failed, attributed from the TAP location of each failing block, and fails closed to the whole selection marked selection-unattributed when attribution is impossible. A real run now writes one category and one test where it previously claimed four categories and 102 tests.",
+      "test/taskRouting.test.js, red on the development tip since a0b440c, checks that the route was computed rather than described: the dispatcher's own bounded wording plus both hash bindings. The record was restored by running the dispatcher, not by editing the reason string.",
+      "A governed discovery workflow cannot start itself: GitHub refuses a workflow_dispatch for a workflow it never registered, and registers one only when a trigger actually fires. perplexity-research.yml has zero runs for exactly this reason. model-pointer-research.yml now carries a push trigger scoped to discovery's own implementation, so it registers once and re-runs only when discovery changes.",
+      "The Self-Test matrix was red on every leg from d51344e, and not for any reason that tip's change log names. ModelPointerResearchStore.due() read the clock twice - once for its own default `at`, then again inside read(), which seeds an unseen topic's nextRunAt - so whenever those readings straddled a millisecond the store reported the topic it had just created as not yet due, runDue() returned nothing, and the CLI's providerKind came back null. Measured at 15 of 2000 fresh stores on an idle host and 0 of 2000 after the repair. A topic that has never run is now due without consulting a deadline it never earned. GoogleResearchStore and PerplexityResearchStore carried the identical three lines and were repaired with it.",
+      "Eighteen of eighteen Self-Test legs pass at exact tip 259cf60ce2fc9127a2a8277df172dff39d3b59a0 - nine on push run 34926863414 and nine on pull-request run 34926865280 - across ubuntu, windows-2022 and macOS on Node 20, 22 and 24. Every leg was red on the four preceding tips. Mutation claim discovery-first-due-race-20260915 released at 2026-09-15T08:33:50Z; no claim is now active.",
+      "Dispatched the oversight workflow and confirmed from the API that it ran rather than being refused: run 34938208295 assigned runners 1000022397 and 1000022400, executed every step, and return-vetted-data published vetted commit ef2d3b3 to Crucible-Vetted-Learning-State after running the post-merge custody vet ahead of encryption. Re-ran the Crucible hosted proof on that bundle as run 34947395586 and quoted both hashes rather than asserting a match: the restore succeeds and queue SHA-256 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef now equals the manifest value that previously read 96f13274cf8c57d717e6f581cbe3c38bdcb6d52ad7e56a5fac51fd18eeefb50e. The restored-queue-hash mismatch that had blocked hosted R4-R6 since 2026-09-10 is closed.",
+      "Established that the discovery blocker is no longer a missing credential. NVIDIA_NIM_MODEL now reaches the job and the readiness step passes; dispatched run 34947505096 executed all 16 due topics and every one was blocked identically with HTTP 410, \"The model has reached its end of life on 2026-08-26T09:00:00Z and is no longer available.\" A 410 is a model-lifecycle answer rather than an authentication failure, so the key works and the configured model is withdrawn. Recorded in the release status rather than retried, and noted that each blocked topic consumed its daily slot so the topics are not due again until 24 hours after 2026-09-15T08:32:29Z.",
+      "Updated governingDocuments/scientific-learning-release-status.json, which the preceding push left untouched, and changed the rolling target state from indeterminate-until-nonzero-hosted-throughput to indeterminate-until-a-pairable-owner-declaration-exists. Hosted throughput is no longer zero, so the old state name had become false; the target is still indeterminate because what now bounds it is an owner action with no measurable rate. No gate is marked passed: src/hostedLearningProof.js exited 1 under CRU-0026 before emitting a verdict, and a reading of log lines is not a substitute for the proof own outcome.",
+      "Repaired the evaluateR2 reporting defect recorded as remaining in the preceding push. A source that never reached extraction was counted as having left the extraction backlog, because PENDING_EXTRACTION_STATES covers only the two extraction states: on the real hosted population the gate read \"all 534 queued sources have left the extraction backlog\" while 128 of them had never been retrieved. Custody now decides which population a source belongs to rather than a list of state names, because the queue carries states this repository does not define - the Learning Worker writes oversight-vetting-pending - and a state allow-list here would have to guess where an unfamiliar name belongs. The satisfied verdict is unchanged on real completions, since R2 asks what the worker does with the work it is given and coverage is judged by R4 and R5; the detail now names both populations. A new branch reads pending where an empty backlog carries no completions at all, which is strictly stricter than before and the only branch whose verdict changed. npm run test:all 863/863 with the regression test shown failing against the old implementation first.",
+      "Switched governed discovery to nvidia/nemotron-3-nano-30b-a3b on the owner's instruction, and pinned it in .github/workflows/model-pointer-research.yml rather than asking for another setting change. The retired id was in Secrets, not Variables - GitHub masks secrets and prints variables, and the failing run showed NVIDIA_NIM_MODEL as *** - so the workflow can override it from version control and no longer consults Secrets for the model at all. A repository variable still wins over the pinned default, and prints in the log. NVIDIA_NIM_API_KEY is unchanged and is still read from Secrets only. lint:workflows passes across 20 files and test/workflow.test.js is 32/32.",
+      "Closed the pre-registration hole the owner identified with \"scope was what hypothesis is supposed to be\". The code agrees with that reading: languageExperimentRegistry builds the hypothesis as a template over the declared boundary and the claim, and hypothesisTestPlan holds the experiment to the declared claimScope, so the declaration is the hypothesis rather than configuration for it. hypothesisTestPlanSha256 froze the plan during the run, after the declaration had been read, so nothing recorded the boundary before the result was known. New src/scopePreRegistration.js records each declaration hash against the run clock in scope-pre-registration.json and refuses, under the new CRU-0047, a declaration that changed after a controlled experiment on that same claim ran and did not verify it; CRU-0048 covers the ledger itself failing closed. The rule arms on exactly one case: a claim never evaluated stays freely correctable, which is what keeps the currently unpairable declaration fixable, and a verified claim may be re-declared as a new experiment with the prior registration kept in history. A thrown pipeline is deliberately left pending rather than recorded not-verified, because a throw cannot be told apart from a broken harness and arming the refusal on an ambiguous signal would block the owner over a defect of ours. On refusal the ledger is left untouched, or refusing would itself record the new hash as pre-registered.",
+      "Proved both new rules load-bearing by mutation rather than asserting them: disabling the not-verified refusal turns two unit tests red, and letting a refused declaration reach selectAllEvaluable turns the integration test red - that last one is the case where the run would have promoted on a boundary chosen after the failure. test/scopePreRegistration.test.js is 8 tests over the hash contract, first registration, unchanged re-sighting, refusal and its persistence, free correction while pending, re-declaration after verified, ledger tampering and project binding, and per-declaration independence. test/realCorpusLearning.test.js gains two integration tests through learnFromRealCorpus on the real extraction worker and real documents. Registered the new file in both testCadenceCoreLegacy and _testCadenceCore, which is what the four-category classification requires. npm run test:all 873/873."
     ],
     "verification": [
-      "Pre-write branch and remote-tip verification completed at 0f66d3b05989d10580ae22b3202d22ad3cf108d0.",
-      "Focused tests pass 49/49; full governed suite and the mandatory known-bug re-test pass 337/337; configuration, docs, workflow lint, clutter, privacy, security, conflict governance, general governance, design-brief, core-reference, authenticity, and diff checks pass.",
-      "Exact development tip 8fd433ec and exact main merge commit 32cf371 passed Self-Test and CodeQL; PR #16 checks passed before protected merge.",
-      "The failed third-branch run 33269032123 reported only Plug-in via AI-HANDOFF.json governingDocuments -> main:Devlog-Pruned (Archive branch); the ledger is intentionally on Archive, not main."
-      ,"Focused reference-integrity and handoff tests pass 40/40; full governed suite passes 338/338; validation, docs, workflow lint, clutter, privacy, security, conflict governance, general governance, design-brief, core-reference, authenticity, and diff checks pass."
+      "npm run test:all 863/863 at this change. The count rose by one with the evaluateR2 regression test, which was shown failing against the previous implementation before the repair existed.",
+      "validate, docs:check, lint:workflows, audit:clutter, audit:privacy, audit:security, audit:ai-conflict-governance, audit:governance, audit:design-brief, audit:core-ref, audit:failure-codes, audit:circulation, audit:coordination and git diff --check all exit 0.",
+      "Hosted at 259cf60: eighteen of eighteen Self-Test legs green, CodeQL and both Analyze jobs green, both AI handoff policy and AI conflict governance runs green, both locked-PR guards, monitor sync and the DEVLOG archive job green.",
+      "Prove R4-R8 was read rather than assumed and has changed. Custody now verifies oversight-vetted with queue hash 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef over 403 stored source files, 8 documents and 526 links; the job reaches corroboration and uploads three artifact files. 25,981 usable candidates from 297 sources; one claim corroborated by two independent sources (\"Any class can have more than one constructor.\"); independent-source counts 1 at 0.8, 1 at the configured 0.74, 2 at 0.7, 10 at 0.6, 34 at 0.5. It fails closed on CRU-0026, not CRU-0023. No gate advanced and none was marked passed.",
+      "Fill the candidate URL holding queue is green. It no longer fails closed on an empty NVIDIA_NIM_MODEL: the model is pinned in the workflow and run 34949648646 printed it unmasked as nvidia/nemotron-3-nano-30b-a3b. That run searched 0 topics because all 16 recorded a blocked run at 2026-09-15T08:32:29Z and a blocked topic consumes its daily slot, so a green check here is not evidence that R3 admitted anything and evaluateR3 still reads pending.",
+      "npm run test:all 873/873 at this change, with the two new rules shown failing under mutation first. The failure-code ratchet holds at 581 uncoded throw sites and none added; the fly-by-wire ratchet holds at 57 direct edges and none added, with scopePreRegistration placed in the learning organ."
     ],
     "remaining": [
-      "Run focused and full verification, fetch/reconcile immediately before the atomic development commit and push, promote the authorized repair through release, and verify exact-main third-branch integrity plus the normal hosted checks until green."
+      "Owner action for R5: either republish Crucible-Learning-State including owner-delegated-url:11bfade7a586952ee66669380ffef05fb567a48589b59c33159b275c47e44eb4 so the existing declaration becomes pairable, or declare a scope, experiment and distinct verifier for a claim the hosted corpus already corroborates - \"Any class can have more than one constructor.\" is corroborated at the configured threshold by linked-source:28503d6f and owner-file:7a409be1. Declaring a scope is the owner judgement and is never inferred.",
+      "Retain gate evidence durably outside the evictable Actions caches, with per-gate invalidation when the relevant implementation changes.",
+      "Do not weaken handoff, coordination, learning-custody, collision, security, or promotion gates to obtain green cosmetics, and never mark a gate passed on a run that was refused before it started or that exited before emitting a verdict.",
+      "Re-check the corpus arithmetic when the queue is next readable. The hosted custody report records 403 of 534 sources with stored content, which implies 131 without, while the same run diagnoses sources-without-content as 128. The three-source difference is unexplained and neither number was taken on trust: the repaired evaluateR2 derives its own count from contentSha256 rather than from either figure."
+    ],
+    "open": [
+      "The 14-source owner rescan obligation stays pending and unperformed. Its trigger condition is now partly met: custody is self-consistent and retention is provable. It stays pending because R5 has produced no retained hosted knowledge version yet, so there is no retained-state evidence to record completion against. When it is performed, reuse content hashes and extraction-window history; do not duplicate source bytes, reset custody, or re-extract unchanged windows.",
+      "Pull request 19 promotes development to main. Making its checks green does not make it mergeable, and nothing here merges it. Learning scope stays blocked from main until every learning gate passes and the owner authorizes promotion.",
+      "The first real discovery attempt on the new model is not the run this push triggers. All 16 topics recorded a blocked run at 2026-09-15T08:32:29Z, and a blocked topic consumes its daily slot exactly as the Google and Perplexity paths behave, so nothing is due again until 2026-09-16T08:32:29Z. The triggered run will therefore report searched 0 and exit 0, which is the workflow behaving correctly and is not evidence that R3 admitted anything. evaluateR3 decides R3 from the audit log rather than from the check colour, and it still reads pending.",
+      "The stale NVIDIA_NIM_MODEL repository secret still exists and is still unused. Verified unreferenced at 3a70af7: no workflow reads secrets.NVIDIA_NIM_MODEL, and the only live reference is vars.NVIDIA_NIM_MODEL in model-pointer-research.yml behind the pinned default. The owner asked for it to be deleted and it could not be done from this session: there is no Actions secret-management tool available here and the gh CLI is not present, so deletion remains an owner action in Settings, Secrets and variables, Actions, Secrets tab."
     ]
-  }
+  },
+  "mutationOwnershipPolicy": {
+    "rule": "Discussion is shared; mutation is exclusive. Any AI may read, test, review, critique and propose against any scope. Exactly one AI may mutate a given scope, and only while holding an active claim.",
+    "scopeShape": "A claim locks paths and/or explicit line regions. Overlap is structural: a directory claim locks every file beneath it, and a region inside an already-claimed file is covered.",
+    "transferRule": "Ownership changes only by explicit release or handoff. Winning a technical argument does not transfer it; the current owner may implement another AI's accepted proposal.",
+    "conflictRule": "A conflict naming contestedScope freezes only that scope. A conflict naming no scope, or marked repositoryWide, stops everything - the safe reading when the record does not say what is disputed.",
+    "canonicalStreamRule": "One canonical mutation stream per claimed scope. Other providers act as reviewers, investigators, testers or proposal sources until ownership changes.",
+    "enforcement": "src/mutationClaims.js and src/coordinationGate.js; npm run audit:coordination fails the build on overlap."
+  },
+  "providerPolicy": {
+    "providers": [
+      "openai",
+      "anthropic",
+      "perplexity",
+      "nvidia-nim"
+    ],
+    "canonicalSet": "aiProviderRegistry.PROVIDER_IDS is canonical. aiProviderAdapters.DIALECTS carries protocol metadata only and is asserted at load to cover exactly that set, so a dialect variant can never quietly become a fifth provider that gets consulted and counted.",
+    "credentialRule": "Credentials come only from environment variables or repository secrets. Never in source, a committed prompt, AI-HANDOFF.json, AI-CONFLICTS.json, DEVLOG.md, or a workflow log.",
+    "modelRule": "General multi-provider deliberation has no default model: each provider reads its model from the environment and a missing one is reported as configuration. The separate Perplexity citation-discovery transport explicitly pins the current supported search model sonar when PERPLEXITY_MODEL is absent, because that bounded workflow makes the model optional by owner direction; this does not create a default for provider voting or review.",
+    "provenanceRule": "Every response is kept separately with provider, model, timestamp, taskId, prompt hash and response hash. Responses are never merged into one authorless answer.",
+    "failureRule": "A provider that could not be reached is recorded as failed, never dropped, and lowers corroboration to insufficient-evidence. An unreachable provider is unknown, not agreeing.",
+    "authorityRule": "Cross-model agreement is evidence, not proof. No AI may declare its own work approved, and no AI may be the only reviewer of its own material change. Tests, security, governance, integrity checks and OWNER authority all outrank model consensus."
+  },
+  "mutationClaims": [
+    {
+      "taskId": "multi-ai-coordination",
+      "owner": {
+        "provider": "anthropic",
+        "model": "claude-opus-5",
+        "agent": "session_01Ggfg1gzuSLTQwTgUejXQ7V"
+      },
+      "scope": {
+        "paths": [
+          "src/mutationClaims.js",
+          "src/mutationClaimStore.js",
+          "src/multiAiDeliberation.js",
+          "src/aiProviderRegistry.js",
+          "src/aiProviderAdapters.js",
+          "src/multiAiOrchestrator.js",
+          "src/devlogAccountability.js",
+          "src/coordinationGate.js",
+          "src/aiHandoffContinuation.js",
+          "src/coordinationCli.js"
+        ],
+        "regions": []
+      },
+      "purpose": "Extend the Crucible Orchestrator into the governed multi-AI coordinator: exclusive mutation ownership, AI-CONFLICTS deliberation, DEVLOG accountability, and four governed provider adapters.",
+      "status": "released",
+      "acquiredAt": "2026-09-03T17:10:00Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-03T18:05:00Z"
+    },
+    {
+      "taskId": "resolve-additive-diagnostics-conflict",
+      "owner": {
+        "provider": "openai",
+        "model": "codex",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-CONFLICTS.json",
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          ".github/workflows/handoff-policy.yml",
+          "src/devlogPruneArchive.js",
+          "src/testCadenceCoreLegacy.js",
+          "test/devlogPruneArchive.test.js",
+          "test/workflow.test.js",
+          "src/failureCodes.js",
+          "src/circulationLinkage.js"
+        ],
+        "regions": []
+      },
+      "purpose": "Record the owner-approved additive diagnostics ruling and automate the standing Devlog-Pruned Archive synchronization exception.",
+      "status": "released",
+      "acquiredAt": "2026-09-04T16:18:55Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-04T16:18:55Z"
+    },
+    {
+      "taskId": "crucible-rolling-learning-release-review-20260906",
+      "owner": {
+        "provider": "openai",
+        "model": "codex",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "governingDocuments/scientific-learning-release-status.json"
+        ],
+        "regions": []
+      },
+      "purpose": "Record the material 2026-09-06 scientific-learning release forecast and gate evidence update on development only.",
+      "status": "released",
+      "acquiredAt": "2026-09-06T16:15:41Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-07T02:47:14Z"
+    },
+    {
+      "taskId": "daily-google-research-and-lock-recovery-20260908",
+      "owner": {
+        "provider": "openai",
+        "model": "gpt-5",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "package.json",
+          "src/automatedGoogleResearch.js",
+          "src/automatedGoogleResearchCli.js",
+          "src/durableLock.js",
+          "src/durableLockRecoveryCli.js",
+          "src/circulationLinkage.js",
+          "src/failureCodes.js",
+          "test/automatedGoogleResearch.test.js",
+          "test/durableLock.test.js"
+        ],
+        "regions": []
+      },
+      "purpose": "Run up to 50 due research topics daily, prevent zero-byte canonical locks, recover the exact owner-authorized legacy extraction lock with preserved evidence, and report post-search extraction blockage as a structured failing partial result.",
+      "status": "released",
+      "acquiredAt": "2026-09-08T17:56:00Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-08T18:28:00Z"
+    },
+    {
+      "taskId": "crucible-rolling-learning-release-review-20260909",
+      "owner": {
+        "provider": "openai",
+        "model": "gpt-5",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "governingDocuments/scientific-learning-release-status.json"
+        ],
+        "regions": []
+      },
+      "purpose": "Record the material 2026-09-09 exact-tip CI, custody, and rolling scientific-learning forecast evidence on development only.",
+      "status": "released",
+      "acquiredAt": "2026-09-09T16:12:14Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-09T16:12:14Z"
+    },
+    {
+      "taskId": "crucible-rolling-learning-release-review-20260910-1600",
+      "owner": {
+        "provider": "openai",
+        "model": "gpt-5",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "governingDocuments/scientific-learning-release-plan.md",
+          "governingDocuments/scientific-learning-release-status.json"
+        ],
+        "regions": []
+      },
+      "purpose": "Record the material 2026-09-10 scheduler, vetted-custody, exact-tip CI, and rolling scientific-learning forecast evidence on development only.",
+      "status": "released",
+      "acquiredAt": "2026-09-10T20:07:39.795Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-10T20:09:30.249Z"
+    },
+    {
+      "taskId": "crucible-rolling-learning-release-review-20260910-proof-correction",
+      "owner": {
+        "provider": "openai",
+        "model": "gpt-5",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "governingDocuments/scientific-learning-release-status.json"
+        ],
+        "regions": []
+      },
+      "purpose": "Correct the 2026-09-10 rolling review with the exact-tip hosted proof that consumed the new vetted publication and still failed queue-hash verification.",
+      "status": "released",
+      "acquiredAt": "2026-09-10T20:19:22.533Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-10T20:20:27.385Z"
+    },
+    {
+      "taskId": "perplexity-r3-discovery-and-self-test-repair-20260910",
+      "owner": {
+        "provider": "openai",
+        "model": "gpt-5",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "README.md",
+          "package.json",
+          ".github/workflows/perplexity-research.yml",
+          "src/aiProviderAdapters.js",
+          "src/automatedGoogleResearch.js",
+          "src/providerCirculation.js",
+          "src/automatedPerplexityResearch.js",
+          "src/automatedPerplexityResearchCli.js",
+          "src/sourceRetrievalWorker.js",
+          "src/sourceRetrievalWorkerCli.js",
+          "src/ownerFileIntake.js",
+          "src/ownerFileIntakeCli.js",
+          "src/claimExtractionWorker.js",
+          "src/claimExtractionWorkerCli.js",
+          "src/safeInformationRetrieval.js",
+          "src/semanticCorroboration.js",
+          "src/pairedCorroboration.js",
+          "src/realCorpusLearning.js",
+          "src/hostedLearningProof.js",
+          "src/preSoakReadiness.js",
+          "src/circulationLinkage.js",
+          "src/failureCodes.js",
+          "src/testCadenceCoreLegacy.js",
+          "test/_testCadenceCore.js",
+          "test/aiProviderAdapters.test.js",
+          "test/automatedPerplexityResearch.test.js",
+          "test/sourceRetrievalWorker.test.js",
+          "test/claimExtractionWorker.test.js",
+          "test/safeInformationRetrieval.test.js",
+          "test/semanticCorroboration.test.js",
+          "test/pairedCorroboration.test.js",
+          "test/hostedLearningProof.test.js",
+          "test/ownerFileIntake.test.js",
+          "test/pdfTextExtraction.test.js",
+          "test/failureCodes.test.js",
+          "test/preSoakReadiness.test.js",
+          "test/scientificLearning.test.js",
+          "test/workflow.test.js",
+          "governingDocuments/scientific-learning-policy.md",
+          "governingDocuments/learning-scope-declarations.json",
+          "governingDocuments/scientific-learning-release-plan.md",
+          "governingDocuments/scientific-learning-release-status.json"
+        ],
+        "regions": []
+      },
+      "purpose": "Complete the governed research-to-learning path: repair the random ciphertext assertion; add daily 50-topic candidate-only Perplexity discovery and safe URL retrieval; and prove one independently corroborated real-corpus claim through controlled testing, durable memory, restart restoration, and bounded use without claiming hosted release evidence.",
+      "status": "released",
+      "acquiredAt": "2026-09-11T02:15:00Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-12T19:34:00Z"
+    },
+    {
+      "taskId": "canonical-task-routing-20260912",
+      "owner": {
+        "provider": "openai",
+        "model": "gpt-5",
+        "agent": "codex-root"
+      },
+      "scope": {
+        "paths": [
+          "TASK-ROUTING.json",
+          "AGENTS.md",
+          "AI-HANDOFF.json",
+          "DEVLOG.md",
+          "README.md",
+          "package.json",
+          ".githooks/pre-push",
+          ".github/workflows/self-test.yml",
+          "src/taskRouting.js",
+          "src/taskRoutingCli.js",
+          "src/failureCodes.js",
+          "src/circulationLinkage.js",
+          "src/testCadenceCoreLegacy.js",
+          "test/_testCadenceCore.js",
+          "test/taskRouting.test.js",
+          "test/workflow.test.js",
+          "test/failureCodes.test.js"
+        ],
+        "regions": []
+      },
+      "purpose": "Classify each task once, route it by stable repository ID to an owner-approved branch, require repository-scoped commits, and fail closed before writes or pushes when routing is unknown, conflicting, protected, or mismatched.",
+      "status": "released",
+      "acquiredAt": "2026-09-12T19:34:00Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-13T00:21:00Z"
+    },
+    {
+      "taskId": "discovery-first-due-race-20260915",
+      "owner": {
+        "provider": "anthropic",
+        "model": "claude-opus-5",
+        "agent": "session_01Ggfg1gzuSLTQwTgUejXQ7V"
+      },
+      "scope": {
+        "paths": [
+          "src/automatedModelPointerResearch.js",
+          "src/automatedGoogleResearch.js",
+          "src/automatedPerplexityResearch.js",
+          "test/automatedModelPointerResearch.test.js",
+          "test/automatedGoogleResearch.test.js",
+          "test/automatedPerplexityResearch.test.js",
+          "AI-HANDOFF.json",
+          "DEVLOG.md"
+        ],
+        "regions": []
+      },
+      "purpose": "Close the clock-ordering race that lets a never-run discovery topic miss its first due window, which is turning every Self-Test matrix leg red.",
+      "status": "released",
+      "acquiredAt": "2026-09-15T03:51:10.192Z",
+      "handedOffTo": null,
+      "releasedAt": "2026-09-15T08:33:50.781Z"
+    }
+  ]
 }

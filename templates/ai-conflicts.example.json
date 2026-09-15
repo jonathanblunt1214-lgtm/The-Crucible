@@ -1,4 +1,91 @@
 {
   "schemaVersion": 1,
-  "conflicts": []
+  "conflicts": [
+    {
+      "id": "example-competing-extractor-designs",
+      "timestamp": "2026-09-03T17:20:00Z",
+      "type": "competing-implementation-proposal",
+      "description": "Two providers proposed different fixes for the same extractor defect.",
+      "status": "open",
+      "detectedAt": "2026-09-03",
+      "contestedAction": "Rewriting src/example.js while two providers disagree on the approach.",
+      "contestedScope": {
+        "paths": [
+          "src/example.js"
+        ]
+      },
+      "rationaleSummary": "Both proposals are plausible and the evidence does not yet separate them, so the contested mutation is frozen and every position is preserved for the owner.",
+      "evidence": [
+        "test/example.test.js currently passes under both proposals",
+        "neither proposal has been run against the real corpus"
+      ],
+      "sides": [
+        {
+          "source": "openai",
+          "instruction": "Normalise at read time."
+        },
+        {
+          "source": "anthropic",
+          "instruction": "Normalise at write time."
+        }
+      ],
+      "alternatives": [
+        "Normalise at read time, leaving stored data untouched.",
+        "Normalise at write time, migrating stored data once."
+      ],
+      "deliberation": {
+        "proposals": [
+          {
+            "provider": "openai",
+            "model": "example-model",
+            "summary": "Normalise at read time.",
+            "evidence": [
+              "no migration required"
+            ],
+            "at": "2026-09-03T17:05:00Z"
+          },
+          {
+            "provider": "anthropic",
+            "model": "example-model",
+            "summary": "Normalise at write time.",
+            "evidence": [
+              "read path stays hot"
+            ],
+            "at": "2026-09-03T17:06:00Z"
+          }
+        ],
+        "positions": [
+          {
+            "provider": "perplexity",
+            "position": "Read-time normalisation is the safer first step.",
+            "evidence": [
+              "reversible without a migration"
+            ]
+          }
+        ],
+        "responses": [
+          {
+            "provider": "nvidia-nim",
+            "respondsTo": "anthropic",
+            "stance": "partial",
+            "response": "Write-time is faster but needs a migration plan first."
+          }
+        ],
+        "corroboration": {
+          "outcome": "partial-agreement",
+          "rationaleSummary": "Three providers lean read-time, one is partial. Agreement is evidence, not proof, and does not authorise the change.",
+          "assessedAt": "2026-09-03T17:10:00Z",
+          "escalatedToOwner": false,
+          "ownerApproved": false,
+          "promotionAuthorized": false
+        }
+      },
+      "resolution": {
+        "decision": "Pending repository-owner decision.",
+        "rationaleSummary": "No AI may resolve this; both positions are preserved until the owner rules.",
+        "decidedBy": null,
+        "decidedAt": null
+      }
+    }
+  ]
 }

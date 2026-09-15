@@ -26,3 +26,28 @@ jobs:
       - uses: github/codeql-action/analyze@42947a340483f03ba47bb1a039b2c519aab3df85 # v3
         with:
           category: /language:javascript-typescript
+          # Write the SARIF where the next step can keep it. This does not change what is
+          # analysed or what is uploaded to code scanning; it only stops the findings from
+          # existing solely on a runner that is about to be destroyed.
+          output: sarif-results
+      # A check that reports "4 high" and provides no way to read the four is the code-scanning
+      # equivalent of the empty `diagnoses` array this repository just spent a day removing. The
+      # alert detail lives only in the code-scanning API and the web UI; the analysis log says
+      # "Exported results to SARIF" and "Successfully uploaded results" and prints nothing about
+      # what was found. Four consecutive commits reported exactly 4 high with no way, from a
+      # terminal, to learn what they were.
+      #
+      # Retaining the SARIF costs nothing and makes the findings readable by whoever is holding
+      # the failure - which is the same principle as every failure carrying a code.
+      #
+      # It can never change this job's result: it runs on always() and is continue-on-error, so
+      # a diagnostic failure cannot replace the real one.
+      - name: Keep the SARIF, so a red CodeQL check can be read rather than guessed at
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: codeql-sarif-${{ github.run_id }}-${{ github.run_attempt }}
+          path: sarif-results
+          if-no-files-found: warn
+          retention-days: 90

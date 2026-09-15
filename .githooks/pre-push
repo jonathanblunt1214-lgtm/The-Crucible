@@ -6,6 +6,20 @@
 # for why the executable bit matters here).
 set -e
 
+# Read and verify the proposed ref updates before Git's local repository bindings are
+# removed. The router reads this hook's stdin exactly once, rejects new branches and
+# route/path mismatches, and treats deletion as outside routing authority (Git hosting
+# policy and explicit owner authorization still decide whether a deletion is allowed).
+node src/taskRoutingCli.js verify-push --remote "$1" --url "$2"
+
+# Git exports repository-local environment into hooks. The tests below create
+# isolated repositories, so remove only those inherited bindings before npm
+# starts; otherwise their Git commands can mutate or lock the repository that
+# is currently being pushed.
+for crucible_git_var in $(git rev-parse --local-env-vars); do
+  unset "$crucible_git_var"
+done
+
 echo "[The Crucible] Running local pre-push verification..."
 npm run lint:workflows
 npm run docs:check

@@ -1,0 +1,133 @@
+{
+  "schemaVersion": 1,
+  "projectId": "github:jonathanblunt1214-lgtm/The-Crucible",
+  "branch": "development",
+  "developmentSha": "d9a91da7165ffd672899698a31dca1e134c7d03e",
+  "updatedAt": "2026-09-15T10:30:00Z",
+  "rollingTarget": null,
+  "rollingTargetState": "indeterminate-until-a-pairable-owner-declaration-exists",
+  "timezone": "America/New_York",
+  "confidence": "low",
+  "releaseAuthorized": false,
+  "promotionPerformed": false,
+  "gates": {
+    "R1": "passed",
+    "R2": "pending; the refusal condition that kept hosted throughput at zero is resolved, and the extraction backlog is drained. Learning-Worker run 559 started on a real runner (runner_id 1000022276), and the worker export the oversight run consumed was generated at 2026-09-15T05:28:09.646Z at worker SHA 671922249a431bf4e40c234424ff2868e9ba192f carrying candidateCount 26794 over queueSourceCount 534. The restored corpus holds no source in claim-extraction-forced-pending or claim-extraction-in-progress: 381 are claim-extraction-complete, 109 retrieval-blocked, 25 oversight-vetting-pending and 19 research-approved-pending-retrieval. That is a drained extraction queue, not 534 extracted sources - the 109 blocked plus the 19 awaiting retrieval are the same 128 the proof reports as having no stored content, so they left the backlog without ever entering extraction. The gate is not marked passed on that distinction being elided.",
+    "R3": "pending; the blocker moved from a missing credential to a retired model id, and is now one owner setting. NVIDIA_NIM_API_KEY and NVIDIA_NIM_MODEL both reach the job, the readiness step passes, and dispatched run 34947505096 executed all 16 due topics against NVIDIA NIM on a real runner. Every topic was blocked identically: HTTP 410, \"The model has reached its end of life on 2026-08-26T09:00:00Z and is no longer available.\" A 410 is a model-lifecycle answer rather than an authentication one, so the key is working and the configured model is simply withdrawn. Zero URLs were admitted and zero registered; the run failed closed under CRU-0042 rather than reporting an empty result. Each blocked topic still consumed its daily slot, so the topics are not due again for 24 hours from 2026-09-15T08:32:29Z unless the project-bound discovery state is discarded.",
+    "R4": "pending hosted; the custody blocker is resolved and the end-to-end chain is now demonstrated on the real hosted corpus, but the proof stopped before emitting any gate verdict. Oversight run 34938208295 published vetted commit ef2d3b3 with a post-merge custody vet ahead of encryption, and hosted run 34947395586 restored it: provenance oversight-vetted, queue SHA-256 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef now equal to the manifest value that previously read 96f13274cf8c57d717e6f581cbe3c38bdcb6d52ad7e56a5fac51fd18eeefb50e, learning SHA-256 9eb788434be6a62c055522a3daa3090720f6754e42ec3c298f75c32db3c0d383, across 403 stored source files and 329669312 bytes with plaintextRetained false. Owner-ingested source owner-file:7a409be17956fa11e90c634d6de5a586d0415d668c56d252f66fb5580a362d9b travelled ingest, hashing, bounded extraction, deduplication and oversight-vetted candidate custody intact, and its claim \"Any class can have more than one constructor.\" is corroborated at the configured 0.74 threshold by the independent linked-source:28503d6f107c6d879b9a251ad0c10598865e2d6aeeec816f8431dae855b8068e. The gate stays pending because src/hostedLearningProof.js is what decides it and that run exited 1 under CRU-0026 before reaching a verdict; the record does not substitute a reading of log lines for the proof own outcome.",
+    "R5": "pending hosted; passed locally on real corpus, and the hosted attempt is now blocked on corpus contents rather than custody. The owner-declared Node.js dense-numeric-array scope completed the controlled experiment and distinct independent verifier locally, producing active durable knowledge version 1 with proof SHA-256 2f0ba6995432f34715867eb4e3945bb9d5e789241e0e66be7a835291b62fd3cf. Hosted run 34947395586 failed closed under CRU-0026: the single declaration in governingDocuments/learning-scope-declarations.json pairs owner-file:2f16a53d0254b2fa13963c82e0043662e2a0eead8b1eefcd6fcf9d776ec6eabc with owner-delegated-url:11bfade7a586952ee66669380ffef05fb567a48589b59c33159b275c47e44eb4, and the second of those is not in the restored corpus, so nothing can be paired to it. That source is admitted into the local queue by npm run learning:admit-source-url and retrieved locally; no workflow publishes the raw corpus, so it can only reach the vetted bundle after the owner republishes Crucible-Learning-State with it included. The alternative remedy is an owner decision, never an inferred one: declare a scope for a claim the hosted corpus already corroborates. The declared scope is now pre-registered rather than merely read: src/scopePreRegistration.js records the SHA-256 of each declaration against the run clock in scope-pre-registration.json, and refuses under CRU-0047 a declaration that changed after a controlled experiment on that same claim ran and did not verify it. This strengthens what R5 already required - a hash-bound pre-result plan - which held inside a run and not across runs, and it moves no gate. The declaration currently blocking R5 has never reached an experiment, so its outcome is pending and correcting it is explicitly not blocked.",
+    "R6": "pending hosted; passed locally. After the learning process exited, a fresh process restored version 1 and exact-boundary retrieval returned it; a separate authenticity consumer selected it as bounded regression context with knowledgeIsProofForCurrentRun false and maySkipTest false.",
+    "R7": "pending; the mechanism is locally proven, but no real promoted version from the current custody chain exists to supersede and roll back in hosted evidence.",
+    "R8": "pending; no complete combined live cycle currently demonstrates every required safety, quarantine, deduplication, contradiction, and rollback behaviour on the current real corpus.",
+    "R9": "held; soak band 72-96 continuous hours, observation ceiling 1000 data points, and the soak does not start while the data cannot exhibit the failures it checks",
+    "R10": "pending; exact tip d9a91da7165ffd672899698a31dca1e134c7d03e is the record SHA and its predecessor 259cf60ce2fc9127a2a8277df172dff39d3b59a0 is hosted-green across all eighteen Self-Test legs, CodeQL, both AI handoff policy runs, both AI conflict governance runs, the locked-PR guards, the monitor sync and the DEVLOG archive job. The single remaining red check on pull request 19 is Prove R4-R8 on encrypted durable state, now failing on CRU-0026 rather than the restored queue hash mismatch it failed on before. Pull request 19 promotes development to main and is not merged; learning scope stays blocked from main until every learning gate passes and the owner authorizes promotion.",
+    "R11": "pending"
+  },
+  "blockingReason": "No gate is marked passed, and two long-standing blockers are nonetheless gone. Oversight republished a self-consistent vetted bundle at ef2d3b3, so the restored queue hash and the published manifest value now agree on 54a976c3c02c1cbeaa522ccece1053a8e3516885de56cd006541a809d1c915ef; the hosted proof reads the real corpus end to end and corroborates one claim across two independent sources. Hosted throughput is no longer zero, so the rolling target is no longer indeterminate for that reason. What now bounds the date is an owner action with no measurable rate: R5 cannot proceed hosted until either the owner-delegated MDN source reaches Crucible-Learning-State, or the owner declares a scope for a claim the hosted corpus already corroborates. R3 needs one currently-available NVIDIA NIM model id in place of a model withdrawn on 2026-08-26. R7 and R8 still have no real cycle, and R9 cannot start until R2-R8 are simultaneously green.",
+  "history": [
+    {
+      "recordedAt": "2026-08-30T20:33:00Z",
+      "priorTarget": null,
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Initial low-confidence forecast; mandatory extraction, live-cycle, rollback, 72-hour soak, exact-tip CI, and owner-authorization gates remain."
+    },
+    {
+      "recordedAt": "2026-08-30T21:13:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Extraction throughput is now measurable: forced web sources fell from 393 to 288 and all seven PDFs advanced to page 11. Confidence increased to medium; remaining live-cycle and soak gates keep the target unchanged."
+    },
+    {
+      "recordedAt": "2026-08-31T17:49:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Gate change without a date change: R2 restart proof passed via a live SIGKILL recovery cycle now permanently covered by test/durableLock.test.js, and exact tip 492c8fe1d5944b41088a839e5aefdfb8c02aef19 is hosted-green across all nine Self-Test jobs, CodeQL, and every governance workflow. R3-R8 still require live retrieval and the operator durable store, and the mandatory 72-hour soak has not started, so the target does not move earlier."
+    },
+    {
+      "recordedAt": "2026-08-31T18:45:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Owner decision, not a forecast recalculation: the mandatory soak is raised from 72 to 96 continuous hours, and the durable-lock staleness floor is set to 30 seconds with 60 seconds as the ceiling no agent may exceed without the owner saying so. The target does not move, because R3-R8 remain unproven and their completion, not the soak length, is what currently bounds the date; the extra 24 hours is absorbed well inside the existing forecast."
+    },
+    {
+      "recordedAt": "2026-08-31T19:00:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Owner clarification superseding the earlier same-day entry: the soak is a 72-96 hour band, not a single 96-hour duration. 72 is a hard floor rather than a default, the duration is chosen from evidence before the clock starts and never revised downward mid-soak, and forecasting continues to use 96. The target does not move, because R3-R8 remain unproven and their completion, not the soak length, is what bounds the date."
+    },
+    {
+      "recordedAt": "2026-08-31T19:30:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Owner decision closing the R9 definition gap: an observation ceiling of 1000 data points, and an explicit hold rather than a vacuous run when the current data would return no result. The target does not move; if anything this makes the dependency on R5 and R7 explicit, since verified knowledge versions and supersessions are what make a soak observable at all."
+    },
+    {
+      "recordedAt": "2026-08-31T22:09:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Hosted evidence changed R4-R8 to passed without changing the forecast: run 33444444978 at exact development SHA 5ed69f6dcc319f1050b45cfcf84d2108863d5f9a passed twice, and execution two restored the authenticated encrypted state from execution one. R2 live backlog evidence and R3 live discovery remain open, so R9 remains held and the target does not move earlier."
+    },
+    {
+      "recordedAt": "2026-09-01T00:10:00Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": "2026-09-14T16:00:00Z",
+      "reason": "Gate correction under the owner decision of 2026-08-31 to build a real learning machine. R4-R8 had been recorded passed on a hosted proof that built its sources in code and never read the restored corpus. R4-R6 are now wired to the real corpus with no fallback and are pending hosted re-proof; R7 and R8 are recorded as fixture-based. The target does not move: the corrected gates are no further from completion than the real work was before, only more accurately described."
+    },
+    {
+      "recordedAt": "2026-09-07T02:47:14Z",
+      "priorTarget": "2026-09-14T16:00:00Z",
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
+      "reason": "The September 14 forecast is withdrawn rather than rolled forward by an invented rate. Learning-Worker recovery and candidate export now succeed, but Oversight repeatedly fails before returning merged vetted ciphertext, the vetted-state tip remains unchanged, R3 has no scheduled run, and the exact development tip is red. A finite target can be recalculated only after measurable end-to-end throughput resumes; forecasting must still include the full 96-hour soak."
+    },
+    {
+      "recordedAt": "2026-09-09T16:12:14Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
+      "reason": "Development advanced to 2bf95fc7620d6c8001afd8396b935bfb0c61f154 and exact-tip CI improved to 31 successful, 1 failed, and 1 skipped checks, clearing the prior Self-Test and CodeQL blockers. Daily research capacity and a real manual 16-topic cycle are now proven, but R3 still lacks scheduler-originated evidence, scheduled Worker throughput remains zero, Oversight still fails before vetted publication, and the hosted real corpus still has zero independent corroboration with 278 sources awaiting extraction. The target remains indeterminate at low confidence rather than inventing an end-to-end rate; any future finite forecast still includes the full 96-hour soak."
+    },
+    {
+      "recordedAt": "2026-09-10T20:07:44Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
+      "reason": "Development advanced through 4f0bdb378a15343c310e9e4fa1a5d5f4ea407df6. The first scheduler-originated research run completed all 16 due topics and Oversight successfully published independently validated vetted commit 4c4297f, clearing two prior custody unknowns. They do not establish end-to-end throughput: research admitted zero URLs, scheduled Worker run 34522273359 still processed zero work after publication, and exact-tip hosted proof 34525272883 consumed the current vetted custody but still failed on a restored queue hash mismatch. The target remains indeterminate at low confidence; any future finite forecast still includes the full 96-hour soak."
+    },
+    {
+      "recordedAt": "2026-09-11T02:44:00Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-end-to-end-throughput",
+      "reason": "Owner-file intake measured 14 requested sources as 10 exact SHA-256 matches already fully extracted and 4 novel files. The 4 new records completed local bounded extraction with 58 candidate IDs and no blocker, while the same batch advanced 21 older sources. This proves useful local candidate throughput, not retained or independently vetted knowledge. The current bundle is still internally inconsistent and live Perplexity discovery still lacks its secret, so no release gate advances and the target remains indeterminate. The active rolling review now preserves a one-time hash-bound rescan obligation for all 14 sources after real retention and self-consistent custody are proven."
+    },
+    {
+      "recordedAt": "2026-09-12T12:02:00Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-hosted-throughput",
+      "reason": "Local end-to-end retention is no longer zero. Two independent real sources carried the bounded Array.prototype.map claim through controlled testing and a distinct verifier into durable version 1; fresh-process retrieval and the normal authenticity consumer both restored and used it without skipping tests. This advances local R4-R6 only. The target remains indeterminate because Oversight must republish the inconsistent vetted bundle before hosted R4-R6 can repeat, and R7-R9 remain unsatisfied."
+    },
+    {
+      "recordedAt": "2026-09-15T05:00:00Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-nonzero-hosted-throughput",
+      "reason": "Development advanced from 4f0bdb37 through d51344ef. This review changed no gate to passed and removed no blocker that gates evidence. What it did establish is that the recurring blockers had three distinct causes, none of them the learning system: GitHub refuses to start every private-repository job before any step runs, which is why Worker and Oversight throughput are zero and why the vetted bundle cannot be republished; R3 was waiting on a Perplexity API key that a Perplexity Pro subscription never covered, now replaced by a free governed provider; and the discovery schedule cannot fire at all because GitHub schedules only from the default branch. Two governed records were also found to be false rather than merely stale - the known-bug ledger was marking four categories failed when one test failed, and the routing test had been red on the tip since a0b440c while checking for a phrase the dispatcher never writes - and both are repaired at their cause. The target stays indeterminate because hosted throughput is still zero and inventing a rate is forbidden; any future finite forecast still includes the full 96-hour soak."
+    },
+    {
+      "recordedAt": "2026-09-15T09:10:00Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-a-pairable-owner-declaration-exists",
+      "reason": "The target stays indeterminate but for a different and narrower reason, so the state name changes with it. Hosted throughput is no longer zero: the job-refusal condition is resolved, Learning-Worker ran on a real runner, and the oversight run consumed a worker export generated at 2026-09-15T05:28:09.646Z with 26794 candidates over 534 queue sources. Oversight run 34938208295 published vetted commit ef2d3b3 after vetting custody post-merge and before encryption, which closed the restored-queue-hash mismatch that had blocked hosted R4-R6 since 2026-09-10: hosted run 34947395586 restored the bundle, verified provenance oversight-vetted over 403 stored source files, and reached corroboration, pairing owner-file:7a409be1 with the independent linked-source:28503d6f at the configured 0.74 sameness threshold. No gate is marked passed, because src/hostedLearningProof.js exited 1 under CRU-0026 before emitting a verdict and a reading of log lines is not a substitute for the proof own outcome. The forecast therefore turns on two owner actions rather than on any rate this project can measure: a pairable declaration for R5, and a live NVIDIA NIM model id for R3, whose configured model was withdrawn on 2026-08-26. Any future finite forecast still includes the full 96-hour soak."
+    },
+    {
+      "recordedAt": "2026-09-15T10:30:00Z",
+      "priorTarget": null,
+      "newTarget": null,
+      "newTargetState": "indeterminate-until-a-pairable-owner-declaration-exists",
+      "reason": "No gate moved and the target is unchanged; what changed is that R5 now enforces across runs the pre-registration it already required in words. The owner observed that the declared scope is what the hypothesis was supposed to be, and the code agrees: languageExperimentRegistry builds the hypothesis as a template over the declared boundary and the claim, and hypothesisTestPlan holds the experiment to the declared claimScope, so every falsifiable commitment comes from the declaration. hypothesisTestPlanSha256 froze that plan during the run, after the declaration had been read, so nothing recorded the boundary before the result was known and a boundary could be narrowed after a failed experiment with no artifact showing it moved. src/scopePreRegistration.js now records each declaration hash against the run clock and refuses, under the new CRU-0047, a declaration that changed after an experiment on that claim ran and did not verify it. A claim never evaluated stays correctable and a verified claim may be re-declared as a new experiment, so the rule arms only on the one case it is for. The file governingDocuments/learning-scope-declarations.json previously instructed the post-hoc order directly and now documents the pre-registration and when a boundary may change."
+    }
+  ]
+}
