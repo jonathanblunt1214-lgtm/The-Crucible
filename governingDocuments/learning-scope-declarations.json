@@ -17,6 +17,13 @@
         "For example, the Array object's map function allows you to iterate over each element of an array, then build a new array by applying a transform function to each element.",
         "See full compatibility Learn more The map() method of Array instances creates a new array populated with the results of calling a provided function on every element in the calling array."
       ]
+    },
+    {
+      "claim": "Any class can have more than one constructor.",
+      "claimScope": "Java classes compiled and executed by OpenJDK 21, whose constructors differ in parameter list",
+      "generalizationBoundary": "Does not cover other JDK versions, other JVM languages, records, enums or interfaces, or constructors distinguished by anything other than parameter list.",
+      "language": "java",
+      "$whyNoPairing": "pairedSources is deliberately absent. The corpus own semantic test already related the two asserting sentences at the configured 0.74 threshold - \"Any class can have more than one constructor.\" from linked-source:28503d6f107c6d879b9a251ad0c10598865e2d6aeeec816f8431dae855b8068e and \"The class can also include one or more constructors.\" from owner-file:7a409be17956fa11e90c634d6de5a586d0415d668c56d252f66fb5580a362d9b. $ownerPairing exists for wording too different for that test to relate; nominating a pairing here would substitute owner judgement for the machine where the machine succeeded."
     }
   ],
   "$ownerPairing": "When two sources agree in wording too different for that test to relate - one says \"does not modify the original\" and the other says \"leaves the input untouched\" - add pairedSources with exactly the two source ids, and pairedAssertions with the sentence each of those documents uses, in the same order. Each sentence must appear verbatim among that document's own bounded assertions, and the corpus is checked against the hash the queue recorded, so a pairing can never make a document say something it does not say. Sameness of meaning is then recorded as your judgement, not the machine's: the comparison decision carries agreementBasis \"owner-declared\". Omit pairedAssertions to have the wording test locate the asserting sentence itself.",
