@@ -111,7 +111,7 @@
   },
   "sessionPolicy": {
     "recheckGoverningDocuments": "Re-read every file listed in governingDocuments at the start of every session and again any time more than 10 minutes have passed since lastActionAt, even if it is the same agent continuing the same conversation.",
-    "lastActionAt": "2026-09-15T20:20:00Z"
+    "lastActionAt": "2026-09-16T07:10:00Z"
   },
   "repairSelectionPolicy": {
     "rule": "Always select the correct fix, never the one that merely makes the symptom go away. 'It works now' is not the standard; 'this is the right change, and here is why the alternatives are wrong' is.",
@@ -193,7 +193,7 @@
   "activePlan": {
     "agent": "Claude",
     "objective": "Clear the blockers keeping the scientific-learning pipeline from producing evidence, without spending money: tell a refused hosted job apart from a failed one, move governed discovery onto a free provider, make governed records state what actually happened, and run the rolling release review from the literal development tip.",
-    "currentPrompt": "Review the first real hosted learning run at the literal development tip, fix the false pass it reported, and record R4-R8 exactly as the evidence supports without weakening or completing any gate.",
+    "currentPrompt": "Resolve the unexplained three-source corpus arithmetic difference by counting sources and stored files as distinct quantities",
     "executionMode": {
       "mode": "work",
       "agent": "Claude",
@@ -208,9 +208,9 @@
       "branch": "development",
       "reason": "Affected paths select crucible-core.",
       "explicitOverride": false,
-      "selectedAt": "2026-09-16T06:11:54.405Z",
-      "promptSha256": "b36d6253645937af1c4badd174f2d4208ae7896a96d36c67cb945522bf771ece",
-      "affectedPathsSha256": "7fd1e5642facfeb5fa55e6ac882deb9d7e8c617f9e2a59a6dd86ece6e1946b81"
+      "selectedAt": "2026-09-16T07:05:00Z",
+      "promptSha256": "2e7a440bfedd2e6d7233889f48dcd39f47e33f5adba21a7607605c3fd47bee6b",
+      "affectedPathsSha256": "341c27b46629f079df8a6574c26bb3fd6a8d6bd174dbffb64deeea79c7c6137e"
     },
     "steps": [
       "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
@@ -244,7 +244,7 @@
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-16T06:20:00Z",
+    "lastUpdatedAt": "2026-09-16T07:10:00Z",
     "currentStep": 27,
     "priority": "Execute the owner-authorized 6:07 plan in order 2A-2E, then Steps 3-7.",
     "ownership": {
@@ -359,7 +359,7 @@
     ],
     "remaining": [
       "Do not weaken handoff, coordination, learning-custody, collision, security, or promotion gates to obtain green cosmetics, and never mark a gate passed on a run that was refused before it started or that exited before emitting a verdict.",
-      "Re-check the corpus arithmetic when the queue is next readable. The hosted custody report records 403 of 534 sources with stored content, which implies 131 without, while the same run diagnoses sources-without-content as 128. The three-source difference is unexplained and neither number was taken on trust: the repaired evaluateR2 derives its own count from contentSha256 rather than from either figure.",
+      "Resolved 2026-09-16: the corpus arithmetic difference was a phantom. The custody report counts content-addressed stored files and intakePathways counts sources without content, so sources minus files is the number of sources sharing a file, never the number without content. 534 sources, 128 without content, 406 with content held in 403 files, 3 sharing. The corpus summary now reports sourcesWithContent beside documentsWithContent and a regression test pins both readings.",
       "Second half of the owner's combined choice, in the Vetting-and-Governance-oversite. repository and not this one: have Oversight carry a copy of the gate evidence into independent custody. Crucible now emits gate-evidence.json inside its retained artifact, which is the input that half consumes. Oversight already pushes and is the independent party, so the evidence ends up in custody Crucible does not control - which is the point of splitting it this way.",
       "R8 is the only gate reporting pending on the real corpus, and both reasons are named. The prompt-injection safeguard is not firing: 60 documents carry those patterns and none is recorded as quarantined, which is the safeguard not having fired rather than evidence that it did. And no document in the restored corpus begins with executable magic bytes, so that behaviour cannot be demonstrated on this corpus at all - a fact about the corpus, not a gap to route around.",
       "R4-R7 stay reported rather than passed because the experiment behind them has run exactly once. A run that learns rather than restores is what repeats the measurement, and a restored store will keep short-circuiting that - so getting a second independent execution needs thought about how, not just another dispatch."

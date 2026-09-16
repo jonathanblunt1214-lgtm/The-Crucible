@@ -367,3 +367,39 @@ test('the proof refuses a boundary that moved after an experiment on the same cl
   assert.equal(same.scopePreRegistration.refused.length, 0);
   assert.equal(same.scopePreRegistration.registrations[0].state, 'unchanged');
 });
+
+// Regression, 2026-09-16. A hosted run reported 534 sources, 403 with stored content, and
+// diagnosed 128 sources without content. 534 - 403 = 131, so a three-source difference was
+// recorded in the handoff as unexplained. Nothing was wrong: the two numbers count different
+// things. A source has content when its queue record carries a durablePath or a contentSha256,
+// which is how intakePathways counts the ones that do not. A stored file is content-addressed -
+// hostedSourceBundle.stage names it ${contentSha256}${extension} and skips the copy when that
+// name exists, while still pointing every source at it - so several sources share one file.
+// sources minus files is the number that share. It is never the number without content.
+test('sources and stored files are counted separately, because several sources may share one file', async (t) => {
+  const dir = workspace(t);
+  const { bundleRoot, learningRoot, queueFile } = buildBundle(dir, twoRealDocuments());
+
+  const queue = JSON.parse(fs.readFileSync(queueFile, 'utf8'));
+  const shared = queue.links[0];
+  // A third source whose retrieved bytes were identical, so it points at the first source's file.
+  queue.links.push({ ...shared, id: 'https://example.org/same-bytes', url: 'https://example.org/same-bytes', finalUrl: 'https://example.org/same-bytes' });
+  // A fourth source that was never retrieved at all.
+  queue.links.push({ id: 'https://example.org/never-retrieved', state: 'retrieval-blocked', url: 'https://example.org/never-retrieved', finalUrl: null, contentType: null, contentSha256: null, durablePath: null, retrievedAt: null });
+  fs.writeFileSync(queueFile, `${JSON.stringify(queue, null, 2)}\n`);
+
+  const result = await learnFromRealCorpus({ bundleRoot, learningRoot, projectId: PROJECT, scopeDeclarationFile: null, harnessesFor, now: () => AT });
+  const c = result.corpus;
+
+  assert.equal(c.sources, 4, 'every queue record is a source');
+  assert.equal(c.sourcesWithContent, 3, 'three carry a durablePath or a content hash');
+  assert.equal(c.documentsWithContent, 2, 'two distinct content-addressed files hold them');
+  assert.equal(c.sourcesWithContent - c.documentsWithContent, 1, 'one source shares a file with another');
+
+  // The arithmetic that produced the phantom. Subtracting files from sources counts the sharers
+  // as though they had no content, and disagrees with the diagnostic by exactly that many.
+  const withoutContent = result.intake.diagnostics.signals.find((s) => s.signal === 'sources-without-content');
+  assert.match(withoutContent.detail, /^1 source\(s\) have no stored content/);
+  assert.equal(c.sources - c.documentsWithContent, 2, 'the wrong subtraction says two');
+  assert.notEqual(c.sources - c.documentsWithContent, 1, 'and the right answer is one, which is why the two never had to agree');
+});
