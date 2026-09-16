@@ -511,3 +511,50 @@ test('the hosted proof reads the corpus under a read key and destroys the plaint
   assert.match(workflow, /Destroy runner plaintext[\s\S]*if: always\(\)[\s\S]*rm -rf/);
   assert.doesNotMatch(workflow, /git\s+push/);
 });
+
+// The one workflow that deliberately sends repository content to an external AI service. The
+// owner authorized it on 2026-09-16 and the Selective Membrane mandate is what made that an
+// owner decision rather than an agent's, so the properties that keep it inside the mandate are
+// asserted here instead of only described in its comments. Whoever widens this has to delete an
+// assertion to do it.
+test('the council consult egresses only on a human dispatch, sends only its input, and authorizes nothing', () => {
+  const file = path.join(root, '.github', 'workflows', 'council-consult.yml');
+  const workflow = fs.readFileSync(file, 'utf8');
+
+  // Egress happens when a person asks and at no other time. The absence of an automatic trigger
+  // is the offline hard stop; a schedule or a push trigger would make it continuous.
+  const triggers = workflow.slice(workflow.indexOf('\non:'), workflow.indexOf('\npermissions:'));
+  assert.match(triggers, /workflow_dispatch:/);
+  assert.doesNotMatch(triggers, /\bschedule:/, 'a scheduled consult is continuous egress, not an authorized one');
+  assert.doesNotMatch(triggers, /^\s{2}push:/m, 'a push-triggered consult egresses on every commit');
+
+  // It may read the repository and nothing else, and it holds no credential but the provider key.
+  assert.match(workflow, /^permissions:\n  contents: read\n/m);
+  for (const forbidden of ['contents: write', 'packages:', 'id-token:', 'pull-requests: write']) {
+    assert.ok(!workflow.includes(forbidden), `the consult job must not request ${forbidden}`);
+  }
+  for (const credential of ['CRUCIBLE_HOSTED_STORE_KEY', 'CRUCIBLE_VETTED_BUNDLE_KEY', 'CRUCIBLE_VETTED_STATE_READ_KEY']) {
+    assert.ok(!workflow.includes(credential), `${credential} has no business in a job that talks to a provider`);
+  }
+
+  // Nothing implicit leaves the repository: the prompt is the dispatch input, and the corpus,
+  // the durable store and the vetted state repositories are not read into the request.
+  // Through the environment, not interpolated into the script: an inline ${{ inputs.prompt }} is
+  // substituted before bash parses the line, so free-form text could run as shell.
+  assert.match(workflow, /CONSULT_PROMPT: \$\{\{ inputs\.prompt \}\}/);
+  assert.match(workflow, /--prompt "\$CONSULT_PROMPT"/);
+  assert.doesNotMatch(workflow, /--prompt "\$\{\{ inputs\.prompt \}\}"/, 'the prompt must not be interpolated into the shell');
+  for (const source of ['Crucible-Vetted-Learning-State', 'Crucible-Learning-State', 'CRUCIBLE_HOSTED_BUNDLE_ROOT', 'source-queue.json', 'store.envelope.json']) {
+    assert.ok(!workflow.includes(source), `a consult must not read ${source} into an outbound request`);
+  }
+
+  // The answer is advice. It is retained and printed, and written into no governed record.
+  for (const sink of ['.hosted-learning-cache', 'governingDocuments/', 'hosted-learning-proof/']) {
+    assert.ok(!workflow.includes(sink), `a consult answer must not be written into ${sink}`);
+  }
+  assert.match(workflow, /authorizes no promotion/);
+
+  // A consult that failed closed must not leave the job green. Piping node into tee reports
+  // tee's status, which is exactly how a CRU-0034 refusal would have read as success.
+  assert.doesNotMatch(workflow, /coordinationCli\.js consult[\s\S]{0,200}\|\s*tee/, 'piping the consult into tee masks its exit status');
+});

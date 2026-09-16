@@ -193,7 +193,7 @@
   "activePlan": {
     "agent": "Claude",
     "objective": "Clear the blockers keeping the scientific-learning pipeline from producing evidence, without spending money: tell a refused hosted job apart from a failed one, move governed discovery onto a free provider, make governed records state what actually happened, and run the rolling release review from the literal development tip.",
-    "currentPrompt": "Make the hosted run name the claim it verified, and report any active knowledge version the restored corpus does not back",
+    "currentPrompt": "Configure the council for Claude and stand up the owner-authorized Crucible consult workflow on the existing NIM secret",
     "executionMode": {
       "mode": "work",
       "agent": "Claude",
@@ -208,9 +208,9 @@
       "branch": "development",
       "reason": "Affected paths select crucible-core.",
       "explicitOverride": false,
-      "selectedAt": "2026-09-16T06:27:45.121Z",
-      "promptSha256": "cf7c9ec1426f9a49664e28349c0759bbc0d0912eb7bdb8b6c5cf384a93e1a775",
-      "affectedPathsSha256": "0a8a20096345e13cb898e37773b6969803fce11b5476ee8dcea23a54560ef29d"
+      "selectedAt": "2026-09-16T06:46:02.435Z",
+      "promptSha256": "e0cb92cf05e2c33078e2a1ffb2912b0bae55ad639694ebf745e3a659eb088d29",
+      "affectedPathsSha256": "4d3a25966e96e60d2d663a121cd23d01c0835a4d6262dc004583d181b039df95"
     },
     "steps": [
       "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
@@ -243,12 +243,14 @@
       "[done] Made every run name the claim its satisfied gates are about, by logging each active knowledge version with its claim and experiment boundary - a restored run evaluates no declaration, so R5 could read satisfied with nothing in the log saying what was verified.",
       "[done] Confirmed from the run log that the Java experiment really executed: active knowledge v3, candidate extracted-46e181f0, boundary \"Java classes compiled and executed by OpenJDK 21, whose constructors differ in parameter list\". javac and java ran and the claim verified inside the owner declared boundary.",
       "[done] Found an active knowledge version the deleted fake harness had promoted, still counted by R5, and made every run mark each active version corpus-backed or not with a warning on any that is not. Reported, not retracted: retracting durable learning state is an owner decision.",
-      "[done] Fixed a latent R6 defect found while instrumenting - the gate passed on the activeVersion pointer resolving rather than on the version it names still being active, while retrieve() would return nothing - and emitted the completion report on one stream so the verdict stops interleaving into the gate list."
+      "[done] Fixed a latent R6 defect found while instrumenting - the gate passed on the activeVersion pointer resolving rather than on the version it names still being active, while retrieve() would return nothing - and emitted the completion report on one stream so the verdict stops interleaving into the gate list.",
+      "[done] Recorded the owner decision authorizing council egress and built .github/workflows/council-consult.yml on the existing NVIDIA_NIM_API_KEY secret: dispatch-only, contents: read, the prompt passed through the environment rather than interpolated into the shell, the answer retained as an artifact and written into no governed record.",
+      "[done] Established that this session cannot reach the deployed council at all: the environment network policy answers 403 to CONNECT for onrender.com, so the MCP endpoint is unreachable from here whatever the URL and token. Configuration guidance is for the owner Claude Code on a host with open egress."
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-16T06:45:00Z",
-    "currentStep": 31,
+    "lastUpdatedAt": "2026-09-16T07:40:00Z",
+    "currentStep": 33,
     "priority": "Execute the owner-authorized 6:07 plan in order 2A-2E, then Steps 3-7.",
     "ownership": {
       "currentClaim": null,
@@ -285,8 +287,13 @@
     },
     "blockers": [
       {
-        "id": "council-not-invocable-from-here",
-        "summary": "The council was located, built and interrogated: jonathanblunt1214-lgtm/AI-collaboration- at bff91e94d233b1e93e1364b307a8768078f2ed5e, whose CollaborationOrchestrator.readiness() over createProviderRegistry() reports all six providers configured false - nvidia-nim, openai, anthropic, gemini, deepseek and perplexity. The two free ones are nvidia-nim and the Gemini free tier, per its own README. Nothing reaches this environment because Credential Isolation keeps keys in repository secrets, and Crucible own coordinationCli providers agrees at 0 of 4. Hosted, only model-pointer-research.yml carries NVIDIA_NIM_API_KEY and it is the discovery workflow; there is no consult workflow. Two free paths exist and both need the owner: supply NVIDIA_NIM_API_KEY, or GEMINI_API_KEY with GEMINI_API_ENABLED, to this session environment; or authorize a Crucible workflow that runs the consult with the existing NIM secret, which sends repository content to an external AI service and is therefore a Selective Membrane decision. Caveat either way: the pinned nvidia/nemotron-3-nano-30b-a3b has never been successfully called and its predecessor returned HTTP 410. And under Evidence Over Assertion a council answer is evidence, never proof, so it can help reason about why the R8 prompt-injection safeguard does not fire but cannot satisfy the gate.",
+        "id": "nim-model-never-called",
+        "summary": "nvidia/nemotron-3-nano-30b-a3b has still never been called, and the owner reports doubting the code is finished rather than the model. Crucible own consult path reads complete - createConfiguredAdapters, a real bearer chat adapter with redaction, MultiAiOrchestrator.distribute, corroborate, deliberationFromDistribution - and it fails closed with CRU-0034 and exit 1 when no provider is configured, verified locally. What has never happened is a successful call. The consult workflow is the first thing that will make one on the existing secret, so dispatching it is the test: it either returns a deliberation or fails with a coded error naming the stage.",
+        "owner": "claude"
+      },
+      {
+        "id": "council-unreachable-from-this-session",
+        "summary": "The deployed council cannot be reached from this session and no URL or token changes that: the environment network policy answers 403 to CONNECT for onrender.com, and its allow-list covers Anthropic APIs, package registries and GitHub only. The same policy is why NVIDIA NIM cannot be called from here either. The consult therefore runs on a GitHub runner, which is what the new workflow is for. Configuring the council as an MCP server is for the owner Claude Code on a host with open egress: Streamable HTTP at <deployed-host>/mcp with Authorization: Bearer AI_COLLABORATION_BEARER_TOKEN, the host readable from the Render dashboard or the registered ChatGPT app, since the repository does not record it.",
         "owner": "user"
       },
       {
@@ -359,7 +366,8 @@
       "Run 35062311534 also settled how much run 35013415132 actually proved, by reporting that it restored real corpus knowledge rather than learning. hasRealCorpusKnowledge returning true requires an active knowledge version whose candidate provenance matches a real corpus content hash or source id, read back from the encrypted store the earlier run wrote - so that promotion was real and durable rather than inferred. It is still one execution of the experiment, in the run whose completion message was false, and the confirming run did not repeat it.",
       "Corrected a record that had been false for about ten hours before anyone read it. Pull request 19 was merged by the owner at 2026-09-15T09:29:12Z from head 802f520, and this file plus the release status had been asserting it was unmerged and that learning scope stayed blocked from main. Main is 8162707 and carries development through 802f520 - the scope pre-registration - and nothing later, so the harness replacement, the Java declaration, CONSTITUTION.md and the completion fix are all still development-only. Promotion was the owner own action; no agent authorizes it.",
       "The Java experiment is confirmed to have executed, from the run log rather than by inference. Hosted run 35062707190 prints active knowledge v3, candidate extracted-46e181f05a9c6f5dab5b9c21be5f07f3, claim \"Any class can have more than one constructor.\", boundary \"Java classes compiled and executed by OpenJDK 21, whose constructors differ in parameter list\". The candidate is an extracted corpus candidate, harnessesForDeclaration has no default pair, and its experiment throws CRU-0050 unless the fixture assertions pass with the executed negative control failing - so javac and java ran on the runner and the claim verified inside the declared boundary.",
-      "Every active knowledge version is now marked corpus-backed or NOT corpus-backed, reusing the one discriminator a fixture cannot forge - membership in the restored corpus - factored per version as corpusBackedVersions rather than reinvented. hasRealCorpusKnowledge asks whether the store holds any real knowledge, and one real version answers yes for the whole store, which is why it could not surface the version the deleted harness had left behind. Covered by test/realCorpusLearning.test.js."
+      "Every active knowledge version is now marked corpus-backed or NOT corpus-backed, reusing the one discriminator a fixture cannot forge - membership in the restored corpus - factored per version as corpusBackedVersions rather than reinvented. hasRealCorpusKnowledge asks whether the store holds any real knowledge, and one real version answers yes for the whole store, which is why it could not surface the version the deleted harness had left behind. Covered by test/realCorpusLearning.test.js.",
+      "Council egress exists as one dispatch-only workflow, authorized by the owner on 2026-09-16 and bounded by assertions rather than by its own comments. .github/workflows/council-consult.yml has no schedule and no push trigger, so egress happens when a person asks and at no other time; permissions are contents: read; the prompt travels through the environment rather than being interpolated into the shell, because an inline ${{ inputs.prompt }} is substituted before bash parses the line and free-form text is the point of the input; the consult is redirected rather than piped, because a pipeline reports tee status and a CRU-0034 refusal would otherwise have read as a green job. The deliberation is retained as an artifact and written into no governed record: it marks no gate and authorizes no promotion."
     ],
     "verification": [
       "npm run test:all 863/863 at this change. The count rose by one with the evaluateR2 regression test, which was shown failing against the previous implementation before the repair existed.",
@@ -379,7 +387,8 @@
       "R8 is the only gate reporting pending on the real corpus, and both reasons are named. The prompt-injection safeguard is not firing: 60 documents carry those patterns and none is recorded as quarantined, which is the safeguard not having fired rather than evidence that it did. And no document in the restored corpus begins with executable magic bytes, so that behaviour cannot be demonstrated on this corpus at all - a fact about the corpus, not a gap to route around.",
       "R4-R7 stay reported rather than passed because the experiment behind them has run exactly once. A run that learns rather than restores is what repeats the measurement, and a restored store will keep short-circuiting that - so getting a second independent execution needs thought about how, not just another dispatch.",
       "Owner decision: whether to retract active knowledge v1, which the deleted hardcoded harness promoted and R5 still counts. It is reported on every run and no gate is marked passed while it is counted, but no agent retracts governed learning state on its own.",
-      "The council is not invocable without an owner decision. 0 of 4 governed providers are configured here, only the discovery workflow carries the free NVIDIA NIM key, there is no consult workflow, and standing up one would send repository content to an external AI service - a Selective Membrane decision. Its output would be evidence, never proof, and R8 needs a safeguard to fire rather than an opinion."
+      "The council is not invocable without an owner decision. 0 of 4 governed providers are configured here, only the discovery workflow carries the free NVIDIA NIM key, there is no consult workflow, and standing up one would send repository content to an external AI service - a Selective Membrane decision. Its output would be evidence, never proof, and R8 needs a safeguard to fire rather than an opinion.",
+      "Dispatch council-consult.yml once to find out whether the NIM path works. nvidia/nemotron-3-nano-30b-a3b has never been called successfully, and that run is the first real test of it - a deliberation or a coded failure naming the stage, either of which is worth more than the current silence."
     ],
     "open": [
       "The 14-source owner rescan obligation stays pending and unperformed. Its trigger condition is now partly met: custody is self-consistent and retention is provable. It stays pending because R5 has produced no retained hosted knowledge version yet, so there is no retained-state evidence to record completion against. When it is performed, reuse content hashes and extraction-window history; do not duplicate source bytes, reset custody, or re-extract unchanged windows.",
@@ -747,6 +756,17 @@
       "acquiredAt": "2026-09-15T19:31:51.657Z",
       "handedOffTo": null,
       "releasedAt": "2026-09-15T19:31:57.672Z"
+    }
+  ],
+  "ownerDecisions": [
+    {
+      "recordedAt": "2026-09-16T07:40:00Z",
+      "mandate": "Selective Membrane",
+      "decision": "Authorize a Crucible workflow that runs the council consult with the existing NVIDIA NIM secret, accepting that it sends repository content to an external AI service.",
+      "ownerWords": "do Authorize a Crucible workflow that runs the consult with the existing NIM secret - but that sends repository content to an external AI service, which is a Selective Membrane call and yours to make.",
+      "scope": ".github/workflows/council-consult.yml only. workflow_dispatch only, no schedule and no push trigger. permissions contents: read. The outbound request carries the dispatcher typed prompt and nothing implicit - no corpus, no durable store, no vetted state repository, no other credential. The deliberation is advice: retained as an artifact, written into no governed record, and it marks no gate and authorizes no promotion.",
+      "enforcedBy": "test/workflow.test.js, which asserts each of those properties and was shown failing against a scheduled trigger, contents: write, a tee pipeline that would mask a failed consult, and an inline prompt interpolation.",
+      "authorizesPromotion": false
     }
   ]
 }
