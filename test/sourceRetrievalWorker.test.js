@@ -126,3 +126,53 @@ test('a concurrent extraction owner keeps the queue; retrieval never bypasses th
     await assert.rejects(() => worker.run(), /Source queue lock is held/);
   } finally { held.release(); }
 });
+
+// What the two R8 safety provers must look for, taken from the pipeline rather than from a
+// reading of it. Both of their satisfied branches used to require a source that was recorded
+// quarantined AND still had stored content carrying the offending bytes, and this is the test
+// that shows the pipeline never produces that pair - so both branches were unreachable and R8
+// could only ever report a corpus explanation for a gate that could not pass.
+test('a refused source records the refusal and persists none of the bytes, which is what the safety provers must read', async (t) => {
+  const { proveInjection, proveExecutable } = require('../src/realCorpusSafety');
+
+  // Executable content: SafeInformationRetriever throws before persisting, and the worker records
+  // retrieval-blocked with the retriever's own sentence in blocker. Not 'quarantined'.
+  const exe = fixture(t);
+  const exeUrl = 'https://developer.mozilla.org/payload';
+  registerOwnerDelegatedUrl({ queueFile:exe.queueFile, projectId:PROJECT, url:exeUrl, now:() => AT });
+  const exeWorker = new SourceRetrievalWorker({
+    queueFile:exe.queueFile, projectId:PROJECT, auditRoot:path.join(exe.root, 'audit'), minimumIntervalMs:0, now:() => AT,
+    retrieverFactory:() => ({ retrieve:async() => { throw new Error('Executable content quarantined: PE/DOS executable.'); } }),
+  });
+  await exeWorker.run();
+  const exeSource = new AtomicClaimExtractionQueue(exe.queueFile, PROJECT).read().links[0];
+  assert.equal(exeSource.state, 'retrieval-blocked', 'the executable screen throws, so the worker records retrieval-blocked');
+  assert.notEqual(exeSource.state, 'quarantined', 'which is exactly why the old prover could never see it');
+  assert.match(exeSource.blocker, /Executable content quarantined/);
+  assert.ok(!exeSource.durablePath, 'nothing was persisted, so there are no magic bytes to re-scan');
+  const executable = proveExecutable(path.join(exe.root, 'bundle'), [exeSource]);
+  assert.equal(executable.satisfied, true, executable.reason);
+  assert.equal(executable.evidence.contentPersisted, false);
+  assert.match(executable.evidence.refusal, /Executable content quarantined/);
+  assert.equal(executable.promotionAuthorized, false);
+
+  // Prompt injection: the retriever returns content null with a quarantined record, so the worker
+  // records state quarantined and again writes no durablePath.
+  const inj = fixture(t);
+  const injUrl = 'https://developer.mozilla.org/injected';
+  registerOwnerDelegatedUrl({ queueFile:inj.queueFile, projectId:PROJECT, url:injUrl, now:() => AT });
+  const injWorker = new SourceRetrievalWorker({
+    queueFile:inj.queueFile, projectId:PROJECT, auditRoot:path.join(inj.root, 'audit'), minimumIntervalMs:0, now:() => AT,
+    retrieverFactory:() => ({ retrieve:async(input) => result(input, 'unsafe', { state:'quarantined', classification:'Crucible Issue', quarantineReasons:['prompt-injection-pattern'] }) }),
+  });
+  await injWorker.run();
+  const injSource = new AtomicClaimExtractionQueue(inj.queueFile, PROJECT).read().links[0];
+  assert.equal(injSource.state, 'quarantined');
+  assert.deepEqual(injSource.quarantineReasons, ['prompt-injection-pattern']);
+  assert.match(injSource.blocker, /quarantined before persistence/);
+  assert.ok(!injSource.durablePath, 'the safeguard firing means the bytes were never stored');
+  const injection = proveInjection(path.join(inj.root, 'bundle'), [injSource]);
+  assert.equal(injection.satisfied, true, injection.reason);
+  assert.equal(injection.evidence.contentPersisted, false);
+  assert.equal(injection.promotionAuthorized, false);
+});
