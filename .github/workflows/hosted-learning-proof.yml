@@ -139,6 +139,15 @@ jobs:
           CRUCIBLE_HOSTED_PROOF_REPORT: hosted-learning-proof/report.json
           CRUCIBLE_HOSTED_BUNDLE_ROOT: ${{ runner.temp }}/crucible-source-restore/plaintext
           CRUCIBLE_HOSTED_SCOPE_DECLARATIONS: governingDocuments/learning-scope-declarations.json
+          # The independent vetting organ's own refusal record. Oversight publishes it beside the
+          # ciphertext, this job already clones it to join the parts, and nothing read it - so a
+          # source Oversight quarantined for prompt injection reached the proof as
+          # oversight-vetting-pending and R8 reported that no quarantine existed anywhere. Read
+          # only for a decision and a reason, and credited only when Crucible holds none of the
+          # refused bytes. It is plaintext in the vetted repository, so its trust basis is
+          # membership of that repository rather than the bundle key; the content-absence check is
+          # what makes that enough.
+          CRUCIBLE_OVERSIGHT_CUSTODY_REPORT: ${{ runner.temp }}/crucible-source-restore/ciphertext/encrypted-custody-report.json
         run: node src/hostedLearningProof.js
       - name: Destroy runner plaintext
         if: always()

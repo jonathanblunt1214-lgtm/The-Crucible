@@ -174,8 +174,51 @@ function recordedQuarantine(source) {
 // content absent is what the safeguard DID. The guard the previous shape was reaching for is kept
 // exactly - a source with stored content is an admitted source and can never be evidence, which
 // is why absentContent is required rather than merely allowed.
-function proveInjection(bundleRoot, sources, readFile = fs.readFileSync) {
+// The independent vetting organ's own record of what it refused. Oversight publishes
+// encrypted-custody-report.json beside the ciphertext in the vetted state repository, and it
+// carries a per-source decision with a reason. The hosted workflow already clones that file onto
+// the runner to join the ciphertext parts; nothing read it.
+//
+// This matters because Crucible's queue does not carry Oversight's reason. A source Oversight
+// quarantines appears in the queue as oversight-vetting-pending, so proveInjection - which reads
+// the queue state - found zero quarantined sources while the refusal was recorded all along, one
+// directory away, by the party whose independence is the point.
+//
+// Treated as candidate evidence from an independent party, never as instruction. Only two fields
+// are read, decision and reason, and a refusal is credited only when the corpus also does not
+// hold the content: an independent record that the bytes were refused, corroborated by the bytes
+// being absent. The report is not encrypted, so its trust basis is membership of the vetted
+// repository rather than the bundle key - which is why the content-absence half is required
+// rather than decorative.
+function oversightInjectionRefusals(custodyReport) {
+  const reviews = (custodyReport && Array.isArray(custodyReport.sourceReviews)) ? custodyReport.sourceReviews : [];
+  return reviews
+    .filter((review) => String(review.decision || '') === 'quarantined' && /prompt.?injection/i.test(String(review.reason || '')))
+    .map((review) => ({ sourceId: String(review.sourceId || ''), contentSha256: String(review.contentSha256 || '').toLowerCase(), reason: String(review.reason || '') }));
+}
+
+function proveInjection(bundleRoot, sources, readFile = fs.readFileSync, custodyReport = null) {
   const admitted = [];
+  // Independent refusal first, because it is the stronger evidence: a different party recorded
+  // the decision, and Crucible holds none of the bytes it refused.
+  const storedHashes = new Set();
+  for (const source of sources) {
+    if (sourceContentPath(bundleRoot, source)) storedHashes.add(String(source.contentSha256 || '').toLowerCase());
+  }
+  for (const refusal of oversightInjectionRefusals(custodyReport)) {
+    if (!refusal.contentSha256) continue;
+    if (storedHashes.has(refusal.contentSha256)) continue; // admitted after all: not evidence.
+    return satisfied('prompt-injection', {
+      sourceId: refusal.sourceId,
+      recordedBy: 'independent-oversight-custody-report',
+      reason: refusal.reason,
+      contentSha256: refusal.contentSha256,
+      contentPersisted: false,
+      classification: 'Crucible Issue',
+      state: 'quarantined',
+      quarantineReasons: [refusal.reason],
+    });
+  }
   for (const source of sources) {
     const file = sourceContentPath(bundleRoot, source);
     const quarantine = recordedQuarantine(source);
@@ -311,7 +354,7 @@ function proveContradiction(payload, candidateRecords) {
 // All eight, from real material. Returns the behaviours proven, those that were not, and the
 // plain evidence list the readiness gate consumes - which now only ever contains behaviours
 // something real actually demonstrated.
-async function realCorpusSafety({ root, bundleRoot, bundle, payload, candidateRecords = [] }) {
+async function realCorpusSafety({ root, bundleRoot, bundle, payload, candidateRecords = [], custodyReport = null }) {
   const sources = (bundle && bundle.sources) || [];
   const approved = sources.map((source) => String(source.finalUrl || source.url || '')).find((url) => /^https:\/\//.test(url));
   const behaviours = [];
@@ -321,7 +364,7 @@ async function realCorpusSafety({ root, bundleRoot, bundle, payload, candidateRe
   behaviours.push(proveDuplicateUrl(sources));
   behaviours.push(proveDuplicateContent(sources));
   behaviours.push(proveDuplicateClaim(candidateRecords));
-  behaviours.push(proveInjection(bundleRoot, sources));
+  behaviours.push(proveInjection(bundleRoot, sources, fs.readFileSync, custodyReport));
   behaviours.push(proveExecutable(bundleRoot, sources));
   behaviours.push(proveContradiction(payload || {}, candidateRecords));
 
@@ -337,4 +380,4 @@ async function realCorpusSafety({ root, bundleRoot, bundle, payload, candidateRe
   };
 }
 
-module.exports = { REQUIRED, realCorpusSafety, proveRefusals, proveDuplicateUrl, proveDuplicateContent, proveDuplicateClaim, proveInjection, proveExecutable, proveContradiction };
+module.exports = { REQUIRED, oversightInjectionRefusals, realCorpusSafety, proveRefusals, proveDuplicateUrl, proveDuplicateContent, proveDuplicateClaim, proveInjection, proveExecutable, proveContradiction };

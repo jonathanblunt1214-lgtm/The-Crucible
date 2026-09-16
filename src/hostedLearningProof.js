@@ -9,7 +9,7 @@ const { DurableScientificLearningStore, encryptWeeklyEnvelope, decryptWeeklyEnve
 const { runLearningCycle } = require('./learningCycle');
 const { preSoakReadiness } = require('./preSoakReadiness');
 const { learnFromRealCorpus, hasRealCorpusKnowledge, readBundle, corpusCandidateStore, allCandidateRecords, readScopeDeclarations, corpusBackedVersions } = require('./realCorpusLearning');
-const { realCorpusSafety } = require('./realCorpusSafety');
+const { realCorpusSafety, oversightInjectionRefusals } = require('./realCorpusSafety');
 const { DurableGateEvidenceStore, invalidateStaleGates } = require('./durableGateEvidence');
 const { realSupersession } = require('./realSupersession');
 const { intakePathways } = require('./intakePathways');
@@ -43,7 +43,7 @@ function persist(store, encryptedFile, key, binding) {
   fs.writeFileSync(temporary,`${JSON.stringify(envelope,null,2)}\n`,{flag:'wx',mode:0o600});
   fs.renameSync(temporary,encryptedFile);
 }
-async function runHostedProof({ root, encryptedFile, reportFile, key, repository, ref, runId, bundleRoot, scopeDeclarationFile, now=()=>new Date().toISOString() }) {
+async function runHostedProof({ root, encryptedFile, reportFile, key, repository, ref, runId, bundleRoot, scopeDeclarationFile, oversightCustodyReportFile=null, now=()=>new Date().toISOString() }) {
   if (!/^[-_A-Za-z0-9+/=]{32,}$/.test(key||'')) throw new Error('CRUCIBLE_HOSTED_STORE_KEY is missing or invalid.');
   if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repository||'')) throw new Error('GitHub repository identity is invalid.');
   if (ref!=='refs/heads/development') throw new Error('Hosted learning proof is development-only.');
@@ -194,12 +194,31 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   for (const record of [...payload.candidateRecords, ...(corpusStore ? corpusStore.read().candidateRecords : [])]) {
     if (!everyRecord.has(record.candidate.id)) everyRecord.set(record.candidate.id, record);
   }
+  // The independent vetting organ's own refusal record, when the job has it. Oversight publishes
+  // encrypted-custody-report.json beside the ciphertext, the workflow already clones it to join
+  // the parts, and nothing read it - so a source Oversight quarantined for prompt injection
+  // appeared here only as oversight-vetting-pending and R8 reported no quarantine existed.
+  // Read as candidate evidence from an independent party: two fields, and the refusal counts only
+  // when Crucible also holds none of the bytes. A malformed or absent report is not fatal, and it
+  // is not silent either - it leaves the behaviour to the corpus alone and says so.
+  let custodyReport = null;
+  if (oversightCustodyReportFile) {
+    try {
+      custodyReport = JSON.parse(fs.readFileSync(oversightCustodyReportFile, 'utf8'));
+      const refusals = oversightInjectionRefusals(custodyReport);
+      console.log(`[The Crucible] independent oversight custody report read: ${(custodyReport.sourceReviews || []).length} source review(s), ${refusals.length} recorded as quarantined for prompt injection.`);
+    } catch (error) {
+      custodyReport = null;
+      console.log(`[The Crucible] independent oversight custody report was not usable (${error.message}); R8 falls back to what the corpus alone can show.`);
+    }
+  }
   const safetyResult = await realCorpusSafety({
     root,
     bundleRoot,
     bundle: restoredBundle,
     payload,
     candidateRecords: [...everyRecord.values()],
+    custodyReport,
   });
   const safety = safetyResult.evidence;
   for (const item of safetyResult.unsatisfied) console.log(`[The Crucible] R8 ${item.behaviour} not demonstrated: ${item.reason}`);
@@ -255,7 +274,7 @@ function reportCompletion(report, log = console.log) {
 }
 
 if (require.main === module) {
-  runHostedProof({ root: process.env.RUNNER_TEMP || process.cwd(), encryptedFile: process.env.CRUCIBLE_HOSTED_ENCRYPTED_STATE || '.hosted-learning-cache/store.envelope.json', reportFile: process.env.CRUCIBLE_HOSTED_PROOF_REPORT || 'hosted-learning-proof/report.json', key: process.env.CRUCIBLE_HOSTED_STORE_KEY, repository: process.env.GITHUB_REPOSITORY, ref: process.env.GITHUB_REF, runId: process.env.GITHUB_RUN_ID, bundleRoot: process.env.CRUCIBLE_HOSTED_BUNDLE_ROOT, scopeDeclarationFile: process.env.CRUCIBLE_HOSTED_SCOPE_DECLARATIONS || crypto.randomUUID() })
+  runHostedProof({ root: process.env.RUNNER_TEMP || process.cwd(), encryptedFile: process.env.CRUCIBLE_HOSTED_ENCRYPTED_STATE || '.hosted-learning-cache/store.envelope.json', reportFile: process.env.CRUCIBLE_HOSTED_PROOF_REPORT || 'hosted-learning-proof/report.json', key: process.env.CRUCIBLE_HOSTED_STORE_KEY, repository: process.env.GITHUB_REPOSITORY, ref: process.env.GITHUB_REF, runId: process.env.GITHUB_RUN_ID, bundleRoot: process.env.CRUCIBLE_HOSTED_BUNDLE_ROOT, scopeDeclarationFile: process.env.CRUCIBLE_HOSTED_SCOPE_DECLARATIONS || crypto.randomUUID(), oversightCustodyReportFile: process.env.CRUCIBLE_OVERSIGHT_CUSTODY_REPORT || null })
     .then((report) => { process.exitCode = reportCompletion(report); })
     .catch((error) => { console.error(`[The Crucible] Hosted learning proof failed closed: ${error.message}`); process.exitCode = 1; });
 }
