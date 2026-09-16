@@ -208,9 +208,9 @@
       "branch": "development",
       "reason": "Affected paths select crucible-core.",
       "explicitOverride": false,
-      "selectedAt": "2026-09-16T06:46:02.435Z",
+      "selectedAt": "2026-09-16T06:50:27.212Z",
       "promptSha256": "e0cb92cf05e2c33078e2a1ffb2912b0bae55ad639694ebf745e3a659eb088d29",
-      "affectedPathsSha256": "4d3a25966e96e60d2d663a121cd23d01c0835a4d6262dc004583d181b039df95"
+      "affectedPathsSha256": "364003eccb1bab84244316918e9be99bf6e7a0e8de74a66d34d6b1bddb406ddf"
     },
     "steps": [
       "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
@@ -245,11 +245,12 @@
       "[done] Found an active knowledge version the deleted fake harness had promoted, still counted by R5, and made every run mark each active version corpus-backed or not with a warning on any that is not. Reported, not retracted: retracting durable learning state is an owner decision.",
       "[done] Fixed a latent R6 defect found while instrumenting - the gate passed on the activeVersion pointer resolving rather than on the version it names still being active, while retrieve() would return nothing - and emitted the completion report on one stream so the verdict stops interleaving into the gate list.",
       "[done] Recorded the owner decision authorizing council egress and built .github/workflows/council-consult.yml on the existing NVIDIA_NIM_API_KEY secret: dispatch-only, contents: read, the prompt passed through the environment rather than interpolated into the shell, the answer retained as an artifact and written into no governed record.",
-      "[done] Established that this session cannot reach the deployed council at all: the environment network policy answers 403 to CONNECT for onrender.com, so the MCP endpoint is unreachable from here whatever the URL and token. Configuration guidance is for the owner Claude Code on a host with open egress."
+      "[done] Established that this session cannot reach the deployed council at all: the environment network policy answers 403 to CONNECT for onrender.com, so the MCP endpoint is unreachable from here whatever the URL and token. Configuration guidance is for the owner Claude Code on a host with open egress.",
+      "[done] Dispatched the consult and reported the refusal instead of working around it: GitHub returns 404 because workflow_dispatch requires the workflow on the default branch, so the file has to reach main first and that is an owner promotion."
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-16T07:40:00Z",
+    "lastUpdatedAt": "2026-09-16T07:55:00Z",
     "currentStep": 33,
     "priority": "Execute the owner-authorized 6:07 plan in order 2A-2E, then Steps 3-7.",
     "ownership": {
@@ -286,6 +287,11 @@
       "rule": "Crucible verification, not AI confidence, establishes a trusted boundary."
     },
     "blockers": [
+      {
+        "id": "consult-not-dispatchable-until-it-reaches-main",
+        "summary": "council-consult.yml is on development and GitHub answers 404 to its dispatch, because workflow_dispatch is only accepted for a workflow present on the default branch, which is main. Measured rather than assumed: every dispatchable workflow here is on main - hosted-learning-proof.yml, model-pointer-research.yml and perplexity-research.yml, at 140, 7 and 1 runs - while council-consult.yml is unknown to the Actions API entirely. A push trigger would not fix it and is refused anyway, because a push-triggered consult egresses on every commit. So the workflow is correct and in place but cannot run until the file reaches main, and reaching main is a promotion that CONSTITUTION.md Promotion Boundary says no AI and no council authorizes. Note the conflict before choosing: promoting all of development would also carry learning-scope changes to main while R8 is pending, against the standing constraint that they stay blocked until every learning gate passes. The narrow option is to carry this one workflow file to main through release, which keeps the learning scope where it is.",
+        "owner": "user"
+      },
       {
         "id": "nim-model-never-called",
         "summary": "nvidia/nemotron-3-nano-30b-a3b has still never been called, and the owner reports doubting the code is finished rather than the model. Crucible own consult path reads complete - createConfiguredAdapters, a real bearer chat adapter with redaction, MultiAiOrchestrator.distribute, corroborate, deliberationFromDistribution - and it fails closed with CRU-0034 and exit 1 when no provider is configured, verified locally. What has never happened is a successful call. The consult workflow is the first thing that will make one on the existing secret, so dispatching it is the test: it either returns a deliberation or fails with a coded error naming the stage.",
@@ -388,7 +394,8 @@
       "R4-R7 stay reported rather than passed because the experiment behind them has run exactly once. A run that learns rather than restores is what repeats the measurement, and a restored store will keep short-circuiting that - so getting a second independent execution needs thought about how, not just another dispatch.",
       "Owner decision: whether to retract active knowledge v1, which the deleted hardcoded harness promoted and R5 still counts. It is reported on every run and no gate is marked passed while it is counted, but no agent retracts governed learning state on its own.",
       "The council is not invocable without an owner decision. 0 of 4 governed providers are configured here, only the discovery workflow carries the free NVIDIA NIM key, there is no consult workflow, and standing up one would send repository content to an external AI service - a Selective Membrane decision. Its output would be evidence, never proof, and R8 needs a safeguard to fire rather than an opinion.",
-      "Dispatch council-consult.yml once to find out whether the NIM path works. nvidia/nemotron-3-nano-30b-a3b has never been called successfully, and that run is the first real test of it - a deliberation or a coded failure naming the stage, either of which is worth more than the current silence."
+      "Dispatch council-consult.yml once to find out whether the NIM path works. nvidia/nemotron-3-nano-30b-a3b has never been called successfully, and that run is the first real test of it - a deliberation or a coded failure naming the stage, either of which is worth more than the current silence.",
+      "council-consult.yml cannot be dispatched until it exists on main, which is an owner promotion. Promoting all of development would carry learning-scope changes to main while R8 is pending, against the standing constraint; carrying just this workflow file through release would not. Either way no AI authorizes it."
     ],
     "open": [
       "The 14-source owner rescan obligation stays pending and unperformed. Its trigger condition is now partly met: custody is self-consistent and retention is provable. It stays pending because R5 has produced no retained hosted knowledge version yet, so there is no retained-state evidence to record completion against. When it is performed, reuse content hashes and extraction-window history; do not duplicate source bytes, reset custody, or re-extract unchanged windows.",
