@@ -1,0 +1,104 @@
+name: Council consult
+
+# Owner-authorized egress, and the authorization is the reason this file exists rather than an
+# argument for it. The Selective Membrane mandate in CONSTITUTION.md holds that external AI
+# services are execution hosts, not Crucible organs and not learning sources, so sending
+# repository content to one is an owner decision. The owner made it on 2026-09-16, in these
+# words: "do Authorize a Crucible workflow that runs the consult with the existing NIM secret".
+# The decision is recorded in DEVLOG.md and AI-HANDOFF.json, which is the only way the
+# constitution permits a mandate boundary to move.
+#
+# Three properties keep this inside the mandate rather than beside it.
+#
+# It never runs by itself. workflow_dispatch only - no schedule, no push trigger - so egress
+# happens when a person asks for it and at no other time. That is the offline hard stop: the
+# absence of an automatic trigger, not a flag that could be flipped by a later edit.
+#
+# It sends only what the dispatcher types. The prompt is an input. Nothing reads the corpus, the
+# durable store, the vetted state repositories, or any secret into the request, and the job has
+# no credential other than the provider key it must have to call the provider at all.
+#
+# Its answer is advice and is never evidence. The deliberation is printed and retained as an
+# artifact; no step writes it into learning state, the candidate queue, or any governed record.
+# Under Evidence Over Assertion a council answer is evidence and never proof, and under
+# Proof Before Behaviour it cannot change behaviour on its own. Nothing here authorizes a
+# promotion, marks a gate, or closes a blocker.
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: Task id this consult is about, for the provenance record.
+        required: true
+        type: string
+      prompt:
+        description: The exact question sent to the provider. This text leaves the repository.
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: council-consult-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  consult:
+    name: Consult the free council providers
+    if: github.ref == 'refs/heads/development'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      NVIDIA_NIM_API_KEY: ${{ secrets.NVIDIA_NIM_API_KEY }}
+      # Configuration rather than a credential, and pinned in version control for the same reason
+      # the discovery workflow pins it: when NVIDIA withdrew the previous model the log could only
+      # report HTTP 410 about '***', because the id had been masked. A reviewer has to be able to
+      # read, diff and date it. A repository variable still overrides.
+      NVIDIA_NIM_MODEL: ${{ vars.NVIDIA_NIM_MODEL || 'nvidia/nemotron-3-nano-30b-a3b' }}
+      NVIDIA_NIM_BASE_URL: ${{ vars.NVIDIA_NIM_BASE_URL || secrets.NVIDIA_NIM_BASE_URL }}
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 22
+          cache: npm
+      - name: Install locked dependencies
+        run: npm ci
+      # Says which providers are callable before anything is sent, so a run that consults one
+      # provider is not mistaken for a council. The model id prints; the key never does.
+      - name: Report which providers are configured
+        run: |
+          echo "[The Crucible] model: $NVIDIA_NIM_MODEL"
+          node src/coordinationCli.js providers
+      # Deliberately not piped into tee. A pipeline exits with the status of its last command, so
+      # `node ... | tee` reports tee's success and a consult that failed closed under CRU-0034
+      # would leave the job green. The redirect keeps node's own exit status as the step's.
+      - name: Consult
+        env:
+          # Through the environment, never interpolated into the script. ${{ inputs.prompt }}
+          # written inline is substituted before bash parses the line, so a prompt containing a
+          # quote or $(...) would run as shell rather than be sent as text - and free-form text
+          # is exactly what this input is for.
+          CONSULT_TASK: ${{ inputs.task }}
+          CONSULT_PROMPT: ${{ inputs.prompt }}
+        run: |
+          mkdir -p council-consult
+          node src/coordinationCli.js consult \
+            --task "$CONSULT_TASK" \
+            --prompt "$CONSULT_PROMPT" \
+            > council-consult/deliberation.json
+          cat council-consult/deliberation.json
+      # Retained so the deliberation can be read and cited later, and deliberately nowhere else.
+      # It is not written into learning state and carries no authorization.
+      - name: Retain the deliberation
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: council-consult-${{ github.run_id }}-${{ github.run_attempt }}
+          path: council-consult/deliberation.json
+          if-no-files-found: warn
+          retention-days: 90
+      - name: State what this run did not authorize
+        if: always()
+        run: echo "[The Crucible] This consult is advice. It is not candidate evidence, it marks no gate, and it authorizes no promotion."
