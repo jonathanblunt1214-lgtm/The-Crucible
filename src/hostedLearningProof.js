@@ -127,6 +127,14 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   } else {
     console.log('[The Crucible] real corpus knowledge was restored from retained state, so no declaration was evaluated and no claim was tested on this runner.');
   }
+  // Names the claim each satisfied gate is actually about. R5 and R6 are judged from the store,
+  // so on a restored run they read satisfied with nothing in the log saying what was verified -
+  // and the boundary is what identifies the language whose harness produced it. The first run to
+  // finish reported four gates satisfied without naming a single claim.
+  for (const version of store.activeKnowledge()) {
+    console.log(`[The Crucible] active knowledge v${version.version} (candidate ${version.candidateId}): ${String(version.claim).slice(0, 140)}`);
+    console.log(`[The Crucible]   boundary: ${version.boundary}`);
+  }
   // R7 on real evidence: a further independent corpus source re-tests the promoted claim,
   // supersedes it, and the prior version is restored with its history intact. This previously
   // built a candidate out of the same hardcoded claim string it had just promoted, labelled it
