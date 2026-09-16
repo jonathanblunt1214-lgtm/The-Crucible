@@ -114,6 +114,18 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
       // demand opposite responses. The code comes from the branch that chose the reason.
       throw crucibleError(realLearning.stopCode || UNCODED, `Hosted learning proof stopped: ${realLearning.reason}`);
     }
+    // What this run actually did, in the log rather than only in the retained artifact. Every
+    // gate below is judged from the store, so "R5 satisfied" on its own cannot distinguish a
+    // claim this run tested from one an earlier run promoted and this one restored - and those
+    // are different findings. This names the claim, the two adapters that measured it, and the
+    // version, so which of the two happened is readable without downloading the run.
+    for (const item of realLearning.evaluations || []) {
+      console.log(`[The Crucible] ${item.learned ? 'promoted' : 'not promoted'} (${item.language}): ${String(item.claim).slice(0, 140)}`);
+      console.log(`[The Crucible]   experiment ${item.experimentExecutorId || 'none'} | independent verifier ${item.independentVerifierId || 'none'} | version ${item.verifiedVersion || 'none'} | sources ${(item.sourceIds || []).join(' ')}`);
+      if (!item.learned) console.log(`[The Crucible]   ${item.reason}`);
+    }
+  } else {
+    console.log('[The Crucible] real corpus knowledge was restored from retained state, so no declaration was evaluated and no claim was tested on this runner.');
   }
   // R7 on real evidence: a further independent corpus source re-tests the promoted claim,
   // supersedes it, and the prior version is restored with its history intact. This previously
@@ -197,9 +209,30 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   fs.mkdirSync(path.dirname(reportFile),{recursive:true}); fs.writeFileSync(reportFile,`${JSON.stringify(report,null,2)}\n`,{mode:0o600}); return report;
 }
 
-if(require.main===module){runHostedProof({root:process.env.RUNNER_TEMP||process.cwd(),encryptedFile:process.env.CRUCIBLE_HOSTED_ENCRYPTED_STATE||'.hosted-learning-cache/store.envelope.json',reportFile:process.env.CRUCIBLE_HOSTED_PROOF_REPORT||'hosted-learning-proof/report.json',key:process.env.CRUCIBLE_HOSTED_STORE_KEY,repository:process.env.GITHUB_REPOSITORY,ref:process.env.GITHUB_REF,runId:process.env.GITHUB_RUN_ID,bundleRoot:process.env.CRUCIBLE_HOSTED_BUNDLE_ROOT,scopeDeclarationFile:process.env.CRUCIBLE_HOSTED_SCOPE_DECLARATIONS||crypto.randomUUID()}).then((report)=>console.log(`[The Crucible] GitHub-hosted durable learning proof passed R4-R8 at revision ${report.revision}.`)).catch((error)=>{console.error(`[The Crucible] Hosted learning proof failed closed: ${error.message}`);process.exitCode=1;});}
+// The completion line used to print "passed R4-R8" on every resolve, whatever the gates said.
+// While the proof failed closed at CRU-0026 that line was unreachable, and it became reachable
+// the moment an owner declaration let a run get this far - so the first run that ever finished
+// produced a green check and a log line claiming five gates had passed while R8 was pending. A
+// green check is read here as the evidence that the gates hold. This reports each gate exactly as
+// the readiness reporter judged it and exits non-zero unless all of R4-R8 are satisfied. The
+// retention step is `if: always()`, so a red run still uploads the durable state and the gate
+// evidence, and the restore chain the next run reads is unaffected.
+function reportCompletion(report, log = console.log, warn = console.error) {
+  const gates = report.gates || [];
+  for (const gate of gates) log(`[The Crucible] ${gate.id}: ${gate.state}`);
+  const unsatisfied = gates.filter((item) => item.state !== 'satisfied');
+  if (gates.length && !unsatisfied.length) {
+    log(`[The Crucible] GitHub-hosted durable learning proof: R4-R8 all satisfied at revision ${report.revision}. This authorizes no promotion.`);
+    return 0;
+  }
+  warn(`[The Crucible] GitHub-hosted durable learning proof did not pass at revision ${report.revision}: ${unsatisfied.map((item) => `${item.id} ${item.state}`).join(', ') || 'no gate was reported at all'}. The run is red because the gates it exists to prove are not all satisfied; the retained artifact still carries the durable state.`);
+  return 1;
+}
 
-// The local real-corpus proof reuses the exact controlled behaviour checks that hosted evidence
-// uses. Exporting the factory prevents a second, quietly divergent definition of "map worked"
-// from becoming local proof while the hosted gate measures something else.
-module.exports={runHostedProof};
+if (require.main === module) {
+  runHostedProof({ root: process.env.RUNNER_TEMP || process.cwd(), encryptedFile: process.env.CRUCIBLE_HOSTED_ENCRYPTED_STATE || '.hosted-learning-cache/store.envelope.json', reportFile: process.env.CRUCIBLE_HOSTED_PROOF_REPORT || 'hosted-learning-proof/report.json', key: process.env.CRUCIBLE_HOSTED_STORE_KEY, repository: process.env.GITHUB_REPOSITORY, ref: process.env.GITHUB_REF, runId: process.env.GITHUB_RUN_ID, bundleRoot: process.env.CRUCIBLE_HOSTED_BUNDLE_ROOT, scopeDeclarationFile: process.env.CRUCIBLE_HOSTED_SCOPE_DECLARATIONS || crypto.randomUUID() })
+    .then((report) => { process.exitCode = reportCompletion(report); })
+    .catch((error) => { console.error(`[The Crucible] Hosted learning proof failed closed: ${error.message}`); process.exitCode = 1; });
+}
+
+module.exports={runHostedProof,reportCompletion};

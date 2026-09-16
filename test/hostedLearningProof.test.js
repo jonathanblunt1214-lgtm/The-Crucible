@@ -144,3 +144,39 @@ test('the hosted proof has no fixture fallback and stops when the corpus cannot 
   assert.deepEqual(stopped.gates.map((item) => item.state), ['unsatisfied', 'unsatisfied', 'unsatisfied', 'unsatisfied', 'unsatisfied']);
   assert.equal(stopped.authorizesPromotion, false);
 });
+
+// The run that first reached the end of this proof printed "passed R4-R8" and exited 0 while R8
+// was pending, because the completion line was attached to the promise resolving rather than to
+// the gates. A green check is the thing a reader trusts here, so this asserts the reporter cannot
+// produce one unless every gate it names is satisfied.
+test('the completion report cannot claim a pass while any gate is unsatisfied', () => {
+  const { reportCompletion } = require('../src/hostedLearningProof');
+  const said = [];
+  const log = (line) => said.push(line);
+
+  const pending = reportCompletion({ revision: 60, gates: [
+    { id: 'R4', state: 'satisfied' }, { id: 'R5', state: 'satisfied' }, { id: 'R6', state: 'satisfied' },
+    { id: 'R7', state: 'satisfied' }, { id: 'R8', state: 'pending' },
+  ] }, log, log);
+  assert.equal(pending, 1, 'one pending gate makes the run red');
+  const pendingText = said.join('\n');
+  // Anchored on the pass wording itself: the red line legitimately contains "not all satisfied".
+  assert.doesNotMatch(pendingText, /passed R4-R8|R4-R8 all satisfied/, 'nothing may read as a pass');
+  assert.match(pendingText, /R8 pending/, 'it names the gate that is not satisfied');
+  assert.match(pendingText, /retained artifact still carries the durable state/, 'a red run does not break the chain');
+
+  said.length = 0;
+  const all = reportCompletion({ revision: 61, gates: ['R4', 'R5', 'R6', 'R7', 'R8'].map((id) => ({ id, state: 'satisfied' })) }, log, log);
+  assert.equal(all, 0);
+  assert.match(said.join('\n'), /R4-R8 all satisfied at revision 61/);
+  assert.match(said.join('\n'), /authorizes no promotion/, 'passing every gate is still not authorization');
+
+  // An empty gate list is the absence of a measurement, not five passes.
+  said.length = 0;
+  assert.equal(reportCompletion({ revision: 62, gates: [] }, log, log), 1);
+  assert.match(said.join('\n'), /no gate was reported at all/);
+
+  // And the unconditional line is gone from the source, not merely unreachable.
+  const source = fs.readFileSync(path.join(__dirname, '..', 'src', 'hostedLearningProof.js'), 'utf8');
+  assert.doesNotMatch(source, /durable learning proof passed R4-R8/);
+});
