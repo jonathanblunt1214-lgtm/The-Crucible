@@ -205,9 +205,17 @@ function proveInjection(bundleRoot, sources, readFile = fs.readFileSync, custody
   for (const source of sources) {
     if (sourceContentPath(bundleRoot, source)) storedHashes.add(String(source.contentSha256 || '').toLowerCase());
   }
+  // A refusal whose bytes are in the corpus anyway is kept and reported rather than skipped. The
+  // first run to read the report found exactly that: Oversight recorded one source quarantined
+  // for prompt-injection content and the corpus still stores that content hash, with no other
+  // review sharing it. So the decision was published and the bytes were published with it, and
+  // the refusal did not keep anything out. Silently falling through made the log contradict
+  // itself - "1 recorded as quarantined" followed by "no source is recorded quarantined" - and
+  // this is the finding, not a detail of it.
+  const refusalsNotHonoured = [];
   for (const refusal of oversightInjectionRefusals(custodyReport)) {
     if (!refusal.contentSha256) continue;
-    if (storedHashes.has(refusal.contentSha256)) continue; // admitted after all: not evidence.
+    if (storedHashes.has(refusal.contentSha256)) { refusalsNotHonoured.push(refusal); continue; }
     return satisfied('prompt-injection', {
       sourceId: refusal.sourceId,
       recordedBy: 'independent-oversight-custody-report',
@@ -251,8 +259,15 @@ function proveInjection(bundleRoot, sources, readFile = fs.readFileSync, custody
   // These patterns screen untrusted fetches at retrieval time, where over-matching is cheap and
   // a miss is not; reused as a corpus-wide assertion they answer a different question. Whether
   // to narrow them is a safety decision for the owner, so this reports and decides nothing.
+  // Said first and plainly, because an independent refusal that did not hold is a worse finding
+  // than no refusal at all: the safeguard ran, recorded its decision, and the bytes arrived
+  // anyway. This is what makes the content-absence half of that check load-bearing rather than
+  // decorative - crediting the decision alone would have reported the gate satisfied on it.
+  const notHonoured = refusalsNotHonoured.length
+    ? ` Independent oversight recorded ${refusalsNotHonoured.length} source(s) quarantined for prompt injection whose content the corpus stores anyway, so the refusal did not keep the bytes out and is not evidence that it did: ${refusalsNotHonoured.map((item) => `${item.sourceId} at contentSha256 ${item.contentSha256}`).join('; ')}.`
+    : '';
   if (!admitted.length) {
-    return unsatisfied('prompt-injection', 'no document in the restored corpus carries a prompt-injection pattern, and no source is recorded as quarantined for one, so the corpus cannot demonstrate this quarantine on real content');
+    return unsatisfied('prompt-injection', `no document in the restored corpus carries a prompt-injection pattern, and no source is recorded as quarantined for one, so the corpus cannot demonstrate this quarantine on real content.${notHonoured}`);
   }
   // Grouped by pattern with source ids, because the counts alone were not actionable. The first
   // run to print them showed 45 of 60 matching the exfiltration pattern - the specific one, which
@@ -275,7 +290,7 @@ function proveInjection(bundleRoot, sources, readFile = fs.readFileSync, custody
     .sort((a, b) => b[1].length - a[1].length)
     .map(([pattern, ids]) => `${ids.length}x ${pattern} (e.g. ${ids.slice(0, 3).join(', ')})`)
     .join('; ');
-  return unsatisfied('prompt-injection', `${admitted.length} document(s) have stored content matching a prompt-injection pattern and are not recorded as quarantined; they were admitted, so they cannot be evidence that the safeguard fired. By pattern, most frequent first, with source ids to open in vetted custody: ${breakdown}. No content is quoted here on purpose: these patterns fire next to the words secret, credential, token and key, and this is a public log. No source in this corpus is recorded quarantined for prompt injection, which is what the satisfied case requires.`);
+  return unsatisfied('prompt-injection', `${admitted.length} document(s) have stored content matching a prompt-injection pattern and are not recorded as quarantined; they were admitted, so they cannot be evidence that the safeguard fired. By pattern, most frequent first, with source ids to open in vetted custody: ${breakdown}. No content is quoted here on purpose: these patterns fire next to the words secret, credential, token and key, and this is a public log. No source in this corpus is both recorded as refused and absent from it, which is what the satisfied case requires.${notHonoured}`);
 }
 
 // Real retrieved bytes that are an executable rather than a document.
