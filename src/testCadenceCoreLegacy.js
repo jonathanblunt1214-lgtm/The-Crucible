@@ -47,6 +47,7 @@ const TEST_MAIN_CATEGORIES = {
     'test/scopePreRegistration.test.js',
     'test/durableGateEvidence.test.js',
     'test/hostedExperimentHarnesses.test.js',
+    'test/toolchainCirculation.test.js',
     'test/semanticCorroboration.test.js',
     'test/corroborationSensitivity.test.js',
     'test/sourceIndependence.test.js',
