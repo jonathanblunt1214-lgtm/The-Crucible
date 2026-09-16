@@ -403,3 +403,38 @@ test('sources and stored files are counted separately, because several sources m
   assert.equal(c.sources - c.documentsWithContent, 2, 'the wrong subtraction says two');
   assert.notEqual(c.sources - c.documentsWithContent, 1, 'and the right answer is one, which is why the two never had to agree');
 });
+
+// Deleting a harness does not retract what it already promoted. The first hosted run to print
+// its active knowledge found a version carrying the exact module constant the deleted hardcoded
+// harness used as its boundary, still active and still counted by R5 beside the version a real
+// experiment earned. hasRealCorpusKnowledge cannot tell them apart - it asks whether the store
+// holds any real knowledge, and one real version answers yes for the whole store. Per version is
+// the question that separates them.
+test('corpusBackedVersions names which knowledge versions the restored corpus actually backs', () => {
+  const { corpusBackedVersions, hasRealCorpusKnowledge } = require('../src/realCorpusLearning');
+  const realHash = 'b'.repeat(64);
+  const payload = {
+    knowledgeVersions: [
+      { version: 1, candidateId: 'cycle-fixture', claim: 'from a deleted harness' },
+      { version: 2, candidateId: 'extracted-real', claim: 'from the corpus' },
+      { version: 3, candidateId: 'missing-record', claim: 'no candidate record at all' },
+    ],
+    candidateRecords: [
+      { candidate: { id: 'cycle-fixture', provenance: { sourceId: 'not-in-queue', contentSha256: 'c'.repeat(64) } } },
+      { candidate: { id: 'extracted-real', provenance: { sourceId: 'linked-source:one', contentSha256: realHash } } },
+    ],
+  };
+  const bundle = { manifest: { sourceFiles: [{ sha256: realHash }] }, sources: [{ id: 'linked-source:one' }] };
+
+  const backed = corpusBackedVersions({ payload, bundle });
+  assert.deepEqual([...backed].sort(), [2], 'only the version whose provenance is in the corpus counts');
+  assert.equal(backed.has(1), false, 'a fixture candidate is not corpus-backed however valid its hashes look');
+  assert.equal(backed.has(3), false, 'a version with no candidate record is not corpus-backed either');
+
+  // A bundle that attests nothing backs nothing, which is what makes this fail closed.
+  assert.equal(corpusBackedVersions({ payload, bundle: null }).size, 0);
+  assert.equal(corpusBackedVersions({ payload, bundle: { manifest: {}, sources: [] } }).size, 0);
+
+  // And the store-wide question still answers yes, which is exactly why it cannot be the one asked.
+  assert.equal(hasRealCorpusKnowledge({ read: () => payload }, bundle), true);
+});

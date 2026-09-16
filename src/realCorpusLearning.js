@@ -367,18 +367,30 @@ function selectAllEvaluable({ store, available, corroborated, declarations, bund
 // The only thing a fixture cannot forge is membership in the corpus. A verified version
 // counts as real when its candidate's content hash is one of the hashes the restored
 // manifest attests, or its source id is one the restored queue actually holds.
+//
+// Factored per version, because the same question has to be asked of each one and not only of
+// the store as a whole. Deleting a harness does not retract what it already promoted: a version
+// promoted before this check existed stays in the durable store, stays active, and keeps being
+// counted, and "does the store contain any real knowledge" cannot tell it apart from the version
+// that earns the answer. The set of version numbers is what lets a caller name the difference.
+function corpusBackedVersions({ payload, bundle }) {
+  const realHashes = new Set((bundle && bundle.manifest && bundle.manifest.sourceFiles ? bundle.manifest.sourceFiles : []).map((file) => String(file.sha256 || '').toLowerCase()));
+  const realSourceIds = new Set((bundle && bundle.sources ? bundle.sources : []).map((source) => String(source.id || '')));
+  const backed = new Set();
+  if (!realHashes.size && !realSourceIds.size) return backed;
+  for (const version of payload.knowledgeVersions || []) {
+    const record = (payload.candidateRecords || []).find((item) => item.candidate.id === version.candidateId);
+    const provenance = record && record.candidate && record.candidate.provenance;
+    if (!provenance) continue;
+    if (realHashes.has(String(provenance.contentSha256 || '').toLowerCase()) || realSourceIds.has(String(provenance.sourceId || ''))) backed.add(version.version);
+  }
+  return backed;
+}
+
 function hasRealCorpusKnowledge(store, bundle) {
   const payload = store.read();
   if (!payload.knowledgeVersions.length) return false;
-  const realHashes = new Set((bundle && bundle.manifest && bundle.manifest.sourceFiles ? bundle.manifest.sourceFiles : []).map((file) => String(file.sha256 || '').toLowerCase()));
-  const realSourceIds = new Set((bundle && bundle.sources ? bundle.sources : []).map((source) => String(source.id || '')));
-  if (!realHashes.size && !realSourceIds.size) return false;
-  return payload.knowledgeVersions.some((version) => {
-    const record = payload.candidateRecords.find((item) => item.candidate.id === version.candidateId);
-    const provenance = record && record.candidate && record.candidate.provenance;
-    if (!provenance) return false;
-    return realHashes.has(String(provenance.contentSha256 || '').toLowerCase()) || realSourceIds.has(String(provenance.sourceId || ''));
-  });
+  return corpusBackedVersions({ payload, bundle }).size > 0;
 }
 
 async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeDeclarationFile, harnessesFor, corroborationOptions = {}, now = () => new Date().toISOString() }) {
@@ -629,4 +641,4 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
   };
 }
 
-module.exports = { readBundle, corpusCandidateStore, allCandidateRecords, corroborationEntries, corroboratedClaims, corroborationFunnel, corroborationSensitivity, reviewCorroborated, readScopeDeclarations, selectEvaluable, selectAllEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };
+module.exports = { corpusBackedVersions, readBundle, corpusCandidateStore, allCandidateRecords, corroborationEntries, corroboratedClaims, corroborationFunnel, corroborationSensitivity, reviewCorroborated, readScopeDeclarations, selectEvaluable, selectAllEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };

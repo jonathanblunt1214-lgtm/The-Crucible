@@ -8,7 +8,7 @@ const path = require('node:path');
 const { DurableScientificLearningStore, encryptWeeklyEnvelope, decryptWeeklyEnvelope, sha } = require('./scientificLearning');
 const { runLearningCycle } = require('./learningCycle');
 const { preSoakReadiness } = require('./preSoakReadiness');
-const { learnFromRealCorpus, hasRealCorpusKnowledge, readBundle, corpusCandidateStore, allCandidateRecords, readScopeDeclarations } = require('./realCorpusLearning');
+const { learnFromRealCorpus, hasRealCorpusKnowledge, readBundle, corpusCandidateStore, allCandidateRecords, readScopeDeclarations, corpusBackedVersions } = require('./realCorpusLearning');
 const { realCorpusSafety } = require('./realCorpusSafety');
 const { DurableGateEvidenceStore, invalidateStaleGates } = require('./durableGateEvidence');
 const { realSupersession } = require('./realSupersession');
@@ -131,9 +131,21 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   // so on a restored run they read satisfied with nothing in the log saying what was verified -
   // and the boundary is what identifies the language whose harness produced it. The first run to
   // finish reported four gates satisfied without naming a single claim.
+  // Each one says whether the corpus backs it, because deleting a harness does not retract what
+  // it already promoted. The first run to print this found an active version carrying the exact
+  // module constant the deleted hardcoded harness used as its boundary, still counted by R5
+  // alongside the version a real experiment earned. Membership in the restored corpus is the one
+  // thing a fixture cannot forge, so that is the discriminator, reused rather than reinvented.
+  const backedVersions = corpusBackedVersions({ payload: store.read(), bundle: restoredBundle });
+  const unbacked = [];
   for (const version of store.activeKnowledge()) {
-    console.log(`[The Crucible] active knowledge v${version.version} (candidate ${version.candidateId}): ${String(version.claim).slice(0, 140)}`);
+    const backed = backedVersions.has(version.version);
+    if (!backed) unbacked.push(version);
+    console.log(`[The Crucible] active knowledge v${version.version} (${backed ? 'corpus-backed' : 'NOT corpus-backed'}, candidate ${version.candidateId}): ${String(version.claim).slice(0, 140)}`);
     console.log(`[The Crucible]   boundary: ${version.boundary}`);
+  }
+  for (const version of unbacked) {
+    console.log(`[The Crucible] WARNING active knowledge v${version.version} is not backed by any source in the restored corpus: its candidate ${version.candidateId} has no provenance matching a manifest hash or a queue source id. It is still counted as a verified knowledge version by R5. This reports it and changes no gate; retracting durable state is an owner decision.`);
   }
   // R7 on real evidence: a further independent corpus source re-tests the promoted claim,
   // supersedes it, and the prior version is restored with its history intact. This previously
@@ -225,15 +237,20 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
 // the readiness reporter judged it and exits non-zero unless all of R4-R8 are satisfied. The
 // retention step is `if: always()`, so a red run still uploads the durable state and the gate
 // evidence, and the restore chain the next run reads is unaffected.
-function reportCompletion(report, log = console.log, warn = console.error) {
+// Deliberately one stream. The gate lines went to stdout and the verdict to stderr, and the
+// runner interleaves the two, so the first red run printed its verdict between R4 and R5 - a
+// report whose point is that each gate is stated plainly should not arrive shuffled.
+function reportCompletion(report, log = console.log) {
   const gates = report.gates || [];
-  for (const gate of gates) log(`[The Crucible] ${gate.id}: ${gate.state}`);
   const unsatisfied = gates.filter((item) => item.state !== 'satisfied');
+  const lines = gates.map((gate) => `[The Crucible] ${gate.id}: ${gate.state}`);
   if (gates.length && !unsatisfied.length) {
-    log(`[The Crucible] GitHub-hosted durable learning proof: R4-R8 all satisfied at revision ${report.revision}. This authorizes no promotion.`);
+    lines.push(`[The Crucible] GitHub-hosted durable learning proof: R4-R8 all satisfied at revision ${report.revision}. This authorizes no promotion.`);
+    log(lines.join('\n'));
     return 0;
   }
-  warn(`[The Crucible] GitHub-hosted durable learning proof did not pass at revision ${report.revision}: ${unsatisfied.map((item) => `${item.id} ${item.state}`).join(', ') || 'no gate was reported at all'}. The run is red because the gates it exists to prove are not all satisfied; the retained artifact still carries the durable state.`);
+  lines.push(`[The Crucible] GitHub-hosted durable learning proof did not pass at revision ${report.revision}: ${unsatisfied.map((item) => `${item.id} ${item.state}`).join(', ') || 'no gate was reported at all'}. The run is red because the gates it exists to prove are not all satisfied; the retained artifact still carries the durable state.`);
+    log(lines.join('\n'));
   return 1;
 }
 

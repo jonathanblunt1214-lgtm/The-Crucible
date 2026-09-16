@@ -87,11 +87,18 @@ function evaluateR5(payload) {
 }
 
 // R6: an active version is set and retrievable within its own tested boundary.
+//
+// The status check is not redundant with the pointer resolving. retrieve() filters on
+// status === 'active', so a payload whose activeVersion points at a version that supersession or
+// rollback has since marked superseded or rolled-back returns nothing from retrieval while this
+// gate read satisfied and reported the boundary of a version no longer in force. A gate named
+// verified-only retrieval must not pass while retrieval within the tested boundary is empty.
 function evaluateR6(payload) {
   if (!payload.activeVersion) return gate('R6', 'Verified-only retrieval', 'pending', 'no active version is set, so verified-only retrieval cannot be demonstrated');
   const active = (payload.knowledgeVersions || []).find((item) => item.version === payload.activeVersion);
   if (!active) return gate('R6', 'Verified-only retrieval', 'pending', `the active version ${payload.activeVersion} does not resolve to a stored knowledge version`);
-  return gate('R6', 'Verified-only retrieval', 'satisfied', `active version ${active.version} resolves and carries boundary "${active.boundary || 'not declared'}"`);
+  if (active.status !== 'active') return gate('R6', 'Verified-only retrieval', 'pending', `the active version pointer names version ${active.version}, whose status is ${active.status || 'not recorded'}, so retrieval within its boundary returns nothing and the pointer resolving is not evidence of retrieval`);
+  return gate('R6', 'Verified-only retrieval', 'satisfied', `active version ${active.version} resolves, is active, and carries boundary "${active.boundary || 'not declared'}"`);
 }
 
 // R7: a real promoted claim has been rolled back or superseded, with its history intact.
