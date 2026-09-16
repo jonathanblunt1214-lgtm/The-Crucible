@@ -21,14 +21,34 @@ const { JavaRuntimeAdapter, NodeRuntimeAdapter, JavaSemanticAdapter, TypeScriptS
 // Resolved from the environment rather than assumed at a fixed path, because the JDK lands
 // somewhere different on a GitHub runner than in a container. A missing toolchain is reported
 // by name here rather than as a failure inside a compiler invocation much later.
-function javaToolchain(env = process.env) {
+// A Windows JDK ships javac.exe and java.exe, so probing for extensionless names finds nothing
+// and the toolchain is reported absent on a runner that has one. That is what happened: run
+// 35150387996 failed five tests on all three windows-2022 legs with CRU-0050 "the java toolchain
+// is unavailable on this runner", while every ubuntu and macOS leg passed. The JDK was there; the
+// probe could not see it. PATH is searched as well as JAVA_HOME because a runner may ship a JDK
+// without exporting JAVA_HOME, and searching it is strictly better than guessing at two POSIX
+// directories that cannot exist on Windows anyway.
+function executableIn(directory, base, platform) {
+  const suffixes = platform === 'win32' ? ['.exe', '.bat', '.cmd', ''] : [''];
+  for (const suffix of suffixes) {
+    const candidate = path.join(directory, `${base}${suffix}`);
+    if (fs.existsSync(candidate)) return candidate;
+  }
+  return null;
+}
+
+function javaToolchain(env = process.env, platform = process.platform) {
   const candidates = [];
   if (env.JAVA_HOME) candidates.push(path.join(env.JAVA_HOME, 'bin'));
-  candidates.push('/usr/bin', '/usr/local/bin');
+  for (const entry of String(env.PATH || env.Path || '').split(platform === 'win32' ? ';' : ':')) {
+    const trimmed = entry.trim();
+    if (trimmed) candidates.push(trimmed);
+  }
+  if (platform !== 'win32') candidates.push('/usr/bin', '/usr/local/bin');
   for (const directory of candidates) {
-    const javac = path.join(directory, 'javac');
-    const java = path.join(directory, 'java');
-    if (fs.existsSync(javac) && fs.existsSync(java)) return { javac, java, directory };
+    const javac = executableIn(directory, 'javac', platform);
+    const java = executableIn(directory, 'java', platform);
+    if (javac && java) return { javac, java, directory };
   }
   return null;
 }
