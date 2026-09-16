@@ -366,6 +366,13 @@ test('an independent oversight refusal demonstrates prompt-injection, but only w
   const refused = proveInjection(withBytes.bundleRoot, withBytes.bundle.sources, fs.readFileSync, report);
   assert.equal(refused.satisfied, false, 'a recorded refusal whose bytes are in the corpus is not a refusal that held');
   assert.match(refused.reason, /they were admitted/);
+  // And it is reported rather than skipped. This is the case the hosted corpus is actually in:
+  // Oversight recorded the quarantine and the bytes were published anyway, so the refusal did not
+  // keep anything out. Falling through silently made the log contradict itself - "1 recorded as
+  // quarantined" and then "no source is recorded quarantined" - and an independent refusal that
+  // did not hold is a worse finding than no refusal at all.
+  assert.match(refused.reason, /refusal did not keep the bytes out/);
+  assert.match(refused.reason, /linked-source:refused at contentSha256/);
 
   // No report, or an unusable one, leaves the behaviour to the corpus alone rather than throwing.
   assert.equal(proveInjection(clean.bundleRoot, clean.bundle.sources, fs.readFileSync, null).satisfied, false);

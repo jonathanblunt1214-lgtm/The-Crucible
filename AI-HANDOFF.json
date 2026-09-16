@@ -193,7 +193,7 @@
   "activePlan": {
     "agent": "Claude",
     "objective": "Clear the blockers keeping the scientific-learning pipeline from producing evidence, without spending money: tell a refused hosted job apart from a failed one, move governed discovery onto a free provider, make governed records state what actually happened, and run the rolling release review from the literal development tip.",
-    "currentPrompt": "Read the corpus material directly and find whether the prompt-injection refusal exists anywhere in custody",
+    "currentPrompt": "Report that the independent prompt-injection refusal did not hold, and name it rather than falling through silently",
     "executionMode": {
       "mode": "work",
       "agent": "Claude",
@@ -208,9 +208,9 @@
       "branch": "development",
       "reason": "Affected paths select crucible-core.",
       "explicitOverride": false,
-      "selectedAt": "2026-09-16T07:23:59.384Z",
-      "promptSha256": "27287238d63df697af4419a15090faecbd0b0816a4b1f14a6fbca239cd863599",
-      "affectedPathsSha256": "b3e0f8215f01122dce17c313546c41af8a95fbcb7f0d581be49947fae518576b"
+      "selectedAt": "2026-09-16T07:28:42.039Z",
+      "promptSha256": "41edc6b566dba9fd7bb60d31335ce0ef9344884160d615e54527a7e56fff8bde",
+      "affectedPathsSha256": "b781497e3e6f112be98909bb7e32d8da3d31c66f35043ebed89f6957b24b6fb8"
     },
     "steps": [
       "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
@@ -253,12 +253,14 @@
       "[done] Read the measurement instead of keeping my explanation: 45 of the 60 match the exfiltration pattern rather than the broad ones, so over-breadth covers at most 18 and the remaining 45 are the sharper open question. Report now groups source ids by pattern and quotes no content, because that pattern fires next to secret, credential, token and key and the log is public.",
       "[done] Recorded the executable-content hypothesis as disconfirmed: no source in the restored corpus records that refusal, so none of the 109 retrieval-blocked sources was one.",
       "[done] Attached the vetted state repository and read its plaintext custody report, on the owner instruction to look at the material whenever that is what the pipeline needs. Oversight had recorded exactly one source quarantined for \"prompt-injection content\" - linked-source:5ab0eabad5e6714491c75fabab25d6afdf54218c4bdbfe705592c08de4baef62 - and Crucible had never read that file although the hosted job already clones it.",
-      "[done] Wired the independent refusal into proveInjection as candidate evidence from an independent party, credited only when Crucible holds none of the refused bytes, with both halves shown load-bearing."
+      "[done] Wired the independent refusal into proveInjection as candidate evidence from an independent party, credited only when Crucible holds none of the refused bytes, with both halves shown load-bearing.",
+      "[done] Established from run 35068425740 that the one independent prompt-injection refusal did not hold: the corpus stores the refused content hash and no other review shares it, so Oversight published the decision and the bytes together. The content-absence guard rejected it, which is the guard working in production.",
+      "[done] Fixed the reporting defect that made the log contradict itself, and named unhonoured refusals with source id and content hash."
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-16T09:40:00Z",
-    "currentStep": 42,
+    "lastUpdatedAt": "2026-09-16T10:10:00Z",
+    "currentStep": 44,
     "priority": "Execute the owner-authorized 6:07 plan in order 2A-2E, then Steps 3-7.",
     "ownership": {
       "currentClaim": null,
@@ -295,9 +297,9 @@
     },
     "blockers": [
       {
-        "id": "r8-awaiting-the-runner-content-check",
-        "summary": "prompt-injection now has an independent recorded refusal to cite - linked-source:5ab0eabad5e6714491c75fabab25d6afdf54218c4bdbfe705592c08de4baef62, quarantined by Oversight for \"prompt-injection content\" - and is credited only if the corpus holds none of those bytes, which is decided on the runner against the real 534 sources. The next hosted run says whether R8 prompt-injection is satisfied. executable-content remains undemonstrable: no source records that refusal and Oversight 25 quarantines are 24 policy refusals plus the one injection, so there is no executable refusal anywhere in custody.",
-        "owner": "claude"
+        "id": "oversight-refusal-was-not-honoured",
+        "summary": "Oversight recorded linked-source:5ab0eabad5e6714491c75fabab25d6afdf54218c4bdbfe705592c08de4baef62 quarantined for prompt-injection content, and the corpus it published stores that content at contentSha256 79719cd5979b6351fd2759205433a8311b7a54db821c98fd4e6175937b952a37 anyway. No other source review shares that hash, so this is not one file shared by a duplicate. The refusal was published; the bytes were published with it. That is a custody failure in the independent vetting path rather than in Crucible, and it is the sharpest open item in the pipeline. Crucible side is correct and unchanged: the content-absence check refused to credit it, so no gate moved.",
+        "owner": "user-or-oversight"
       },
       {
         "id": "forty-five-documents-match-the-exfiltration-pattern",
@@ -389,7 +391,8 @@
       "Crucible free-only is enforced rather than incidental. createConfiguredAdapters builds an adapter for every provider whose credential is in the environment, so before this one paid key reaching one job would have spent the owner money with nothing in the run saying so. The registry now carries a billing tier per provider and consult drops paid adapters before distribution, reporting each exclusion because not consulted and not available are different facts. Perplexity is marked paid deliberately: a Perplexity Pro subscription does not cover the API billing this adapter uses, and assuming it did already cost this repository a blocked gate.",
       "R8 was unsatisfiable by construction, and the reason was never the corpus. proveInjection required a source recorded quarantined whose stored content still carried the patterns, but SafeInformationRetriever returns content null on injection signals and the worker then records the refusal without ever writing a durablePath - blocker: retrieved content was quarantined before persistence - so the prover skipped every document the safeguard caught before testing it. proveExecutable was further off: the retriever does not record a quarantine for executable bytes at all, it throws at the magic-byte check, and the worker catches that into retrieval-blocked with the sentence in blocker, so neither half of what that prover required is ever written. Both now read the recorded refusal with content absent, which is what the safeguard did, while the admitted-document guard is unchanged: bytes present means the screen did not stop them. Established by driving the real SourceRetrievalWorker in test/sourceRetrievalWorker.test.js, and both branches shown load-bearing by disabling each in turn.",
       "The gate-evidence fingerprint proved itself in production at run 35067259424: it dropped the inherited R8 outcome to unproven because realCorpusSafety.js, one of R8 deciders, had changed. An inherited proof did not survive the code that produced it, which is exactly what that mechanism was built for and the first time it has fired on a real change.",
-      "The prompt-injection refusal was never missing, only unread. Oversight publishes encrypted-custody-report.json in plaintext beside the ciphertext, and its sourceReviews record 25 quarantines among 406 decisions - 24 policy refusals and exactly one \"prompt-injection content\", linked-source:5ab0eabad5e6714491c75fabab25d6afdf54218c4bdbfe705592c08de4baef62. Crucible queue does not carry Oversight reason, so that source arrives as oversight-vetting-pending and the prover, reading queue state, correctly saw no quarantine. The hosted job had been cloning that file all along to join the ciphertext parts. It is read now, two fields only, as candidate evidence from an independent party rather than as instruction, and credited only alongside the corpus not holding the refused bytes - the report is plaintext, so membership of the vetted repository is its only trust basis and the content check is what makes that sufficient."
+      "The prompt-injection refusal was never missing, only unread. Oversight publishes encrypted-custody-report.json in plaintext beside the ciphertext, and its sourceReviews record 25 quarantines among 406 decisions - 24 policy refusals and exactly one \"prompt-injection content\", linked-source:5ab0eabad5e6714491c75fabab25d6afdf54218c4bdbfe705592c08de4baef62. Crucible queue does not carry Oversight reason, so that source arrives as oversight-vetting-pending and the prover, reading queue state, correctly saw no quarantine. The hosted job had been cloning that file all along to join the ciphertext parts. It is read now, two fields only, as candidate evidence from an independent party rather than as instruction, and credited only alongside the corpus not holding the refused bytes - the report is plaintext, so membership of the vetted repository is its only trust basis and the content check is what makes that sufficient.",
+      "The content-absence half of the oversight refusal check is load-bearing in production, not only under test. Run 35068425740 read the report, found the single prompt-injection quarantine, and refused to credit it because the corpus stores that content hash - and no other review shares it, so the bytes are there because they were published, not because a duplicate shares a file. Crediting the decision field alone would have marked R8 prompt-injection satisfied on a refusal that kept nothing out."
     ],
     "verification": [
       "npm run test:all 863/863 at this change. The count rose by one with the evaluateR2 regression test, which was shown failing against the previous implementation before the repair existed.",
