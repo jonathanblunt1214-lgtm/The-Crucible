@@ -406,7 +406,15 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
 
   const corpus = {
     sources: bundle.sources.length,
+    // Three quantities, not two, and subtracting the wrong pair is how a phantom discrepancy got
+    // recorded as unexplained. A source has content when its queue record carries a durablePath or
+    // a contentSha256, which is exactly how intakePathways counts the ones that do not. A stored
+    // file is content-addressed: hostedSourceBundle.stage names it ${contentSha256}${extension} and
+    // skips the copy when that name already exists, while still pointing every source at it. So
+    // several sources legitimately share one file, and sources - files is the number that share,
+    // never the number without content.
     documentsWithContent: bundle.manifest.sourceFiles ? bundle.manifest.sourceFiles.length : 0,
+    sourcesWithContent: bundle.sources.filter((source) => source.durablePath || source.contentSha256).length,
     candidateRecords: before.candidateRecords.length,
     corpusCandidateRecords: corpusStore ? corpusStore.read().candidateRecords.length : 0,
     corpusLearningStateRestored: Boolean(corpusStore),

@@ -84,7 +84,7 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
       for (const signal of pathways.diagnostics.signals) console.log(`[The Crucible]   ${signal.signal}: ${signal.detail}`);
       if (pathways.blocked) console.log(`[The Crucible] blocked pathway: ${pathways.blocked}`);
       const c = stopped.corpus || {};
-      console.log(`[The Crucible] corpus: ${c.sources} sources, ${c.documentsWithContent} with stored content; ${c.corpusCandidateRecords} candidate(s) in the corpus learning state, ${c.candidateRecords} in the persistent store, ${c.candidatesAvailableForCorroboration} available to corroboration; ${c.furnitureExcludedFromCorroboration} excluded as document furniture; ${c.corroboratedClaims} corroborated; corpus learning state restored: ${c.corpusLearningStateRestored}.`);
+      console.log(`[The Crucible] corpus: ${c.sources} sources, ${c.sourcesWithContent} with stored content held in ${c.documentsWithContent} content-addressed file(s) (${c.sourcesWithContent - c.documentsWithContent} share a file with another source); ${c.corpusCandidateRecords} candidate(s) in the corpus learning state, ${c.candidateRecords} in the persistent store, ${c.candidatesAvailableForCorroboration} available to corroboration; ${c.furnitureExcludedFromCorroboration} excluded as document furniture; ${c.corroboratedClaims} corroborated; corpus learning state restored: ${c.corpusLearningStateRestored}.`);
       // Says whether zero corroborated claims is the corpus or the threshold. Reporting only.
       if (c.corroborationSensitivity) {
         const s = c.corroborationSensitivity;
