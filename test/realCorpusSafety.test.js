@@ -293,7 +293,11 @@ test('prompt-injection is demonstrated by a recorded quarantine with no persiste
 
   // And the report names the pattern that matched, so a reader can tell an attack from a phrase
   // that ordinary technical documentation contains.
-  assert.match(admitted.reason, /Matching patterns, most frequent first: 1x \(\?:reveal\|exfiltrat\|upload\)/, 'the exfiltration pattern is what that text matches');
+  // Grouped by pattern with the source ids to open, and no content quoted: these patterns fire
+  // next to the words secret, credential, token and key, and the report goes to a public log.
+  assert.match(admitted.reason, /By pattern, most frequent first, with source ids/);
+  assert.match(admitted.reason, /1x \(\?:reveal\|exfiltrat\|upload\).*\(e\.g\. linked-source:admitted\)/, 'the exfiltration pattern is what that text matches, and the id says which document');
+  assert.doesNotMatch(admitted.reason, /Ignore all previous instructions/, 'matched content is never quoted into the log');
 });
 
 // The patterns are a retrieval-time screen for untrusted fetches, where over-matching is cheap.

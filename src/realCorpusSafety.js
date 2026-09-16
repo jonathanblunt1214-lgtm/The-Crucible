@@ -211,10 +211,28 @@ function proveInjection(bundleRoot, sources, readFile = fs.readFileSync) {
   if (!admitted.length) {
     return unsatisfied('prompt-injection', 'no document in the restored corpus carries a prompt-injection pattern, and no source is recorded as quarantined for one, so the corpus cannot demonstrate this quarantine on real content');
   }
+  // Grouped by pattern with source ids, because the counts alone were not actionable. The first
+  // run to print them showed 45 of 60 matching the exfiltration pattern - the specific one, which
+  // ordinary documentation samples do not match - and only 18 matching the broad ones. So "these
+  // are over-matches" stopped being a safe reading, and whoever looks next needs to know WHICH
+  // documents to open.
+  //
+  // Deliberately no match context. This pattern fires on text near "secret", "credential",
+  // "token" and "key", which is exactly where a real credential would sit, and this runs in a
+  // public Actions log. Naming the source ids sends the reader to the documents in vetted custody
+  // instead of copying their bytes into a log that cannot be unpublished.
   const byPattern = new Map();
-  for (const item of admitted) for (const pattern of item.patterns) byPattern.set(pattern, (byPattern.get(pattern) || 0) + 1);
-  const breakdown = [...byPattern.entries()].sort((a, b) => b[1] - a[1]).map(([pattern, count]) => `${count}x ${pattern}`).join('; ');
-  return unsatisfied('prompt-injection', `${admitted.length} document(s) have stored content matching a prompt-injection pattern and are not recorded as quarantined (${admitted.slice(0, 3).map((item) => item.sourceId).join(', ')}); they were admitted, so they cannot be evidence that the safeguard fired. Matching patterns, most frequent first: ${breakdown}. A pattern that ordinary technical prose matches is a pattern over-matching rather than an attack detected; no source in this corpus is recorded quarantined for prompt injection, which is what the satisfied case requires.`);
+  for (const item of admitted) {
+    for (const pattern of item.patterns) {
+      if (!byPattern.has(pattern)) byPattern.set(pattern, []);
+      byPattern.get(pattern).push(item.sourceId);
+    }
+  }
+  const breakdown = [...byPattern.entries()]
+    .sort((a, b) => b[1].length - a[1].length)
+    .map(([pattern, ids]) => `${ids.length}x ${pattern} (e.g. ${ids.slice(0, 3).join(', ')})`)
+    .join('; ');
+  return unsatisfied('prompt-injection', `${admitted.length} document(s) have stored content matching a prompt-injection pattern and are not recorded as quarantined; they were admitted, so they cannot be evidence that the safeguard fired. By pattern, most frequent first, with source ids to open in vetted custody: ${breakdown}. No content is quoted here on purpose: these patterns fire next to the words secret, credential, token and key, and this is a public log. No source in this corpus is recorded quarantined for prompt injection, which is what the satisfied case requires.`);
 }
 
 // Real retrieved bytes that are an executable rather than a document.
