@@ -12,7 +12,7 @@ const { inspectForContinuation, formatContinuationReport } = require('./aiHandof
 const { ownerLabel } = require('./mutationClaims');
 const { createConfiguredAdapters } = require('./aiProviderAdapters');
 const { MultiAiOrchestrator, deliberationFromDistribution } = require('./multiAiOrchestrator');
-const { PROVIDER_IDS, credentialPresent, modelFor } = require('./aiProviderRegistry');
+const { PROVIDER_IDS, FREE_PROVIDER_IDS, credentialPresent, modelFor, describeProvider } = require('./aiProviderRegistry');
 
 const root = process.env.CRUCIBLE_PROJECT_ROOT ? path.resolve(process.env.CRUCIBLE_PROJECT_ROOT) : process.cwd();
 
@@ -101,7 +101,25 @@ async function main() {
     const taskId = requiredFlag(args, 'task');
     const prompt = requiredFlag(args, 'prompt');
     const { adapters, unconfigured } = createConfiguredAdapters();
-    if (!adapters.size) throw crucibleError('CRU-0034', `No provider is configured, so this task cannot be distributed. ${unconfigured.map((item) => item.reason).join(' ')}`);
+    // The Crucible consults the free part of the council only. This is a cost boundary the owner
+    // set, and enforcing it here rather than relying on which secret a workflow happens to export
+    // is deliberate: createConfiguredAdapters builds an adapter for every provider whose
+    // credential is in the environment, so without this filter one paid key reaching one job
+    // would spend the owner's money without anything in the run saying it had. A paid provider
+    // that is configured is reported as excluded rather than silently dropped, because "it was
+    // not consulted" and "it was not available" are different facts. The whole council, paid
+    // providers included, belongs to the owner's own client, where the owner is choosing to spend.
+    const excludedAsPaid = [];
+    for (const id of [...adapters.keys()]) {
+      if (FREE_PROVIDER_IDS.includes(id)) continue;
+      adapters.delete(id);
+      excludedAsPaid.push(id);
+    }
+    for (const id of excludedAsPaid) console.error(`[The Crucible] ${describeProvider(id).label} is configured but was not consulted: The Crucible uses the free part of the council only.`);
+    if (!adapters.size) {
+      const reasons = unconfigured.map((item) => item.reason).join(' ');
+      throw crucibleError('CRU-0034', `No free provider is configured, so this task cannot be distributed. Free providers are ${FREE_PROVIDER_IDS.join(', ')}. ${reasons}${excludedAsPaid.length ? ` Configured but excluded as paid: ${excludedAsPaid.join(', ')}.` : ''}`);
+    }
     const orchestrator = new MultiAiOrchestrator();
     for (const [id, adapter] of adapters) orchestrator.register(id, adapter);
     const distribution = await orchestrator.distribute({ taskId, prompt });

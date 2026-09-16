@@ -18,6 +18,7 @@ const PROVIDERS = Object.freeze({
   openai: Object.freeze({
     id: 'openai',
     label: 'OpenAI',
+    billing: 'paid',
     credentialEnv: 'OPENAI_API_KEY',
     modelEnv: 'OPENAI_MODEL',
     endpointEnv: 'OPENAI_BASE_URL',
@@ -27,6 +28,7 @@ const PROVIDERS = Object.freeze({
   anthropic: Object.freeze({
     id: 'anthropic',
     label: 'Anthropic Claude',
+    billing: 'paid',
     credentialEnv: 'ANTHROPIC_API_KEY',
     modelEnv: 'ANTHROPIC_MODEL',
     endpointEnv: 'ANTHROPIC_BASE_URL',
@@ -36,6 +38,7 @@ const PROVIDERS = Object.freeze({
   perplexity: Object.freeze({
     id: 'perplexity',
     label: 'Perplexity',
+    billing: 'paid',
     credentialEnv: 'PERPLEXITY_API_KEY',
     modelEnv: 'PERPLEXITY_MODEL',
     endpointEnv: 'PERPLEXITY_BASE_URL',
@@ -45,6 +48,7 @@ const PROVIDERS = Object.freeze({
   'nvidia-nim': Object.freeze({
     id: 'nvidia-nim',
     label: 'NVIDIA NIM',
+    billing: 'free',
     credentialEnv: 'NVIDIA_NIM_API_KEY',
     modelEnv: 'NVIDIA_NIM_MODEL',
     endpointEnv: 'NVIDIA_NIM_BASE_URL',
@@ -54,6 +58,18 @@ const PROVIDERS = Object.freeze({
 });
 
 const PROVIDER_IDS = Object.freeze(Object.keys(PROVIDERS));
+// Which providers The Crucible itself may call, and it is a cost boundary rather than a
+// capability one. The owner pays for this engine and has said so plainly, so Crucible consults
+// the free part of the council only; the whole council, paid providers included, is for the
+// owner's own client where the owner is choosing to spend. Recording it here rather than leaving
+// it to which secret a workflow happens to set is the point: without this, "Crucible is free" is
+// one stray environment variable away from being false, and the variable would be money.
+//
+// Perplexity is marked paid deliberately even though a Perplexity Pro subscription exists - that
+// subscription does not cover API billing, which is what this adapter uses, and assuming
+// otherwise already cost this repository a blocked gate.
+const FREE_PROVIDER_IDS = Object.freeze(PROVIDER_IDS.filter((id) => PROVIDERS[id].billing === 'free'));
+const PAID_PROVIDER_IDS = Object.freeze(PROVIDER_IDS.filter((id) => PROVIDERS[id].billing !== 'free'));
 const CREDENTIAL_ENV_NAMES = Object.freeze(PROVIDER_IDS.map((id) => PROVIDERS[id].credentialEnv));
 
 function describeProvider(id) {
@@ -152,7 +168,7 @@ function assertNoCredentialsPersisted(text, options = {}) {
 }
 
 module.exports = {
-  PROVIDERS, PROVIDER_IDS, CREDENTIAL_ENV_NAMES, CREDENTIAL_SHAPES,
+  PROVIDERS, PROVIDER_IDS, FREE_PROVIDER_IDS, PAID_PROVIDER_IDS, CREDENTIAL_ENV_NAMES, CREDENTIAL_SHAPES,
   describeProvider, credentialPresent, credentialFor, endpointFor, modelFor,
   knownSecretValues, redact, findCredentialLeaks, assertNoCredentialsPersisted,
 };

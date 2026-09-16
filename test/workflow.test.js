@@ -536,6 +536,14 @@ test('the council consult egresses only on a human dispatch, sends only its inpu
   for (const credential of ['CRUCIBLE_HOSTED_STORE_KEY', 'CRUCIBLE_VETTED_BUNDLE_KEY', 'CRUCIBLE_VETTED_STATE_READ_KEY']) {
     assert.ok(!workflow.includes(credential), `${credential} has no business in a job that talks to a provider`);
   }
+  // The Crucible consults the free part of the council only, because it is the owner's expense.
+  // coordinationCli enforces this regardless, so a paid key here would be refused rather than
+  // billed - but it has no reason to be here either, and its absence is the cheaper guard.
+  const { PAID_PROVIDER_IDS, PROVIDERS } = require('../src/aiProviderRegistry');
+  for (const id of PAID_PROVIDER_IDS) {
+    assert.ok(!workflow.includes(PROVIDERS[id].credentialEnv), `${PROVIDERS[id].credentialEnv} is billable and must not reach a Crucible job`);
+  }
+  assert.match(workflow, /NVIDIA_NIM_API_KEY: \$\{\{ secrets\.NVIDIA_NIM_API_KEY \}\}/, 'the free provider is the one it calls');
 
   // Nothing implicit leaves the repository: the prompt is the dispatch input, and the corpus,
   // the durable store and the vetted state repositories are not read into the request.
