@@ -86,10 +86,24 @@ test('R5 is the linchpin and reads pending while there is no verified version', 
   assert.equal(evaluateR5({ knowledgeVersions: [{ version: 'v-1' }] }).state, 'satisfied');
 });
 
-test('R6 requires the active pointer to actually resolve to a stored version', () => {
+test('R6 requires the active pointer to resolve to a version that is still active', () => {
   assert.equal(evaluateR6({ activeVersion: null }).state, 'pending');
   assert.equal(evaluateR6({ activeVersion: 'v-9', knowledgeVersions: [{ version: 'v-1' }] }).state, 'pending');
-  assert.equal(evaluateR6({ activeVersion: 'v-1', knowledgeVersions: [{ version: 'v-1', boundary: 'b' }] }).state, 'satisfied');
+  assert.equal(evaluateR6({ activeVersion: 'v-1', knowledgeVersions: [{ version: 'v-1', boundary: 'b', status: 'active' }] }).state, 'satisfied');
+
+  // Found while instrumenting the hosted proof. retrieve() filters on status === 'active', so a
+  // pointer left aimed at a version that supersession or rollback has since demoted returns
+  // nothing from retrieval - and this gate reported satisfied anyway, quoting the boundary of a
+  // version no longer in force. A gate named verified-only retrieval must not pass while
+  // retrieval within the tested boundary is empty. Every version a real store writes carries a
+  // status, which is why the absent-status fixture this assertion used before was not a case
+  // worth preserving.
+  const demoted = { activeVersion: 'v-1', knowledgeVersions: [{ version: 'v-1', boundary: 'b', status: 'superseded' }] };
+  assert.equal(demoted.knowledgeVersions.filter((item) => item.status === 'active').length, 0, 'nothing is retrievable for this payload');
+  const gateWhenDemoted = evaluateR6(demoted);
+  assert.equal(gateWhenDemoted.state, 'pending');
+  assert.match(gateWhenDemoted.detail, /whose status is superseded/);
+  assert.match(evaluateR6({ activeVersion: 'v-1', knowledgeVersions: [{ version: 'v-1', boundary: 'b' }] }).detail, /status is not recorded/, 'an absent status is not an active one');
 });
 
 test('R7 requires a real rollback or supersession record', () => {
