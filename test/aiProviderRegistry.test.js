@@ -93,3 +93,41 @@ test('the repository\'s own governance artifacts carry no credentials', () => {
     assert.deepEqual(findCredentialLeaks(fs.readFileSync(target, 'utf8'), { env: {}, label: relative }), [], `${relative} must not contain a credential`);
   }
 });
+
+// The owner pays for this engine and drew the line explicitly: The Crucible consults the free
+// part of the council only, while the whole council including paid providers belongs to the
+// owner's own client. That boundary is money, so it is recorded in the registry and enforced in
+// the CLI rather than left to which secret a workflow happens to export - otherwise "Crucible is
+// free" stays true only until one paid key reaches one job.
+test('the registry separates the free council from the paid one, and consult calls only the free part', async () => {
+  const { FREE_PROVIDER_IDS, PAID_PROVIDER_IDS, PROVIDERS } = require('../src/aiProviderRegistry');
+  assert.deepEqual([...FREE_PROVIDER_IDS], ['nvidia-nim']);
+  assert.deepEqual([...PAID_PROVIDER_IDS].sort(), ['anthropic', 'openai', 'perplexity']);
+  // Every governed provider is one or the other, so a provider added later cannot default to free.
+  for (const id of PROVIDER_IDS) assert.ok(['free', 'paid'].includes(PROVIDERS[id].billing), `${id} declares no billing tier`);
+  assert.equal(FREE_PROVIDER_IDS.length + PAID_PROVIDER_IDS.length, PROVIDER_IDS.length);
+  // Perplexity is paid on purpose: a Perplexity Pro subscription does not cover the API billing
+  // this adapter uses, and assuming it did already cost this repository a blocked gate.
+  assert.equal(PROVIDERS.perplexity.billing, 'paid');
+
+  // The property that protects the owner's money: a paid credential in the environment must never
+  // produce a paid call. Run as a real process, because the guard lives in the CLI path a
+  // workflow invokes, and asserting it on an import would not exercise that path.
+  const { execFile } = require('node:child_process');
+  const run = (env) => new Promise((resolve) => {
+    execFile(process.execPath, ['src/coordinationCli.js', 'consult', '--task', 't', '--prompt', 'p'],
+      { cwd: path.join(__dirname, '..'), env: { ...process.env, ...env }, timeout: 60000 },
+      (error, stdout, stderr) => resolve({ code: error ? (error.code ?? 1) : 0, stdout, stderr }));
+  });
+
+  const paidOnly = await run({
+    OPENAI_API_KEY: 'test-key-not-used', OPENAI_MODEL: 'gpt-4o',
+    ANTHROPIC_API_KEY: '', PERPLEXITY_API_KEY: '', NVIDIA_NIM_API_KEY: '',
+  });
+  assert.notEqual(paidOnly.code, 0, 'a paid-only environment must refuse rather than spend');
+  assert.match(paidOnly.stderr, /OpenAI is configured but was not consulted/, 'the exclusion is stated, not silent');
+  assert.match(paidOnly.stderr, /CRU-0034/);
+  assert.match(paidOnly.stderr, /free part of the council only|No free provider is configured/);
+  // Nothing was sent: no deliberation block reached stdout.
+  assert.equal(paidOnly.stdout.trim(), '', 'a refused consult produces no deliberation');
+});

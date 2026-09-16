@@ -14,6 +14,12 @@ name: Council consult
 # happens when a person asks for it and at no other time. That is the offline hard stop: the
 # absence of an automatic trigger, not a flag that could be flipped by a later edit.
 #
+# It consults the free part of the council only. The Crucible is the owner's expense, so it calls
+# NVIDIA NIM and nothing billable; the whole council, paid providers included, belongs to the
+# owner's own client where the owner is choosing to spend. This job exports one provider key, and
+# coordinationCli refuses a paid provider even if its credential somehow reaches the environment -
+# so the boundary does not depend on this file staying careful.
+#
 # It sends only what the dispatcher types. The prompt is an input. Nothing reads the corpus, the
 # durable store, the vetted state repositories, or any secret into the request, and the job has
 # no credential other than the provider key it must have to call the provider at all.
