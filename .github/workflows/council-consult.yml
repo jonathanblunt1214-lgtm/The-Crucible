@@ -24,6 +24,14 @@ name: Council consult
 # Proof Before Behaviour it cannot change behaviour on its own. Nothing here authorizes a
 # promotion, marks a gate, or closes a blocker.
 
+# Dispatching this requires the file to exist on the default branch. GitHub answered 404 to
+# council-consult.yml/dispatches while it lived only on development, and every workflow here that
+# does dispatch - hosted-learning-proof.yml, model-pointer-research.yml, perplexity-research.yml -
+# is present on main. A push trigger does not substitute for that and is refused regardless, since
+# a push-triggered consult would egress on every commit. So this stays unrunnable until the file
+# reaches main, which is a promotion the Promotion Boundary mandate leaves to the owner. Promoting
+# all of development would also carry learning-scope changes to main while R8 is pending; carrying
+# this one file through release would not.
 on:
   workflow_dispatch:
     inputs:
