@@ -8,7 +8,7 @@ const path = require('node:path');
 const { DurableScientificLearningStore, encryptWeeklyEnvelope, decryptWeeklyEnvelope, sha } = require('./scientificLearning');
 const { runLearningCycle } = require('./learningCycle');
 const { preSoakReadiness } = require('./preSoakReadiness');
-const { learnFromRealCorpus, hasRealCorpusKnowledge, readBundle, corpusCandidateStore, allCandidateRecords, readScopeDeclarations, corpusBackedVersions } = require('./realCorpusLearning');
+const { learnFromRealCorpus, hasRealCorpusKnowledge, readBundle, corpusCandidateStore, allCandidateRecords, readScopeDeclarations, corpusBackedVersions, oversightQuarantinedHashes } = require('./realCorpusLearning');
 const { realCorpusSafety, oversightInjectionRefusals } = require('./realCorpusSafety');
 const { DurableGateEvidenceStore, invalidateStaleGates } = require('./durableGateEvidence');
 const { realSupersession } = require('./realSupersession');
@@ -57,9 +57,24 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   // cannot supply a corroborated, owner-scoped claim, this reports unsatisfied and stops.
   let realLearning = null;
   const restoredBundle = bundleRoot && fs.existsSync(path.join(bundleRoot,'manifest.json')) ? readBundle(bundleRoot) : null;
+  // Read here rather than just before the safety check, because the refusals in it decide what
+  // learning is allowed to see. Candidate evidence from an independent party: two fields, decision
+  // and reason, never an instruction. An unusable report excludes nothing and says so.
+  let custodyReport = null;
+  if (oversightCustodyReportFile) {
+    try {
+      custodyReport = JSON.parse(fs.readFileSync(oversightCustodyReportFile, 'utf8'));
+      const injection = oversightInjectionRefusals(custodyReport);
+      const refused = oversightQuarantinedHashes(custodyReport);
+      console.log(`[The Crucible] independent oversight custody report read: ${(custodyReport.sourceReviews || []).length} source review(s), ${refused.size} quarantined, ${injection.length} of them for prompt injection.`);
+    } catch (error) {
+      custodyReport = null;
+      console.log(`[The Crucible] independent oversight custody report was not usable (${error.message}); nothing is excluded on consumption and R8 falls back to what the corpus alone can show.`);
+    }
+  }
   if (!hasRealCorpusKnowledge(store, restoredBundle)) {
     if (!bundleRoot) throw new Error('CRUCIBLE_HOSTED_BUNDLE_ROOT is required: the hosted proof learns from the restored real corpus and has no fixture fallback.');
-    realLearning = await learnFromRealCorpus({ bundleRoot, learningRoot:storeRoot, projectId, scopeDeclarationFile, harnessesFor:(declaration)=>harnessesForDeclaration(declaration,{projectId,at}), now:()=>at });
+    realLearning = await learnFromRealCorpus({ bundleRoot, learningRoot:storeRoot, projectId, scopeDeclarationFile, harnessesFor:(declaration)=>harnessesForDeclaration(declaration,{projectId,at}), custodyReport, now:()=>at });
     if (!realLearning.learned) {
       const stopped = { schemaVersion:1, projectId, repository, ref, runId:String(runId), completedAt:at, restoredEncryptedState:restored,
         learnedFromRealCorpus:false, reason:realLearning.reason, corpus:realLearning.corpus,
@@ -201,17 +216,6 @@ async function runHostedProof({ root, encryptedFile, reportFile, key, repository
   // Read as candidate evidence from an independent party: two fields, and the refusal counts only
   // when Crucible also holds none of the bytes. A malformed or absent report is not fatal, and it
   // is not silent either - it leaves the behaviour to the corpus alone and says so.
-  let custodyReport = null;
-  if (oversightCustodyReportFile) {
-    try {
-      custodyReport = JSON.parse(fs.readFileSync(oversightCustodyReportFile, 'utf8'));
-      const refusals = oversightInjectionRefusals(custodyReport);
-      console.log(`[The Crucible] independent oversight custody report read: ${(custodyReport.sourceReviews || []).length} source review(s), ${refusals.length} recorded as quarantined for prompt injection.`);
-    } catch (error) {
-      custodyReport = null;
-      console.log(`[The Crucible] independent oversight custody report was not usable (${error.message}); R8 falls back to what the corpus alone can show.`);
-    }
-  }
   const safetyResult = await realCorpusSafety({
     root,
     bundleRoot,

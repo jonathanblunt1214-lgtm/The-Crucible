@@ -393,9 +393,46 @@ function hasRealCorpusKnowledge(store, bundle) {
   return corpusBackedVersions({ payload, bundle }).size > 0;
 }
 
-async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeDeclarationFile, harnessesFor, corroborationOptions = {}, now = () => new Date().toISOString() }) {
+// Content the independent vetting organ refused, keyed by hash. Oversight records a decision per
+// source and publishes the bundle; nothing in its publish path removes what it quarantined, so a
+// refusal arrives here as a note rather than as an absence - verified by reading that repository:
+// `quarantin` appears only in its vetting function and that function's test, and its custody
+// module contains no deletion at all. One refusal was confirmed present in the restored corpus by
+// content hash, with no other review sharing that hash.
+//
+// So this is enforced on consumption. It is deliberately NOT presented as the upstream refusal
+// having held: which organ kept the bytes out is the whole question, and realCorpusSafety still
+// sees the corpus as published so that the finding stays visible instead of being tidied away by
+// the fix. Reported per exclusion, because silently dropping 25 sources would be its own defect.
+function oversightQuarantinedHashes(custodyReport) {
+  const reviews = (custodyReport && Array.isArray(custodyReport.sourceReviews)) ? custodyReport.sourceReviews : [];
+  const refused = new Map();
+  for (const review of reviews) {
+    if (String(review.decision || '') !== 'quarantined') continue;
+    const hash = String(review.contentSha256 || '').toLowerCase();
+    if (hash) refused.set(hash, { sourceId: String(review.sourceId || ''), reason: String(review.reason || 'not recorded') });
+  }
+  return refused;
+}
+
+async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeDeclarationFile, harnessesFor, corroborationOptions = {}, custodyReport = null, now = () => new Date().toISOString() }) {
   const bundle = readBundle(bundleRoot);
   if (bundle.manifest.projectId !== projectId) throw new Error(`The restored bundle belongs to ${bundle.manifest.projectId}, not ${projectId}.`);
+
+  // Refused content does not get to teach anything, whoever failed to remove it.
+  const refusedHashes = oversightQuarantinedHashes(custodyReport);
+  if (refusedHashes.size) {
+    const kept = [];
+    for (const source of bundle.sources) {
+      const refusal = refusedHashes.get(String(source.contentSha256 || '').toLowerCase());
+      if (!refusal) { kept.push(source); continue; }
+      console.log(`[The Crucible] excluded from learning: ${source.id} carries content the independent vetting organ quarantined (${refusal.reason}), and the published bundle contained it anyway.`);
+    }
+    if (kept.length !== bundle.sources.length) {
+      console.log(`[The Crucible] ${bundle.sources.length - kept.length} source(s) excluded from learning on consumption because their content was refused upstream and published regardless. This closes the exposure; it does not make the upstream refusal evidence that it held.`);
+      bundle.sources = kept;
+    }
+  }
 
   const store = new DurableScientificLearningStore({ root: learningRoot, projectId });
   const before = store.read();
@@ -641,4 +678,4 @@ async function learnFromRealCorpus({ bundleRoot, learningRoot, projectId, scopeD
   };
 }
 
-module.exports = { corpusBackedVersions, readBundle, corpusCandidateStore, allCandidateRecords, corroborationEntries, corroboratedClaims, corroborationFunnel, corroborationSensitivity, reviewCorroborated, readScopeDeclarations, selectEvaluable, selectAllEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };
+module.exports = { corpusBackedVersions, oversightQuarantinedHashes, readBundle, corpusCandidateStore, allCandidateRecords, corroborationEntries, corroboratedClaims, corroborationFunnel, corroborationSensitivity, reviewCorroborated, readScopeDeclarations, selectEvaluable, selectAllEvaluable, hasRealCorpusKnowledge, learnFromRealCorpus };

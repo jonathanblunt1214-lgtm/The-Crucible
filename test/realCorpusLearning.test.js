@@ -7,7 +7,7 @@ const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const { ClaimExtractionWorker } = require('../src/claimExtractionWorker');
 const { DurableScientificLearningStore } = require('../src/scientificLearning');
-const { readBundle, corpusCandidateStore, corroboratedClaims, reviewCorroborated, readScopeDeclarations, learnFromRealCorpus } = require('../src/realCorpusLearning');
+const { readBundle, corpusCandidateStore, corroboratedClaims, reviewCorroborated, readScopeDeclarations, learnFromRealCorpus, oversightQuarantinedHashes } = require('../src/realCorpusLearning');
 const { ScopePreRegistrationLedger, screenDeclarations, declarationSha256 } = require('../src/scopePreRegistration');
 
 const PROJECT = 'github:owner/repo';
@@ -437,4 +437,48 @@ test('corpusBackedVersions names which knowledge versions the restored corpus ac
 
   // And the store-wide question still answers yes, which is exactly why it cannot be the one asked.
   assert.equal(hasRealCorpusKnowledge({ read: () => payload }, bundle), true);
+});
+
+// Refused content does not get to teach anything, whoever failed to remove it. Oversight records a
+// decision per source and publishes the bundle, and nothing in its publish path removes what it
+// quarantined - verified by reading that repository: `quarantin` appears only in its vetting
+// function and that function's test, and its custody module contains no deletion at all. One
+// refusal was confirmed present in the restored corpus by content hash, with no other review
+// sharing that hash. So the refusal arrives here as a note rather than as an absence.
+//
+// Every quarantined source is excluded, not only the content-hazard one. The 24 policy refusals
+// come from classifySource rejecting a non-HTTPS URL, a denied host, .onion, a private address, or
+// credentials embedded in the URL - so they are provenance refusals, and corroboration here needs
+// two independent identified sources. A provenance-refused source can never be one, so admitting
+// it could only add permanently unusable records and inflate every count that reads "candidates
+// available to corroboration".
+test('content the independent vetting organ refused is excluded from learning, whoever published it', async (t) => {
+  const dir = workspace(t);
+  const documents = twoRealDocuments();
+  const { bundleRoot, learningRoot, queueFile } = buildBundle(dir, documents);
+  const refusedHash = sha256(documents[0].content);
+  const keptHash = sha256(documents[1].content);
+
+  const report = {
+    schemaVersion: 1,
+    independentOversight: true,
+    sourceReviews: [
+      { sourceId: documents[0].url, contentSha256: refusedHash, decision: 'quarantined', reason: 'Source is prohibited by independent vetting policy.' },
+      { sourceId: documents[1].url, contentSha256: keptHash, decision: 'approved-for-bounded-extraction', reason: null },
+    ],
+  };
+  assert.deepEqual([...oversightQuarantinedHashes(report).keys()], [refusedHash], 'only the quarantined review is refused');
+
+  // A report that refuses nothing, or that is unusable, excludes nothing and does not throw.
+  assert.equal(oversightQuarantinedHashes(null).size, 0);
+  assert.equal(oversightQuarantinedHashes({ sourceReviews: 'not-an-array' }).size, 0);
+  assert.equal(oversightQuarantinedHashes({ sourceReviews: [{ decision: 'quarantined' }] }).size, 0, 'a review with no content hash refuses nothing');
+
+  const common = { bundleRoot, learningRoot, projectId: PROJECT, scopeDeclarationFile: null, harnessesFor: () => ({ experiment: { id: 'a' }, verifier: { id: 'b' } }), now: () => AT };
+  const withReport = await learnFromRealCorpus({ ...common, custodyReport: report });
+  const withoutReport = await learnFromRealCorpus({ ...common, learningRoot: path.join(dir, 'learning-2'), custodyReport: null });
+
+  // The refused source is gone from what learning saw; the approved one is not.
+  assert.equal(withReport.corpus.sources, withoutReport.corpus.sources - 1, 'exactly the refused source was excluded');
+  assert.ok(withoutReport.corpus.sources >= 2, 'the unfiltered corpus really did carry both');
 });
