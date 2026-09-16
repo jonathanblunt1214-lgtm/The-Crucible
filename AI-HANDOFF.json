@@ -208,9 +208,9 @@
       "branch": "development",
       "reason": "Affected paths select crucible-core.",
       "explicitOverride": false,
-      "selectedAt": "2026-09-15T19:40:59.948Z",
+      "selectedAt": "2026-09-16T06:11:54.405Z",
       "promptSha256": "b36d6253645937af1c4badd174f2d4208ae7896a96d36c67cb945522bf771ece",
-      "affectedPathsSha256": "52487c088c00eca4cdfbb46dc9151f8c60cb7c9b5bc33dd04c3cdc177a45b145"
+      "affectedPathsSha256": "7fd1e5642facfeb5fa55e6ac882deb9d7e8c617f9e2a59a6dd86ece6e1946b81"
     },
     "steps": [
       "[done] Re-read current repository identity, governing handoff, workflow evidence, and exact hosted failures before mutation.",
@@ -237,12 +237,15 @@
       "[done] Deleted the hardcoded harness that ran one array-map snippet for every claim and replaced it with real per-language experiments whose independence is a different measurement method, proven by mutation.",
       "[done] Landed the owner-approved scope declaration for the corroborated Java claim, so the first controlled experiment on a real fixture can run.",
       "[done] Read the first-ever green run of the hosted proof skeptically instead of reporting it, found the green was false, and made the completion reporter state each gate and exit non-zero unless all of R4-R8 are satisfied.",
-      "[done] Instrumented the learning outcome in the run log - each declaration with its experiment adapter, independent verifier, promoted version and source ids, and a distinct line when knowledge was restored rather than learned - so \"R5 satisfied\" can no longer be read without knowing which of the two happened."
+      "[done] Instrumented the learning outcome in the run log - each declaration with its experiment adapter, independent verifier, promoted version and source ids, and a distinct line when knowledge was restored rather than learned - so \"R5 satisfied\" can no longer be read without knowing which of the two happened.",
+      "[done] Confirmed the completion fix on a real runner: hosted run 35062311534 at 69ba57c states R4-R7 satisfied and R8 pending, exits 1, and the check is red - and the retained artifact still uploaded 4 files, so the 90-day restore chain survives a red run as designed.",
+      "[done] Corrected the false record that pull request 19 was unmerged. The owner merged it at 2026-09-15T09:29:12Z from head 802f520; main is 8162707 and carries development through 802f520 only.",
+      "[done] Made every run name the claim its satisfied gates are about, by logging each active knowledge version with its claim and experiment boundary - a restored run evaluates no declaration, so R5 could read satisfied with nothing in the log saying what was verified."
     ],
     "status": "handoff-ready",
     "startedAt": "2026-09-13T05:06:01Z",
-    "lastUpdatedAt": "2026-09-15T20:05:00Z",
-    "currentStep": 25,
+    "lastUpdatedAt": "2026-09-16T06:20:00Z",
+    "currentStep": 27,
     "priority": "Execute the owner-authorized 6:07 plan in order 2A-2E, then Steps 3-7.",
     "ownership": {
       "currentClaim": null,
@@ -270,17 +273,17 @@
     },
     "verificationStatus": {
       "state": "verified-at-trusted-boundary-with-unverified-delta",
-      "lastFullLocalSuite": "889/889 at this change",
+      "lastFullLocalSuite": "889/889 at 69ba57c",
       "trustedBoundary": "259cf60ce2fc9127a2a8277df172dff39d3b59a0",
       "outstandingRedChecks": [
-        "Prove R4-R8 on encrypted durable state: expected red again by design. Run 35013415132 at bf0c9428 went green while R8 was pending because the completion line printed unconditionally on the promise resolving; the reporter now exits non-zero unless every one of R4-R8 is satisfied, so this check stays red until R8 is genuinely demonstrated."
+        "Prove R4-R8 on encrypted durable state: red at 69ba57c by design. Run 35062311534 states R4-R7 satisfied, R8 pending, and exits 1. This check stays red until R8 is genuinely demonstrated, and a green one before then would be the defect this change removed."
       ],
       "rule": "Crucible verification, not AI confidence, establishes a trusted boundary."
     },
     "blockers": [
       {
-        "id": "r4-r7-reported-not-passed",
-        "summary": "R4-R7 read satisfied in hosted run 35013415132, but the only affirmative record is the absence of an unsatisfied line in the log, the report.json is inside an artifact this environment cannot download, and that same run printed a false pass. They stay reported rather than passed until a run states each gate affirmatively, which the corrected reporter does.",
+        "id": "r4-r7-measured-once",
+        "summary": "R4-R7 read satisfied on two runs, but the experiment behind them ran exactly once. Run 35062311534 confirms run 35013415132 promotion from the durable store rather than from an absent log line, which is stronger evidence - but it restored knowledge instead of learning, so it did not repeat the measurement, and which language harness produced the version is in neither log. They stay reported rather than passed.",
         "owner": "claude"
       },
       {
@@ -304,7 +307,7 @@
         "owner": "user-or-oversight"
       }
     ],
-    "nextAction": "Dispatch the hosted proof at the new tip and read the affirmative gate lines it now prints, which is what settles whether R4-R7 are recorded as passed rather than reported. Then R8: the prompt-injection safeguard is not firing on the 60 corpus documents that carry those patterns, and no corpus document begins with executable magic bytes. Owner actions unchanged: delete the unused NVIDIA_NIM_MODEL secret, and supply a currently-available NIM model id for R3.",
+    "nextAction": "R8 is the work: establish why the prompt-injection safeguard does not fire on the 60 corpus documents that carry those patterns, reproduced identically on runs 35013415132 and 35062311534. Separately, no corpus document begins with executable magic bytes, so that behaviour cannot be demonstrated on this corpus at all. Owner actions unchanged: delete the unused NVIDIA_NIM_MODEL secret, and supply a currently-available NVIDIA NIM model id for R3.",
     "evidenceReferences": {
       "plan": "Owner-supplied ChatGPT share 6aa654ab-27f4-83ea-857d-a81324160ea6, title 'Work Refresh Probe 6:04', 726 messages spanning 2026-09-07 to 2026-09-13.",
       "mergedPromotion": "Pull request 19 merged 2026-09-15T09:29Z; main is 8162707."
@@ -338,7 +341,10 @@
       "Proven by mutation, and the first attempt at that proof was invalid: a broken shell chain skipped the mutation and reported against an unmutated fixture, so the working harness claimed earlier had no evidence behind it. Run properly, a Java fixture reduced to one constructor is refused and restores to passing, a JavaScript positive fixture replaced by the mutating control is refused and restores to passing, a negative control given several constructors invalidates the experiment with the positive fixture untouched because a control that cannot fail has isolated nothing, and an unregistered language raises CRU-0050 rather than borrowing another harness. test/hostedExperimentHarnesses.test.js is 7 tests over real toolchains with nothing stubbed. The test that certified the fake is replaced rather than deleted: it asserted the two ids differed, and now asserts the pair differs in method and that the closure stays deleted.",
       "Landed the owner-approved scope declaration for \"Any class can have more than one constructor.\", scoped to Java classes compiled and executed by OpenJDK 21 whose constructors differ in parameter list. pairedSources is deliberately absent, and the declaration records why: the corpus own semantic test already related the two asserting sentences at the configured 0.74 threshold, and $ownerPairing exists for wording too different for that test to relate, so nominating a pairing would substitute owner judgement where the machine succeeded. The explanatory field is excluded from the pre-registration hash by construction, so commentary cannot change the contract.",
       "The first run of the hosted proof ever to finish reported success, and the success was false. Run 35013415132 at bf0c9428 printed \"GitHub-hosted durable learning proof passed R4-R8 at revision 60\" and exited 0 while its own R8 line read pending, because the completion message was attached to the promise resolving rather than to the gates. That line was unreachable for as long as the proof failed closed at CRU-0026, and became reachable the moment the owner declaration let a run get that far - so the defect was introduced by the change that made learning possible, and its first effect was a green check nobody had earned. reportCompletion now prints every gate state, names the ones that are not satisfied, and returns a non-zero exit unless all of R4-R8 are satisfied. The retention step is if: always(), so a red run still uploads the encrypted store and gate-evidence.json and the 90-day restore chain is unaffected. Covered by test/hostedLearningProof.test.js, which also asserts the old sentence is gone from the source rather than merely unreachable.",
-      "What a run actually learned is now in the run log rather than only in an artifact this environment cannot download. Each evaluated declaration prints its outcome, language, experiment adapter, independent verifier, promoted version and source ids, and a run that restored real corpus knowledge instead of learning prints that distinctly. Both readings produce \"R5 satisfied\" and they are different findings: run 35013415132 is known to have learned on its runner only because the reopened-contradiction line happens to be emitted from inside learnFromRealCorpus, which is evidence by accident."
+      "What a run actually learned is now in the run log rather than only in an artifact this environment cannot download. Each evaluated declaration prints its outcome, language, experiment adapter, independent verifier, promoted version and source ids, and a run that restored real corpus knowledge instead of learning prints that distinctly. Both readings produce \"R5 satisfied\" and they are different findings: run 35013415132 is known to have learned on its runner only because the reopened-contradiction line happens to be emitted from inside learnFromRealCorpus, which is evidence by accident.",
+      "The completion fix is confirmed on a real runner, not just in tests. Hosted run 35062311534 at 69ba57c prints R4: satisfied, R5: satisfied, R6: satisfied, R7: satisfied, R8: pending, then the red line, and exits 1 - the first affirmative statement of these gates anywhere, replacing four states that had only ever been inferred from the absence of a log line. The retained artifact still uploaded its 4 files on the red run, so the 90-day restore chain is unaffected exactly as intended.",
+      "Run 35062311534 also settled how much run 35013415132 actually proved, by reporting that it restored real corpus knowledge rather than learning. hasRealCorpusKnowledge returning true requires an active knowledge version whose candidate provenance matches a real corpus content hash or source id, read back from the encrypted store the earlier run wrote - so that promotion was real and durable rather than inferred. It is still one execution of the experiment, in the run whose completion message was false, and the confirming run did not repeat it.",
+      "Corrected a record that had been false for about ten hours before anyone read it. Pull request 19 was merged by the owner at 2026-09-15T09:29:12Z from head 802f520, and this file plus the release status had been asserting it was unmerged and that learning scope stayed blocked from main. Main is 8162707 and carries development through 802f520 - the scope pre-registration - and nothing later, so the harness replacement, the Java declaration, CONSTITUTION.md and the completion fix are all still development-only. Promotion was the owner own action; no agent authorizes it."
     ],
     "verification": [
       "npm run test:all 863/863 at this change. The count rose by one with the evaluateR2 regression test, which was shown failing against the previous implementation before the repair existed.",
@@ -356,7 +362,7 @@
       "Re-check the corpus arithmetic when the queue is next readable. The hosted custody report records 403 of 534 sources with stored content, which implies 131 without, while the same run diagnoses sources-without-content as 128. The three-source difference is unexplained and neither number was taken on trust: the repaired evaluateR2 derives its own count from contentSha256 rather than from either figure.",
       "Second half of the owner's combined choice, in the Vetting-and-Governance-oversite. repository and not this one: have Oversight carry a copy of the gate evidence into independent custody. Crucible now emits gate-evidence.json inside its retained artifact, which is the input that half consumes. Oversight already pushes and is the independent party, so the evidence ends up in custody Crucible does not control - which is the point of splitting it this way.",
       "R8 is the only gate reporting pending on the real corpus, and both reasons are named. The prompt-injection safeguard is not firing: 60 documents carry those patterns and none is recorded as quarantined, which is the safeguard not having fired rather than evidence that it did. And no document in the restored corpus begins with executable magic bytes, so that behaviour cannot be demonstrated on this corpus at all - a fact about the corpus, not a gap to route around.",
-      "R4-R7 are recorded as reported satisfied, not passed. The only affirmative record is the absence of an unsatisfied line for each of them in one run log; the report.json that states them positively is inside artifact 10414189476, which this session cannot download because the egress policy blocks the artifact blob host; and the same run misreported its own completion. A run whose reporter states each gate affirmatively is what converts these to passed."
+      "R4-R7 stay reported rather than passed because the experiment behind them has run exactly once. A run that learns rather than restores is what repeats the measurement, and a restored store will keep short-circuiting that - so getting a second independent execution needs thought about how, not just another dispatch."
     ],
     "open": [
       "The 14-source owner rescan obligation stays pending and unperformed. Its trigger condition is now partly met: custody is self-consistent and retention is provable. It stays pending because R5 has produced no retained hosted knowledge version yet, so there is no retained-state evidence to record completion against. When it is performed, reuse content hashes and extraction-window history; do not duplicate source bytes, reset custody, or re-extract unchanged windows.",
